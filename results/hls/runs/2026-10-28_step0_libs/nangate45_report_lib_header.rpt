@@ -1,0 +1,32 @@
+
+****************************************
+Report : library
+Library: NangateOpenCellLibrary
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 18:00:09 2026
+****************************************
+
+Library Type            : Technology, PG pin Based
+Tool Created            : U-2022.12-SP2
+Date Created            : Thu 10 Feb 2011, 18:11:20
+Library Version         : revision 1.0
+Comments                : Copyright (c) 2004-2011 Nangate Inc. All Rights Reserved.
+Time Unit               : 1ns
+
+Capacitive Load Unit    : 1.000000ff
+Pulling Resistance Unit : 1kilo-ohm
+Voltage Unit            : 1V
+Current Unit            : 1mA
+Dynamic Energy Unit     : 0.001000pJ   (derived from V,C units)
+Leakage Power Unit      : 1nW
+Bus Naming Style        : %s[%d] (default)
+
+Operating Conditions:
+
+
+    Operating Condition Name : typical
+    Library : NangateOpenCellLibrary
+    Process :   1.00
+    Temperature :  25.00
+    Voltage :   1.10
+    Interconnect Model : balanced_tree

@@ -1,0 +1,30 @@
+
+****************************************
+Report : library
+Library: gscl45nm
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 18:00:08 2026
+****************************************
+
+Library Type            : Technology, PG pin Based
+Tool Created            : Y-2006.06-SP4
+Date Created            : Not Specified
+Library Version         : Not Specified
+Time Unit               : 1ns
+
+Capacitive Load Unit    : 1.000000pf
+Pulling Resistance Unit : 1kilo-ohm
+Voltage Unit            : 1V
+Current Unit            : 1uA
+Dynamic Energy Unit     : 1.000000pJ   (derived from V,C units)
+Leakage Power Unit      : 1nW
+Bus Naming Style        : %s[%d] (default)
+
+Operating Conditions:
+
+
+    Operating Condition Name : typical
+    Library : gscl45nm
+    Process :   1.00
+    Temperature :  27.00
+    Voltage :   1.10
