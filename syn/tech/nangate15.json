@@ -1,0 +1,13 @@
+{
+  "name": "nangate15",
+  "lib_env": "SYN_LIB_NANGATE15",
+  "lib_default": "../RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db",
+  "lib_name": "NanGate_15nm_OCL",
+  "units": {"time": "1ps", "cap": "1ff"},
+  "drive_cell": "INV_X4",
+  "out_load_ff": 13.2,
+  "max_transition_ns": 0.25,
+  "wire_load": "none",
+  "fixes": [],
+  "notes": "Nangate 15 nm Open Cell Library, typical corner: 0.80 V, 25 C. out_load_ff is four INV_X4 inputs (4 x 3.301 fF). The library has no wire-load models. Its flops (DFFRNQ_X1, DFFSNQ_X1) all have an async reset or set, so Vitis's synchronous reset costs a flop with an unused reset pin plus reset logic."
+}

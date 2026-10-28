@@ -1,0 +1,500 @@
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -max_paths 5
+Design : vecadd
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 18:53:26 2026
+****************************************
+
+Operating Conditions: typical   Library: NanGate_15nm_OCL
+Wire Load Model Mode: top
+
+  Startpoint: B_TDATA[384]
+              (input port clocked by clk)
+  Endpoint: add_ln13_6_reg_383_reg[63]
+            (rising edge-triggered flip-flop clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Point                                         Incr       Path
+  ----------------------------------------------------------------
+  clock clk (rise edge)                      0.00000    0.00000
+  clock network delay (ideal)                0.00000    0.00000
+  input external delay                      10.00000   10.00000 r
+  B_TDATA[384] (in)                          0.40826   10.40826 r
+  U1698/ZN (NAND2_X1)                        5.99789   16.40615 f
+  U2676/ZN (INV_X1)                          3.12131   19.52746 r
+  U2677/ZN (OAI21_X1)                        2.83497   22.36243 f
+  U2678/ZN (OAI21_X1)                        3.24944   25.61187 r
+  intadd_1/U62/CO (FA_X1)                    9.25595   34.86782 r
+  intadd_1/U61/CO (FA_X1)                    8.89857   43.76639 r
+  intadd_1/U60/CO (FA_X1)                    8.89857   52.66496 r
+  intadd_1/U59/CO (FA_X1)                    8.89857   61.56352 r
+  intadd_1/U58/CO (FA_X1)                    8.89857   70.46209 r
+  intadd_1/U57/CO (FA_X1)                    8.89857   79.36066 r
+  intadd_1/U56/CO (FA_X1)                    8.89857   88.25922 r
+  intadd_1/U55/CO (FA_X1)                    8.89857   97.15779 r
+  intadd_1/U54/CO (FA_X1)                    8.89857   106.05636 r
+  intadd_1/U53/CO (FA_X1)                    8.89857   114.95493 r
+  intadd_1/U52/CO (FA_X1)                    8.89857   123.85349 r
+  intadd_1/U51/CO (FA_X1)                    8.89857   132.75206 r
+  intadd_1/U50/CO (FA_X1)                    8.89857   141.65063 r
+  intadd_1/U49/CO (FA_X1)                    8.89857   150.54921 r
+  intadd_1/U48/CO (FA_X1)                    8.89857   159.44778 r
+  intadd_1/U47/CO (FA_X1)                    8.89857   168.34636 r
+  intadd_1/U46/CO (FA_X1)                    8.89857   177.24493 r
+  intadd_1/U45/CO (FA_X1)                    8.89857   186.14351 r
+  intadd_1/U44/CO (FA_X1)                    8.89857   195.04208 r
+  intadd_1/U43/CO (FA_X1)                    8.89857   203.94066 r
+  intadd_1/U42/CO (FA_X1)                    8.89857   212.83923 r
+  intadd_1/U41/CO (FA_X1)                    8.89857   221.73781 r
+  intadd_1/U40/CO (FA_X1)                    8.89857   230.63638 r
+  intadd_1/U39/CO (FA_X1)                    8.89857   239.53496 r
+  intadd_1/U38/CO (FA_X1)                    8.89857   248.43353 r
+  intadd_1/U37/CO (FA_X1)                    8.89856   257.33209 r
+  intadd_1/U36/CO (FA_X1)                    8.89856   266.23065 r
+  intadd_1/U35/CO (FA_X1)                    8.89856   275.12921 r
+  intadd_1/U34/CO (FA_X1)                    8.89856   284.02777 r
+  intadd_1/U33/CO (FA_X1)                    8.89856   292.92633 r
+  intadd_1/U32/CO (FA_X1)                    8.89856   301.82489 r
+  intadd_1/U31/CO (FA_X1)                    8.89856   310.72345 r
+  intadd_1/U30/CO (FA_X1)                    8.89856   319.62201 r
+  intadd_1/U29/CO (FA_X1)                    8.89856   328.52057 r
+  intadd_1/U28/CO (FA_X1)                    8.89856   337.41913 r
+  intadd_1/U27/CO (FA_X1)                    8.89856   346.31769 r
+  intadd_1/U26/CO (FA_X1)                    8.89856   355.21625 r
+  intadd_1/U25/CO (FA_X1)                    8.89856   364.11481 r
+  intadd_1/U24/CO (FA_X1)                    8.89856   373.01337 r
+  intadd_1/U23/CO (FA_X1)                    8.89856   381.91193 r
+  intadd_1/U22/CO (FA_X1)                    8.89856   390.81049 r
+  intadd_1/U21/CO (FA_X1)                    8.89856   399.70905 r
+  intadd_1/U20/CO (FA_X1)                    8.89856   408.60760 r
+  intadd_1/U19/CO (FA_X1)                    8.89856   417.50616 r
+  intadd_1/U18/CO (FA_X1)                    8.89856   426.40472 r
+  intadd_1/U17/CO (FA_X1)                    8.89856   435.30328 r
+  intadd_1/U16/CO (FA_X1)                    8.89856   444.20184 r
+  intadd_1/U15/CO (FA_X1)                    8.89856   453.10040 r
+  intadd_1/U14/CO (FA_X1)                    8.89856   461.99896 r
+  intadd_1/U13/CO (FA_X1)                    8.89856   470.89752 r
+  intadd_1/U12/CO (FA_X1)                    8.89856   479.79608 r
+  intadd_1/U11/CO (FA_X1)                    8.89856   488.69464 r
+  intadd_1/U10/CO (FA_X1)                    8.89856   497.59320 r
+  intadd_1/U9/CO (FA_X1)                     8.89856   506.49176 r
+  intadd_1/U8/CO (FA_X1)                     8.89856   515.39032 r
+  intadd_1/U7/CO (FA_X1)                     8.89856   524.28888 r
+  intadd_1/U6/CO (FA_X1)                     8.89856   533.18744 r
+  intadd_1/U5/CO (FA_X1)                     8.89856   542.08600 r
+  intadd_1/U4/CO (FA_X1)                     8.89856   550.98456 r
+  intadd_1/U3/CO (FA_X1)                     8.89856   559.88312 r
+  intadd_1/U2/CO (FA_X1)                     9.15479   569.03790 r
+  U2671/Z (XOR2_X1)                          6.37152   575.40942 r
+  U2672/ZN (XNOR2_X1)                        7.37396   582.78339 f
+  U2674/ZN (AOI22_X1)                        3.48651   586.26990 r
+  add_ln13_6_reg_383_reg[63]/D (DFFSNQ_X1)   0.00000   586.26990 r
+  data arrival time                                    586.26990
+
+  clock clk (rise edge)                     10000.00000 10000.00000
+  clock network delay (ideal)                0.00000   10000.00000
+  clock uncertainty                         -100.00000 9900.00000
+  add_ln13_6_reg_383_reg[63]/CLK (DFFSNQ_X1)  0.00000  9900.00000 r
+  library setup time                        -8.70517   9891.29492
+  data required time                                   9891.29492
+  ----------------------------------------------------------------
+  data required time                                   9891.29492
+  data arrival time                                    -586.26990
+  ----------------------------------------------------------------
+  slack (MET)                                          9305.02539
+
+
+  Startpoint: B_TDATA[64]
+              (input port clocked by clk)
+  Endpoint: add_ln13_1_reg_358_reg[63]
+            (rising edge-triggered flip-flop clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Point                                         Incr       Path
+  ----------------------------------------------------------------
+  clock clk (rise edge)                      0.00000    0.00000
+  clock network delay (ideal)                0.00000    0.00000
+  input external delay                      10.00000   10.00000 r
+  B_TDATA[64] (in)                           0.40826   10.40826 r
+  U1642/ZN (NAND2_X1)                        5.99789   16.40615 f
+  U2708/ZN (INV_X1)                          3.12131   19.52746 r
+  U2709/ZN (OAI21_X1)                        2.83497   22.36243 f
+  U2710/ZN (OAI21_X1)                        3.24944   25.61187 r
+  intadd_6/U62/CO (FA_X1)                    9.25595   34.86782 r
+  intadd_6/U61/CO (FA_X1)                    8.89857   43.76639 r
+  intadd_6/U60/CO (FA_X1)                    8.89857   52.66496 r
+  intadd_6/U59/CO (FA_X1)                    8.89857   61.56352 r
+  intadd_6/U58/CO (FA_X1)                    8.89857   70.46209 r
+  intadd_6/U57/CO (FA_X1)                    8.89857   79.36066 r
+  intadd_6/U56/CO (FA_X1)                    8.89857   88.25922 r
+  intadd_6/U55/CO (FA_X1)                    8.89857   97.15779 r
+  intadd_6/U54/CO (FA_X1)                    8.89857   106.05636 r
+  intadd_6/U53/CO (FA_X1)                    8.89857   114.95493 r
+  intadd_6/U52/CO (FA_X1)                    8.89857   123.85349 r
+  intadd_6/U51/CO (FA_X1)                    8.89857   132.75206 r
+  intadd_6/U50/CO (FA_X1)                    8.89857   141.65063 r
+  intadd_6/U49/CO (FA_X1)                    8.89857   150.54921 r
+  intadd_6/U48/CO (FA_X1)                    8.89857   159.44778 r
+  intadd_6/U47/CO (FA_X1)                    8.89857   168.34636 r
+  intadd_6/U46/CO (FA_X1)                    8.89857   177.24493 r
+  intadd_6/U45/CO (FA_X1)                    8.89857   186.14351 r
+  intadd_6/U44/CO (FA_X1)                    8.89857   195.04208 r
+  intadd_6/U43/CO (FA_X1)                    8.89857   203.94066 r
+  intadd_6/U42/CO (FA_X1)                    8.89857   212.83923 r
+  intadd_6/U41/CO (FA_X1)                    8.89857   221.73781 r
+  intadd_6/U40/CO (FA_X1)                    8.89857   230.63638 r
+  intadd_6/U39/CO (FA_X1)                    8.89857   239.53496 r
+  intadd_6/U38/CO (FA_X1)                    8.89857   248.43353 r
+  intadd_6/U37/CO (FA_X1)                    8.89856   257.33209 r
+  intadd_6/U36/CO (FA_X1)                    8.89856   266.23065 r
+  intadd_6/U35/CO (FA_X1)                    8.89856   275.12921 r
+  intadd_6/U34/CO (FA_X1)                    8.89856   284.02777 r
+  intadd_6/U33/CO (FA_X1)                    8.89856   292.92633 r
+  intadd_6/U32/CO (FA_X1)                    8.89856   301.82489 r
+  intadd_6/U31/CO (FA_X1)                    8.89856   310.72345 r
+  intadd_6/U30/CO (FA_X1)                    8.89856   319.62201 r
+  intadd_6/U29/CO (FA_X1)                    8.89856   328.52057 r
+  intadd_6/U28/CO (FA_X1)                    8.89856   337.41913 r
+  intadd_6/U27/CO (FA_X1)                    8.89856   346.31769 r
+  intadd_6/U26/CO (FA_X1)                    8.89856   355.21625 r
+  intadd_6/U25/CO (FA_X1)                    8.89856   364.11481 r
+  intadd_6/U24/CO (FA_X1)                    8.89856   373.01337 r
+  intadd_6/U23/CO (FA_X1)                    8.89856   381.91193 r
+  intadd_6/U22/CO (FA_X1)                    8.89856   390.81049 r
+  intadd_6/U21/CO (FA_X1)                    8.89856   399.70905 r
+  intadd_6/U20/CO (FA_X1)                    8.89856   408.60760 r
+  intadd_6/U19/CO (FA_X1)                    8.89856   417.50616 r
+  intadd_6/U18/CO (FA_X1)                    8.89856   426.40472 r
+  intadd_6/U17/CO (FA_X1)                    8.89856   435.30328 r
+  intadd_6/U16/CO (FA_X1)                    8.89856   444.20184 r
+  intadd_6/U15/CO (FA_X1)                    8.89856   453.10040 r
+  intadd_6/U14/CO (FA_X1)                    8.89856   461.99896 r
+  intadd_6/U13/CO (FA_X1)                    8.89856   470.89752 r
+  intadd_6/U12/CO (FA_X1)                    8.89856   479.79608 r
+  intadd_6/U11/CO (FA_X1)                    8.89856   488.69464 r
+  intadd_6/U10/CO (FA_X1)                    8.89856   497.59320 r
+  intadd_6/U9/CO (FA_X1)                     8.89856   506.49176 r
+  intadd_6/U8/CO (FA_X1)                     8.89856   515.39032 r
+  intadd_6/U7/CO (FA_X1)                     8.89856   524.28888 r
+  intadd_6/U6/CO (FA_X1)                     8.89856   533.18744 r
+  intadd_6/U5/CO (FA_X1)                     8.89856   542.08600 r
+  intadd_6/U4/CO (FA_X1)                     8.89856   550.98456 r
+  intadd_6/U3/CO (FA_X1)                     8.89856   559.88312 r
+  intadd_6/U2/CO (FA_X1)                     9.15479   569.03790 r
+  U2703/Z (XOR2_X1)                          6.37152   575.40942 r
+  U2704/ZN (XNOR2_X1)                        7.37396   582.78339 f
+  U2706/ZN (AOI22_X1)                        3.48651   586.26990 r
+  add_ln13_1_reg_358_reg[63]/D (DFFSNQ_X1)   0.00000   586.26990 r
+  data arrival time                                    586.26990
+
+  clock clk (rise edge)                     10000.00000 10000.00000
+  clock network delay (ideal)                0.00000   10000.00000
+  clock uncertainty                         -100.00000 9900.00000
+  add_ln13_1_reg_358_reg[63]/CLK (DFFSNQ_X1)  0.00000  9900.00000 r
+  library setup time                        -8.69464   9891.30566
+  data required time                                   9891.30566
+  ----------------------------------------------------------------
+  data required time                                   9891.30566
+  data arrival time                                    -586.26990
+  ----------------------------------------------------------------
+  slack (MET)                                          9305.03613
+
+
+  Startpoint: B_TDATA[128]
+              (input port clocked by clk)
+  Endpoint: add_ln13_2_reg_363_reg[63]
+            (rising edge-triggered flip-flop clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Point                                         Incr       Path
+  ----------------------------------------------------------------
+  clock clk (rise edge)                      0.00000    0.00000
+  clock network delay (ideal)                0.00000    0.00000
+  input external delay                      10.00000   10.00000 r
+  B_TDATA[128] (in)                          0.40826   10.40826 r
+  U1648/ZN (NAND2_X1)                        5.99789   16.40615 f
+  U2716/ZN (INV_X1)                          3.12131   19.52746 r
+  U2717/ZN (OAI21_X1)                        2.83497   22.36243 f
+  U2718/ZN (OAI21_X1)                        3.24944   25.61187 r
+  intadd_5/U62/CO (FA_X1)                    9.25595   34.86782 r
+  intadd_5/U61/CO (FA_X1)                    8.89857   43.76639 r
+  intadd_5/U60/CO (FA_X1)                    8.89857   52.66496 r
+  intadd_5/U59/CO (FA_X1)                    8.89857   61.56352 r
+  intadd_5/U58/CO (FA_X1)                    8.89857   70.46209 r
+  intadd_5/U57/CO (FA_X1)                    8.89857   79.36066 r
+  intadd_5/U56/CO (FA_X1)                    8.89857   88.25922 r
+  intadd_5/U55/CO (FA_X1)                    8.89857   97.15779 r
+  intadd_5/U54/CO (FA_X1)                    8.89857   106.05636 r
+  intadd_5/U53/CO (FA_X1)                    8.89857   114.95493 r
+  intadd_5/U52/CO (FA_X1)                    8.89857   123.85349 r
+  intadd_5/U51/CO (FA_X1)                    8.89857   132.75206 r
+  intadd_5/U50/CO (FA_X1)                    8.89857   141.65063 r
+  intadd_5/U49/CO (FA_X1)                    8.89857   150.54921 r
+  intadd_5/U48/CO (FA_X1)                    8.89857   159.44778 r
+  intadd_5/U47/CO (FA_X1)                    8.89857   168.34636 r
+  intadd_5/U46/CO (FA_X1)                    8.89857   177.24493 r
+  intadd_5/U45/CO (FA_X1)                    8.89857   186.14351 r
+  intadd_5/U44/CO (FA_X1)                    8.89857   195.04208 r
+  intadd_5/U43/CO (FA_X1)                    8.89857   203.94066 r
+  intadd_5/U42/CO (FA_X1)                    8.89857   212.83923 r
+  intadd_5/U41/CO (FA_X1)                    8.89857   221.73781 r
+  intadd_5/U40/CO (FA_X1)                    8.89857   230.63638 r
+  intadd_5/U39/CO (FA_X1)                    8.89857   239.53496 r
+  intadd_5/U38/CO (FA_X1)                    8.89857   248.43353 r
+  intadd_5/U37/CO (FA_X1)                    8.89856   257.33209 r
+  intadd_5/U36/CO (FA_X1)                    8.89856   266.23065 r
+  intadd_5/U35/CO (FA_X1)                    8.89856   275.12921 r
+  intadd_5/U34/CO (FA_X1)                    8.89856   284.02777 r
+  intadd_5/U33/CO (FA_X1)                    8.89856   292.92633 r
+  intadd_5/U32/CO (FA_X1)                    8.89856   301.82489 r
+  intadd_5/U31/CO (FA_X1)                    8.89856   310.72345 r
+  intadd_5/U30/CO (FA_X1)                    8.89856   319.62201 r
+  intadd_5/U29/CO (FA_X1)                    8.89856   328.52057 r
+  intadd_5/U28/CO (FA_X1)                    8.89856   337.41913 r
+  intadd_5/U27/CO (FA_X1)                    8.89856   346.31769 r
+  intadd_5/U26/CO (FA_X1)                    8.89856   355.21625 r
+  intadd_5/U25/CO (FA_X1)                    8.89856   364.11481 r
+  intadd_5/U24/CO (FA_X1)                    8.89856   373.01337 r
+  intadd_5/U23/CO (FA_X1)                    8.89856   381.91193 r
+  intadd_5/U22/CO (FA_X1)                    8.89856   390.81049 r
+  intadd_5/U21/CO (FA_X1)                    8.89856   399.70905 r
+  intadd_5/U20/CO (FA_X1)                    8.89856   408.60760 r
+  intadd_5/U19/CO (FA_X1)                    8.89856   417.50616 r
+  intadd_5/U18/CO (FA_X1)                    8.89856   426.40472 r
+  intadd_5/U17/CO (FA_X1)                    8.89856   435.30328 r
+  intadd_5/U16/CO (FA_X1)                    8.89856   444.20184 r
+  intadd_5/U15/CO (FA_X1)                    8.89856   453.10040 r
+  intadd_5/U14/CO (FA_X1)                    8.89856   461.99896 r
+  intadd_5/U13/CO (FA_X1)                    8.89856   470.89752 r
+  intadd_5/U12/CO (FA_X1)                    8.89856   479.79608 r
+  intadd_5/U11/CO (FA_X1)                    8.89856   488.69464 r
+  intadd_5/U10/CO (FA_X1)                    8.89856   497.59320 r
+  intadd_5/U9/CO (FA_X1)                     8.89856   506.49176 r
+  intadd_5/U8/CO (FA_X1)                     8.89856   515.39032 r
+  intadd_5/U7/CO (FA_X1)                     8.89856   524.28888 r
+  intadd_5/U6/CO (FA_X1)                     8.89856   533.18744 r
+  intadd_5/U5/CO (FA_X1)                     8.89856   542.08600 r
+  intadd_5/U4/CO (FA_X1)                     8.89856   550.98456 r
+  intadd_5/U3/CO (FA_X1)                     8.89856   559.88312 r
+  intadd_5/U2/CO (FA_X1)                     9.15479   569.03790 r
+  U2711/Z (XOR2_X1)                          6.37152   575.40942 r
+  U2712/ZN (XNOR2_X1)                        7.37396   582.78339 f
+  U2714/ZN (AOI22_X1)                        3.48651   586.26990 r
+  add_ln13_2_reg_363_reg[63]/D (DFFSNQ_X1)   0.00000   586.26990 r
+  data arrival time                                    586.26990
+
+  clock clk (rise edge)                     10000.00000 10000.00000
+  clock network delay (ideal)                0.00000   10000.00000
+  clock uncertainty                         -100.00000 9900.00000
+  add_ln13_2_reg_363_reg[63]/CLK (DFFSNQ_X1)  0.00000  9900.00000 r
+  library setup time                        -8.69464   9891.30566
+  data required time                                   9891.30566
+  ----------------------------------------------------------------
+  data required time                                   9891.30566
+  data arrival time                                    -586.26990
+  ----------------------------------------------------------------
+  slack (MET)                                          9305.03613
+
+
+  Startpoint: B_TDATA[192]
+              (input port clocked by clk)
+  Endpoint: add_ln13_3_reg_368_reg[63]
+            (rising edge-triggered flip-flop clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Point                                         Incr       Path
+  ----------------------------------------------------------------
+  clock clk (rise edge)                      0.00000    0.00000
+  clock network delay (ideal)                0.00000    0.00000
+  input external delay                      10.00000   10.00000 r
+  B_TDATA[192] (in)                          0.40826   10.40826 r
+  U1513/ZN (NAND2_X1)                        5.99789   16.40615 f
+  U2724/ZN (INV_X1)                          3.12131   19.52746 r
+  U2725/ZN (OAI21_X1)                        2.83497   22.36243 f
+  U2726/ZN (OAI21_X1)                        3.24944   25.61187 r
+  intadd_4/U62/CO (FA_X1)                    9.25595   34.86782 r
+  intadd_4/U61/CO (FA_X1)                    8.89857   43.76639 r
+  intadd_4/U60/CO (FA_X1)                    8.89857   52.66496 r
+  intadd_4/U59/CO (FA_X1)                    8.89857   61.56352 r
+  intadd_4/U58/CO (FA_X1)                    8.89857   70.46209 r
+  intadd_4/U57/CO (FA_X1)                    8.89857   79.36066 r
+  intadd_4/U56/CO (FA_X1)                    8.89857   88.25922 r
+  intadd_4/U55/CO (FA_X1)                    8.89857   97.15779 r
+  intadd_4/U54/CO (FA_X1)                    8.89857   106.05636 r
+  intadd_4/U53/CO (FA_X1)                    8.89857   114.95493 r
+  intadd_4/U52/CO (FA_X1)                    8.89857   123.85349 r
+  intadd_4/U51/CO (FA_X1)                    8.89857   132.75206 r
+  intadd_4/U50/CO (FA_X1)                    8.89857   141.65063 r
+  intadd_4/U49/CO (FA_X1)                    8.89857   150.54921 r
+  intadd_4/U48/CO (FA_X1)                    8.89857   159.44778 r
+  intadd_4/U47/CO (FA_X1)                    8.89857   168.34636 r
+  intadd_4/U46/CO (FA_X1)                    8.89857   177.24493 r
+  intadd_4/U45/CO (FA_X1)                    8.89857   186.14351 r
+  intadd_4/U44/CO (FA_X1)                    8.89857   195.04208 r
+  intadd_4/U43/CO (FA_X1)                    8.89857   203.94066 r
+  intadd_4/U42/CO (FA_X1)                    8.89857   212.83923 r
+  intadd_4/U41/CO (FA_X1)                    8.89857   221.73781 r
+  intadd_4/U40/CO (FA_X1)                    8.89857   230.63638 r
+  intadd_4/U39/CO (FA_X1)                    8.89857   239.53496 r
+  intadd_4/U38/CO (FA_X1)                    8.89857   248.43353 r
+  intadd_4/U37/CO (FA_X1)                    8.89856   257.33209 r
+  intadd_4/U36/CO (FA_X1)                    8.89856   266.23065 r
+  intadd_4/U35/CO (FA_X1)                    8.89856   275.12921 r
+  intadd_4/U34/CO (FA_X1)                    8.89856   284.02777 r
+  intadd_4/U33/CO (FA_X1)                    8.89856   292.92633 r
+  intadd_4/U32/CO (FA_X1)                    8.89856   301.82489 r
+  intadd_4/U31/CO (FA_X1)                    8.89856   310.72345 r
+  intadd_4/U30/CO (FA_X1)                    8.89856   319.62201 r
+  intadd_4/U29/CO (FA_X1)                    8.89856   328.52057 r
+  intadd_4/U28/CO (FA_X1)                    8.89856   337.41913 r
+  intadd_4/U27/CO (FA_X1)                    8.89856   346.31769 r
+  intadd_4/U26/CO (FA_X1)                    8.89856   355.21625 r
+  intadd_4/U25/CO (FA_X1)                    8.89856   364.11481 r
+  intadd_4/U24/CO (FA_X1)                    8.89856   373.01337 r
+  intadd_4/U23/CO (FA_X1)                    8.89856   381.91193 r
+  intadd_4/U22/CO (FA_X1)                    8.89856   390.81049 r
+  intadd_4/U21/CO (FA_X1)                    8.89856   399.70905 r
+  intadd_4/U20/CO (FA_X1)                    8.89856   408.60760 r
+  intadd_4/U19/CO (FA_X1)                    8.89856   417.50616 r
+  intadd_4/U18/CO (FA_X1)                    8.89856   426.40472 r
+  intadd_4/U17/CO (FA_X1)                    8.89856   435.30328 r
+  intadd_4/U16/CO (FA_X1)                    8.89856   444.20184 r
+  intadd_4/U15/CO (FA_X1)                    8.89856   453.10040 r
+  intadd_4/U14/CO (FA_X1)                    8.89856   461.99896 r
+  intadd_4/U13/CO (FA_X1)                    8.89856   470.89752 r
+  intadd_4/U12/CO (FA_X1)                    8.89856   479.79608 r
+  intadd_4/U11/CO (FA_X1)                    8.89856   488.69464 r
+  intadd_4/U10/CO (FA_X1)                    8.89856   497.59320 r
+  intadd_4/U9/CO (FA_X1)                     8.89856   506.49176 r
+  intadd_4/U8/CO (FA_X1)                     8.89856   515.39032 r
+  intadd_4/U7/CO (FA_X1)                     8.89856   524.28888 r
+  intadd_4/U6/CO (FA_X1)                     8.89856   533.18744 r
+  intadd_4/U5/CO (FA_X1)                     8.89856   542.08600 r
+  intadd_4/U4/CO (FA_X1)                     8.89856   550.98456 r
+  intadd_4/U3/CO (FA_X1)                     8.89856   559.88312 r
+  intadd_4/U2/CO (FA_X1)                     9.15479   569.03790 r
+  U2719/Z (XOR2_X1)                          6.37152   575.40942 r
+  U2720/ZN (XNOR2_X1)                        7.37396   582.78339 f
+  U2722/ZN (AOI22_X1)                        3.48651   586.26990 r
+  add_ln13_3_reg_368_reg[63]/D (DFFSNQ_X1)   0.00000   586.26990 r
+  data arrival time                                    586.26990
+
+  clock clk (rise edge)                     10000.00000 10000.00000
+  clock network delay (ideal)                0.00000   10000.00000
+  clock uncertainty                         -100.00000 9900.00000
+  add_ln13_3_reg_368_reg[63]/CLK (DFFSNQ_X1)  0.00000  9900.00000 r
+  library setup time                        -8.69464   9891.30566
+  data required time                                   9891.30566
+  ----------------------------------------------------------------
+  data required time                                   9891.30566
+  data arrival time                                    -586.26990
+  ----------------------------------------------------------------
+  slack (MET)                                          9305.03613
+
+
+  Startpoint: B_TDATA[320]
+              (input port clocked by clk)
+  Endpoint: add_ln13_5_reg_378_reg[63]
+            (rising edge-triggered flip-flop clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Point                                         Incr       Path
+  ----------------------------------------------------------------
+  clock clk (rise edge)                      0.00000    0.00000
+  clock network delay (ideal)                0.00000    0.00000
+  input external delay                      10.00000   10.00000 r
+  B_TDATA[320] (in)                          0.40826   10.40826 r
+  U1500/ZN (NAND2_X1)                        5.99789   16.40615 f
+  U2692/ZN (INV_X1)                          3.12131   19.52746 r
+  U2693/ZN (OAI21_X1)                        2.83497   22.36243 f
+  U2694/ZN (OAI21_X1)                        3.24944   25.61187 r
+  intadd_2/U62/CO (FA_X1)                    9.25595   34.86782 r
+  intadd_2/U61/CO (FA_X1)                    8.89857   43.76639 r
+  intadd_2/U60/CO (FA_X1)                    8.89857   52.66496 r
+  intadd_2/U59/CO (FA_X1)                    8.89857   61.56352 r
+  intadd_2/U58/CO (FA_X1)                    8.89857   70.46209 r
+  intadd_2/U57/CO (FA_X1)                    8.89857   79.36066 r
+  intadd_2/U56/CO (FA_X1)                    8.89857   88.25922 r
+  intadd_2/U55/CO (FA_X1)                    8.89857   97.15779 r
+  intadd_2/U54/CO (FA_X1)                    8.89857   106.05636 r
+  intadd_2/U53/CO (FA_X1)                    8.89857   114.95493 r
+  intadd_2/U52/CO (FA_X1)                    8.89857   123.85349 r
+  intadd_2/U51/CO (FA_X1)                    8.89857   132.75206 r
+  intadd_2/U50/CO (FA_X1)                    8.89857   141.65063 r
+  intadd_2/U49/CO (FA_X1)                    8.89857   150.54921 r
+  intadd_2/U48/CO (FA_X1)                    8.89857   159.44778 r
+  intadd_2/U47/CO (FA_X1)                    8.89857   168.34636 r
+  intadd_2/U46/CO (FA_X1)                    8.89857   177.24493 r
+  intadd_2/U45/CO (FA_X1)                    8.89857   186.14351 r
+  intadd_2/U44/CO (FA_X1)                    8.89857   195.04208 r
+  intadd_2/U43/CO (FA_X1)                    8.89857   203.94066 r
+  intadd_2/U42/CO (FA_X1)                    8.89857   212.83923 r
+  intadd_2/U41/CO (FA_X1)                    8.89857   221.73781 r
+  intadd_2/U40/CO (FA_X1)                    8.89857   230.63638 r
+  intadd_2/U39/CO (FA_X1)                    8.89857   239.53496 r
+  intadd_2/U38/CO (FA_X1)                    8.89857   248.43353 r
+  intadd_2/U37/CO (FA_X1)                    8.89856   257.33209 r
+  intadd_2/U36/CO (FA_X1)                    8.89856   266.23065 r
+  intadd_2/U35/CO (FA_X1)                    8.89856   275.12921 r
+  intadd_2/U34/CO (FA_X1)                    8.89856   284.02777 r
+  intadd_2/U33/CO (FA_X1)                    8.89856   292.92633 r
+  intadd_2/U32/CO (FA_X1)                    8.89856   301.82489 r
+  intadd_2/U31/CO (FA_X1)                    8.89856   310.72345 r
+  intadd_2/U30/CO (FA_X1)                    8.89856   319.62201 r
+  intadd_2/U29/CO (FA_X1)                    8.89856   328.52057 r
+  intadd_2/U28/CO (FA_X1)                    8.89856   337.41913 r
+  intadd_2/U27/CO (FA_X1)                    8.89856   346.31769 r
+  intadd_2/U26/CO (FA_X1)                    8.89856   355.21625 r
+  intadd_2/U25/CO (FA_X1)                    8.89856   364.11481 r
+  intadd_2/U24/CO (FA_X1)                    8.89856   373.01337 r
+  intadd_2/U23/CO (FA_X1)                    8.89856   381.91193 r
+  intadd_2/U22/CO (FA_X1)                    8.89856   390.81049 r
+  intadd_2/U21/CO (FA_X1)                    8.89856   399.70905 r
+  intadd_2/U20/CO (FA_X1)                    8.89856   408.60760 r
+  intadd_2/U19/CO (FA_X1)                    8.89856   417.50616 r
+  intadd_2/U18/CO (FA_X1)                    8.89856   426.40472 r
+  intadd_2/U17/CO (FA_X1)                    8.89856   435.30328 r
+  intadd_2/U16/CO (FA_X1)                    8.89856   444.20184 r
+  intadd_2/U15/CO (FA_X1)                    8.89856   453.10040 r
+  intadd_2/U14/CO (FA_X1)                    8.89856   461.99896 r
+  intadd_2/U13/CO (FA_X1)                    8.89856   470.89752 r
+  intadd_2/U12/CO (FA_X1)                    8.89856   479.79608 r
+  intadd_2/U11/CO (FA_X1)                    8.89856   488.69464 r
+  intadd_2/U10/CO (FA_X1)                    8.89856   497.59320 r
+  intadd_2/U9/CO (FA_X1)                     8.89856   506.49176 r
+  intadd_2/U8/CO (FA_X1)                     8.89856   515.39032 r
+  intadd_2/U7/CO (FA_X1)                     8.89856   524.28888 r
+  intadd_2/U6/CO (FA_X1)                     8.89856   533.18744 r
+  intadd_2/U5/CO (FA_X1)                     8.89856   542.08600 r
+  intadd_2/U4/CO (FA_X1)                     8.89856   550.98456 r
+  intadd_2/U3/CO (FA_X1)                     8.89856   559.88312 r
+  intadd_2/U2/CO (FA_X1)                     9.15479   569.03790 r
+  U2687/Z (XOR2_X1)                          6.37152   575.40942 r
+  U2688/ZN (XNOR2_X1)                        7.37396   582.78339 f
+  U2690/ZN (AOI22_X1)                        3.48651   586.26990 r
+  add_ln13_5_reg_378_reg[63]/D (DFFSNQ_X1)   0.00000   586.26990 r
+  data arrival time                                    586.26990
+
+  clock clk (rise edge)                     10000.00000 10000.00000
+  clock network delay (ideal)                0.00000   10000.00000
+  clock uncertainty                         -100.00000 9900.00000
+  add_ln13_5_reg_378_reg[63]/CLK (DFFSNQ_X1)  0.00000  9900.00000 r
+  library setup time                        -8.69464   9891.30566
+  data required time                                   9891.30566
+  ----------------------------------------------------------------
+  data required time                                   9891.30566
+  data arrival time                                    -586.26990
+  ----------------------------------------------------------------
+  slack (MET)                                          9305.03613
+
+
+1

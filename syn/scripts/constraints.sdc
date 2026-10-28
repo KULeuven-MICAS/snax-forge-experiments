@@ -1,6 +1,9 @@
 ################################
 # syn/scripts/constraints.sdc
-# Sourced by dc_syn.tcl after link, which sets $clock_ns.
+# Sourced by dc_syn.tcl after link. Every value is physical (ns, fF) and scaled
+# to the library's units: $t_scale library time units per ns, $c_scale library
+# capacitance units per fF. dc_syn.tcl also sets $clock_ns, $drive_cell,
+# $out_load_ff and $max_trans_ns from the tech file (syn/tech/<tech>.json).
 # Vitis's tops have one clock, ap_clk, and a synchronous active-low reset,
 # ap_rst_n, which is treated as an ordinary input here.
 ################################
@@ -10,7 +13,7 @@
 #-----------------------------
 
 # Setting as low as possible is nice for high speed
-set_max_transition 0.25 [current_design]
+set_max_transition [expr {$max_trans_ns * $t_scale}] [current_design]
 
 # Lower fanout means less delay on critical paths
 set_max_fanout 32 [current_design]
@@ -19,32 +22,32 @@ set_max_fanout 32 [current_design]
 # Declare clocks
 #-----------------------------
 set clk_port ap_clk
-create_clock -name clk -period $clock_ns [get_ports $clk_port]
+create_clock -name clk -period [expr {$clock_ns * $t_scale}] [get_ports $clk_port]
 
 #-----------------------------
 # Setup and hold time uncertainties
 #-----------------------------
 
-# Set between 0.05 and 0.2
-set_clock_uncertainty 0.1 -setup [get_clocks clk]
+# Set between 0.05 and 0.2 ns
+set_clock_uncertainty [expr {0.1 * $t_scale}] -setup [get_clocks clk]
 
-# Set between 0.05 and 0.1
-set_clock_uncertainty 0.02 -hold [get_clocks clk]
+# Set between 0.05 and 0.1 ns
+set_clock_uncertainty [expr {0.02 * $t_scale}] -hold [get_clocks clk]
 
 #-----------------------------
 # IO constraints (every input but the clock)
 #-----------------------------
 set data_inputs [remove_from_collection [all_inputs] [get_ports $clk_port]]
 
-# Get from the FreePDK45nm
-set_driving_cell -lib_cell INV_X4 $data_inputs
+# The tech file's driving cell (INV_X4 on both Nangate libraries)
+set_driving_cell -lib_cell $drive_cell $data_inputs
 
-# Set some generic.
-set_load 0.03 [all_outputs]
+# The tech file's output load: four INV_X4 inputs
+set_load [expr {$out_load_ff * $c_scale}] [all_outputs]
 
-set_input_delay -max 0.01 -clock clk $data_inputs
+set_input_delay -max [expr {0.01 * $t_scale}] -clock clk $data_inputs
 
-set_output_delay -max 0.01 -clock clk [all_outputs]
+set_output_delay -max [expr {0.01 * $t_scale}] -clock clk [all_outputs]
 
 #-----------------------------
 # Reset

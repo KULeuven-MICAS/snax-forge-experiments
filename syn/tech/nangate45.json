@@ -1,0 +1,13 @@
+{
+  "name": "nangate45",
+  "lib_env": "SYN_LIB_NANGATE45",
+  "lib_default": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db",
+  "lib_name": "NangateOpenCellLibrary",
+  "units": {"time": "1ns", "cap": "1ff"},
+  "drive_cell": "INV_X4",
+  "out_load_ff": 25.0,
+  "max_transition_ns": 0.25,
+  "wire_load": "off",
+  "fixes": [],
+  "notes": "Nangate 45 nm Open Cell Library, typical corner: 1.10 V, 25 C. out_load_ff is four INV_X4 inputs (4 x 6.258 fF). The library has wire-load models (default 5K_hvratio_1_1); wire_load off keeps them out."
+}

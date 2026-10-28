@@ -1,0 +1,5 @@
+Design rules on vecadd, in library units (time 1ps, cap 1ff)
+max_transition: 250.000000
+max_fanout: 32.000000
+outputs: 518
+output max pin load rise/fall 13.20/13.20: 518 ports

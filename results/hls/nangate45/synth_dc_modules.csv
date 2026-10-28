@@ -1,0 +1,2 @@
+point,tech,clock_ns,path,design,area_um2,comb_um2,seq_um2,bbox_um2,dyn_power_uw,leak_power_uw
+done/vecadd/opt_w8,nangate45,10,vecadd,vecadd,6057.0859,3425.2820,2631.8039,0.0000,374.291,110

@@ -1,0 +1,14 @@
+ 
+****************************************
+Report : constraint
+        -all_violators
+        -verbose
+        -max_delay
+Design : vecadd
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 18:51:42 2026
+****************************************
+
+This design has no violated constraints.
+
+1
