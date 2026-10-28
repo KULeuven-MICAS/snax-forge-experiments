@@ -88,10 +88,12 @@ Every `run` keeps `results/hls/<tech>/` in step, and that is what is committed:
 results/hls/<tech>/synth_dc.csv            a copy of the summary
 results/hls/<tech>/synth_dc_modules.csv    one row per hierarchical cell
 results/hls/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>]/
-                                           every reports/*.rpt, lib_info.txt and tech.json;
-                                           no netlists or sdf; a file over 1 MB is left out
-                                           and named in skipped.txt
+                                           area.rpt, area_hierarchy.rpt, reference.rpt, power.rpt,
+                                           power_hierarchy.rpt, qor.rpt, tech.json, lib_info.txt;
+                                           a file over 1 MB is left out and named in skipped.txt
 ```
+
+Only those eight files are committed per run (`KEPT_REPORTS` at the top of `syn.py`): they are what the area and energy model reads (area and power in total, per level of hierarchy and per cell type in `reference.rpt`), the QoR summary, and what the run ran on (`tech.json`, `lib_info.txt`). Everything else stays in the run folder: `timing.rpt` (the largest, about 30 kB a point), `constraint_setup.rpt`, `clock.rpt`, `port.rpt`, `design_rules.rpt`, `power_verbose_hierarchy.rpt`, the logs, the netlist and the sdf. Those check a run (the clock, the loads, the paths) rather than feed the model, and a rerun rebuilds them.
 
 `port.rpt` covers a sample of ports (clock, reset, the first and last data input and output): the full report runs to hundreds of kB on the wide AXI-stream tops. `design_rules.rpt` holds the design's max transition and max fanout in library units and a tally of every output's max pin load.
 

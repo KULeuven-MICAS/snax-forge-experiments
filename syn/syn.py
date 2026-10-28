@@ -29,7 +29,7 @@ values, the .db's md5 and what DC read from the library). Every run also writes
 one row into syn/runs/hls/<tech>/summary.csv. git ignores syn/runs/ entirely;
 results/hls/<tech>/ keeps what is committed: synth_dc.csv (a copy of the
 summary), synth_dc_modules.csv (one row per hierarchical cell) and reports/
-(every run's *.rpt, tech.json and lib_info.txt; no netlists).
+(KEPT_REPORTS of every run: area, power, reference, qor, tech.json, lib_info.txt).
 
 A point whose filelist.f has '# ram:' lines holds a memory Vitis built (e.g.
 DaCe's dot buffer). Neither library has RAM cells, and DC would build it from
@@ -74,6 +74,11 @@ RESULTS = ROOT / "results" / "hls"
 SCRIPT = SYN / "scripts" / "dc_syn.tcl"
 DEFAULT_CLOCK = "10"
 MAX_REPORT_BYTES = 1 << 20  # reports copied to results/ above this size are skipped
+# What results/hls/<tech>/reports/ keeps of a run: what the area and energy model reads (area and
+# power, per level of hierarchy and per cell type), the QoR, and what the run ran on. The rest
+# (timing, constraints, ports, clocks, verbose power) stays in syn/runs/.
+KEPT_REPORTS = ("area.rpt", "area_hierarchy.rpt", "reference.rpt", "power.rpt", "power_hierarchy.rpt",
+                "qor.rpt", "tech.json", "lib_info.txt")
 
 COLUMNS = ["point", "top", "tech", "clock_ns", "status", "errors", "area_um2", "comb_area_um2", "seq_area_um2",
            "buf_inv_area_um2", "cells", "seq_cells", "crit_path_ns", "slack_ns", "fmax_mhz", "maxcap_nets",
@@ -339,12 +344,12 @@ def read_modules(tech: dict, point: str, clock: str) -> list[dict]:
 
 
 def copy_reports(tech: str, point: str, clock: str) -> list[str]:
-    """Every reports/*.rpt, lib_info.txt and tech.json into results/; returns what was skipped."""
+    """KEPT_REPORTS into results/; returns what was skipped."""
     rdir = run_dir(tech, point, clock)
     dest = RESULTS / tech / "reports" / point_tag(point, clock)
     if dest.exists():
         shutil.rmtree(dest)
-    files = sorted((rdir / "reports").glob("*.rpt")) + [rdir / "reports" / "lib_info.txt", rdir / "tech.json"]
+    files = [rdir / name if name == "tech.json" else rdir / "reports" / name for name in KEPT_REPORTS]
     skipped = []
     for f in files:
         if not f.is_file():
@@ -355,6 +360,7 @@ def copy_reports(tech: str, point: str, clock: str) -> list[str]:
         dest.mkdir(parents=True, exist_ok=True)
         shutil.copy2(f, dest / f.name)
     if skipped:
+        dest.mkdir(parents=True, exist_ok=True)
         (dest / "skipped.txt").write_text(
             f"Over {MAX_REPORT_BYTES} B, kept only in {rdir.relative_to(ROOT)}/:\n" + "\n".join(skipped) + "\n")
     return skipped
