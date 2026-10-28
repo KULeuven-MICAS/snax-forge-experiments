@@ -1,0 +1,58 @@
+{
+  "tech_file": "syn/tech/nangate15.json",
+  "tech": {
+    "name": "nangate15",
+    "lib_env": "SYN_LIB_NANGATE15",
+    "lib_default": "../RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db",
+    "lib_name": "NanGate_15nm_OCL",
+    "units": {
+      "time": "1ps",
+      "cap": "1ff"
+    },
+    "drive_cell": "INV_X4",
+    "out_load_ff": 13.2,
+    "max_transition_ns": 0.25,
+    "wire_load": "none",
+    "fixes": [],
+    "notes": "Nangate 15 nm Open Cell Library, typical corner: 0.80 V, 25 C. out_load_ff is four INV_X4 inputs (4 x 3.301 fF). The library has no wire-load models. Its flops (DFFRNQ_X1, DFFSNQ_X1) all have an async reset or set, so Vitis's synchronous reset costs a flop with an unused reset pin plus reset logic."
+  },
+  "resolved": {
+    "lib_db": "/users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db",
+    "lib_from": "lib_default",
+    "t_scale": "1000",
+    "c_scale": "1",
+    "lib_md5": "86fdb9ac95951e07419ef62d7f3323bb",
+    "clock_ns": "10",
+    "cores": 16,
+    "dc_env": {
+      "SYN_FILELIST": "/users/micas/rantonio/no_backup/kul_main/hls-exercises/rtl/untiered/relu/unopt_w8/filelist.f",
+      "SYN_LIB_DB": "/users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db",
+      "SYN_LIB_NAME": "NanGate_15nm_OCL",
+      "SYN_TIME_UNIT": "1ps",
+      "SYN_CAP_UNIT": "1ff",
+      "SYN_T_SCALE": "1000",
+      "SYN_C_SCALE": "1",
+      "SYN_DRIVE_CELL": "INV_X4",
+      "SYN_OUT_LOAD_FF": "13.2",
+      "SYN_MAX_TRANS_NS": "0.25",
+      "SYN_WIRE_LOAD": "none",
+      "SYN_CLOCK_NS": "10",
+      "SYN_CORES": "16"
+    },
+    "dc_returncode": 0
+  },
+  "dc_lib_info": {
+    "library": "NanGate_15nm_OCL",
+    "db": "/users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db",
+    "time_unit": "1ps",
+    "cap_unit": "1ff",
+    "operating_condition": "typical",
+    "process": "1.00",
+    "voltage_v": "0.80",
+    "temperature_c": "25.00",
+    "default_wire_load": "",
+    "dc_version": "Y-2026.03-SP2",
+    "power_default_toggle_rate": "0.1",
+    "power_default_static_probability": "0.5"
+  }
+}

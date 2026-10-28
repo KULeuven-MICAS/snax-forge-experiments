@@ -1,0 +1,86 @@
+Information: Updating design information... (UID-85)
+Warning: Design 'axpy' contains 2 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+ 
+****************************************
+Report : qor
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:30:37 2026
+****************************************
+
+
+  Timing Path Group 'clk'
+  -----------------------------------
+  Levels of Logic:           82.00000
+  Critical Path Length:     751.28748
+  Critical Path Slack:     9129.42188
+  Critical Path Clk Period:
+                          10000.00000
+  Total Negative Slack:       0.00000
+  No. of Violating Paths:     0.00000
+  Worst Hold Violation:      -9.28748
+  Total Hold Violation:  -12609.68555
+  No. of Hold Violations:  1969.00000
+  -----------------------------------
+
+
+  Cell Count
+  -----------------------------------
+  Hierarchical Cell Count:          1
+  Hierarchical Port Count:        192
+  Leaf Cell Count:              12131
+  Buf/Inv Cell Count:            2679
+  Buf Cell Count:                 168
+  Inv Cell Count:                2511
+  CT Buf/Inv Cell Count:            0
+  Combinational Cell Count:     10160
+  Sequential Cell Count:         1971
+  Macro Count:                      0
+  -----------------------------------
+
+
+  Area
+  -----------------------------------
+  Combinational Area:      3642.85139
+  Noncombinational Area:   2518.84330
+  Buf/Inv Area:             411.54971
+  Total Buffer Area:         41.28768
+  Total Inverter Area:      370.26203
+  Macro/Black Box Area:       0.00000
+  Net Area:                   0.00000
+  -----------------------------------
+  Cell Area:               6161.69469
+  Design Area:             6161.69469
+
+
+  Design Rules
+  -----------------------------------
+  Total Number of Nets:         14281
+  Nets With Violations:             0
+  Max Trans Violations:             0
+  Max Cap Violations:               0
+  -----------------------------------
+
+
+  Hostname: micas-lapserv1.esat.kuleuven.be
+
+  Compile CPU Statistics
+  -----------------------------------------
+  Resource Sharing:                13.59338
+  Logic Optimization:              18.01025
+  Mapping Optimization:            54.95734
+  -----------------------------------------
+  Overall Compile Time:            153.70891
+  Overall Compile Wall Clock Time: 56.00857
+
+  --------------------------------------------------------------------
+
+  Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
+
+
+  Design (Hold)  WNS: 9.28748  TNS: 12609.68555  Number of Violating Paths: 1969
+
+  --------------------------------------------------------------------
+
+
+1

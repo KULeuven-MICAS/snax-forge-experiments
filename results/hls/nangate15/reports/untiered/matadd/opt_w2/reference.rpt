@@ -1,0 +1,41 @@
+ 
+****************************************
+Report : reference
+Design : matadd
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:35:51 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+AND4_X1            NanGate_15nm_OCL     0.442368       6     2.654208
+AOI21_X1           NanGate_15nm_OCL     0.294912      20     5.898240
+AOI22_X1           NanGate_15nm_OCL     0.344064     174    59.867136
+BUF_X1             NanGate_15nm_OCL     0.245760       5     1.228800
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952     198   253.034487 n
+FA_X1              NanGate_15nm_OCL     1.179648     122   143.917061 r
+INV_X1             NanGate_15nm_OCL     0.147456     198    29.196289
+NAND2_X1           NanGate_15nm_OCL     0.196608      21     4.128768
+NAND4_X1           NanGate_15nm_OCL     0.344064      12     4.128768
+NOR2_X1            NanGate_15nm_OCL     0.196608      45     8.847360
+NOR3_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+NOR4_X1            NanGate_15nm_OCL     0.344064       9     3.096576
+OAI21_X1           NanGate_15nm_OCL     0.294912      27     7.962624
+OR2_X1             NanGate_15nm_OCL     0.294912       8     2.359296
+XNOR2_X1           NanGate_15nm_OCL     0.442368      43    19.021824
+XOR2_X1            NanGate_15nm_OCL     0.442368      28    12.386304
+-----------------------------------------------------------------------------
+Total 17 references                                   558.317566
+1

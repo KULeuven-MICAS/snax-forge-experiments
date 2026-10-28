@@ -1,0 +1,38 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : matadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:34:22 2026
+****************************************
+
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+
+Operating Conditions: typical   Library: NanGate_15nm_OCL
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 0.8  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ps
+    Dynamic Power Units = 1mW    (derived from V,C,T units)
+    Leakage Power Units = 1pW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+matadd_dace                            7.41e-02    0.180 6.01e+07    0.314 100.0
+  grp_module_matadd_0_0_fu_40 (matadd_dace_module_matadd_0_0) 7.31e-02    0.168 5.58e+07    0.297  94.3
+    grp_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2_fu_32 (matadd_dace_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2) 7.23e-02    0.161 5.31e+07    0.286  91.0
+      flow_control_loop_pipe_sequential_init_U (matadd_dace_flow_control_loop_pipe_sequential_init) 2.38e-05 3.86e-04 1.49e+05 5.59e-04   0.2
+1

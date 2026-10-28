@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : reference
+Design : vsum
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:09:39 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       6     1.769472
+AOI21_X1           NanGate_15nm_OCL     0.294912     102    30.081025
+AOI22_X1           NanGate_15nm_OCL     0.344064     670   230.522878
+BUF_X1             NanGate_15nm_OCL     0.245760      40     9.830400
+BUF_X2             NanGate_15nm_OCL     0.245760       5     1.228800
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952     912  1165.492184 n
+FA_X1              NanGate_15nm_OCL     1.179648     123   145.096709 r
+INV_X1             NanGate_15nm_OCL     0.147456    1120   165.150726
+NAND2_X1           NanGate_15nm_OCL     0.196608      44     8.650752
+NAND3_X1           NanGate_15nm_OCL     0.294912       4     1.179648
+NAND4_X1           NanGate_15nm_OCL     0.344064      22     7.569408
+NOR2_X1            NanGate_15nm_OCL     0.196608     108    21.233665
+NOR4_X1            NanGate_15nm_OCL     0.344064      12     4.128768
+OAI21_X1           NanGate_15nm_OCL     0.294912      45    13.271040
+OAI22_X1           NanGate_15nm_OCL     0.344064     494   169.967615
+OR2_X1             NanGate_15nm_OCL     0.294912       2     0.589824
+OR4_X1             NanGate_15nm_OCL     0.442368      64    28.311552
+XNOR2_X1           NanGate_15nm_OCL     0.442368      68    30.081024
+XOR2_X1            NanGate_15nm_OCL     0.442368      34    15.040512
+-----------------------------------------------------------------------------
+Total 19 references                                  2049.196002
+1

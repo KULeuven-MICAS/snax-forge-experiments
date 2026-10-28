@@ -1,0 +1,37 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : vecadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:20:19 2026
+****************************************
+
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+
+Operating Conditions: typical   Library: NanGate_15nm_OCL
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 0.8  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ps
+    Dynamic Power Units = 1mW    (derived from V,C,T units)
+    Leakage Power Units = 1pW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+vecadd_dace                            2.02e-02 5.94e-02 2.16e+07    0.101 100.0
+  grp_vecadd_dace_Pipeline_VITIS_LOOP_19_1_fu_44 (vecadd_dace_vecadd_dace_Pipeline_VITIS_LOOP_19_1) 1.85e-02 4.53e-02 1.63e+07 8.02e-02  79.2
+    flow_control_loop_pipe_sequential_init_U (vecadd_dace_flow_control_loop_pipe_sequential_init) 2.69e-05 3.89e-04 1.55e+05 5.72e-04   0.6
+1

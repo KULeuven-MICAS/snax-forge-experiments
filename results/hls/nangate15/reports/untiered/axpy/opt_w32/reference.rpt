@@ -1,0 +1,75 @@
+ 
+****************************************
+Report : reference
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:25:17 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+AND4_X1            NanGate_15nm_OCL     0.442368       6     2.654208
+AOI21_X1           NanGate_15nm_OCL     0.294912      52    15.335425
+AOI22_X1           NanGate_15nm_OCL     0.344064    8237  2834.055146
+BUF_X1             NanGate_15nm_OCL     0.245760     532   130.744317
+BUF_X2             NanGate_15nm_OCL     0.245760       2     0.491520
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952    8328 10642.783888 n
+FA_X1              NanGate_15nm_OCL     1.179648    1984  2340.421715 r
+INV_X1             NanGate_15nm_OCL     0.147456    8744  1289.355310
+NAND2_X1           NanGate_15nm_OCL     0.196608      26     5.111808
+NAND4_X1           NanGate_15nm_OCL     0.344064      12     4.128768
+NOR2_X1            NanGate_15nm_OCL     0.196608      74    14.548993
+NOR3_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+NOR4_X1            NanGate_15nm_OCL     0.344064       9     3.096576
+OAI21_X1           NanGate_15nm_OCL     0.294912      22     6.488064
+OAI22_X1           NanGate_15nm_OCL     0.344064     130    44.728320
+OR2_X1             NanGate_15nm_OCL     0.294912       8     2.359296
+XNOR2_X1           NanGate_15nm_OCL     0.442368      37    16.367616
+XOR2_X1            NanGate_15nm_OCL     0.442368      90    39.813120
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0  2212.233262       1  2212.233262 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1  2213.068846       1  2213.068846 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2  2213.953582       1  2213.953582 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3  2213.953582       1  2213.953582 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4  2214.494254       1  2214.494254 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5  2214.346798       1  2214.346798 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6  2214.346798       1  2214.346798 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7  2213.953582       1  2213.953582 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8  2213.216302       1  2213.216302 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9  2212.134958       1  2212.134958 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10  2212.085806       1  2212.085806 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11  2212.675630       1  2212.675630 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12  2211.741742       1  2211.741742 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13  2213.658670       1  2213.658670 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14  2214.346798       1  2214.346798 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15  2214.199342       1  2214.199342 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_16  2214.740014       1  2214.740014 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_17  2214.592558       1  2214.592558 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_18  2214.101038       1  2214.101038 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_19  2213.806126       1  2213.806126 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_20  2213.117998       1  2213.117998 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_21  2213.511214       1  2213.511214 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_22  2212.970542       1  2212.970542 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_23  2212.724782       1  2212.724782 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_24  2214.051886       1  2214.051886 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_25  2214.199342       1  2214.199342 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_26  2214.199342       1  2214.199342 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_27  2214.592558       1  2214.592558 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_28  2213.707822       1  2213.707822 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_29  2213.707822       1  2213.707822 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_30  2213.412910       1  2213.412910 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_31  2211.692590       1  2211.692590 h
+-----------------------------------------------------------------------------
+Total 51 references                                 88226.612411
+1

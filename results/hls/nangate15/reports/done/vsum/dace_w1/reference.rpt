@@ -1,0 +1,36 @@
+ 
+****************************************
+Report : reference
+Design : vsum_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:02:04 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+AOI21_X1           NanGate_15nm_OCL     0.294912       1     0.294912
+AOI22_X1           NanGate_15nm_OCL     0.344064      63    21.676032
+BUF_X2             NanGate_15nm_OCL     0.245760       1     0.245760
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952      68    86.900733 n
+INV_X1             NanGate_15nm_OCL     0.147456      70    10.321920
+NAND2_X1           NanGate_15nm_OCL     0.196608       6     1.179648
+NOR2_X1            NanGate_15nm_OCL     0.196608       6     1.179648
+NOR3_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+OAI21_X1           NanGate_15nm_OCL     0.294912      35    10.321920
+OR2_X1             NanGate_15nm_OCL     0.294912       1     0.294912
+vsum_dace_vsum_dace_Pipeline_VITIS_LOOP_37_1   404.520957       1   404.520957 h, n
+-----------------------------------------------------------------------------
+Total 12 references                                   537.526266
+1

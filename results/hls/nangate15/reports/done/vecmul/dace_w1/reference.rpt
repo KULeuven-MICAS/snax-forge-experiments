@@ -1,0 +1,41 @@
+ 
+****************************************
+Report : reference
+Design : vecmul_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:32:29 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+AOI21_X1           NanGate_15nm_OCL     0.294912      20     5.898240
+AOI22_X1           NanGate_15nm_OCL     0.344064     161    55.394304
+BUF_X1             NanGate_15nm_OCL     0.245760       5     1.228800
+BUF_X2             NanGate_15nm_OCL     0.245760       1     0.245760
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952     227   290.095094 n
+INV_X1             NanGate_15nm_OCL     0.147456     218    32.145409
+NAND2_X1           NanGate_15nm_OCL     0.196608      22     4.325376
+NAND4_X1           NanGate_15nm_OCL     0.344064       6     2.064384
+NOR2_X1            NanGate_15nm_OCL     0.196608      41     8.060928
+NOR4_X1            NanGate_15nm_OCL     0.344064       4     1.376256
+OAI21_X1           NanGate_15nm_OCL     0.294912      52    15.335425
+OAI22_X1           NanGate_15nm_OCL     0.344064      31    10.665984
+OR2_X1             NanGate_15nm_OCL     0.294912      15     4.423680
+XNOR2_X1           NanGate_15nm_OCL     0.442368      17     7.520256
+XOR2_X1            NanGate_15nm_OCL     0.442368      14     6.193152
+vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64  2203.238446       1  2203.238446 h
+-----------------------------------------------------------------------------
+Total 17 references                                  2648.506406
+1

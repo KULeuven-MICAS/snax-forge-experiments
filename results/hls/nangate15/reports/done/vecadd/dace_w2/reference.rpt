@@ -1,0 +1,39 @@
+ 
+****************************************
+Report : reference
+Design : vecadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:20:19 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       3     0.884736
+AOI21_X1           NanGate_15nm_OCL     0.294912      14     4.128768
+AOI22_X1           NanGate_15nm_OCL     0.344064      89    30.621696
+BUF_X1             NanGate_15nm_OCL     0.245760       1     0.245760
+BUF_X2             NanGate_15nm_OCL     0.245760       1     0.245760
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952      65    83.066877 n
+INV_X1             NanGate_15nm_OCL     0.147456      81    11.943936
+NAND2_X1           NanGate_15nm_OCL     0.196608      19     3.735552
+NOR2_X1            NanGate_15nm_OCL     0.196608      20     3.932160
+NOR3_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+NOR4_X1            NanGate_15nm_OCL     0.344064       2     0.688128
+OAI21_X1           NanGate_15nm_OCL     0.294912      16     4.718592
+OAI22_X1           NanGate_15nm_OCL     0.344064       1     0.344064
+XNOR2_X1           NanGate_15nm_OCL     0.442368       1     0.442368
+vecadd_dace_vecadd_dace_Pipeline_VITIS_LOOP_19_1   489.062400       1   489.062400 h, n
+-----------------------------------------------------------------------------
+Total 15 references                                   634.355710
+1

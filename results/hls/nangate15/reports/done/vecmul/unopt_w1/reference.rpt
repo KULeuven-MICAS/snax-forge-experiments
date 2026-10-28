@@ -1,0 +1,42 @@
+ 
+****************************************
+Report : reference
+Design : vecmul
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:55:14 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND4_X1            NanGate_15nm_OCL     0.442368       6     2.654208
+AOI21_X1           NanGate_15nm_OCL     0.294912      20     5.898240
+AOI22_X1           NanGate_15nm_OCL     0.344064      42    14.450688
+BUF_X1             NanGate_15nm_OCL     0.245760       1     0.245760
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952      68    86.900733 n
+INV_X1             NanGate_15nm_OCL     0.147456      60     8.847360
+NAND2_X1           NanGate_15nm_OCL     0.196608      23     4.521984
+NAND3_X1           NanGate_15nm_OCL     0.294912       1     0.294912
+NAND4_X1           NanGate_15nm_OCL     0.344064       7     2.408448
+NOR2_X1            NanGate_15nm_OCL     0.196608      36     7.077888
+NOR3_X1            NanGate_15nm_OCL     0.294912       2     0.589824
+NOR4_X1            NanGate_15nm_OCL     0.344064      14     4.816896
+OAI21_X1           NanGate_15nm_OCL     0.294912      17     5.013504
+OAI22_X1           NanGate_15nm_OCL     0.344064       2     0.688128
+OR2_X1             NanGate_15nm_OCL     0.294912       8     2.359296
+XNOR2_X1           NanGate_15nm_OCL     0.442368      12     5.308416
+XOR2_X1            NanGate_15nm_OCL     0.442368      50    22.118400
+vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64  2212.577326       1  2212.577326 h
+-----------------------------------------------------------------------------
+Total 18 references                                  2386.772012
+1

@@ -1,0 +1,37 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : vsum_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:02:04 2026
+****************************************
+
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+
+Operating Conditions: typical   Library: NanGate_15nm_OCL
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 0.8  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ps
+    Dynamic Power Units = 1mW    (derived from V,C,T units)
+    Leakage Power Units = 1pW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+vsum_dace                              5.33e-03 4.96e-02 1.91e+07 7.41e-02 100.0
+  grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53 (vsum_dace_vsum_dace_Pipeline_VITIS_LOOP_37_1) 4.24e-03 3.53e-02 1.43e+07 5.39e-02  72.8
+    flow_control_loop_pipe_sequential_init_U (vsum_dace_flow_control_loop_pipe_sequential_init) 3.76e-05 3.92e-04 1.56e+05 5.86e-04   0.8
+1

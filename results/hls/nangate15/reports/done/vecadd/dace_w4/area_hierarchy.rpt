@@ -1,0 +1,46 @@
+ 
+****************************************
+Report : area
+Design : vecadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:21:30 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                         2447
+Number of nets:                          4204
+Number of cells:                         1791
+Number of combinational cells:           1400
+Number of sequential cells:               384
+Number of macros/black boxes:               0
+Number of buf/inv:                        472
+Number of references:                      11
+
+Combinational area:                569.769998
+Buf/Inv area:                       70.287362
+Noncombinational area:             490.733551
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  1060.503549
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  ------------------------------------------------------
+vecadd_dace                       1060.5035    100.0   42.2707    79.2330  0.0000  vecadd_dace
+grp_module_vecadd_0_0_fu_40        938.9998     88.5   33.0793    42.1724  0.0000  vecadd_dace_module_vecadd_0_0
+grp_module_vecadd_0_0_fu_40/grp_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1_fu_32  863.7481    81.4 492.9454  366.7722 0.0000 vecadd_dace_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1
+grp_module_vecadd_0_0_fu_40/grp_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/flow_control_loop_pipe_sequential_init_U    4.0305     0.4   1.4746    2.5559 0.0000 vecadd_dace_flow_control_loop_pipe_sequential_init
+--------------------------------  ---------  -------  --------  ---------  ------  ------------------------------------------------------
+Total                                                 569.7700   490.7336  0.0000
+
+1

@@ -1,0 +1,51 @@
+ 
+****************************************
+Report : area
+Design : vecmul
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:53:44 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                         3117
+Number of nets:                         51914
+Number of cells:                        41643
+Number of combinational cells:          40540
+Number of sequential cells:              1094
+Number of macros/black boxes:               0
+Number of buf/inv:                       4593
+Number of references:                      24
+
+Combinational area:              18233.672053
+Buf/Inv area:                      734.969873
+Noncombinational area:            1398.079440
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 19631.751493
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  ---------------------------------------------------------------------------------
+vecmul                            19631.7515    100.0    606.9781  1398.0794  0.0000  vecmul
+mul_64s_64s_64_1_1_U1              2203.3368     11.2   2203.3368     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7
+mul_64s_64s_64_1_1_U2              2203.3368     11.2   2203.3368     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6
+mul_64s_64s_64_1_1_U3              2203.3368     11.2   2203.3368     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5
+mul_64s_64s_64_1_1_U4              2203.3368     11.2   2203.3368     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4
+mul_64s_64s_64_1_1_U5              2203.3368     11.2   2203.3368     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+mul_64s_64s_64_1_1_U6              2203.3368     11.2   2203.3368     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+mul_64s_64s_64_1_1_U7              2203.3368     11.2   2203.3368     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U8              2203.3368     11.2   2203.3368     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+--------------------------------  ----------  -------  ----------  ---------  ------  ---------------------------------------------------------------------------------
+Total                                                  18233.6721  1398.0794  0.0000
+
+1

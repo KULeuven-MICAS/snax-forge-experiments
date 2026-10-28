@@ -1,0 +1,35 @@
+ 
+****************************************
+Report : reference
+Design : matadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:33:08 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       2     0.589824
+AOI21_X1           NanGate_15nm_OCL     0.294912       1     0.294912
+AOI22_X1           NanGate_15nm_OCL     0.344064      60    20.643840
+BUF_X2             NanGate_15nm_OCL     0.245760       1     0.245760
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952      62    79.233021 n
+INV_X1             NanGate_15nm_OCL     0.147456      65     9.584640
+NAND2_X1           NanGate_15nm_OCL     0.196608       4     0.786432
+NAND3_X1           NanGate_15nm_OCL     0.294912       1     0.294912
+NOR2_X1            NanGate_15nm_OCL     0.196608       5     0.983040
+OAI21_X1           NanGate_15nm_OCL     0.294912      30     8.847360
+matadd_dace_module_matadd_0_0   938.999807       1    938.999807  h, n
+-----------------------------------------------------------------------------
+Total 11 references                                  1060.503549
+1

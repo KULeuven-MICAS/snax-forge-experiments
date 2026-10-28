@@ -1,0 +1,59 @@
+ 
+****************************************
+Report : area
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:04:54 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                         5262
+Number of nets:                        110443
+Number of cells:                        88922
+Number of combinational cells:          85245
+Number of sequential cells:              3660
+Number of macros/black boxes:               0
+Number of buf/inv:                      10824
+Number of references:                      36
+
+Combinational area:              38414.451479
+Buf/Inv area:                     1716.682794
+Noncombinational area:            4677.304158
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 43091.755637
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  -------------------------------------------------------------------------------
+dot                               43091.7556    100.0   3161.0635  4677.3042  0.0000  dot
+mul_64s_64s_64_1_1_U1              2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15
+mul_64s_64s_64_1_1_U10             2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6
+mul_64s_64s_64_1_1_U11             2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5
+mul_64s_64s_64_1_1_U12             2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4
+mul_64s_64s_64_1_1_U13             2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+mul_64s_64s_64_1_1_U14             2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+mul_64s_64s_64_1_1_U15             2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U16             2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+mul_64s_64s_64_1_1_U2              2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14
+mul_64s_64s_64_1_1_U3              2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13
+mul_64s_64s_64_1_1_U4              2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12
+mul_64s_64s_64_1_1_U5              2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11
+mul_64s_64s_64_1_1_U6              2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10
+mul_64s_64s_64_1_1_U7              2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9
+mul_64s_64s_64_1_1_U8              2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8
+mul_64s_64s_64_1_1_U9              2203.3368      5.1   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7
+--------------------------------  ----------  -------  ----------  ---------  ------  -------------------------------------------------------------------------------
+Total                                                  38414.4515  4677.3042  0.0000
+
+1

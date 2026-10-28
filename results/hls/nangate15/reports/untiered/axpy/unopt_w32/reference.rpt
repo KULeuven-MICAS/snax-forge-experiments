@@ -1,0 +1,46 @@
+ 
+****************************************
+Report : reference
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:29:48 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912     128    37.748737
+AND3_X1            NanGate_15nm_OCL     0.393216       2     0.786432
+AOI21_X1           NanGate_15nm_OCL     0.294912       6     1.769472
+AOI22_X1           NanGate_15nm_OCL     0.344064    4028  1385.889781
+BUF_X1             NanGate_15nm_OCL     0.245760     425   104.447997
+BUF_X2             NanGate_15nm_OCL     0.245760       7     1.720320
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952    6585  8415.313629 n
+FA_X1              NanGate_15nm_OCL     1.179648      61    71.958531 r
+INV_X1             NanGate_15nm_OCL     0.147456    6720   990.904355
+NAND2_X1           NanGate_15nm_OCL     0.196608     688   135.266309
+NAND3_X1           NanGate_15nm_OCL     0.294912       9     2.654208
+NAND4_X1           NanGate_15nm_OCL     0.344064      11     3.784704
+NOR2_X1            NanGate_15nm_OCL     0.196608     433    85.131267
+NOR3_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+NOR4_X1            NanGate_15nm_OCL     0.344064     521   179.257343
+OAI21_X1           NanGate_15nm_OCL     0.294912     581   171.343878
+OAI22_X1           NanGate_15nm_OCL     0.344064    4184  1439.563765
+OR2_X1             NanGate_15nm_OCL     0.294912       2     0.589824
+OR4_X1             NanGate_15nm_OCL     0.442368     128    56.623104
+XNOR2_X1           NanGate_15nm_OCL     0.442368      21     9.289728
+XOR2_X1            NanGate_15nm_OCL     0.442368      14     6.193152
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64  2202.599470       1  2202.599470 h
+-----------------------------------------------------------------------------
+Total 22 references                                 15303.130918
+1

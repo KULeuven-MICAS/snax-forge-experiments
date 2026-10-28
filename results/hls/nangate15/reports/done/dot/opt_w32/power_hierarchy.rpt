@@ -1,0 +1,67 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:13:57 2026
+****************************************
+
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+
+Operating Conditions: typical   Library: NanGate_15nm_OCL
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 0.8  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ps
+    Dynamic Power Units = 1mW    (derived from V,C,T units)
+    Leakage Power Units = 1pW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+dot                                       0.174    1.426 2.85e+09    4.446 100.0
+  mul_64s_64s_64_1_1_U32 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 4.20e-03 3.80e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U31 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 4.20e-03 3.81e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U30 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 4.17e-03 3.78e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U29 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 4.18e-03 3.78e-03 7.29e+07 8.08e-02   1.8
+  mul_64s_64s_64_1_1_U28 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4) 4.17e-03 3.78e-03 7.29e+07 8.08e-02   1.8
+  mul_64s_64s_64_1_1_U27 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5) 4.21e-03 3.80e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U26 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6) 4.19e-03 3.80e-03 7.29e+07 8.08e-02   1.8
+  mul_64s_64s_64_1_1_U25 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7) 4.20e-03 3.79e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U24 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8) 4.19e-03 3.79e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U23 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9) 4.21e-03 3.80e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U22 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10) 4.17e-03 3.78e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U21 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11) 4.17e-03 3.78e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U20 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12) 4.16e-03 3.77e-03 7.29e+07 8.08e-02   1.8
+  mul_64s_64s_64_1_1_U19 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13) 4.15e-03 3.76e-03 7.29e+07 8.08e-02   1.8
+  mul_64s_64s_64_1_1_U18 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14) 4.19e-03 3.79e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U17 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15) 4.23e-03 3.82e-03 7.29e+07 8.10e-02   1.8
+  mul_64s_64s_64_1_1_U16 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_16) 4.20e-03 3.80e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U15 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_17) 4.15e-03 3.76e-03 7.29e+07 8.08e-02   1.8
+  mul_64s_64s_64_1_1_U14 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_18) 4.18e-03 3.78e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U13 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_19) 4.19e-03 3.79e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U12 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_20) 4.18e-03 3.79e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U11 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_21) 4.19e-03 3.80e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U10 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_22) 4.19e-03 3.80e-03 7.29e+07 8.08e-02   1.8
+  mul_64s_64s_64_1_1_U9 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_23) 4.19e-03 3.80e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U8 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_24) 4.20e-03 3.80e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U7 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_25) 4.18e-03 3.79e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U6 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_26) 4.15e-03 3.77e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U5 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_27) 4.19e-03 3.80e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U4 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_28) 4.19e-03 3.80e-03 7.29e+07 8.08e-02   1.8
+  mul_64s_64s_64_1_1_U3 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_29) 4.21e-03 3.82e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U2 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_30) 4.20e-03 3.80e-03 7.29e+07 8.09e-02   1.8
+  mul_64s_64s_64_1_1_U1 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_31) 4.15e-03 3.76e-03 7.29e+07 8.08e-02   1.8
+1

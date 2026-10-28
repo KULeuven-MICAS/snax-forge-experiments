@@ -1,0 +1,45 @@
+ 
+****************************************
+Report : area
+Design : matadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:31:52 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                          868
+Number of nets:                          2022
+Number of cells:                         1175
+Number of combinational cells:            943
+Number of sequential cells:               227
+Number of macros/black boxes:               0
+Number of buf/inv:                        305
+Number of references:                      15
+
+Combinational area:                344.260616
+Buf/Inv area:                       45.465602
+Noncombinational area:             290.095094
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                   634.355710
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  --------------------------------------------------
+matadd_dace                        634.3557    100.0   62.2264    83.0669  0.0000  matadd_dace
+grp_matadd_dace_Pipeline_VITIS_LOOP_20_2_fu_44  489.0624    77.1 280.4122  204.4723 0.0000 matadd_dace_matadd_dace_Pipeline_VITIS_LOOP_20_2
+grp_matadd_dace_Pipeline_VITIS_LOOP_20_2_fu_44/flow_control_loop_pipe_sequential_init_U    4.1779     0.7   1.6220    2.5559 0.0000 matadd_dace_flow_control_loop_pipe_sequential_init
+--------------------------------  ---------  -------  --------  ---------  ------  --------------------------------------------------
+Total                                                 344.2606   290.0951  0.0000
+
+1

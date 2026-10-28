@@ -1,0 +1,45 @@
+ 
+****************************************
+Report : area
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:02:22 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                          782
+Number of nets:                         14727
+Number of cells:                        11973
+Number of combinational cells:          11384
+Number of sequential cells:               586
+Number of macros/black boxes:               0
+Number of buf/inv:                       1643
+Number of references:                      19
+
+Combinational area:               4992.319589
+Buf/Inv area:                      257.802247
+Noncombinational area:             748.879846
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  5741.199435
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  ------------------------------------------------------------------------------
+dot                               5741.1994    100.0   585.6461   748.8798  0.0000  dot
+mul_64s_64s_64_1_1_U1             2203.3368     38.4  2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U2             2203.3368     38.4  2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+--------------------------------  ---------  -------  ---------  ---------  ------  ------------------------------------------------------------------------------
+Total                                                 4992.3196   748.8798  0.0000
+
+1

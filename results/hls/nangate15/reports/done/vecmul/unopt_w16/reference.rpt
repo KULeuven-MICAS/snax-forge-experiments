@@ -1,0 +1,44 @@
+ 
+****************************************
+Report : reference
+Design : vecmul
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:57:30 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+AOI21_X1           NanGate_15nm_OCL     0.294912      19     5.603328
+AOI22_X1           NanGate_15nm_OCL     0.344064    2363   813.023226
+BUF_X1             NanGate_15nm_OCL     0.245760     209    51.363839
+BUF_X2             NanGate_15nm_OCL     0.245760       5     1.228800
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952    3380  4319.477611 n
+INV_X1             NanGate_15nm_OCL     0.147456    3378   498.106386
+NAND2_X1           NanGate_15nm_OCL     0.196608     243    47.775746
+NAND3_X1           NanGate_15nm_OCL     0.294912       9     2.654208
+NAND4_X1           NanGate_15nm_OCL     0.344064      11     3.784704
+NOR2_X1            NanGate_15nm_OCL     0.196608      37     7.274496
+NOR3_X1            NanGate_15nm_OCL     0.294912     132    38.928385
+NOR4_X1            NanGate_15nm_OCL     0.344064       9     3.096576
+OAI21_X1           NanGate_15nm_OCL     0.294912     227    66.945026
+OAI22_X1           NanGate_15nm_OCL     0.344064    2005   689.848315
+OR3_X1             NanGate_15nm_OCL     0.393216       1     0.393216
+OR4_X1             NanGate_15nm_OCL     0.442368     128    56.623104
+XNOR2_X1           NanGate_15nm_OCL     0.442368      14     6.193152
+XOR2_X1            NanGate_15nm_OCL     0.442368      19     8.404992
+vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64  2203.336750       1  2203.336750 h
+-----------------------------------------------------------------------------
+Total 20 references                                  8824.356771
+1

@@ -1,0 +1,42 @@
+ 
+****************************************
+Report : reference
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:15:41 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+AOI21_X1           NanGate_15nm_OCL     0.294912      38    11.206656
+AOI22_X1           NanGate_15nm_OCL     0.344064     475   163.430399
+BUF_X1             NanGate_15nm_OCL     0.245760      24     5.898240
+BUF_X2             NanGate_15nm_OCL     0.245760       4     0.983040
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952     781   998.080477 n
+FA_X1              NanGate_15nm_OCL     1.179648     123   145.096709 r
+INV_X1             NanGate_15nm_OCL     0.147456     858   126.517252
+NAND2_X1           NanGate_15nm_OCL     0.196608     173    34.013185
+NAND4_X1           NanGate_15nm_OCL     0.344064      22     7.569408
+NOR2_X1            NanGate_15nm_OCL     0.196608      42     8.257536
+NOR4_X1            NanGate_15nm_OCL     0.344064      12     4.128768
+OAI21_X1           NanGate_15nm_OCL     0.294912     304    89.653251
+OAI22_X1           NanGate_15nm_OCL     0.344064     234    80.510975
+OR2_X1             NanGate_15nm_OCL     0.294912       2     0.589824
+XNOR2_X1           NanGate_15nm_OCL     0.442368      69    30.523392
+XOR2_X1            NanGate_15nm_OCL     0.442368      33    14.598144
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64  2203.336750       1  2203.336750 h
+-----------------------------------------------------------------------------
+Total 18 references                                  3924.688920
+1

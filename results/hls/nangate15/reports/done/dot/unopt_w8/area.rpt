@@ -1,0 +1,30 @@
+ 
+****************************************
+Report : area
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:19:07 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                         1358
+Number of nets:                         13377
+Number of cells:                        11007
+Number of combinational cells:           9452
+Number of sequential cells:              1553
+Number of macros/black boxes:               0
+Number of buf/inv:                       2294
+Number of references:                      20
+
+Combinational area:               3538.944059
+Buf/Inv area:                      352.026634
+Noncombinational area:            1984.659387
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  5523.603446
+Total area:                 undefined
+1

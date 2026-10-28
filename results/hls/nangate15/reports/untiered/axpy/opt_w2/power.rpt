@@ -1,0 +1,56 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:11:48 2026
+****************************************
+
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+
+Operating Conditions: typical   Library: NanGate_15nm_OCL
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 0.8  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ps
+    Dynamic Power Units = 1mW    (derived from V,C,T units)
+    Leakage Power Units = 1pW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 208.267868 uW   (70%)
+  Net Switching Power  = 88.586273 uW   (30%)
+                         ---------
+Total Dynamic Power    = 296.854156 uW  (100%)
+
+Cell Leakage Power     = 197.3637 uW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network    0.122035          0.000000          0.000000          0.122035  (  24.69%)  i
+register       2.000034e-03        7.380792e-04        2.942700e+07        3.216515e-02
+                                                                                 (   6.51%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational  8.423253e-02        8.784828e-02        1.679367e+08          0.340017
+                                                                                 (  68.80%)
+--------------------------------------------------------------------------------------------------
+Total            0.208268 mW     8.858636e-02 mW     1.973636e+08 pW       0.494218 mW
+1

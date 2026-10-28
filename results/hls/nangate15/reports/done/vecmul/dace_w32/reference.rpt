@@ -1,0 +1,34 @@
+ 
+****************************************
+Report : reference
+Design : vecmul_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:44:00 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       2     0.589824
+AOI21_X1           NanGate_15nm_OCL     0.294912       1     0.294912
+AOI22_X1           NanGate_15nm_OCL     0.344064      54    18.579456
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952      56    71.565310 n
+INV_X1             NanGate_15nm_OCL     0.147456      59     8.699904
+NAND2_X1           NanGate_15nm_OCL     0.196608       4     0.786432
+NAND3_X1           NanGate_15nm_OCL     0.294912       1     0.294912
+NOR2_X1            NanGate_15nm_OCL     0.196608       5     0.983040
+OAI21_X1           NanGate_15nm_OCL     0.294912      27     7.962624
+vecmul_dace_module_vecmul_0_0 77972.768026       1  77972.768026  h, n
+-----------------------------------------------------------------------------
+Total 10 references                                 78082.524440
+1

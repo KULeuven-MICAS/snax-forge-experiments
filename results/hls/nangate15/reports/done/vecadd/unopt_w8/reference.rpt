@@ -1,0 +1,45 @@
+ 
+****************************************
+Report : reference
+Design : vecadd
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:31:03 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       2     0.589824
+AND3_X1            NanGate_15nm_OCL     0.393216       1     0.393216
+AOI21_X1           NanGate_15nm_OCL     0.294912     148    43.646978
+AOI22_X1           NanGate_15nm_OCL     0.344064    1086   373.653501
+BUF_X1             NanGate_15nm_OCL     0.245760      99    24.330239
+BUF_X2             NanGate_15nm_OCL     0.245760       1     0.245760
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952    1841  2352.709551 n
+FA_X1              NanGate_15nm_OCL     1.179648      61    71.958531 r
+INV_X1             NanGate_15nm_OCL     0.147456    1942   286.359562
+NAND2_X1           NanGate_15nm_OCL     0.196608     103    20.250625
+NAND3_X1           NanGate_15nm_OCL     0.294912       6     1.769472
+NAND4_X1           NanGate_15nm_OCL     0.344064      11     3.784704
+NOR2_X1            NanGate_15nm_OCL     0.196608     158    31.064065
+NOR3_X1            NanGate_15nm_OCL     0.294912       2     0.589824
+NOR4_X1            NanGate_15nm_OCL     0.344064       9     3.096576
+OAI21_X1           NanGate_15nm_OCL     0.294912      88    25.952257
+OAI22_X1           NanGate_15nm_OCL     0.344064    1108   381.222909
+OR2_X1             NanGate_15nm_OCL     0.294912       1     0.294912
+OR4_X1             NanGate_15nm_OCL     0.442368     128    56.623104
+XNOR2_X1           NanGate_15nm_OCL     0.442368      15     6.635520
+XOR2_X1            NanGate_15nm_OCL     0.442368      20     8.847360
+-----------------------------------------------------------------------------
+Total 21 references                                  3694.018489
+1

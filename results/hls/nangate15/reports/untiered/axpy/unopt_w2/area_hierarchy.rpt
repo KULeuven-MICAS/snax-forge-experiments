@@ -1,0 +1,44 @@
+ 
+****************************************
+Report : area
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:27:02 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                          686
+Number of nets:                          9449
+Number of cells:                         7877
+Number of combinational cells:           7062
+Number of sequential cells:               813
+Number of macros/black boxes:               0
+Number of buf/inv:                       1412
+Number of references:                      19
+
+Combinational area:               2828.943415
+Buf/Inv area:                      217.939974
+Noncombinational area:            1038.974940
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  3867.918355
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  -----------------------------------------------------------------------------
+axpy                              3867.9184    100.0   626.3439  1038.9749  0.0000  axpy
+mul_64s_64s_64_1_1_U1             2202.5995     56.9  2202.5995     0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64
+--------------------------------  ---------  -------  ---------  ---------  ------  -----------------------------------------------------------------------------
+Total                                                 2828.9434  1038.9749  0.0000
+
+1

@@ -1,0 +1,42 @@
+ 
+****************************************
+Report : reference
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:12:11 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       4     1.179648
+AOI21_X1           NanGate_15nm_OCL     0.294912      38    11.206656
+AOI22_X1           NanGate_15nm_OCL     0.344064     239    82.231295
+BUF_X1             NanGate_15nm_OCL     0.245760       6     1.474560
+BUF_X2             NanGate_15nm_OCL     0.245760       4     0.983040
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952     328   419.168242 n
+FA_X1              NanGate_15nm_OCL     1.179648      62    73.138179 r
+INV_X1             NanGate_15nm_OCL     0.147456     453    66.797570
+NAND2_X1           NanGate_15nm_OCL     0.196608      39     7.667712
+NAND4_X1           NanGate_15nm_OCL     0.344064      18     6.193152
+NOR2_X1            NanGate_15nm_OCL     0.196608      41     8.060928
+NOR4_X1            NanGate_15nm_OCL     0.344064      16     5.505024
+OAI21_X1           NanGate_15nm_OCL     0.294912      44    12.976128
+OAI22_X1           NanGate_15nm_OCL     0.344064     144    49.545216
+OR2_X1             NanGate_15nm_OCL     0.294912       1     0.294912
+XNOR2_X1           NanGate_15nm_OCL     0.442368      43    19.021824
+XOR2_X1            NanGate_15nm_OCL     0.442368      57    25.214976
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64  2212.479022       1  2212.479022 h
+-----------------------------------------------------------------------------
+Total 18 references                                  3003.138085
+1

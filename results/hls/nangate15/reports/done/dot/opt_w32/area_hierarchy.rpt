@@ -1,0 +1,75 @@
+ 
+****************************************
+Report : area
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:13:51 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                        10382
+Number of nets:                        218618
+Number of cells:                       175646
+Number of combinational cells:         168881
+Number of sequential cells:              6732
+Number of macros/black boxes:               0
+Number of buf/inv:                      20984
+Number of references:                      52
+
+Combinational area:              76407.621163
+Buf/Inv area:                     3333.390418
+Noncombinational area:            8603.172566
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 85010.793729
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  -------------------------------------------------------------------------------
+dot                               85010.7937    100.0   5900.8452  8603.1726  0.0000  dot
+mul_64s_64s_64_1_1_U1              2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_31
+mul_64s_64s_64_1_1_U10             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_22
+mul_64s_64s_64_1_1_U11             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_21
+mul_64s_64s_64_1_1_U12             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_20
+mul_64s_64s_64_1_1_U13             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_19
+mul_64s_64s_64_1_1_U14             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_18
+mul_64s_64s_64_1_1_U15             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_17
+mul_64s_64s_64_1_1_U16             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_16
+mul_64s_64s_64_1_1_U17             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15
+mul_64s_64s_64_1_1_U18             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14
+mul_64s_64s_64_1_1_U19             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13
+mul_64s_64s_64_1_1_U2              2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_30
+mul_64s_64s_64_1_1_U20             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12
+mul_64s_64s_64_1_1_U21             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11
+mul_64s_64s_64_1_1_U22             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10
+mul_64s_64s_64_1_1_U23             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9
+mul_64s_64s_64_1_1_U24             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8
+mul_64s_64s_64_1_1_U25             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7
+mul_64s_64s_64_1_1_U26             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6
+mul_64s_64s_64_1_1_U27             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5
+mul_64s_64s_64_1_1_U28             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4
+mul_64s_64s_64_1_1_U29             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+mul_64s_64s_64_1_1_U3              2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_29
+mul_64s_64s_64_1_1_U30             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+mul_64s_64s_64_1_1_U31             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U32             2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+mul_64s_64s_64_1_1_U4              2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_28
+mul_64s_64s_64_1_1_U5              2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_27
+mul_64s_64s_64_1_1_U6              2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_26
+mul_64s_64s_64_1_1_U7              2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_25
+mul_64s_64s_64_1_1_U8              2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_24
+mul_64s_64s_64_1_1_U9              2203.3368      2.6   2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_23
+--------------------------------  ----------  -------  ----------  ---------  ------  -------------------------------------------------------------------------------
+Total                                                  76407.6212  8603.1726  0.0000
+
+1

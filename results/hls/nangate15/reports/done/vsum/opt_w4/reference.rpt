@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : reference
+Design : vsum
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:04:34 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+AOI21_X1           NanGate_15nm_OCL     0.294912      36    10.616832
+AOI22_X1           NanGate_15nm_OCL     0.344064     367   126.271487
+BUF_X1             NanGate_15nm_OCL     0.245760      16     3.932160
+BUF_X2             NanGate_15nm_OCL     0.245760       2     0.491520
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952     456   582.746092 n
+FA_X1              NanGate_15nm_OCL     1.179648     248   292.552714 r
+INV_X1             NanGate_15nm_OCL     0.147456     565    83.312643
+NAND2_X1           NanGate_15nm_OCL     0.196608      46     9.043968
+NAND3_X1           NanGate_15nm_OCL     0.294912       1     0.294912
+NAND4_X1           NanGate_15nm_OCL     0.344064      18     6.193152
+NOR2_X1            NanGate_15nm_OCL     0.196608      38     7.471104
+NOR3_X1            NanGate_15nm_OCL     0.294912       3     0.884736
+NOR4_X1            NanGate_15nm_OCL     0.344064      19     6.537216
+OAI21_X1           NanGate_15nm_OCL     0.294912      32     9.437184
+OAI22_X1           NanGate_15nm_OCL     0.344064     128    44.040192
+OR2_X1             NanGate_15nm_OCL     0.294912       1     0.294912
+XNOR2_X1           NanGate_15nm_OCL     0.442368      58    25.657344
+XOR2_X1            NanGate_15nm_OCL     0.442368      70    30.965760
+-----------------------------------------------------------------------------
+Total 19 references                                  1241.038841
+1

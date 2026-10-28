@@ -1,0 +1,45 @@
+ 
+****************************************
+Report : reference
+Design : vecmul
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 22:01:16 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912     128    37.748737
+AND3_X1            NanGate_15nm_OCL     0.393216       2     0.786432
+AOI21_X1           NanGate_15nm_OCL     0.294912       6     1.769472
+AOI22_X1           NanGate_15nm_OCL     0.344064    3835  1319.485430
+BUF_X1             NanGate_15nm_OCL     0.245760     420   103.219197
+BUF_X2             NanGate_15nm_OCL     0.245760       4     0.983040
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952    6455  8249.179875 n
+INV_X1             NanGate_15nm_OCL     0.147456    6518   961.118242
+NAND2_X1           NanGate_15nm_OCL     0.196608     685   134.676485
+NAND3_X1           NanGate_15nm_OCL     0.294912      11     3.244032
+NAND4_X1           NanGate_15nm_OCL     0.344064      11     3.784704
+NOR2_X1            NanGate_15nm_OCL     0.196608     428    84.148227
+NOR3_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+NOR4_X1            NanGate_15nm_OCL     0.344064     521   179.257343
+OAI21_X1           NanGate_15nm_OCL     0.294912     577   170.164230
+OAI22_X1           NanGate_15nm_OCL     0.344064    4183  1439.219701
+OR2_X1             NanGate_15nm_OCL     0.294912       1     0.294912
+OR4_X1             NanGate_15nm_OCL     0.442368     128    56.623104
+XNOR2_X1           NanGate_15nm_OCL     0.442368      19     8.404992
+XOR2_X1            NanGate_15nm_OCL     0.442368      14     6.193152
+vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64  2203.336750       1  2203.336750 h
+-----------------------------------------------------------------------------
+Total 21 references                                 14963.932968
+1

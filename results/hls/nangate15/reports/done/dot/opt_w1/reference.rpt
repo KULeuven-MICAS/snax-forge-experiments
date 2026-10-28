@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : reference
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 21:00:39 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912       2     0.589824
+AOI21_X1           NanGate_15nm_OCL     0.294912      36    10.616832
+AOI22_X1           NanGate_15nm_OCL     0.344064     239    82.231295
+BUF_X1             NanGate_15nm_OCL     0.245760      13     3.194880
+BUF_X2             NanGate_15nm_OCL     0.245760       2     0.491520
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952     394   503.513071 n
+FA_X1              NanGate_15nm_OCL     1.179648      62    73.138179 r
+INV_X1             NanGate_15nm_OCL     0.147456     563    83.017731
+NAND2_X1           NanGate_15nm_OCL     0.196608      46     9.043968
+NAND3_X1           NanGate_15nm_OCL     0.294912       1     0.294912
+NAND4_X1           NanGate_15nm_OCL     0.344064      18     6.193152
+NOR2_X1            NanGate_15nm_OCL     0.196608      43     8.454144
+NOR3_X1            NanGate_15nm_OCL     0.294912       2     0.589824
+NOR4_X1            NanGate_15nm_OCL     0.344064      21     7.225344
+OAI21_X1           NanGate_15nm_OCL     0.294912      34    10.027008
+OAI22_X1           NanGate_15nm_OCL     0.344064     193    66.404351
+XNOR2_X1           NanGate_15nm_OCL     0.442368      65    28.753920
+XOR2_X1            NanGate_15nm_OCL     0.442368      56    24.772608
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64  2203.336750       1  2203.336750 h
+-----------------------------------------------------------------------------
+Total 19 references                                  3121.889314
+1
