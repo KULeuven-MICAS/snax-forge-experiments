@@ -27,7 +27,8 @@ anyway (for when a macro or a black-box stub is in place).
 Tools and files, all overridable from the environment:
   DC_SHELL        dc_shell                               (Design Compiler)
   SYN_RTL         ../hls-exercises/rtl                  (the points)
-  SYN_LIB         ../FreePDK45/osu_soc/lib/files/gscl45nm.db, next to this repo
+  SYN_LIB         ../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db, next to this repo
+                  alternatively use ../RTL_flow_Nangate15/tech/nangate15/NangateOpenCellLibrary_typical.db
 Standard library only.
 """
 
@@ -52,7 +53,7 @@ RUNS = SYN / "runs" / "hls"
 SCRIPT = SYN / "scripts" / "dc_syn.tcl"
 SUMMARY = RUNS / "summary.csv"
 RESULTS_COPY = ROOT / "results" / "hls" / "synth_dc.csv"  # the committed copy of SUMMARY
-DEFAULT_LIB = ROOT.parent / "FreePDK45" / "osu_soc" / "lib" / "files" / "gscl45nm.db"
+DEFAULT_LIB = ROOT.parent / "RTL_flow_Nangate15" / "tech" / "nangate45" / "NangateOpenCellLibrary_typical.db"
 DEFAULT_CLOCK = "10"
 
 COLUMNS = ["point", "top", "clock_ns", "status", "errors", "area", "comb_area", "seq_area", "cells",

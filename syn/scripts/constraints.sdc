@@ -37,7 +37,7 @@ set_clock_uncertainty 0.02 -hold [get_clocks clk]
 set data_inputs [remove_from_collection [all_inputs] [get_ports $clk_port]]
 
 # Get from the FreePDK45nm
-set_driving_cell -lib_cell INVX4 $data_inputs
+set_driving_cell -lib_cell INV_X4 $data_inputs
 
 # Set some generic.
 set_load 0.03 [all_outputs]
