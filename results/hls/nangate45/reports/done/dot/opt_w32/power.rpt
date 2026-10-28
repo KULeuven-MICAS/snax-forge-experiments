@@ -1,0 +1,57 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:20:14 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 3.249372 mW   (85%)
+  Net Switching Power  = 572.485535 uW   (15%)
+                         ---------
+Total Dynamic Power    = 3.821857 mW  (100%)
+
+Cell Leakage Power     =   5.4780 mW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network  2.530346e+03          0.000000          0.000000        2.530346e+03
+                                                                                 (  27.21%)  i
+register        83.864502         55.785873        5.325097e+05        672.162292
+                                                                                 (   7.23%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational  635.152588        516.709656        4.945485e+06        6.097341e+03
+                                                                                 (  65.56%)
+--------------------------------------------------------------------------------------------------
+Total          3.249364e+03 uW     572.495544 uW     5.477994e+06 nW     9.299850e+03 uW
+1

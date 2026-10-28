@@ -1,0 +1,38 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : vecadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:29:09 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+vecadd_dace                             227.479  503.459 1.18e+05  849.270 100.0
+  grp_module_vecadd_0_0_fu_40 (vecadd_dace_module_vecadd_0_0)  224.629  469.914 1.10e+05  805.007  94.8
+    grp_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 (vecadd_dace_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1)  222.729  452.585 1.05e+05  780.763  91.9
+      flow_control_loop_pipe_sequential_init_U (vecadd_dace_flow_control_loop_pipe_sequential_init) 1.70e-02    1.304  270.842    1.591   0.2
+1

@@ -1,0 +1,84 @@
+ 
+****************************************
+Report : reference
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:23:57 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NangateOpenCellLibrary     1.064000       7     7.448000
+AND4_X1            NangateOpenCellLibrary     1.596000       1     1.596000
+AOI21_X1           NangateOpenCellLibrary     1.064000      37    39.368000
+AOI22_X1           NangateOpenCellLibrary     1.330000     119   158.270005
+AOI211_X1          NangateOpenCellLibrary     1.330000      15    19.950001
+AOI221_X1          NangateOpenCellLibrary     1.596000      21    33.515999
+CLKBUF_X1          NangateOpenCellLibrary     0.798000     198   158.003996
+CLKBUF_X2          NangateOpenCellLibrary     1.064000      36    38.304000
+DFF_X1             NangateOpenCellLibrary     4.522000    8328 37659.214634 n
+FA_X1              NangateOpenCellLibrary     4.256000    1984  8443.904083 r
+INV_X1             NangateOpenCellLibrary     0.532000     709   377.188004
+INV_X2             NangateOpenCellLibrary     0.798000       5     3.990000
+MUX2_X1            NangateOpenCellLibrary     1.862000    8224 15313.087906
+NAND2_X1           NangateOpenCellLibrary     0.798000      18    14.364000
+NAND3_X1           NangateOpenCellLibrary     1.064000       1     1.064000
+NAND4_X1           NangateOpenCellLibrary     1.330000       4     5.320000
+NOR2_X1            NangateOpenCellLibrary     0.798000      49    39.101999
+NOR2_X2            NangateOpenCellLibrary     1.330000       1     1.330000
+NOR3_X1            NangateOpenCellLibrary     1.064000       4     4.256000
+NOR4_X1            NangateOpenCellLibrary     1.330000      12    15.960001
+OAI21_X1           NangateOpenCellLibrary     1.064000       3     3.192000
+OAI22_X1           NangateOpenCellLibrary     1.330000      50    66.500002
+OAI33_X1           NangateOpenCellLibrary     1.862000       1     1.862000
+OAI211_X1          NangateOpenCellLibrary     1.330000       4     5.320000
+OAI221_X1          NangateOpenCellLibrary     1.596000      21    33.515999
+OR2_X1             NangateOpenCellLibrary     1.064000       3     3.192000
+OR3_X1             NangateOpenCellLibrary     1.330000       5     6.650000
+XNOR2_X1           NangateOpenCellLibrary     1.596000      64   102.143997
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0  6954.038032       1  6954.038032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1  6954.570032       1  6954.570032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2  6954.570032       1  6954.570032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3  6954.570032       1  6954.570032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4  6938.610033       1  6938.610033 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5  6955.368032       1  6955.368032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6  6952.974032       1  6952.974032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7  6956.166032       1  6956.166032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8  6956.698032       1  6956.698032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9  6946.058032       1  6946.058032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10  6950.048032       1  6950.048032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11  6952.974032       1  6952.974032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12  6948.718032       1  6948.718032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13  6955.102032       1  6955.102032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14  6955.900032       1  6955.900032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15  6955.900032       1  6955.900032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_16  6955.900032       1  6955.900032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_17  6955.900032       1  6955.900032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_18  6956.698032       1  6956.698032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_19  6957.496032       1  6957.496032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_20  6957.496032       1  6957.496032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_21  6957.496032       1  6957.496032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_22  6956.698032       1  6956.698032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_23  6956.698032       1  6956.698032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_24  6957.496032       1  6957.496032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_25  6956.698032       1  6956.698032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_26  6956.698032       1  6956.698032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_27  6957.496032       1  6957.496032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_28  6955.900032       1  6955.900032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_29  6956.432032       1  6956.432032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_30  6957.230032       1  6957.230032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_31  6953.772032       1  6953.772032 h
+-----------------------------------------------------------------------------
+Total 60 references                                 285105.981656
+1

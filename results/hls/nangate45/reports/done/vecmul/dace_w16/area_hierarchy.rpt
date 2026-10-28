@@ -1,0 +1,62 @@
+ 
+****************************************
+Report : area
+Design : vecmul_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:41:33 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                        12431
+Number of nets:                         91282
+Number of cells:                        69157
+Number of combinational cells:          66970
+Number of sequential cells:              2168
+Number of macros/black boxes:               0
+Number of buf/inv:                       4363
+Number of references:                      15
+
+Combinational area:             115144.484507
+Buf/Inv area:                     2769.325977
+Noncombinational area:            9803.695644
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                124948.180152
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area             Local cell area
+                                  --------------------  ------------------------------ 
+Hierarchical cell                 Absolute     Percent  Combi-       Noncombi-  Black-
+                                  Total        Total    national     national   boxes   Design
+--------------------------------  -----------  -------  -----------  ---------  ------  ---------------------------------------------------------------------------------------
+vecmul_dace                       124948.1802    100.0     133.7980   262.2760  0.0000  vecmul_dace
+grp_module_vecmul_0_0_fu_40       124552.1062     99.7     107.4640   140.1820  0.0000  vecmul_dace_module_vecmul_0_0
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 124304.4602    99.5   4084.6960 9392.1937 0.0000 vecmul_dace_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/flow_control_loop_pipe_sequential_init_U     14.0980     0.0      5.0540    9.0440 0.0000 vecmul_dace_flow_control_loop_pipe_sequential_init
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U1   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U10   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U11   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U12   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U13   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U14   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U15   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U16   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U2   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U3   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U4   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U5   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U6   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U7   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U8   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U9   6925.8420     5.5   6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7
+--------------------------------  -----------  -------  -----------  ---------  ------  ---------------------------------------------------------------------------------------
+Total                                                   115144.4845  9803.6956  0.0000
+
+1

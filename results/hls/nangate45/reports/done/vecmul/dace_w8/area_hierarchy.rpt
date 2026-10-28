@@ -1,0 +1,54 @@
+ 
+****************************************
+Report : area
+Design : vecmul_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:46:18 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         6287
+Number of nets:                         46030
+Number of cells:                        34876
+Number of combinational cells:          33717
+Number of sequential cells:              1148
+Number of macros/black boxes:               0
+Number of buf/inv:                       2227
+Number of references:                      15
+
+Combinational area:              57812.706256
+Buf/Inv area:                     1409.267989
+Noncombinational area:            5191.255812
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 63003.962067
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  --------------------------------------------------------------------------------------
+vecmul_dace                       63003.9621    100.0    138.0540   271.3200  0.0000  vecmul_dace
+grp_module_vecmul_0_0_fu_40       62594.5881     99.4    111.1880   144.7040  0.0000  vecmul_dace_module_vecmul_0_0
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 62338.6961    98.9  2151.6740 4766.1878 0.0000 vecmul_dace_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/flow_control_loop_pipe_sequential_init_U    14.0980     0.0     5.0540    9.0440 0.0000 vecmul_dace_flow_control_loop_pipe_sequential_init
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U1  6925.8420    11.0  6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U2  6925.8420    11.0  6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U3  6925.8420    11.0  6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U4  6925.8420    11.0  6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U5  6925.8420    11.0  6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U6  6925.8420    11.0  6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U7  6925.8420    11.0  6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_64s_64s_64_1_1_U8  6925.8420    11.0  6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+--------------------------------  ----------  -------  ----------  ---------  ------  --------------------------------------------------------------------------------------
+Total                                                  57812.7063  5191.2558  0.0000
+
+1

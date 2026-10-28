@@ -1,0 +1,51 @@
+ 
+****************************************
+Report : reference
+Design : vecadd
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:29:19 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NangateOpenCellLibrary     1.064000       1     1.064000
+AOI21_X1           NangateOpenCellLibrary     1.064000      10    10.640000
+AOI22_X1           NangateOpenCellLibrary     1.330000      56    74.480002
+AOI211_X1          NangateOpenCellLibrary     1.330000      15    19.950001
+AOI221_X1          NangateOpenCellLibrary     1.596000      28    44.687999
+CLKBUF_X1          NangateOpenCellLibrary     0.798000       3     2.394000
+DFF_X1             NangateOpenCellLibrary     4.522000     134   605.947978 n
+FA_X1              NangateOpenCellLibrary     4.256000      61   259.616003 r
+INV_X1             NangateOpenCellLibrary     0.532000      64    34.048000
+MUX2_X1            NangateOpenCellLibrary     1.862000      61   113.581999
+NAND2_X1           NangateOpenCellLibrary     0.798000      13    10.374000
+NAND3_X1           NangateOpenCellLibrary     1.064000       7     7.448000
+NAND4_X1           NangateOpenCellLibrary     1.330000      11    14.630000
+NOR2_X1            NangateOpenCellLibrary     0.798000      21    16.758000
+NOR2_X2            NangateOpenCellLibrary     1.330000       3     3.990000
+NOR2_X4            NangateOpenCellLibrary     2.394000       1     2.394000
+NOR3_X1            NangateOpenCellLibrary     1.064000       2     2.128000
+NOR4_X1            NangateOpenCellLibrary     1.330000       5     6.650000
+OAI21_X1           NangateOpenCellLibrary     1.064000       6     6.384000
+OAI22_X1           NangateOpenCellLibrary     1.330000      19    25.270001
+OAI33_X1           NangateOpenCellLibrary     1.862000       1     1.862000
+OAI211_X1          NangateOpenCellLibrary     1.330000       3     3.990000
+OAI221_X1          NangateOpenCellLibrary     1.596000      14    22.343999
+OR2_X1             NangateOpenCellLibrary     1.064000       2     2.128000
+OR4_X1             NangateOpenCellLibrary     1.596000       1     1.596000
+XNOR2_X1           NangateOpenCellLibrary     1.596000       3     4.788000
+XOR2_X1            NangateOpenCellLibrary     1.596000       1     1.596000
+-----------------------------------------------------------------------------
+Total 27 references                                  1300.739982
+1

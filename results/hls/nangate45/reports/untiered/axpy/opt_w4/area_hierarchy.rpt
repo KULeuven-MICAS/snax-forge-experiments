@@ -1,0 +1,47 @@
+ 
+****************************************
+Report : area
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:19:14 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         1646
+Number of nets:                         23541
+Number of cells:                        19205
+Number of combinational cells:          18040
+Number of sequential cells:              1160
+Number of macros/black boxes:               0
+Number of buf/inv:                       1356
+Number of references:                      34
+
+Combinational area:              31365.922133
+Buf/Inv area:                      866.893992
+Noncombinational area:            5245.519810
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 36611.441943
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  -------------------------------------------------------------------------------
+axpy                              36611.4419    100.0   3567.3260  5245.5198  0.0000  axpy
+mul_64s_64s_64_1_1_U1              6954.5700     19.0   6954.5700     0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+mul_64s_64s_64_1_1_U2              6948.4520     19.0   6948.4520     0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+mul_64s_64s_64_1_1_U3              6945.2600     19.0   6945.2600     0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U4              6950.3140     19.0   6950.3140     0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+--------------------------------  ----------  -------  ----------  ---------  ------  -------------------------------------------------------------------------------
+Total                                                  31365.9221  5245.5198  0.0000
+
+1

@@ -1,0 +1,56 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:27:27 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 702.206421 uW   (82%)
+  Net Switching Power  = 151.207687 uW   (18%)
+                         ---------
+Total Dynamic Power    = 853.414124 uW  (100%)
+
+Cell Leakage Power     = 300.4090 uW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network  496.852997          0.000000          0.000000        496.852966  (  43.06%)  i
+register        15.633331          5.624403        9.460784e+04        115.865387
+                                                                                 (  10.04%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational  189.719925        145.583252        2.058012e+05        541.104675
+                                                                                 (  46.90%)
+--------------------------------------------------------------------------------------------------
+Total          702.206238 uW     151.207657 uW     3.004090e+05 nW     1.153823e+03 uW
+1

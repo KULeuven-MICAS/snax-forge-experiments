@@ -1,0 +1,39 @@
+ 
+****************************************
+Report : reference
+Design : matadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:33:27 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NangateOpenCellLibrary     1.064000       3     3.192000
+AOI21_X1           NangateOpenCellLibrary     1.064000       1     1.064000
+AOI22_X1           NangateOpenCellLibrary     1.330000      56    74.480002
+AOI211_X1          NangateOpenCellLibrary     1.330000       1     1.330000
+AOI221_X1          NangateOpenCellLibrary     1.596000       1     1.596000
+CLKBUF_X1          NangateOpenCellLibrary     0.798000       2     1.596000
+DFF_X1             NangateOpenCellLibrary     4.522000      60   271.319990 n
+INV_X1             NangateOpenCellLibrary     0.532000      33    17.556000
+NAND2_X1           NangateOpenCellLibrary     0.798000       1     0.798000
+NOR2_X1            NangateOpenCellLibrary     0.798000       2     1.596000
+NOR2_X2            NangateOpenCellLibrary     1.330000       1     1.330000
+NOR3_X1            NangateOpenCellLibrary     1.064000       1     1.064000
+OAI21_X1           NangateOpenCellLibrary     1.064000      28    29.792000
+OAI211_X1          NangateOpenCellLibrary     1.330000       2     2.660000
+matadd_dace_module_matadd_0_0  6049.903921       1   6049.903921  h, n
+-----------------------------------------------------------------------------
+Total 15 references                                  6459.277914
+1

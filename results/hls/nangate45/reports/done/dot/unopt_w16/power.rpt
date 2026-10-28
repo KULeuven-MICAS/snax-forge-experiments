@@ -1,0 +1,57 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:21:16 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 1.094522 mW   (96%)
+  Net Switching Power  = 51.131702 uW    (4%)
+                         ---------
+Total Dynamic Power    = 1.145654 mW  (100%)
+
+Cell Leakage Power     = 511.5371 uW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network  1.014120e+03          0.000000          0.000000        1.014120e+03
+                                                                                 (  61.20%)  i
+register        37.330200          9.993727        2.034738e+05        250.799377
+                                                                                 (  15.13%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational   43.071003         41.138073        3.080633e+05        392.272308
+                                                                                 (  23.67%)
+--------------------------------------------------------------------------------------------------
+Total          1.094521e+03 uW      51.131798 uW     5.115371e+05 nW     1.657191e+03 uW
+1

@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : area
+Design : relu
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:47:34 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                          299
+Number of nets:                          1565
+Number of cells:                         1173
+Number of combinational cells:            746
+Number of sequential cells:               426
+Number of macros/black boxes:               0
+Number of buf/inv:                         76
+Number of references:                      24
+
+Combinational area:                961.856012
+Buf/Inv area:                       43.358000
+Noncombinational area:            1926.371930
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  2888.227942
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  ---------
+relu                              2888.2279    100.0  961.8560  1926.3719  0.0000  relu
+--------------------------------  ---------  -------  --------  ---------  ------  ---------
+Total                                                 961.8560  1926.3719  0.0000
+
+1

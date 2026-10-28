@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : area
+Design : matadd
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:38:38 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                          429
+Number of nets:                          2497
+Number of cells:                         1816
+Number of combinational cells:           1133
+Number of sequential cells:               683
+Number of macros/black boxes:               0
+Number of buf/inv:                        155
+Number of references:                      24
+
+Combinational area:               1739.640014
+Buf/Inv area:                       85.386001
+Noncombinational area:            3088.525888
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  4828.165902
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  ---------
+matadd                            4828.1659    100.0  1739.6400  3088.5259  0.0000  matadd
+--------------------------------  ---------  -------  ---------  ---------  ------  ---------
+Total                                                 1739.6400  3088.5259  0.0000
+
+1

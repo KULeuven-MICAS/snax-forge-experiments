@@ -1,0 +1,30 @@
+ 
+****************************************
+Report : area
+Design : vecmul
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:58:12 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                          429
+Number of nets:                          5454
+Number of cells:                         4360
+Number of combinational cells:           4290
+Number of sequential cells:                68
+Number of macros/black boxes:               0
+Number of buf/inv:                        324
+Number of references:                      24
+
+Combinational area:               7218.176036
+Buf/Inv area:                      198.967999
+Noncombinational area:             307.495989
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  7525.672024
+Total area:                 undefined
+1

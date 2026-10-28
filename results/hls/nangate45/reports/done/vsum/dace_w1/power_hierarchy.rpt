@@ -1,0 +1,37 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : vsum_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:03:53 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+vsum_dace                                17.326  127.914 3.69e+04  182.123 100.0
+  grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53 (vsum_dace_vsum_dace_Pipeline_VITIS_LOOP_37_1)   14.112   89.588 2.80e+04  131.650  72.3
+    flow_control_loop_pipe_sequential_init_U (vsum_dace_flow_control_loop_pipe_sequential_init) 6.59e-02    1.267  271.015    1.604   0.9
+1

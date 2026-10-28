@@ -1,0 +1,47 @@
+ 
+****************************************
+Report : area
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:15:05 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         1422
+Number of nets:                         23190
+Number of cells:                        18863
+Number of combinational cells:          17889
+Number of sequential cells:               970
+Number of macros/black boxes:               0
+Number of buf/inv:                       1267
+Number of references:                      31
+
+Combinational area:              31017.994143
+Buf/Inv area:                      783.635995
+Noncombinational area:            4386.339841
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 35404.333984
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  ------------------------------------------------------------------------------
+dot                               35404.3340    100.0   3316.7540  4386.3398  0.0000  dot
+mul_64s_64s_64_1_1_U1              6925.3100     19.6   6925.3100     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+mul_64s_64s_64_1_1_U2              6925.3100     19.6   6925.3100     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+mul_64s_64s_64_1_1_U3              6925.3100     19.6   6925.3100     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U4              6925.3100     19.6   6925.3100     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+--------------------------------  ----------  -------  ----------  ---------  ------  ------------------------------------------------------------------------------
+Total                                                  31017.9941  4386.3398  0.0000
+
+1

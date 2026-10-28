@@ -1,0 +1,59 @@
+ 
+****************************************
+Report : area
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:17:05 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         6254
+Number of nets:                         92245
+Number of cells:                        75285
+Number of combinational cells:          71036
+Number of sequential cells:              4232
+Number of macros/black boxes:               0
+Number of buf/inv:                       5332
+Number of references:                      44
+
+Combinational area:             123971.960514
+Buf/Inv area:                     3429.537968
+Noncombinational area:           19137.103306
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                143109.063820
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area              Local cell area
+                                  --------------------  ------------------------------- 
+Hierarchical cell                 Absolute     Percent  Combi-       Noncombi-   Black-
+                                  Total        Total    national     national    boxes   Design
+--------------------------------  -----------  -------  -----------  ----------  ------  --------------------------------------------------------------------------------
+axpy                              143109.0638    100.0   12720.6520  19137.1033  0.0000  axpy
+mul_64s_64s_64_1_1_U1               6955.6340      4.9    6955.6340      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15
+mul_64s_64s_64_1_1_U10              6950.5800      4.9    6950.5800      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6
+mul_64s_64s_64_1_1_U11              6950.5800      4.9    6950.5800      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5
+mul_64s_64s_64_1_1_U12              6947.9200      4.9    6947.9200      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4
+mul_64s_64s_64_1_1_U13              6950.3140      4.9    6950.3140      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+mul_64s_64s_64_1_1_U14              6947.3880      4.9    6947.3880      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+mul_64s_64s_64_1_1_U15              6954.8360      4.9    6954.8360      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U16              6952.4420      4.9    6952.4420      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+mul_64s_64s_64_1_1_U2               6955.6340      4.9    6955.6340      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14
+mul_64s_64s_64_1_1_U3               6954.5700      4.9    6954.5700      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13
+mul_64s_64s_64_1_1_U4               6958.5600      4.9    6958.5600      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12
+mul_64s_64s_64_1_1_U5               6955.1020      4.9    6955.1020      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11
+mul_64s_64s_64_1_1_U6               6955.1020      4.9    6955.1020      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10
+mul_64s_64s_64_1_1_U7               6954.3040      4.9    6954.3040      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9
+mul_64s_64s_64_1_1_U8               6956.9640      4.9    6956.9640      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8
+mul_64s_64s_64_1_1_U9               6951.3780      4.9    6951.3780      0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7
+--------------------------------  -----------  -------  -----------  ----------  ------  --------------------------------------------------------------------------------
+Total                                                   123971.9605  19137.1033  0.0000
+
+1

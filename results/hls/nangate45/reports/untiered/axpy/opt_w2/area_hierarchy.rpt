@@ -1,0 +1,45 @@
+ 
+****************************************
+Report : area
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:13:37 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                          878
+Number of nets:                         12103
+Number of cells:                         9871
+Number of combinational cells:           9220
+Number of sequential cells:               648
+Number of macros/black boxes:               0
+Number of buf/inv:                        706
+Number of references:                      32
+
+Combinational area:              15934.730069
+Buf/Inv area:                      445.017997
+Noncombinational area:            2930.255894
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 18864.985963
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  -------------------------------------------------------------------------------
+axpy                              18864.9860    100.0   2056.4460  2930.2559  0.0000  axpy
+mul_64s_64s_64_1_1_U1              6938.8760     36.8   6938.8760     0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U2              6939.4080     36.8   6939.4080     0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+--------------------------------  ----------  -------  ----------  ---------  ------  -------------------------------------------------------------------------------
+Total                                                  15934.7301  2930.2559  0.0000
+
+1

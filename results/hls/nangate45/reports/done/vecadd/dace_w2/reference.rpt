@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : reference
+Design : vecadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:26:47 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NangateOpenCellLibrary     1.064000       2     2.128000
+AND4_X1            NangateOpenCellLibrary     1.596000       1     1.596000
+AOI21_X1           NangateOpenCellLibrary     1.064000      13    13.832000
+AOI22_X1           NangateOpenCellLibrary     1.330000      61    81.130003
+AOI211_X1          NangateOpenCellLibrary     1.330000       1     1.330000
+AOI221_X1          NangateOpenCellLibrary     1.596000      15    23.939999
+CLKBUF_X1          NangateOpenCellLibrary     0.798000       1     0.798000
+DFF_X1             NangateOpenCellLibrary     4.522000      65   293.929989 n
+INV_X1             NangateOpenCellLibrary     0.532000      37    19.684000
+MUX2_X1            NangateOpenCellLibrary     1.862000      28    52.136000
+NAND2_X1           NangateOpenCellLibrary     0.798000      17    13.566000
+NOR2_X1            NangateOpenCellLibrary     0.798000       2     1.596000
+NOR2_X2            NangateOpenCellLibrary     1.330000       1     1.330000
+NOR3_X1            NangateOpenCellLibrary     1.064000       1     1.064000
+OAI21_X1           NangateOpenCellLibrary     1.064000      15    15.960000
+OAI22_X1           NangateOpenCellLibrary     1.330000       1     1.330000
+OAI211_X1          NangateOpenCellLibrary     1.330000       1     1.330000
+XNOR2_X1           NangateOpenCellLibrary     1.596000       1     1.596000
+vecadd_dace_vecadd_dace_Pipeline_VITIS_LOOP_19_1  1744.427978       1  1744.427978 h, n
+-----------------------------------------------------------------------------
+Total 19 references                                  2272.703969
+1

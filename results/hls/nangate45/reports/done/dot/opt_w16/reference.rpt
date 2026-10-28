@@ -1,0 +1,68 @@
+ 
+****************************************
+Report : reference
+Design : dot
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:13:00 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NangateOpenCellLibrary     1.064000       5     5.320000
+AOI21_X1           NangateOpenCellLibrary     1.064000      28    29.792000
+AOI22_X1           NangateOpenCellLibrary     1.330000     212   281.960009
+AOI211_X1          NangateOpenCellLibrary     1.330000      11    14.630000
+AOI221_X1          NangateOpenCellLibrary     1.596000      27    43.091999
+AOI222_X1          NangateOpenCellLibrary     2.128000       3     6.384000
+BUF_X1             NangateOpenCellLibrary     0.798000       2     1.596000
+CLKBUF_X1          NangateOpenCellLibrary     0.798000     123    98.153997
+CLKBUF_X2          NangateOpenCellLibrary     1.064000       1     1.064000
+DFF_X1             NangateOpenCellLibrary     4.522000    3660 16550.519400 n
+FA_X1              NangateOpenCellLibrary     4.256000     985  4192.160041 r
+INV_X1             NangateOpenCellLibrary     0.532000     207   110.124001
+MUX2_X1            NangateOpenCellLibrary     1.862000    3440  6405.279961
+NAND2_X1           NangateOpenCellLibrary     0.798000      40    31.919999
+NAND3_X1           NangateOpenCellLibrary     1.064000       2     2.128000
+NAND4_X1           NangateOpenCellLibrary     1.330000       6     7.980000
+NOR2_X1            NangateOpenCellLibrary     0.798000      39    31.121999
+NOR2_X2            NangateOpenCellLibrary     1.330000       2     2.660000
+NOR3_X1            NangateOpenCellLibrary     1.064000       4     4.256000
+NOR4_X1            NangateOpenCellLibrary     1.330000       3     3.990000
+OAI21_X1           NangateOpenCellLibrary     1.064000      37    39.368000
+OAI22_X1           NangateOpenCellLibrary     1.330000      89   118.370004
+OAI211_X1          NangateOpenCellLibrary     1.330000      12    15.960001
+OAI221_X1          NangateOpenCellLibrary     1.596000      21    33.515999
+OR2_X1             NangateOpenCellLibrary     1.064000       3     3.192000
+XNOR2_X1           NangateOpenCellLibrary     1.596000      39    62.243998
+XNOR2_X2           NangateOpenCellLibrary     2.660000       1     2.660000
+XOR2_X1            NangateOpenCellLibrary     1.596000      52    82.991998
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14  6925.310033       1  6925.310033 h
+dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15  6925.310033       1  6925.310033 h
+-----------------------------------------------------------------------------
+Total 44 references                                 138987.393935
+1

@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : area
+Design : vecadd
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:29:19 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                          237
+Number of nets:                           812
+Number of cells:                          547
+Number of combinational cells:            412
+Number of sequential cells:               134
+Number of macros/black boxes:               0
+Number of buf/inv:                         67
+Number of references:                      27
+
+Combinational area:                694.792004
+Buf/Inv area:                       36.442000
+Noncombinational area:             605.947978
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  1300.739982
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  ---------
+vecadd                            1300.7400    100.0  694.7920   605.9480  0.0000  vecadd
+--------------------------------  ---------  -------  --------  ---------  ------  ---------
+Total                                                 694.7920   605.9480  0.0000
+
+1

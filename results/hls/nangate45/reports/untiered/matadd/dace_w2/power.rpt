@@ -1,0 +1,56 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : matadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:31:07 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 166.955765 uW   (74%)
+  Net Switching Power  = 59.490520 uW   (26%)
+                         ---------
+Total Dynamic Power    = 226.446289 uW  (100%)
+
+Cell Leakage Power     =  43.0237 uW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network   98.518562          0.000000          0.000000         98.518562  (  36.56%)  i
+register        31.141548         45.768204        1.784029e+04         94.750038
+                                                                                 (  35.16%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational   37.295685         13.722325        2.518346e+04         76.201454
+                                                                                 (  28.28%)
+--------------------------------------------------------------------------------------------------
+Total          166.955795 uW      59.490528 uW     4.302374e+04 nW     269.470062 uW
+1

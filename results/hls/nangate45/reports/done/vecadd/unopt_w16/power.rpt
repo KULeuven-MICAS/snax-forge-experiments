@@ -1,0 +1,57 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : vecadd
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:34:36 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 1.507621 mW   (97%)
+  Net Switching Power  = 49.119362 uW    (3%)
+                         ---------
+Total Dynamic Power    = 1.556740 mW  (100%)
+
+Cell Leakage Power     = 454.2215 uW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network  1.421438e+03          0.000000          0.000000        1.421438e+03
+                                                                                 (  70.68%)  i
+register        51.415405         17.535067        2.660442e+05        334.992371
+                                                                                 (  16.66%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational   34.767258         31.584286        1.881773e+05        254.528885
+                                                                                 (  12.66%)
+--------------------------------------------------------------------------------------------------
+Total          1.507621e+03 uW      49.119354 uW     4.542215e+05 nW     2.010960e+03 uW
+1

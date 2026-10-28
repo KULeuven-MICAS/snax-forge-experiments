@@ -1,0 +1,75 @@
+ 
+****************************************
+Report : area
+Design : vecmul
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:57:13 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                        12333
+Number of nets:                        169224
+Number of cells:                       137535
+Number of combinational cells:         133336
+Number of sequential cells:              4166
+Number of macros/black boxes:               0
+Number of buf/inv:                       8612
+Number of references:                      59
+
+Combinational area:             229694.725010
+Buf/Inv area:                     5481.727954
+Noncombinational area:           18838.651317
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                248533.376326
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area              Local cell area
+                                  --------------------  ------------------------------- 
+Hierarchical cell                 Absolute     Percent  Combi-       Noncombi-   Black-
+                                  Total        Total    national     national    boxes   Design
+--------------------------------  -----------  -------  -----------  ----------  ------  ----------------------------------------------------------------------------------
+vecmul                            248533.3763    100.0    8067.7800  18838.6513  0.0000  vecmul
+mul_64s_64s_64_1_1_U1               6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_31
+mul_64s_64s_64_1_1_U10              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_22
+mul_64s_64s_64_1_1_U11              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_21
+mul_64s_64s_64_1_1_U12              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_20
+mul_64s_64s_64_1_1_U13              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_19
+mul_64s_64s_64_1_1_U14              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_18
+mul_64s_64s_64_1_1_U15              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_17
+mul_64s_64s_64_1_1_U16              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_16
+mul_64s_64s_64_1_1_U17              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15
+mul_64s_64s_64_1_1_U18              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14
+mul_64s_64s_64_1_1_U19              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13
+mul_64s_64s_64_1_1_U2               6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_30
+mul_64s_64s_64_1_1_U20              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12
+mul_64s_64s_64_1_1_U21              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11
+mul_64s_64s_64_1_1_U22              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10
+mul_64s_64s_64_1_1_U23              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9
+mul_64s_64s_64_1_1_U24              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8
+mul_64s_64s_64_1_1_U25              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7
+mul_64s_64s_64_1_1_U26              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6
+mul_64s_64s_64_1_1_U27              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5
+mul_64s_64s_64_1_1_U28              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4
+mul_64s_64s_64_1_1_U29              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+mul_64s_64s_64_1_1_U3               6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_29
+mul_64s_64s_64_1_1_U30              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+mul_64s_64s_64_1_1_U31              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U32              6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+mul_64s_64s_64_1_1_U4               6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_28
+mul_64s_64s_64_1_1_U5               6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_27
+mul_64s_64s_64_1_1_U6               6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_26
+mul_64s_64s_64_1_1_U7               6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_25
+mul_64s_64s_64_1_1_U8               6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_24
+mul_64s_64s_64_1_1_U9               6925.8420      2.8    6925.8420      0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_23
+--------------------------------  -----------  -------  -----------  ----------  ------  ----------------------------------------------------------------------------------
+Total                                                   229694.7250  18838.6513  0.0000
+
+1

@@ -1,0 +1,58 @@
+{
+  "tech_file": "syn/tech/nangate45.json",
+  "tech": {
+    "name": "nangate45",
+    "lib_env": "SYN_LIB_NANGATE45",
+    "lib_default": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db",
+    "lib_name": "NangateOpenCellLibrary",
+    "units": {
+      "time": "1ns",
+      "cap": "1ff"
+    },
+    "drive_cell": "INV_X4",
+    "out_load_ff": 25.0,
+    "max_transition_ns": 0.25,
+    "wire_load": "off",
+    "fixes": [],
+    "notes": "Nangate 45 nm Open Cell Library, typical corner: 1.10 V, 25 C. out_load_ff is four INV_X4 inputs (4 x 6.258 fF). The library has wire-load models (default 5K_hvratio_1_1); wire_load off keeps them out."
+  },
+  "resolved": {
+    "lib_db": "/users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db",
+    "lib_from": "lib_default",
+    "t_scale": "1",
+    "c_scale": "1",
+    "lib_md5": "09a484fa91bd090e4975b6a605c0aa9c",
+    "clock_ns": "10",
+    "cores": 16,
+    "dc_env": {
+      "SYN_FILELIST": "/users/micas/rantonio/no_backup/kul_main/hls-exercises/rtl/untiered/rowsum/unopt_w16/filelist.f",
+      "SYN_LIB_DB": "/users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db",
+      "SYN_LIB_NAME": "NangateOpenCellLibrary",
+      "SYN_TIME_UNIT": "1ns",
+      "SYN_CAP_UNIT": "1ff",
+      "SYN_T_SCALE": "1",
+      "SYN_C_SCALE": "1",
+      "SYN_DRIVE_CELL": "INV_X4",
+      "SYN_OUT_LOAD_FF": "25",
+      "SYN_MAX_TRANS_NS": "0.25",
+      "SYN_WIRE_LOAD": "off",
+      "SYN_CLOCK_NS": "10",
+      "SYN_CORES": "16"
+    },
+    "dc_returncode": 0
+  },
+  "dc_lib_info": {
+    "library": "NangateOpenCellLibrary",
+    "db": "/users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db",
+    "time_unit": "1ns",
+    "cap_unit": "1ff",
+    "operating_condition": "typical",
+    "process": "1.00",
+    "voltage_v": "1.10",
+    "temperature_c": "25.00",
+    "default_wire_load": "5K_hvratio_1_1",
+    "dc_version": "Y-2026.03-SP2",
+    "power_default_toggle_rate": "0.1",
+    "power_default_static_probability": "0.5"
+  }
+}

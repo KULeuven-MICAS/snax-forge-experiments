@@ -1,0 +1,45 @@
+ 
+****************************************
+Report : area
+Design : vsum_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:03:53 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                          384
+Number of nets:                          1245
+Number of cells:                          864
+Number of combinational cells:            632
+Number of sequential cells:               230
+Number of macros/black boxes:               0
+Number of buf/inv:                        153
+Number of references:                      15
+
+Combinational area:                882.056008
+Buf/Inv area:                       83.524001
+Noncombinational area:            1040.059962
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  1922.115971
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  ------------------------------------------------
+vsum_dace                         1922.1160    100.0  156.1420   307.4960  0.0000  vsum_dace
+grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53 1458.4780    75.9 720.8600  723.5200 0.0000 vsum_dace_vsum_dace_Pipeline_VITIS_LOOP_37_1
+grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53/flow_control_loop_pipe_sequential_init_U   14.0980     0.7   5.0540    9.0440 0.0000 vsum_dace_flow_control_loop_pipe_sequential_init
+--------------------------------  ---------  -------  --------  ---------  ------  ------------------------------------------------
+Total                                                 882.0560  1040.0600  0.0000
+
+1

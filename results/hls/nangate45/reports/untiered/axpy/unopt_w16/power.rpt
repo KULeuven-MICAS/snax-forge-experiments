@@ -1,0 +1,57 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:25:53 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 1.768699 mW   (91%)
+  Net Switching Power  = 180.721481 uW    (9%)
+                         ---------
+Total Dynamic Power    = 1.949420 mW  (100%)
+
+Cell Leakage Power     = 617.3625 uW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network  1.509960e+03          0.000000          0.000000        1.509960e+03
+                                                                                 (  58.83%)  i
+register        39.398438         12.516438        2.760700e+05        327.980835
+                                                                                 (  12.78%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational  219.342178        168.204773        3.412926e+05        728.839294
+                                                                                 (  28.40%)
+--------------------------------------------------------------------------------------------------
+Total          1.768700e+03 uW     180.721207 uW     6.173625e+05 nW     2.566780e+03 uW
+1

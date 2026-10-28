@@ -1,0 +1,47 @@
+ 
+****************************************
+Report : area
+Design : vecmul_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:40:15 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         1252
+Number of nets:                         11574
+Number of cells:                         9102
+Number of combinational cells:           8743
+Number of sequential cells:               355
+Number of macros/black boxes:               0
+Number of buf/inv:                        615
+Number of references:                      19
+
+Combinational area:              14802.102066
+Buf/Inv area:                      383.571997
+Noncombinational area:            1605.309942
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 16407.412007
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  --------------------------------------------------------------------------------------
+vecmul_dace                       16407.4120    100.0    234.3460   293.9300  0.0000  vecmul_dace
+grp_vecmul_dace_Pipeline_VITIS_LOOP_19_1_fu_44 15879.1360    96.8   711.0180 1302.3360 0.0000 vecmul_dace_vecmul_dace_Pipeline_VITIS_LOOP_19_1
+grp_vecmul_dace_Pipeline_VITIS_LOOP_19_1_fu_44/flow_control_loop_pipe_sequential_init_U    14.0980     0.1     5.0540    9.0440 0.0000 vecmul_dace_flow_control_loop_pipe_sequential_init
+grp_vecmul_dace_Pipeline_VITIS_LOOP_19_1_fu_44/mul_64s_64s_64_1_1_U1  6925.8420    42.2  6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+grp_vecmul_dace_Pipeline_VITIS_LOOP_19_1_fu_44/mul_64s_64s_64_1_1_U2  6925.8420    42.2  6925.8420    0.0000 0.0000 vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+--------------------------------  ----------  -------  ----------  ---------  ------  --------------------------------------------------------------------------------------
+Total                                                  14802.1021  1605.3099  0.0000
+
+1

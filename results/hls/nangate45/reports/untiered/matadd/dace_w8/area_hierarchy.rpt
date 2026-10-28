@@ -1,0 +1,46 @@
+ 
+****************************************
+Report : area
+Design : matadd_dace
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:33:27 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         4751
+Number of nets:                          6970
+Number of cells:                         2183
+Number of combinational cells:           1544
+Number of sequential cells:               636
+Number of macros/black boxes:               0
+Number of buf/inv:                        117
+Number of references:                      15
+
+Combinational area:               3583.286019
+Buf/Inv area:                       63.840000
+Noncombinational area:            2875.991896
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  6459.277914
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  ------------------------------------------------------
+matadd_dace                       6459.2779    100.0   138.0540   271.3200  0.0000  matadd_dace
+grp_module_matadd_0_0_fu_40       6049.9039     93.7   111.1880   144.7040  0.0000  matadd_dace_module_matadd_0_0
+grp_module_matadd_0_0_fu_40/grp_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2_fu_32 5794.0119    89.7 3328.9900 2450.9239 0.0000 matadd_dace_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2
+grp_module_matadd_0_0_fu_40/grp_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2_fu_32/flow_control_loop_pipe_sequential_init_U   14.0980     0.2    5.0540    9.0440 0.0000 matadd_dace_flow_control_loop_pipe_sequential_init
+--------------------------------  ---------  -------  ---------  ---------  ------  ------------------------------------------------------
+Total                                                 3583.2860  2875.9919  0.0000
+
+1

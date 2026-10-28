@@ -1,0 +1,85 @@
+Information: Updating design information... (UID-85)
+Warning: Design 'rowsum' contains 1 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+ 
+****************************************
+Report : qor
+Design : rowsum
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 20:55:46 2026
+****************************************
+
+
+  Timing Path Group 'clk'
+  -----------------------------------
+  Levels of Logic:           65.00000
+  Critical Path Length:       4.64694
+  Critical Path Slack:        5.22101
+  Critical Path Clk Period:  10.00000
+  Total Negative Slack:       0.00000
+  No. of Violating Paths:     0.00000
+  Worst Hold Violation:       0.00000
+  Total Hold Violation:       0.00000
+  No. of Hold Violations:     0.00000
+  -----------------------------------
+
+
+  Cell Count
+  -----------------------------------
+  Hierarchical Cell Count:          0
+  Hierarchical Port Count:          0
+  Leaf Cell Count:               4440
+  Buf/Inv Cell Count:             333
+  Buf Cell Count:                  43
+  Inv Cell Count:                 290
+  CT Buf/Inv Cell Count:            0
+  Combinational Cell Count:      3014
+  Sequential Cell Count:         1426
+  Macro Count:                      0
+  -----------------------------------
+
+
+  Area
+  -----------------------------------
+  Combinational Area:      4566.95403
+  Noncombinational Area:   6448.37177
+  Buf/Inv Area:             189.12600
+  Total Buffer Area:         34.31400
+  Total Inverter Area:      154.81200
+  Macro/Black Box Area:       0.00000
+  Net Area:                   0.00000
+  -----------------------------------
+  Cell Area:              11015.32580
+  Design Area:            11015.32580
+
+
+  Design Rules
+  -----------------------------------
+  Total Number of Nets:          5763
+  Nets With Violations:             0
+  Max Trans Violations:             0
+  Max Cap Violations:               0
+  -----------------------------------
+
+
+  Hostname: micas-lapserv1.esat.kuleuven.be
+
+  Compile CPU Statistics
+  -----------------------------------------
+  Resource Sharing:                 2.12634
+  Logic Optimization:               7.08608
+  Mapping Optimization:            22.25772
+  -----------------------------------------
+  Overall Compile Time:            61.17983
+  Overall Compile Wall Clock Time: 19.74074
+
+  --------------------------------------------------------------------
+
+  Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
+
+
+  Design (Hold)  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
+
+  --------------------------------------------------------------------
+
+
+1

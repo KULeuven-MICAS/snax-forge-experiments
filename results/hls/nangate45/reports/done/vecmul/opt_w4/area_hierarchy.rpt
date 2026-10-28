@@ -1,0 +1,47 @@
+ 
+****************************************
+Report : area
+Design : vecmul
+Version: Y-2026.03-SP2
+Date   : Wed Oct 28 19:54:09 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         1581
+Number of nets:                         21518
+Number of cells:                        17493
+Number of combinational cells:          16906
+Number of sequential cells:               582
+Number of macros/black boxes:               0
+Number of buf/inv:                       1130
+Number of references:                      29
+
+Combinational area:              28976.710128
+Buf/Inv area:                      713.145994
+Noncombinational area:            2631.803905
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 31608.514033
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  ---------------------------------------------------------------------------------
+vecmul                            31608.5140    100.0   1273.3420  2631.8039  0.0000  vecmul
+mul_64s_64s_64_1_1_U1              6925.8420     21.9   6925.8420     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+mul_64s_64s_64_1_1_U2              6925.8420     21.9   6925.8420     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+mul_64s_64s_64_1_1_U3              6925.8420     21.9   6925.8420     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U4              6925.8420     21.9   6925.8420     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+--------------------------------  ----------  -------  ----------  ---------  ------  ---------------------------------------------------------------------------------
+Total                                                  28976.7101  2631.8039  0.0000
+
+1
