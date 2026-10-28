@@ -1,0 +1,4 @@
+# Synthesis runs stay local (syn/README.md); only results/ is committed
+syn/runs/
+__pycache__/
+*.pyc
