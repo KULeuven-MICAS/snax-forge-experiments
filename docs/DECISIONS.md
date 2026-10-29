@@ -11,8 +11,8 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X5](#x5-results-per-technology) | One results tree and CSV per technology; only `KEPT_REPORTS` committed |
 | [X6](#x6-run-folders-are-kept) | Mapped netlists in `syn/runs/` are kept |
 | [X7](#x7-energy-from-simulated-activity) | Energy from a zero-delay Questa sim of the mapped netlist, then PrimePower, no resynthesis |
-| [X8](#x8-activity-from-the-vcd) | Activity from Questa's VCD read by PT; not Questa's SAIF |
-| [X9](#x9-every-activity-file-is-checked) | Every activity file is checked; annotation coverage alone is not accepted |
+| [X8](#x8-activity-from-the-vcd-through-vcd2saif) | Activity: VCD, then vcd2saif, then `read_saif`; the VCD is deleted at once |
+| [X9](#x9-every-activity-file-is-checked) | The SAIF is checked (DURATION, window, clock toggles) and >= 99 % of nets annotated |
 | [X10](#x10-pt-setup-check) | PT setup check per technology: the forced-activity pair, not P0 against DC |
 | [X11](#x11-flop-energy) | Flop energy compared as clock plus register |
 | [X12](#x12-cycles-and-windows) | Cycles from the first `ap_start` edge to the first `ap_done` edge, as cosim |
@@ -21,6 +21,9 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X15](#x15-python-from-pixi) | Python from the repo's pixi workspace |
 | [X16](#x16-parallel-jobs-from-free-licences) | Parallel jobs from free licences |
 | [X17](#x17-licence-errors) | A tool that fails with a licence error is retried once |
+| [X18](#x18-no-dumps-kept) | No VCD, WLF or compiled design is kept; SAIFs stay in `sim/runs/` |
+| [X19](#x19-stimulus-and-expected-cycles) | Stimulus rand64, 64 beats, seed 0 (rowsum at m8_n64); expected cycles from cosim's line |
+| [X20](#x20-power-results) | `power_pt.csv`'s columns and definitions; checks fail a point but are not stored |
 
 ## Synthesis
 
@@ -75,26 +78,27 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Why:** DC's default activity follows the logic structure, not the work a point does (PITFALLS DC4). The netlist is unplaced, so there is no wire delay to annotate; zero delay gives the activity per cycle the model needs.
 - **Source:** `2026-10-29_pwr_step0.md`, `19c1323`.
 
-### X8. Activity from the VCD
+### X8. Activity from the VCD, through vcd2saif
 
-- **Date:** 2026-10-29
-- **Decision:** activity comes from a Questa VCD of the DUT, read by PT with `read_vcd -zero_delay -strip_path <tb>/<dut> -time {t0 t1}` (ns). `vcd2saif -instance <tb>/<dut> -time t0 t1` (the VCD's unit, ps here) then `read_saif` is the cross-check. Questa's `power report -bsaif` is not used. This replaces the kickoff's "Questa writes the SAIF".
-- **Why:** Questa 2022.4's SAIF is wrong in four ways at zero delay and 13 % low busy, 34 % low idle on vecadd `opt_w8`, with 100 % annotation coverage in PT (PITFALLS Q4). The two VCD routes agree within 0.1 % (vcd2saif / VCD 1.0004 to 1.0010).
-- **Source:** `2026-10-29_pwr_step0.md` (Questa's SAIF against the VCD).
+- **Date:** 2026-10-29 (rewritten for `pwr_r1` the same day)
+- **Decision:** activity comes from a Questa VCD of the DUT's scopes (the netlist's own nets and those of its sub-designs, not the cells'), dumped by the TB from the edge that raises `ap_start` to the done edge. `vcd2saif -instance tb/dut -time t0 t1` cuts the busy window in the VCD's time unit (ps here) into a SAIF, and PT reads it with `read_saif -strip_path tb/dut`. The VCD is deleted right after vcd2saif, whatever the result. Questa's `power report -bsaif` is not used. This replaces the kickoff's "Questa writes the SAIF" and step 0's `read_vcd -zero_delay -time`.
+- **Why:** Questa 2022.4's SAIF is wrong in four ways at zero delay and 13 % low busy, 34 % low idle on vecadd `opt_w8`, with 100 % annotation coverage in PT (PITFALLS Q4). vcd2saif and `read_vcd` agree within 0.1 % (step 0: 1.0004 to 1.0010); a SAIF is small, can be checked in Python (X9) and kept (X18), where a VCD of a long run is not.
+- **Source:** `2026-10-29_pwr_step0.md` (Questa's SAIF against the VCD), `2026-10-29_pwr_r1.md`.
 
 ### X9. Every activity file is checked
 
-- **Date:** 2026-10-29
-- **Decision:** before PT uses an activity file, check it: the clock net toggles 2x per cycle in each window, and each window's length equals its cycle count times the clock period. For a SAIF also T0 + T1 + TX = DURATION on every net. PT's annotation coverage alone is not accepted.
-- **Why:** the defective Questa SAIF showed 3566/3566 nets annotated, like the good files; coverage says a net has a number, not that the number is right.
-- **Source:** `2026-10-29_pwr_step0.md` (For the design: Coverage is not a SAIF check).
+- **Date:** 2026-10-29 (rewritten for `pwr_r1` the same day)
+- **Decision:** before PT, `sim/pwr.py` checks the window's SAIF: T0 + T1 + TX = DURATION on every driven net (a net at Z for the whole window is an undriven wire bit, counted apart; PITFALLS DC5), every entry parsed, DURATION = cycles x clock period, and the clock net's TC = 2 x cycles. After PT, at least 99 % of the design's nets must be annotated from the SAIF (`report_switching_activity`); the list of nets that are not is kept in the run folder. A failed check fails the point.
+- **Why:** coverage alone said 3566/3566 for the defective Questa SAIF too; it says a net has a number, not that the number is right. The clock check caught a lost window edge while building the TB (PITFALLS Q6).
+- **Source:** `2026-10-29_pwr_step0.md` (For the design: Coverage is not a SAIF check), `2026-10-29_pwr_r1.md`.
 
 ### X10. PT setup check
 
 - **Date:** 2026-10-29
 - **Decision:** the PT setup check per technology is the forced-activity pair: `pt_power.tcl` and `dc_readback.tcl` with `PWR_MODE=uniform` (DC's default toggle rate and static probability annotated on every net but the clock), agreeing per power group. P0 (PT with DC's defaults, propagated) against DC's `power.rpt` is not the check.
 - **Why:** with identical annotated activity PT and DC agree to 0.00 % in every group; with default activity they differ by 2.4 % (register 35 %) because their vectorless propagation differs, which says nothing about the setup (PITFALLS PT2).
-- **Source:** `2026-10-29_pwr_step0.md` (P0 against DC).
+- **Status:** `pwr setup-check` implements it (every group within 0.1 %). nangate45 passes; nangate15 does not (combinational +1.95 %, PITFALLS PT5), an open question for that technology's results.
+- **Source:** `2026-10-29_pwr_step0.md` (P0 against DC), `2026-10-29_pwr_r1.md`.
 
 ### X11. Flop energy
 
@@ -106,7 +110,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 ### X12. Cycles and windows
 
 - **Date:** 2026-10-29
-- **Decision:** a run's cycles count rising edges from the first edge that samples `ap_start` = 1 to the first edge that samples `ap_done` = 1. The busy window opens at the falling edge before the first start edge and closes at the falling edge before the done edge (the TB's `$stop`, `onbreak {resume}` in the do-file).
+- **Decision:** a run's cycles count rising edges from the first edge that samples `ap_start` = 1 to the first edge that samples `ap_done` = 1. The busy window opens at the falling edge before the first start edge and closes at the falling edge before the done edge (`sim/tb/ap_ctrl_hs_seq.sv` prints both; step 0 marked them with `$stop`).
 - **Why:** this count equals cosim's latency with no offset (66 against 66 on vecadd `opt_w8`). Falling-edge boundaries hold exactly the transitions of the rising edges inside the window, since nothing toggles at a falling edge.
 - **Source:** `2026-10-29_pwr_step0.md` (Simulation: Result, Windows).
 
@@ -135,13 +139,12 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 
 ### X16. Parallel jobs from free licences
 
-- **Date:** 2026-10-29 (synthesis since 2026-10-28)
-- **Decision:** count free licences with `lmutil lmstat` before a batch, then:
-  - simulations at once: min(free `msimhdlsim`, nproc);
-  - PT runs at once: min(free PrimePower, free PrimeTime, nproc // 4); each run holds one of each, and `update_power` uses 4 threads;
+- **Date:** 2026-10-29 (rewritten for `pwr_r1` the same day; synthesis since 2026-10-28)
+- **Decision:** count free licences with `lmutil lmstat` on both servers at the start of a batch, then:
+  - power (`pwr run`): J = min(free `msimhdlsim`, free PrimePower, free PrimeTime, nproc) workers; each worker runs one point from start to end (compile, then per run vsim, vcd2saif and PT). PT threads per run = max(1, nproc // J) (`set_host_options -max_cores`). The counts, J and the threads go into the run note;
   - DC runs (`syn.py -j`): from free Design-Compiler licences (9 free gave `-j 2`), at `--cores 16` per run.
-- **Why:** a job that cannot check out a licence fails or waits; more jobs than cores slow every job.
-- **Source:** `2026-10-29_pwr_step0.md` (Licences), `2026-10-28_tech_rerun.md` (Commands).
+- **Why:** a job that cannot check out a licence fails or waits; J workers with nproc // J threads each use the cores without oversubscribing them.
+- **Source:** `2026-10-29_pwr_step0.md` (Licences), `2026-10-28_tech_rerun.md` (Commands), `2026-10-29_pwr_r1.md`.
 
 ### X17. Licence errors
 
@@ -149,3 +152,35 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Decision:** a tool that fails with a licence error is retried once; a second failure stops and is reported.
 - **Why:** licence errors can be transient: DC failed once with error -92 during an `lmreread` with 0 of 10 in use, and the rerun seconds later worked (PITFALLS L1).
 - **Source:** `2026-10-29_pwr_step0.md` (Licences).
+
+## Power runs
+
+### X18. No dumps kept
+
+- **Date:** 2026-10-29
+- **Decision:** no VCD, WLF or compiled design library is kept. The VCD is deleted right after vcd2saif, whatever the result; `vsim.wlf` and the point's compiled `work/` at the end of each point. A run folder keeps `tb.json`, the stimulus, the logs, the SAIF, the PT reports and the list of nets not annotated. SAIFs stay in `sim/runs/` (git ignores it); only the reports in X20 are committed.
+- **Why:** a VCD grows with nets x cycles (16.9 MB for vecadd `unopt_w32`, 6273 cycles) and is fully replaced by its SAIF (2.3 MB there); WLF and the compiled library are rebuilt in about 2 s.
+- **Source:** `2026-10-29_pwr_r1.md`.
+
+### X19. Stimulus and expected cycles
+
+- **Date:** 2026-10-29
+- **Decision:** the default stimulus is `rand64`: uniform full-range int64 from numpy `default_rng(seed)`, seed 0, drawn stream by stream in `tb.json` order, then the data pins (axpy's alpha). Every point runs 64 beats whatever W: loop_count = 64 (and len = 64 for dot and vsum), so n = 64 x W elements; matadd loop_count = 64. rowsum runs its cosim size m8_n64 as is. Every input stream bit must toggle at least once before the sim. `--stim forge` (hls-exercises' `data.h` at a cosim size, with `sim/ref.py` asserted equal to its `EXP_*`) is for validation only. Expected cycles come from `results/hls/hls_cycles.csv`: cosim's two sizes of the point give cycles = a x loop_count + b, with a and b integers; at a cosim size the comparison is exact. A mismatch fails the point.
+- **Why:** full-range data toggles every bit, so the energy does not depend on how narrow a test's values are (forge's data cost 4.3 % less per busy cycle in step 0); 64 beats keeps every W's run the same work per beat. The cycle line checks the netlist against cosim at sizes cosim never ran.
+- **Source:** `2026-10-29_pwr_step0.md` (forge against full), `2026-10-29_pwr_r1.md`.
+
+### X20. Power results
+
+- **Date:** 2026-10-29
+- **Decision:** `results/hls/<tech>/power_pt.csv`, one row per point, size and seed (merged on those three), columns in this order:
+  - `point`, `top`, `tech`, `clock_ns`, `W`, `size` (`b64`, or a cosim size), `config` (the pins, e.g. `loop_count=64`), `beats` (beats per input stream), `seed` (`forge` for the forge stimulus), `cycles`;
+  - `e_clk_pj`, `e_reg_pj`, `e_seq_pj`, `e_comb_pj`: (internal + switching) of each PT power group x `clock_ns`, per cycle of the busy window;
+  - `e_flop_pj` = e_clk + e_reg + e_seq; `e_dyn_pj` = e_flop + e_comb; `p_dyn_uw` = e_dyn / clock_ns x 1000;
+  - `e_comb_fire_pj`, `e_flop_fire_pj` = per cycle x cycles / beats; `e_run_pj` = e_dyn x cycles;
+  - `flop_bits` = `seq_cells` of the point in `synth_dc.csv`; `e_bit_pj` = e_flop / flop_bits;
+  - `status`: `ok`, `failed: <which check>`, or `skipped: needs a RAM macro (...)` (a `# ram:` point, as syn.py);
+  - `tb_md5`: the md5 of the run's `tb.json` (X14).
+
+  No leakage columns (X13). `power_pt_modules.csv` (`point, tech, path, design, e_dyn_pj`) has one row per hierarchical cell of the default run. Committed per point in `power_reports/<tier>/<kernel>/<point>/`: `power.rpt`, `power_hierarchy.rpt`, `switching_activity.rpt`, `tb.json` (other runs of the point in a subfolder `<size>_<seed>/`). The checks (X9, X19) fail a point but are not stored as columns; tool versions go in the run note.
+- **Why:** the HWCOST model needs energy per cycle and per firing, split into combinational and flop energy, across the W sweeps; everything else is either a check or recoverable from the run folder.
+- **Source:** `2026-10-29_pwr_r1.md`.

@@ -1,6 +1,6 @@
 # Pitfalls
 
-Tool behaviour that gives wrong numbers, or no numbers, without an error. Grouped by tool. Each entry: symptom, cause, fix or check, and the run note (in `results/hls/runs/`) that found it. The decisions they led to are in [`DECISIONS.md`](DECISIONS.md).
+Tool behaviour that gives wrong numbers, or no numbers, without an error. Grouped by tool (and the environment). Each entry: symptom, cause, fix or check, and the run note (in `results/hls/runs/`) that found it. The decisions they led to are in [`DECISIONS.md`](DECISIONS.md).
 
 ## DC
 
@@ -31,6 +31,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** with no vectors DC sets toggle rate 0.1 and static probability 0.5 on the inputs and propagates them through whatever logic sits in front of the multipliers, whether or not that logic works in a real run.
 - **Fix or check:** the `e_*_pj` columns of `synth_dc.csv` compare points only as far as the default activity holds; energy comparisons use simulated activity (X7).
 - **Found in:** `2026-10-28_tech_rerun.md` (Odd things).
+
+### DC5. Undriven bits in declared vector wires
+
+- **Symptom:** a SAIF from vcd2saif has entries with `(T0 0) (T1 0) (TX 0) (TZ <DURATION>) (TC 0)`: 2 in vecadd `opt_w8` (`b_fu_76[1]`, ...), 2044 in `unopt_w32` (2043 of them bits of `zext_ln170_reg_255`). A parser that expects TC right after TX skips them without a word, and a check of T0 + T1 + TX = DURATION then misses them (the first version of `sim/pwr.py`'s check did).
+- **Cause:** DC keeps a vector wire's declaration (`wire [2047:0] zext_ln170_reg_255;`) after removing the logic behind most of its bits, or connects only a flop's QN (`b_fu_76_reg[1]`). Those bits have no driver, sit at Z the whole simulation, and are not nets in PT.
+- **Fix or check:** parse the optional TZ, count an all-Z entry apart, fail a net that is Z for part of the window, and fail when the parser matches fewer entries than the SAIF has `(T0` fields (`saif_check` in `sim/pwr.py`).
+- **Found in:** `2026-10-29_pwr_r1.md`.
 
 ## Libraries
 
@@ -101,8 +108,15 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 
 - **Symptom:** the VCD of vecadd `opt_w8` (3572 nets, 275 cycles, reset and both windows) is 749,555 bytes, 0.75 MB; it grows with nets and cycles.
 - **Cause:** a VCD stores every transition.
-- **Fix or check:** large points or long runs may need per-window dumps (`vcd on` / `vcd off` around the windows, or one VCD per window) or `read_vcd -pipe_exec`.
-- **Found in:** `2026-10-29_pwr_step0.md` (Activity files, For the design).
+- **Fix or check:** dump only the window and delete the VCD after vcd2saif (X8, X18), as `sim/pwr.py` does: the largest VCD of `pwr_r1` was 16.9 MB (vecadd `unopt_w32`, 6273 cycles), its SAIF 2.3 MB. `read_vcd -pipe_exec` is the other way out.
+- **Found in:** `2026-10-29_pwr_step0.md` (Activity files, For the design), `2026-10-29_pwr_r1.md`.
+
+### Q6. `$dumpon` at a window boundary loses the boundary's clock edge
+
+- **Symptom:** the SAIF of vecadd `opt_w8`'s busy window has `ap_clk` TC 131 for 66 cycles, not 132; everything else looks normal.
+- **Cause:** the window boundaries sit on falling edges (X12). `$dumpon` at the opening falling edge writes the values after that edge, so its transition is not a value change in the VCD, and vcd2saif does not count it.
+- **Fix or check:** dump from the rising edge before the window (the edge that raises `ap_start`) to the rising edge after it (the done edge), and let `vcd2saif -time t0 t1` cut the window: TC 132 and energy as step 0 (`sim/tb/ap_ctrl_hs_seq.sv`). X9's clock check catches it.
+- **Found in:** `2026-10-29_pwr_r1.md` (building the TB).
 
 ## PrimeTime
 
@@ -134,6 +148,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** take the VCD's timescale from its header and convert; X9's window-length check catches a wrong unit.
 - **Found in:** `2026-10-29_pwr_step0.md` (Commands, For the design).
 
+### PT5. nangate15: PT and DC differ on input-pin internal power
+
+- **Symptom:** the setup check (X10) fails on nangate15: with the same uniform activity on every net, PT's combinational group is +1.95 % above DC's (internal +3.66 %, 15.469 against 14.922 µW; switching -0.12 %), register -0.08 %, clock -0.0003 %, leakage equal. nangate45 agrees within 0.0013 %.
+- **Cause:** nangate15's cells have input-pin `internal_power` groups for toggles that do not switch the output (`when : "!A2 & ZN"` on NAND2_X1), and negative table entries (97 in NAND2_X1); nangate45 has neither. PT books more of it than DC: per cell type, internal power differs on NAND4_X1 (+32 %), NOR4_X1, OAI21_X1 and AND4_X1 (about +15 % each), NAND2_X1 (+14 %), AOI22_X1 (+10 %), NOR2_X1 (+8 %), while DFFSNQ_X1, FA_X1, XOR2/XNOR2, INV and BUF agree within 0.03 %. The switching difference (up to -1.3 % on NAND2/NOR2) is consistent with nangate15's `rise/fall_capacitance_range`; not traced further.
+- **Fix or check:** none yet: the setup is the same in both tools (netlist, loads, constraints, leakage equal), but the 0.1 % criterion cannot pass on nangate15. Open for the nangate15 power results (X10 status).
+- **Found in:** `2026-10-29_pwr_r1.md` (setup-check).
+
 ## Licences
 
 ### L1. Transient error -92 from DC
@@ -156,3 +177,12 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** it is put on PATH from `~/.bashrc`, which a non-interactive shell may not read; earlier runs used Vivado's `lmutil`.
 - **Fix or check:** set `LMUTIL` to the binary (Questa's: `/esat/micas-data/software/Mentor/questasim_2022.4/linux_x86_64/lmutil`).
 - **Found in:** `2026-10-28_step0_libs.md`, `2026-10-29_pwr_step0.md` (Tools).
+
+## Environment
+
+### E1. `pixi run python -c "..."` loses the inner quotes
+
+- **Symptom:** `SyntaxError` from a one-liner that runs under plain `python -c`: `'...'` strings inside the double-quoted code arrive without their quotes.
+- **Cause:** pixi runs the command through its own task shell, which parses the quoting again.
+- **Fix or check:** put the code in a script file and run `pixi run python <file>` (or a heredoc to `pixi run python -`).
+- **Found in:** `2026-10-29_pwr_r1.md`.

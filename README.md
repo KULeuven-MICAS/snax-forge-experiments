@@ -30,7 +30,8 @@ repo too, or are pointed to with environment variables.
 |---|---|
 | `syn/` | ASIC synthesis with Design Compiler on the Nangate 45 nm and 15 nm Open Cell Libraries, one tech file per technology in `syn/tech/` ([`syn/README.md`](syn/README.md)). Runs stay local in `syn/runs/`. |
 | `results/hls/` | hls-exercises' bench summaries (`hls_cycles.csv`, `hls_loops.csv`, `forge_cycles.csv`, `report_<tier>.md`) and the run notes in `runs/`. hls-exercises' `bench/bench.py` writes here. |
-| `results/hls/<tech>/` | The synthesis results per technology (`nangate45`, `nangate15`): `synth_dc.csv`, `synth_dc_modules.csv` and every run's reports in `reports/`. `syn/syn.py` writes here. |
+| `sim/` | Gate-level simulation and PrimePower: `pwr.py` (the driver), `sources/` (tb.json adapters), `ref.py`, `tb/`, `scripts/`, and step 0's `probe/` ([`docs/power.md`](docs/power.md)). Runs stay local in `sim/runs/`. |
+| `results/hls/<tech>/` | The results per technology (`nangate45`, `nangate15`): `synth_dc.csv`, `synth_dc_modules.csv` and every run's reports in `reports/` (`syn/syn.py`); `power_pt.csv`, `power_pt_modules.csv` and `power_reports/` (`sim/pwr.py`). |
 
 Planned:
 
@@ -41,9 +42,11 @@ Planned:
 ## Run
 
 ```bash
-python3.11 syn/syn.py list 'done/vecadd/*'                    # hls-exercises' points
-python3.11 syn/syn.py run done/vecadd/opt_w8 --tech nangate45 # one point at 10 ns on nangate45
-python3.11 syn/syn.py summary                                 # every run so far, both technologies
+pixi install                                                  # once: the repo's Python (docs X15)
+pixi run syn list 'done/vecadd/*'                             # hls-exercises' points
+pixi run syn run done/vecadd/opt_w8 --tech nangate45          # one point at 10 ns on nangate45
+pixi run syn summary                                          # every run so far, both technologies
+pixi run pwr run 'done/vecadd/*' --tech nangate45             # dynamic energy of the synthesized points (docs/power.md)
 ```
 
 ## Synthesis
@@ -60,4 +63,4 @@ Caveats:
 - The HLS points are int64 only.
 - Run notes in `results/hls/runs/` before 28 Oct 2026 are on gscl45nm (FreePDK45), now retired.
 
-Python 3.7 or newer, standard library only. On the ESAT servers, use `python3.11`.
+Python comes from the repo's pixi workspace (`pixi.toml`); the EDA tools from PATH (docs/README.md).
