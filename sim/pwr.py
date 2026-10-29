@@ -25,6 +25,7 @@ Results: results/hls/<tech>/power_pt.csv (one row per point, size and seed), pow
 
 Parallel workers J = min(free msimhdlsim, free PrimePower, free PrimeTime, nproc) from lmutil lmstat;
 PT threads per run = max(1, nproc // J) (X16). A tool that fails on a licence error is retried once (X17).
+setup-check: every power group within 0.1%, nangate15's combinational within 2.5% (X10).
 
 Environment, all optional:
   PT_SHELL   pt_shell (else PATH)          LMUTIL    lmutil (else PATH)
@@ -36,7 +37,6 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
-import hashlib
 import importlib.util
 import json
 import os
@@ -71,14 +71,17 @@ DC_READBACK = SIM / "probe" / "dc_readback.tcl"
 TB_TOP, DUT = "tb", "dut"
 CLOCK_NS = 10.0
 SETUP_POINT = "done/vecadd/opt_w8"
-SETUP_TOL = 1e-3            # setup-check: every power group within 0.1%
+SETUP_TOL = 1e-3            # setup-check: every power group within 0.1% ...
+# ... except where PT and DC are known to differ on a library feature, not on the setup (docs X10):
+# nangate15's non-switching internal power on inverting multi-input cells (PITFALLS PT5). PT is the reference.
+SETUP_TOL_GROUP = {("nangate15", "combinational"): 2.5e-2}
 MIN_ANNOTATED = 99.0        # percent of nets annotated from the SAIF
 # Questa cell models, next to each technology's .db, with the vlog options they need
 CELL_MODELS = {"nangate45": ("NangateOpenCellLibrary.v", []),
                "nangate15": ("NanGate_15nm_OCL_functional.v", ["-timescale", "1ns/1ps"])}
 COLUMNS = ["point", "top", "tech", "clock_ns", "W", "size", "config", "beats", "seed", "cycles",
            "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw",
-           "e_comb_fire_pj", "e_flop_fire_pj", "e_run_pj", "flop_bits", "e_bit_pj", "status", "tb_md5"]
+           "e_comb_fire_pj", "e_flop_fire_pj", "e_run_pj", "flop_bits", "e_bit_pj", "status"]
 MODULE_COLUMNS = ["point", "tech", "path", "design", "e_dyn_pj"]
 KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
 LICENCE_ERR = re.compile(r"(?i)(licen[sc]\w*\s+(error|fail\w*|not available|denied|checkout)|unable to check\s*out"
@@ -554,7 +557,6 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
         shutil.rmtree(pdir / stale, ignore_errors=True)
     tb_text = json.dumps(tb, indent=1) + "\n"
     (pdir / "tb.json").write_text(tb_text)
-    tb_md5 = hashlib.md5(tb_text.encode()).hexdigest()
     t_point = time.time()
     try:
         compile_times = {}
@@ -571,7 +573,7 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
             times = dict(compile_times) if not out else {}
             base = {c: "" for c in COLUMNS}
             base.update({"point": point, "top": tb["top"], "tech": tech, "clock_ns": _num(CLOCK_NS), "W": tb["W"],
-                         "size": size, "seed": "forge" if stim == "forge" else seed, "tb_md5": tb_md5})
+                         "size": size, "seed": "forge" if stim == "forge" else seed})
             info = {"run": str((pdir / run_tag(size, stim, seed)).relative_to(ROOT)), "times": times,
                     "default": (stim, seed, size) == ("rand64", 0, hls.default_size(tb))}
             try:
@@ -746,7 +748,7 @@ def cmd_setup_check(args) -> int:
     pt, dc = pt_groups(base / "pt" / "reports"), dc_groups(base / "dc" / "reports" / "power.rpt")
     ok, table = True, []
     print(f"setup-check {tech} {point}: uniform activity, PT against DC (PT {t_pt:.1f} s, DC {t_dc:.1f} s)")
-    print(f"{'group':<14} {'PT dyn uW':>12} {'DC dyn uW':>12} {'diff %':>8} {'PT leak uW':>12} {'DC leak uW':>12} {'diff %':>8}")
+    print(f"{'group':<14} {'PT dyn uW':>12} {'DC dyn uW':>12} {'diff %':>8} {'PT leak uW':>12} {'DC leak uW':>12} {'diff %':>8} {'tol %':>6}")
     for g in syn.POWER_GROUPS:
         pd, dd = pt[g][0] + pt[g][1], dc[g][0] + dc[g][1]
         pl, dl = pt[g][2], dc[g][2]
@@ -754,15 +756,17 @@ def cmd_setup_check(args) -> int:
         def rel(a, b):
             return 0.0 if max(abs(a), abs(b)) < 1e-9 else (a - b) / b if b else float("inf")
         rd, rl = rel(pd, dd), rel(pl, dl)
-        good = abs(rd) <= SETUP_TOL and abs(rl) <= SETUP_TOL
+        tol = SETUP_TOL_GROUP.get((tech, g), SETUP_TOL)
+        good = abs(rd) <= tol and abs(rl) <= tol
         ok &= good
         table.append({"group": g, "pt_dyn_uw": pd, "dc_dyn_uw": dd, "dyn_diff": rd, "pt_leak_uw": pl,
-                      "dc_leak_uw": dl, "leak_diff": rl, "ok": good})
-        print(f"{g:<14} {pd:12.6g} {dd:12.6g} {100 * rd:8.4f} {pl:12.6g} {dl:12.6g} {100 * rl:8.4f}"
+                      "dc_leak_uw": dl, "leak_diff": rl, "tol": tol, "ok": good})
+        print(f"{g:<14} {pd:12.6g} {dd:12.6g} {100 * rd:8.4f} {pl:12.6g} {dl:12.6g} {100 * rl:8.4f} {100 * tol:6g}"
               f"{'' if good else '  FAIL'}")
     (base / "check.json").write_text(json.dumps({"tech": tech, "point": point, "ok": ok, "groups": table,
                                                  "pt_s": t_pt, "dc_s": t_dc}, indent=1) + "\n")
-    print(f"setup-check {tech}: {'PASS' if ok else 'FAIL'} (every group within {100 * SETUP_TOL:g}%)")
+    print(f"setup-check {tech}: {'PASS' if ok else 'FAIL'} (every group within its tolerance: {100 * SETUP_TOL:g}%"
+          + "".join(f", {g} {100 * v:g}%" for (t_, g), v in SETUP_TOL_GROUP.items() if t_ == tech) + ")")
     return 0 if ok else 1
 
 
