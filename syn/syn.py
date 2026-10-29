@@ -7,9 +7,9 @@ hardware point: case and W, every size runs on it), holding Vitis's Verilog and
 a filelist.f that hls-exercises' bench/bench.py writes. Patterns are shell
 globs over those names.
 
-  python3 syn/syn.py list    [PATTERN ...] [--tech T]
-  python3 syn/syn.py run     PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run]
-  python3 syn/syn.py summary [PATTERN ...] [--tech T]
+  pixi run syn list    [PATTERN ...] [--tech T]
+  pixi run syn run     PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run]
+  pixi run syn summary [PATTERN ...] [--tech T]
 
 A technology is a file syn/tech/<tech>.json: the library (.db path and the
 library name it must hold), its time and capacitance units, the driving cell,

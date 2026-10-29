@@ -16,6 +16,10 @@ ASIC synthesis with Design Compiler, on a technology chosen per run: the Nangate
                             tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db
 ```
 
+## Environment
+
+The repo has its own pixi workspace (`pixi.toml` at the root: Python 3.11 and numpy, nothing else). Run `pixi install` once from the repo root, then run every script through pixi: `pixi run syn ...` (tasks run from the repo root and take their arguments after the task name). The EDA tools (`dc_shell`, and later `vsim`, `pt_shell`, `lmutil`) come from the shell's PATH; pixi only puts its own `bin/` in front.
+
 ## Technologies
 
 A technology is one file, `tech/<tech>.json`. `run` needs `--tech <tech>`; there is no default library.
@@ -54,12 +58,12 @@ No wire-load model applies on either library. On nangate45, whose library sets `
 A point is named `<tier>/<kernel>/<point>`, the folder under hls-exercises' `rtl/` (for example `done/vecadd/opt_w8`, one hardware point that every size runs on). Patterns are shell globs over those names; quote them.
 
 ```bash
-python3.11 syn/syn.py list 'done/vecadd/*'                                  # the points a pattern picks
-python3.11 syn/syn.py run done/vecadd/opt_w8 --tech nangate45 --dry-run     # print the commands only
-python3.11 syn/syn.py run done/vecadd/opt_w8 --tech nangate45               # one point at 10 ns
-python3.11 syn/syn.py run 'done/*/opt_w8' --tech nangate15 -j 2             # several, 2 DC runs at once
-python3.11 syn/syn.py summary --tech nangate15                              # every nangate15 run so far
-python3.11 syn/syn.py list --tech nangate45                                 # the points with a nangate45 row
+pixi run syn list 'done/vecadd/*'                                           # the points a pattern picks
+pixi run syn run done/vecadd/opt_w8 --tech nangate45 --dry-run              # print the commands only
+pixi run syn run done/vecadd/opt_w8 --tech nangate45                        # one point at 10 ns
+pixi run syn run 'done/*/opt_w8' --tech nangate15 -j 2                      # several, 2 DC runs at once
+pixi run syn summary --tech nangate15                                       # every nangate15 run so far
+pixi run syn list --tech nangate45                                          # the points with a nangate45 row
 ```
 
 `--clock` is the ASIC clock period in ns (default 10). `--cores` is the cores per DC run (default 16). `-j` is the number of DC runs at once, each of which holds a license. Without `--tech`, `list` lists the points and `summary` shows every technology.
