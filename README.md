@@ -22,6 +22,8 @@ repo too, or are pointed to with environment variables.
                             tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db
 ```
 
+**Docs:** [`docs/`](docs/README.md) holds the settled decisions (`DECISIONS.md`, X1, X2, ...) and the tool pitfalls (`PITFALLS.md`); check new work against both.
+
 ## Layout
 
 | Folder | What it holds |

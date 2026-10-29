@@ -132,6 +132,7 @@ Only those eight files are committed per run (`KEPT_REPORTS` at the top of `syn.
 - `fmax_mhz` is a lower bound: at 10 ns DC meets timing with room to spare and does not upsize for speed.
 - The HLS points are int64 only.
 - Run notes in `results/hls/runs/` before 28 Oct 2026 are on gscl45nm (FreePDK45), now retired.
+- The DC, library, Questa, PrimeTime and licence pitfalls found so far are in [`docs/PITFALLS.md`](../docs/PITFALLS.md).
 
 ## Files
 
