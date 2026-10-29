@@ -1,0 +1,24 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : vecmul_dace
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:19:02 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+vecmul_dace                           7.844621e-04              9.186306e-04              3.372304e-04              2.040323e-03              100.0
+  grp_module_vecmul_0_0_fu_40 (vecmul_dace_module_vecmul_0_0) 7.727958e-04        9.184462e-04        3.330074e-04        2.024249e-03         99.2
+    grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 (vecmul_dace_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1) 7.664465e-04        9.183034e-04        3.301310e-04        2.014881e-03         98.8
+      flow_control_loop_pipe_sequential_init_U (vecmul_dace_flow_control_loop_pipe_sequential_init) 3.837841e-07        1.862991e-08        1.522198e-07        5.546339e-07          0.0
+      mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 1.461747e-04        1.958906e-04        7.294594e-05        4.150113e-04         20.3
+      mul_64s_64s_64_1_1_U2 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 1.464297e-04        1.958867e-04        7.292395e-05        4.152404e-04         20.4
+      mul_64s_64s_64_1_1_U3 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 1.478962e-04        1.979619e-04        7.289476e-05        4.187528e-04         20.5
+      mul_64s_64s_64_1_1_U4 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 1.475440e-04        1.980798e-04        7.291115e-05        4.185349e-04         20.5
+1

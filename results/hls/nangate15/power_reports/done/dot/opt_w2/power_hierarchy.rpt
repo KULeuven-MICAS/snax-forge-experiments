@@ -1,0 +1,19 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : dot
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:18:37 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+dot                                   4.833275e-04              4.704322e-04              1.941016e-04              1.147861e-03              100.0
+  mul_64s_64s_64_1_1_U1 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 1.484003e-04        1.864169e-04        7.276864e-05        4.075859e-04         35.5
+  mul_64s_64s_64_1_1_U2 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 1.473375e-04        1.846979e-04        7.285124e-05        4.048866e-04         35.3
+1

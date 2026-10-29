@@ -1,0 +1,19 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : axpy
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:33:01 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+axpy                                  4.637312e-04              3.444896e-04              2.032818e-04              1.011503e-03              100.0
+  mul_64s_64s_64_1_1_U1 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 1.310089e-04        1.377872e-04        7.621644e-05        3.450126e-04         34.1
+  mul_64s_64s_64_1_1_U2 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 1.296900e-04        1.355800e-04        7.615648e-05        3.414264e-04         33.8
+1

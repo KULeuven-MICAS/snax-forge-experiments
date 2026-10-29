@@ -1,0 +1,25 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : dot
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:27:57 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+dot                                   4.739373e-03              3.545325e-03              1.393228e-03              9.677926e-03              100.0
+  mul_64s_64s_64_1_1_U1 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7) 3.821154e-04        3.630922e-04        1.408292e-04        8.860368e-04          9.2
+  mul_64s_64s_64_1_1_U2 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6) 3.822656e-04        3.542347e-04        1.403754e-04        8.768757e-04          9.1
+  mul_64s_64s_64_1_1_U3 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5) 3.856432e-04        3.612287e-04        1.414981e-04        8.883700e-04          9.2
+  mul_64s_64s_64_1_1_U4 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4) 3.811420e-04        3.589469e-04        1.432899e-04        8.833787e-04          9.1
+  mul_64s_64s_64_1_1_U5 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 3.802866e-04        3.629316e-04        1.409302e-04        8.841485e-04          9.1
+  mul_64s_64s_64_1_1_U6 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 3.733389e-04        3.490611e-04        1.396993e-04        8.620992e-04          8.9
+  mul_64s_64s_64_1_1_U7 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 3.860861e-04        3.660502e-04        1.408649e-04        8.930013e-04          9.2
+  mul_64s_64s_64_1_1_U8 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 3.862322e-04        3.584843e-04        1.410445e-04        8.857611e-04          9.2
+1

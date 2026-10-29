@@ -1,0 +1,36 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : vecmul_dace
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:29:17 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+vecmul_dace                           1.046527e-02              9.924543e-03              2.539014e-03              2.292883e-02              100.0
+  grp_module_vecmul_0_0_fu_40 (vecmul_dace_module_vecmul_0_0) 1.042465e-02        9.923466e-03        2.531271e-03        2.287938e-02         99.8
+    grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 (vecmul_dace_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1) 1.040333e-02        9.922794e-03        2.526040e-03        2.285216e-02         99.7
+      flow_control_loop_pipe_sequential_init_U (vecmul_dace_flow_control_loop_pipe_sequential_init) 1.346265e-06        1.123192e-07        2.879173e-07        1.746501e-06          0.0
+      mul_64s_64s_64_1_1_U10 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6) 5.335441e-04        5.439536e-04        1.424911e-04        1.219989e-03          5.3
+      mul_64s_64s_64_1_1_U11 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5) 5.304274e-04        5.427188e-04        1.425850e-04        1.215731e-03          5.3
+      mul_64s_64s_64_1_1_U12 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4) 5.309795e-04        5.423332e-04        1.425231e-04        1.215836e-03          5.3
+      mul_64s_64s_64_1_1_U13 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 5.328302e-04        5.478524e-04        1.432494e-04        1.223932e-03          5.3
+      mul_64s_64s_64_1_1_U14 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 5.271013e-04        5.393890e-04        1.423533e-04        1.208844e-03          5.3
+      mul_64s_64s_64_1_1_U15 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 5.292314e-04        5.408432e-04        1.438530e-04        1.213928e-03          5.3
+      mul_64s_64s_64_1_1_U16 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 5.347673e-04        5.485604e-04        1.432282e-04        1.226556e-03          5.3
+      mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15) 5.305880e-04        5.427420e-04        1.432704e-04        1.216600e-03          5.3
+      mul_64s_64s_64_1_1_U2 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14) 5.214278e-04        5.373039e-04        1.421505e-04        1.200882e-03          5.2
+      mul_64s_64s_64_1_1_U3 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13) 5.309754e-04        5.455859e-04        1.434040e-04        1.219965e-03          5.3
+      mul_64s_64s_64_1_1_U4 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12) 5.316993e-04        5.481252e-04        1.428731e-04        1.222698e-03          5.3
+      mul_64s_64s_64_1_1_U5 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11) 5.224402e-04        5.392961e-04        1.426184e-04        1.204355e-03          5.3
+      mul_64s_64s_64_1_1_U6 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10) 5.309022e-04        5.484775e-04        1.424411e-04        1.221821e-03          5.3
+      mul_64s_64s_64_1_1_U7 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9) 5.279172e-04        5.396734e-04        1.423244e-04        1.209915e-03          5.3
+      mul_64s_64s_64_1_1_U8 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8) 5.242965e-04        5.352381e-04        1.432336e-04        1.202768e-03          5.2
+      mul_64s_64s_64_1_1_U9 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7) 5.252947e-04        5.357576e-04        1.433981e-04        1.204450e-03          5.3
+1

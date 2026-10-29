@@ -1,0 +1,65 @@
+{
+ "tb_version": 1,
+ "point": "untiered/rowsum/unopt_w32",
+ "kernel": "rowsum",
+ "top": "rowsum",
+ "case": "unopt",
+ "W": 32,
+ "clock": {
+  "port": "ap_clk"
+ },
+ "reset": {
+  "port": "ap_rst_n",
+  "active": "low",
+  "sync": true
+ },
+ "control": {
+  "kind": "ap_ctrl_hs",
+  "start": "ap_start",
+  "done": "ap_done",
+  "ready": "ap_ready",
+  "idle": "ap_idle"
+ },
+ "streams": [
+  {
+   "arg": "A",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 32,
+   "dtype": "int64",
+   "data": "A_TDATA",
+   "valid": "A_TVALID",
+   "ready": "A_TREADY"
+  },
+  {
+   "arg": "y",
+   "dir": "out",
+   "kind": "axis",
+   "lanes": 1,
+   "dtype": "int64",
+   "data": "y_TDATA",
+   "valid": "y_TVALID",
+   "ready": "y_TREADY"
+  }
+ ],
+ "pins": [
+  {
+   "port": "loop_count",
+   "bits": 32,
+   "vld": "loop_count_ap_vld",
+   "from": "config"
+  },
+  {
+   "port": "len",
+   "bits": 32,
+   "vld": "len_ap_vld",
+   "from": "config"
+  }
+ ],
+ "sizes": {
+  "m8_n64": {
+   "loop_count": 16,
+   "len": 2
+  }
+ }
+}

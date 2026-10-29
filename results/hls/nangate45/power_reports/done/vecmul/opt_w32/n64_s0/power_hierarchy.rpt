@@ -1,0 +1,49 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : vecmul
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:29:15 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+vecmul                                1.212990e-02              1.055149e-02              4.880488e-03              2.756188e-02              100.0
+  mul_64s_64s_64_1_1_U10 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_22) 2.706737e-04        2.784342e-04        1.373047e-04        6.864126e-04          2.5
+  mul_64s_64s_64_1_1_U11 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_21) 2.749197e-04        2.818584e-04        1.379397e-04        6.947177e-04          2.5
+  mul_64s_64s_64_1_1_U12 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_20) 2.601958e-04        2.674727e-04        1.350768e-04        6.627454e-04          2.4
+  mul_64s_64s_64_1_1_U13 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_19) 2.598921e-04        2.683889e-04        1.391612e-04        6.674422e-04          2.4
+  mul_64s_64s_64_1_1_U14 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_18) 2.584441e-04        2.695440e-04        1.383008e-04        6.662890e-04          2.4
+  mul_64s_64s_64_1_1_U15 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_17) 2.875256e-04        2.941649e-04        1.363403e-04        7.180308e-04          2.6
+  mul_64s_64s_64_1_1_U16 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_16) 2.526868e-04        2.625532e-04        1.380850e-04        6.533250e-04          2.4
+  mul_64s_64s_64_1_1_U17 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_15) 2.863510e-04        2.952825e-04        1.369355e-04        7.185689e-04          2.6
+  mul_64s_64s_64_1_1_U18 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_14) 2.524860e-04        2.598773e-04        1.363970e-04        6.487604e-04          2.4
+  mul_64s_64s_64_1_1_U19 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_13) 2.472143e-04        2.563251e-04        1.384859e-04        6.420252e-04          2.3
+  mul_64s_64s_64_1_1_U20 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_12) 2.863501e-04        2.967489e-04        1.389102e-04        7.220093e-04          2.6
+  mul_64s_64s_64_1_1_U21 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_11) 2.712836e-04        2.859326e-04        1.364764e-04        6.936927e-04          2.5
+  mul_64s_64s_64_1_1_U22 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_10) 2.487278e-04        2.530625e-04        1.381050e-04        6.398953e-04          2.3
+  mul_64s_64s_64_1_1_U23 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_9) 2.815765e-04        2.830155e-04        1.387388e-04        7.033307e-04          2.6
+  mul_64s_64s_64_1_1_U24 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_8) 2.801296e-04        2.712903e-04        1.378735e-04        6.892934e-04          2.5
+  mul_64s_64s_64_1_1_U25 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7) 2.496631e-04        2.554603e-04        1.376100e-04        6.427334e-04          2.3
+  mul_64s_64s_64_1_1_U26 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6) 2.626964e-04        2.724596e-04        1.378389e-04        6.729949e-04          2.4
+  mul_64s_64s_64_1_1_U27 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5) 2.827605e-04        2.911208e-04        1.375226e-04        7.114040e-04          2.6
+  mul_64s_64s_64_1_1_U28 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4) 2.814883e-04        2.857074e-04        1.375373e-04        7.047329e-04          2.6
+  mul_64s_64s_64_1_1_U29 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 2.820258e-04        2.890025e-04        1.364326e-04        7.074608e-04          2.6
+  mul_64s_64s_64_1_1_U30 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 2.853654e-04        2.899192e-04        1.384563e-04        7.137409e-04          2.6
+  mul_64s_64s_64_1_1_U31 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 2.604518e-04        2.685740e-04        1.407821e-04        6.698080e-04          2.4
+  mul_64s_64s_64_1_1_U32 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 2.697937e-04        2.742471e-04        1.369608e-04        6.810016e-04          2.5
+  mul_64s_64s_64_1_1_U1 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_31) 2.873529e-04        2.938279e-04        1.380401e-04        7.192209e-04          2.6
+  mul_64s_64s_64_1_1_U2 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_30) 2.800866e-04        2.889673e-04        1.370543e-04        7.061082e-04          2.6
+  mul_64s_64s_64_1_1_U3 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_29) 2.878626e-04        2.884279e-04        1.397258e-04        7.160164e-04          2.6
+  mul_64s_64s_64_1_1_U4 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_28) 2.722465e-04        2.757837e-04        1.353481e-04        6.833783e-04          2.5
+  mul_64s_64s_64_1_1_U5 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_27) 2.671075e-04        2.825177e-04        1.388413e-04        6.884665e-04          2.5
+  mul_64s_64s_64_1_1_U6 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_26) 2.666303e-04        2.696877e-04        1.360755e-04        6.723935e-04          2.4
+  mul_64s_64s_64_1_1_U7 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_25) 2.803397e-04        2.886305e-04        1.385825e-04        7.075527e-04          2.6
+  mul_64s_64s_64_1_1_U8 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_24) 2.646575e-04        2.747526e-04        1.365521e-04        6.759623e-04          2.5
+  mul_64s_64s_64_1_1_U9 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_23) 2.981010e-04        3.142236e-04        1.395120e-04        7.518365e-04          2.7
+1

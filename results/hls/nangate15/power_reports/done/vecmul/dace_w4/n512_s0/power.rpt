@@ -1,0 +1,34 @@
+****************************************
+Report : Averaged Power
+	-significant_digits
+	-nosplit
+Design : vecmul_dace
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:32:26 2026
+****************************************
+
+
+
+  Attributes
+  ----------
+      i  -  Including register clock pin internal power
+      u  -  User defined power group
+
+                        Internal             Switching            Leakage              Total
+Power Group             Power                Power                Power                Power               (     %)   Attrs
+----------------------------------------------------------------------------------------------------------------------------
+clock_network           1.205026e-04         0.000000e+00         0.000000e+00         1.205026e-04        ( 5.80%)   i
+register                5.735894e-05         1.187404e-04         2.873366e-05         2.048329e-04        ( 9.86%)   
+combinational           6.236375e-04         8.196529e-04         3.083471e-04         1.751637e-03        (84.34%)   
+sequential              0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+memory                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+io_pad                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+black_box               0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+
+  Net Switching Power  = 9.383933e-04          (45.18%)
+  Cell Internal Power  = 8.014990e-04          (38.59%)
+  Cell Leakage Power   = 3.370807e-04          (16.23%)
+                         -------------------------
+Total Power            = 2.076973e-03         (100.00%)
+
+1

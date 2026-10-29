@@ -1,0 +1,25 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : vecmul
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:28:37 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+vecmul                                4.653377e-03              4.314346e-03              1.255505e-03              1.022323e-02              100.0
+  mul_64s_64s_64_1_1_U1 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7) 4.628467e-04        4.709647e-04        1.412834e-04        1.075095e-03         10.5
+  mul_64s_64s_64_1_1_U2 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6) 4.591437e-04        4.727549e-04        1.403072e-04        1.072206e-03         10.5
+  mul_64s_64s_64_1_1_U3 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5) 4.627128e-04        4.786351e-04        1.414636e-04        1.082812e-03         10.6
+  mul_64s_64s_64_1_1_U4 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4) 4.482277e-04        4.567606e-04        1.395115e-04        1.044500e-03         10.2
+  mul_64s_64s_64_1_1_U5 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 4.553973e-04        4.729885e-04        1.409676e-04        1.069353e-03         10.5
+  mul_64s_64s_64_1_1_U6 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 4.634470e-04        4.669247e-04        1.406685e-04        1.071040e-03         10.5
+  mul_64s_64s_64_1_1_U7 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 4.586861e-04        4.691012e-04        1.422203e-04        1.070008e-03         10.5
+  mul_64s_64s_64_1_1_U8 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 4.577872e-04        4.615540e-04        1.403453e-04        1.059687e-03         10.4
+1

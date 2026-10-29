@@ -1,0 +1,25 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : axpy
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:33:54 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+axpy                                  1.819945e-03              1.415082e-03              7.787406e-04              4.013767e-03              100.0
+  mul_64s_64s_64_1_1_U1 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7) 1.338539e-04        1.398317e-04        7.656872e-05        3.502544e-04          8.7
+  mul_64s_64s_64_1_1_U2 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6) 1.358065e-04        1.423743e-04        7.671770e-05        3.548985e-04          8.8
+  mul_64s_64s_64_1_1_U3 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5) 1.349034e-04        1.410503e-04        7.670476e-05        3.526585e-04          8.8
+  mul_64s_64s_64_1_1_U4 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4) 1.357106e-04        1.427412e-04        7.678224e-05        3.552341e-04          8.9
+  mul_64s_64s_64_1_1_U5 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 1.343678e-04        1.410320e-04        7.672632e-05        3.521262e-04          8.8
+  mul_64s_64s_64_1_1_U6 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 1.340192e-04        1.410440e-04        7.682828e-05        3.518915e-04          8.8
+  mul_64s_64s_64_1_1_U7 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 1.341333e-04        1.404894e-04        7.676832e-05        3.513910e-04          8.8
+  mul_64s_64s_64_1_1_U8 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 1.343002e-04        1.401709e-04        7.660651e-05        3.510776e-04          8.7
+1

@@ -1,0 +1,20 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : matadd_dace
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:33:23 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+matadd_dace                           6.321969e-04              3.284248e-04              2.049568e-04              1.165578e-03              100.0
+  grp_module_matadd_0_0_fu_40 (matadd_dace_module_matadd_0_0) 6.209794e-04        3.267711e-04        2.011502e-04        1.148901e-03         98.6
+    grp_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2_fu_32 (matadd_dace_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2) 6.135708e-04        3.253972e-04        1.984764e-04        1.137444e-03         97.6
+      flow_control_loop_pipe_sequential_init_U (matadd_dace_flow_control_loop_pipe_sequential_init) 4.668777e-07        1.512859e-07        1.689686e-07        7.871322e-07          0.1
+1

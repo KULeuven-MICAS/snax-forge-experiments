@@ -1,0 +1,34 @@
+****************************************
+Report : Averaged Power
+	-significant_digits
+	-nosplit
+Design : dot
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:16:13 2026
+****************************************
+
+
+
+  Attributes
+  ----------
+      i  -  Including register clock pin internal power
+      u  -  User defined power group
+
+                        Internal             Switching            Leakage              Total
+Power Group             Power                Power                Power                Power               (     %)   Attrs
+----------------------------------------------------------------------------------------------------------------------------
+clock_network           3.983638e-04         0.000000e+00         0.000000e+00         3.983638e-04        ( 6.16%)   i
+register                3.791030e-04         3.468500e-04         7.640938e-05         8.023623e-04        (12.41%)   
+combinational           2.411979e-03         2.215217e-03         6.353264e-04         5.262523e-03        (81.42%)   
+sequential              0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+memory                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+io_pad                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+black_box               0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+
+  Net Switching Power  = 2.562067e-03          (39.64%)
+  Cell Internal Power  = 3.189446e-03          (49.35%)
+  Cell Leakage Power   = 7.117358e-04          (11.01%)
+                         -------------------------
+Total Power            = 6.463249e-03         (100.00%)
+
+1

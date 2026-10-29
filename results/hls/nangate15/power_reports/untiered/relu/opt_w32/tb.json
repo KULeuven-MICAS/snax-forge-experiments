@@ -1,0 +1,64 @@
+{
+ "tb_version": 1,
+ "point": "untiered/relu/opt_w32",
+ "kernel": "relu",
+ "top": "relu",
+ "case": "opt",
+ "W": 32,
+ "clock": {
+  "port": "ap_clk"
+ },
+ "reset": {
+  "port": "ap_rst_n",
+  "active": "low",
+  "sync": true
+ },
+ "control": {
+  "kind": "ap_ctrl_hs",
+  "start": "ap_start",
+  "done": "ap_done",
+  "ready": "ap_ready",
+  "idle": "ap_idle"
+ },
+ "streams": [
+  {
+   "arg": "A",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 32,
+   "dtype": "int64",
+   "data": "A_TDATA",
+   "valid": "A_TVALID",
+   "ready": "A_TREADY"
+  },
+  {
+   "arg": "B",
+   "dir": "out",
+   "kind": "axis",
+   "lanes": 32,
+   "dtype": "int64",
+   "data": "B_TDATA",
+   "valid": "B_TVALID",
+   "ready": "B_TREADY"
+  }
+ ],
+ "pins": [
+  {
+   "port": "loop_count",
+   "bits": 32,
+   "vld": "loop_count_ap_vld",
+   "from": "config"
+  }
+ ],
+ "sizes": {
+  "n64": {
+   "loop_count": 2
+  },
+  "n512": {
+   "loop_count": 16
+  },
+  "b64": {
+   "loop_count": 64
+  }
+ }
+}

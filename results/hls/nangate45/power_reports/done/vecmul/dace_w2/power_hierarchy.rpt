@@ -1,0 +1,21 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : vecmul_dace
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:16:25 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+vecmul_dace                           1.432757e-03              1.311913e-03              3.334016e-04              3.078073e-03              100.0
+  grp_vecmul_dace_Pipeline_VITIS_LOOP_19_1_fu_44 (vecmul_dace_vecmul_dace_Pipeline_VITIS_LOOP_19_1) 1.387096e-03        1.311019e-03        3.229444e-04        3.021059e-03         98.1
+    flow_control_loop_pipe_sequential_init_U (vecmul_dace_flow_control_loop_pipe_sequential_init) 1.382861e-06        1.515709e-08        2.877539e-07        1.685772e-06          0.1
+    mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 5.598929e-04        5.716305e-04        1.427291e-04        1.274252e-03         41.4
+    mul_64s_64s_64_1_1_U2 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 5.562382e-04        5.718749e-04        1.424174e-04        1.270531e-03         41.3
+1

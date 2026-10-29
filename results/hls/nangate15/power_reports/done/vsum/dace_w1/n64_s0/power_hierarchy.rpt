@@ -1,0 +1,19 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : vsum_dace
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:32:27 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+vsum_dace                             6.799901e-05              2.562379e-05              1.921377e-05              1.128366e-04              100.0
+  grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53 (vsum_dace_vsum_dace_Pipeline_VITIS_LOOP_37_1) 5.518954e-05        2.542646e-05        1.459760e-05        9.521360e-05         84.4
+    flow_control_loop_pipe_sequential_init_U (vsum_dace_flow_control_loop_pipe_sequential_init) 3.901676e-07        2.751119e-08        1.601342e-07        5.778130e-07          0.5
+1

@@ -1,0 +1,20 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : vecadd_dace
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 10:31:24 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+vecadd_dace                           1.212303e-04              6.519713e-05              3.601835e-05              2.224457e-04              100.0
+  grp_module_vecadd_0_0_fu_40 (vecadd_dace_module_vecadd_0_0) 1.093519e-04        6.454691e-05        3.179544e-05        2.056942e-04         92.5
+    grp_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 (vecadd_dace_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1) 1.024978e-04        6.401497e-05        2.890016e-05        1.954130e-04         87.8
+      flow_control_loop_pipe_sequential_init_U (vecadd_dace_flow_control_loop_pipe_sequential_init) 4.090745e-07        6.569493e-08        1.557336e-07        6.305029e-07          0.3
+1

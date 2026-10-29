@@ -1,0 +1,73 @@
+{
+ "tb_version": 1,
+ "point": "done/vsum/unopt_w8",
+ "kernel": "vsum",
+ "top": "vsum",
+ "case": "unopt",
+ "W": 8,
+ "clock": {
+  "port": "ap_clk"
+ },
+ "reset": {
+  "port": "ap_rst_n",
+  "active": "low",
+  "sync": true
+ },
+ "control": {
+  "kind": "ap_ctrl_hs",
+  "start": "ap_start",
+  "done": "ap_done",
+  "ready": "ap_ready",
+  "idle": "ap_idle"
+ },
+ "streams": [
+  {
+   "arg": "A",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 8,
+   "dtype": "int64",
+   "data": "A_TDATA",
+   "valid": "A_TVALID",
+   "ready": "A_TREADY"
+  },
+  {
+   "arg": "out",
+   "dir": "out",
+   "kind": "axis",
+   "lanes": 1,
+   "dtype": "int64",
+   "data": "out_r_TDATA",
+   "valid": "out_r_TVALID",
+   "ready": "out_r_TREADY"
+  }
+ ],
+ "pins": [
+  {
+   "port": "loop_count",
+   "bits": 32,
+   "vld": "loop_count_ap_vld",
+   "from": "config"
+  },
+  {
+   "port": "len",
+   "bits": 32,
+   "vld": "len_ap_vld",
+   "from": "config"
+  }
+ ],
+ "sizes": {
+  "n64": {
+   "loop_count": 8,
+   "len": 8
+  },
+  "n512": {
+   "loop_count": 64,
+   "len": 64
+  },
+  "b64": {
+   "loop_count": 64,
+   "len": 64
+  }
+ }
+}

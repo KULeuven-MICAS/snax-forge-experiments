@@ -1,0 +1,80 @@
+{
+ "tb_version": 1,
+ "point": "untiered/axpy/unopt_w16",
+ "kernel": "axpy",
+ "top": "axpy",
+ "case": "unopt",
+ "W": 16,
+ "clock": {
+  "port": "ap_clk"
+ },
+ "reset": {
+  "port": "ap_rst_n",
+  "active": "low",
+  "sync": true
+ },
+ "control": {
+  "kind": "ap_ctrl_hs",
+  "start": "ap_start",
+  "done": "ap_done",
+  "ready": "ap_ready",
+  "idle": "ap_idle"
+ },
+ "streams": [
+  {
+   "arg": "x",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 16,
+   "dtype": "int64",
+   "data": "x_TDATA",
+   "valid": "x_TVALID",
+   "ready": "x_TREADY"
+  },
+  {
+   "arg": "y",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 16,
+   "dtype": "int64",
+   "data": "y_TDATA",
+   "valid": "y_TVALID",
+   "ready": "y_TREADY"
+  },
+  {
+   "arg": "y_out",
+   "dir": "out",
+   "kind": "axis",
+   "lanes": 16,
+   "dtype": "int64",
+   "data": "y_out_TDATA",
+   "valid": "y_out_TVALID",
+   "ready": "y_out_TREADY"
+  }
+ ],
+ "pins": [
+  {
+   "port": "loop_count",
+   "bits": 32,
+   "vld": "loop_count_ap_vld",
+   "from": "config"
+  },
+  {
+   "port": "alpha",
+   "bits": 64,
+   "vld": "alpha_ap_vld",
+   "from": "data:alpha"
+  }
+ ],
+ "sizes": {
+  "n64": {
+   "loop_count": 4
+  },
+  "n512": {
+   "loop_count": 32
+  },
+  "b64": {
+   "loop_count": 64
+  }
+ }
+}
