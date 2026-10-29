@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 # The pixi environment (pixi install); pixi.lock is committed
 .pixi/
+# Simulation and power runs stay local, as syn/runs/; the probe scripts are in sim/probe/
+sim/runs/
