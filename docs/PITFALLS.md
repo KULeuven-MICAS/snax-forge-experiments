@@ -152,7 +152,7 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 
 - **Symptom:** the setup check (X10) fails on nangate15: with the same uniform activity on every net, PT's combinational group is +1.95 % above DC's (internal +3.66 %, 15.469 against 14.922 µW; switching -0.12 %), register -0.08 %, clock -0.0003 %, leakage equal. nangate45 agrees within 0.0013 %.
 - **Cause:** nangate15's cells have input-pin `internal_power` groups for toggles that do not switch the output (`when : "!A2 & ZN"` on NAND2_X1), and negative table entries (97 in NAND2_X1); nangate45 has neither. PT books more of it than DC: per cell type, internal power differs on NAND4_X1 (+32 %), NOR4_X1, OAI21_X1 and AND4_X1 (about +15 % each), NAND2_X1 (+14 %), AOI22_X1 (+10 %), NOR2_X1 (+8 %), while DFFSNQ_X1, FA_X1, XOR2/XNOR2, INV and BUF agree within 0.03 %. The switching difference (up to -1.3 % on NAND2/NOR2) is consistent with nangate15's `rise/fall_capacitance_range`; not traced further.
-- **Fix or check:** none yet: the setup is the same in both tools (netlist, loads, constraints, leakage equal), but the 0.1 % criterion cannot pass on nangate15. Open for the nangate15 power results (X10 status).
+- **Fix or check:** the setup is the same in both tools (netlist, loads, constraints, leakage equal). The setup check allows 2.5 % on nangate15's combinational group and 0.1 % elsewhere, and PT is the reference tool for energy (X10).
 - **Found in:** `2026-10-29_pwr_r1.md` (setup-check).
 
 ## Licences

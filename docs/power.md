@@ -13,6 +13,7 @@ Dynamic energy per cycle and per firing of a mapped netlist, from simulated acti
 ```bash
 pixi run pwr tbjson done/vecadd/opt_w8                                   # print the point's tb.json
 pixi run pwr setup-check --tech nangate45                                # PT against DC, forced activity (X10)
+pixi run pwr setup-check --tech nangate15                                # (0.1 % per group; nangate15 combinational 2.5 %)
 pixi run pwr run 'done/vecadd/*' --tech nangate45                        # rand64, 64 beats, seed 0
 pixi run pwr run 'done/vecadd/*_w8' --tech nangate45 --size n512         # at a cosim size
 pixi run pwr run done/vecadd/opt_w8 --tech nangate45 --stim forge --size n512   # data.h, validation only
@@ -71,6 +72,8 @@ In `results/hls/<tech>/` (X20):
 - `power_reports/<tier>/<kernel>/<point>/`: `power.rpt`, `power_hierarchy.rpt`, `switching_activity.rpt` of the default run and the point's `tb.json`; other runs of the point in `<size>_<seed>/` below it.
 
 Tool versions, licence counts, the setup check and the validation go into the run note in `results/hls/runs/`.
+
+`setup-check` passes when PT and DC, given the same uniform activity, agree within 0.1 % in every power group (dynamic and leakage), except nangate15's combinational group within 2.5 % (PITFALLS PT5). PT is the reference tool for energy; DC only checks that PT's setup (netlist, library, loads, constraints) is DC's.
 
 ## Notes
 

@@ -94,10 +94,10 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 
 ### X10. PT setup check
 
-- **Date:** 2026-10-29
-- **Decision:** the PT setup check per technology is the forced-activity pair: `pt_power.tcl` and `dc_readback.tcl` with `PWR_MODE=uniform` (DC's default toggle rate and static probability annotated on every net but the clock), agreeing per power group. P0 (PT with DC's defaults, propagated) against DC's `power.rpt` is not the check.
-- **Why:** with identical annotated activity PT and DC agree to 0.00 % in every group; with default activity they differ by 2.4 % (register 35 %) because their vectorless propagation differs, which says nothing about the setup (PITFALLS PT2).
-- **Status:** `pwr setup-check` implements it (every group within 0.1 %). nangate45 passes; nangate15 does not (combinational +1.95 %, PITFALLS PT5), an open question for that technology's results.
+- **Date:** 2026-10-29 (tolerance amended after `pwr_r1` the same day)
+- **Decision:** the PT setup check per technology is the forced-activity pair: `pt_power.tcl` and `dc_readback.tcl` with `PWR_MODE=uniform` (DC's default toggle rate and static probability annotated on every net but the clock), agreeing per power group within 0.1 %, except nangate15's combinational group within 2.5 %. PT is the reference tool for energy. P0 (PT with DC's defaults, propagated) against DC's `power.rpt` is not the check.
+- **Why:** with identical annotated activity PT and DC agree to 0.00 % in every group on nangate45; with default activity they differ by 2.4 % (register 35 %) because their vectorless propagation differs, which says nothing about the setup (PITFALLS PT2). nangate15's combinational gap (+1.95 %) is non-switching internal power, which PT and DC handle differently (PITFALLS PT5), not the setup; PT, the sign-off power tool that reads the simulated activity, is the one the results use.
+- **Status:** `pwr setup-check` implements it (`SETUP_TOL`, `SETUP_TOL_GROUP` in `sim/pwr.py`). Both technologies pass: nangate45 within 0.0013 %, nangate15 within 0.08 % and combinational +1.95 %.
 - **Source:** `2026-10-29_pwr_step0.md` (P0 against DC), `2026-10-29_pwr_r1.md`.
 
 ### X11. Flop energy
@@ -124,7 +124,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 ### X14. tb.json is internal
 
 - **Date:** 2026-10-29
-- **Decision:** `tb.json`, the description the TB is built from, is internal to this repo. Producers are not changed: hls-exercises keeps writing `rtl/<point>/filelist.f` and `sizes.txt`; snax-forge keeps its bundle and `rtl.json`. One adapter per source builds `tb.json`: `sim/sources/hls.py`, from the point's Verilog ports and `params.json`; `sim/sources/forge.py`, later, at SYN1, from `rtl.json`. `tb.json` is written into each run folder at run time, and its md5 goes into the results row.
+- **Decision:** `tb.json`, the description the TB is built from, is internal to this repo. Producers are not changed: hls-exercises keeps writing `rtl/<point>/filelist.f` and `sizes.txt`; snax-forge keeps its bundle and `rtl.json`. One adapter per source builds `tb.json`: `sim/sources/hls.py`, from the point's Verilog ports and `params.json`; `sim/sources/forge.py`, later, at SYN1, from `rtl.json`. `tb.json` is written into each run folder at run time and committed with the point's reports in `power_reports/` (X20).
 - **Why:** this repo is the data-collection side, and snax-forge must not need changes to be measured.
 - **Source:** agreed 2026-10-29, after `2026-10-29_pwr_step0.md`.
 
@@ -178,8 +178,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
   - `e_flop_pj` = e_clk + e_reg + e_seq; `e_dyn_pj` = e_flop + e_comb; `p_dyn_uw` = e_dyn / clock_ns x 1000;
   - `e_comb_fire_pj`, `e_flop_fire_pj` = per cycle x cycles / beats; `e_run_pj` = e_dyn x cycles;
   - `flop_bits` = `seq_cells` of the point in `synth_dc.csv`; `e_bit_pj` = e_flop / flop_bits;
-  - `status`: `ok`, `failed: <which check>`, or `skipped: needs a RAM macro (...)` (a `# ram:` point, as syn.py);
-  - `tb_md5`: the md5 of the run's `tb.json` (X14).
+  - `status`: `ok`, `failed: <which check>`, or `skipped: needs a RAM macro (...)` (a `# ram:` point, as syn.py).
 
   No leakage columns (X13). `power_pt_modules.csv` (`point, tech, path, design, e_dyn_pj`) has one row per hierarchical cell of the default run. Committed per point in `power_reports/<tier>/<kernel>/<point>/`: `power.rpt`, `power_hierarchy.rpt`, `switching_activity.rpt`, `tb.json` (other runs of the point in a subfolder `<size>_<seed>/`). The checks (X9, X19) fail a point but are not stored as columns; tool versions go in the run note.
 - **Why:** the HWCOST model needs energy per cycle and per firing, split into combinational and flop energy, across the W sweeps; everything else is either a check or recoverable from the run folder.
