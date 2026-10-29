@@ -2,3 +2,5 @@
 syn/runs/
 __pycache__/
 *.pyc
+# The pixi environment (pixi install); pixi.lock is committed
+.pixi/
