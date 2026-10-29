@@ -2,7 +2,7 @@
 """sim/pwr.py - dynamic energy of mapped netlists from simulated activity (docs/power.md).
 
   pixi run pwr tbjson      POINT
-  pixi run pwr run         PATTERN ... --tech T [--stim rand64|forge] [--size TAG] [--seed N] [-j N]
+  pixi run pwr run         PATTERN ... --tech T [--stim rand64|forge] [--size TAG|all] [--seed N] [-j N]
   pixi run pwr setup-check --tech T [--point P]
   pixi run pwr summary     [PATTERN ...] [--tech T]
 
@@ -76,6 +76,7 @@ SETUP_TOL = 1e-3            # setup-check: every power group within 0.1% ...
 # nangate15's non-switching internal power on inverting multi-input cells (PITFALLS PT5). PT is the reference.
 SETUP_TOL_GROUP = {("nangate15", "combinational"): 2.5e-2}
 MIN_ANNOTATED = 99.0        # percent of nets annotated from the SAIF
+TOGGLE_BEATS = 64           # the input-toggle check fails a run from this many beats up
 # Questa cell models, next to each technology's .db, with the vlog options they need
 CELL_MODELS = {"nangate45": ("NangateOpenCellLibrary.v", []),
                "nangate15": ("NanGate_15nm_OCL_functional.v", ["-timescale", "1ns/1ps"])}
@@ -152,7 +153,8 @@ def netlist_of(tech: str, point: str) -> Path:
 def scopes(netlist: Path, top: str) -> list[str]:
     """Instance paths below the top that are designs of the netlist (sub-designs, not cells)."""
     text = netlist.read_text()
-    bodies = dict(re.findall(r"^module\s+(\S+)\s*\((.*?)^endmodule", text, re.M | re.S))
+    # DC indents some module headers (dot's multiplier: '    module dot_mul_64s_...'), so allow leading space
+    bodies = dict(re.findall(r"^\s*module\s+(\S+)\s*\((.*?)^\s*endmodule", text, re.M | re.S))
     if top not in bodies:
         raise Fail(f"{netlist.name}: no module {top}")
     out = []
@@ -258,16 +260,22 @@ def stimulus(tb: dict, size: str, stim: str, seed: int) -> dict:
             exp = d.get(f"EXP_{arg}") or d.get(f"EXP_{inv.get(arg, arg)}")
             if exp is None or not np.array_equal(v, np.array(exp, dtype=np.int64)):
                 raise Fail(f"sim/ref.py differs from data.h EXP for {arg}")
-    for s in ins_s:     # every input bit toggles at least once (from the 0 the TB holds before go)
+    # Every input bit toggles at least once (from the 0 the TB holds before go). Enforced from TOGGLE_BEATS
+    # beats up: with B random beats a bit stays 0 with probability 2^-B, so a task of a few beats (n64 at
+    # W = 32 is 2 beats) cannot pass with any seed; below that the count is recorded (docs X19).
+    untoggled = {}
+    for s in ins_s:
         x = ins[s["arg"]].view(np.uint64).reshape(beats, s["lanes"])
         seen = np.bitwise_or.reduce(x, axis=0)
-        if not np.all(seen == np.uint64(MASK64)):
-            n = sum(64 - bin(int(v)).count("1") for v in seen)
-            raise Fail(f"stimulus: {n} bits of {s['arg']} never toggle")
+        n = sum(64 - bin(int(v)).count("1") for v in seen)
+        if n:
+            untoggled[s["arg"]] = n
+            if beats >= TOGGLE_BEATS:
+                raise Fail(f"stimulus: {n} bits of {s['arg']} never toggle")
     for s in tb["streams"]:
         if s["dir"] == "out" and len(outs[s["arg"]]) % s["lanes"]:
             raise Fail(f"reference {s['arg']}: {len(outs[s['arg']])} values do not fill {s['lanes']} lanes")
-    return {"ins": ins, "pins": pins, "outs": outs, "beats": beats, "config": cfg}
+    return {"ins": ins, "pins": pins, "outs": outs, "beats": beats, "config": cfg, "untoggled": untoggled}
 
 
 def cosim(tb: dict) -> dict:
@@ -463,6 +471,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
     for p in tb["pins"]:
         plus.append(f"+PIN_{p['port']}={st['pins'][p['port']] & ((1 << p['bits']) - 1):x}")
     (rdir / "stim" / "pins.json").write_text(json.dumps(st["pins"], indent=1) + "\n")
+    info["untoggled_bits"] = st["untoggled"]
     exp, how = expected_cycles(tb, size)
     info["expected_cycles"], info["expected_from"] = exp, how
     times["stim"] = time.time() - t
@@ -568,8 +577,11 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
         except Fail as e:
             compile_err = str(e)
         compile_times["compile"] = time.time() - t
-        for size, stim, seed in runs:
-            size = size or hls.default_size(tb)
+        expanded = []
+        for size, stim, seed in runs:     # --size all: every size in the point's sizes.txt
+            sizes = hls.sizes_txt(point) if size == "all" else [size or hls.default_size(tb)]
+            expanded += [(z, stim, seed) for z in sizes]
+        for size, stim, seed in expanded:
             times = dict(compile_times) if not out else {}
             base = {c: "" for c in COLUMNS}
             base.update({"point": point, "top": tb["top"], "tech": tech, "clock_ns": _num(CLOCK_NS), "W": tb["W"],
@@ -799,7 +811,8 @@ def main() -> int:
     p.add_argument("patterns", nargs="+")
     p.add_argument("--tech", required=True, choices=syn.tech_names())
     p.add_argument("--stim", default="rand64", choices=["rand64", "forge"])
-    p.add_argument("--size", default=None, help="a tb.json size tag (default b64, rowsum m8_n64)")
+    p.add_argument("--size", default=None,
+                   help="a tb.json size tag (default b64, rowsum m8_n64), or 'all': every size in the point's sizes.txt")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("-j", type=int, default=0, help="at most this many workers (default: from the licences)")
     p.set_defaults(fn=cmd_run)

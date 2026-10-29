@@ -5,7 +5,8 @@
 // on TVALID after reset, or in TDATA while valid, is an error. Expected data by plusargs:
 //   +<NAME>_HEX=<file>    $readmemh file of the expected beats (sim/ref.py)
 //   +<NAME>_BEATS=<n>     beats expected
-// `complete` rises once every expected beat has arrived.
+// `complete` rises once every expected beat has arrived. Beats count only after reset: the clock's
+// initial X -> 0 is a falling edge at time 0, and some DUTs (axpy opt) drive TVALID high in reset.
 `timescale 1ns/1ps
 
 module axis_sink #(
@@ -36,7 +37,7 @@ module axis_sink #(
             xerr++;
             if (xerr <= 5) $display("TB: FAIL: %s_TVALID is %b at %0t", NAME, tvalid, $realtime);
         end
-        if (tvalid === 1'b1) begin
+        if (rst_n === 1'b1 && tvalid === 1'b1) begin
             if ($isunknown(tdata)) begin
                 xerr++;
                 if (xerr <= 5) $display("TB: FAIL: X/Z in %s_TDATA, beat %0d at %0t: %h", NAME, n, $realtime, tdata);

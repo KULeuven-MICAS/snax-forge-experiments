@@ -44,6 +44,12 @@ def filelist(point: str) -> dict:
     return {"top": top.group(1), "files": files, "rams": rams}
 
 
+def sizes_txt(point: str) -> list[str]:
+    """The sizes whose Vitis run gave this point's Verilog (rtl/<point>/sizes.txt, bench.py), in file order."""
+    lines = (RTL / point / "sizes.txt").read_text().splitlines()
+    return [ln.split()[0] for ln in lines if ln.strip() and not ln.lstrip().startswith("#")]
+
+
 def params_of(point: str) -> dict:
     tier, kernel, _ = point.split("/")
     return json.loads((BENCH / f"tier_{tier}" / kernel / "params.json").read_text())
