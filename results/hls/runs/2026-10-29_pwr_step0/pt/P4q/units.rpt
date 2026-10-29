@@ -1,0 +1,18 @@
+****************************************
+Report : units
+Design : vecadd
+Version: W-2024.09-SP5
+Date   : Thu Oct 29 08:32:41 2026
+****************************************
+
+Units
+---------------------------------------------
+Capacitive_load_unit        : 1e-15 Farad
+Current_unit                : 0.001 Amp
+Resistance_unit             : 1e+06 Ohm
+Time_unit                   : 1e-09 Second
+Voltage_unit                : 1 Volt
+Internal_power_unit         : 1e-06 Watt
+Leakage_power_unit          : 1e-09 Watt
+User Specified Power Unit   : 1 Watt
+1

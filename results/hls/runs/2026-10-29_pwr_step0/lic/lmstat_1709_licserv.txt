@@ -1,0 +1,22 @@
+lmutil - Copyright (c) 1989-2019 Flexera. All Rights Reserved.
+Flexible License Manager status on Thu 10/29/2026 07:46
+
+License server status: 1709@licserv
+    License file(s) on licserv: /etc/flexlm/synopsys.lic:
+
+   licserv: license server UP (MASTER) v11.19.6
+
+Vendor daemon status (on licserv):
+
+Users of PrimePower:  (Total of 30 licenses issued;  Total of 0 licenses in use)
+Users of PrimePower-RTL:  (Total of 40 licenses issued;  Total of 0 licenses in use)
+Users of PrimePower-RTL-DSMA:  (Total of 160 licenses issued;  Total of 0 licenses in use)
+Users of PrimePower-RTL-GUI:  (Total of 30 licenses issued;  Total of 0 licenses in use)
+Users of PrimePower-RTL-Logical:  (Total of 30 licenses issued;  Total of 0 licenses in use)
+Users of PrimePower-RTL-Resim:  (Total of 10 licenses issued;  Total of 0 licenses in use)
+Users of PrimeTime:  (Total of 20 licenses issued;  Total of 0 licenses in use)
+Users of PrimeTime-ADV:  (Total of 20 licenses issued;  Total of 0 licenses in use)
+Users of PrimeTime-ADV-PLUS:  (Total of 10 licenses issued;  Total of 0 licenses in use)
+Users of PrimeTime-APX:  (Total of 10 licenses issued;  Total of 0 licenses in use)
+Users of PrimeTime-ELT:  (Total of 10 licenses issued;  Total of 0 licenses in use)
+Users of PrimeTime-SI:  (Total of 20 licenses issued;  Total of 0 licenses in use)

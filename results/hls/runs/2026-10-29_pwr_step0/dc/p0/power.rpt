@@ -1,0 +1,60 @@
+Information: Updating design information... (UID-85)
+Information: Propagating switching activity (low effort zero delay simulation). (PWR-6)
+Warning: Design has unannotated primary inputs. (PWR-414)
+Warning: Design has unannotated sequential cell outputs. (PWR-415)
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : vecadd
+Version: Y-2026.03-SP2
+Date   : Thu Oct 29 08:27:51 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 332.897491 uW   (89%)
+  Net Switching Power  = 41.393913 uW   (11%)
+                         ---------
+Total Dynamic Power    = 374.291412 uW  (100%)
+
+Cell Leakage Power     = 110.3181 uW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network  228.547104          0.000000          0.000000        228.547104  (  47.16%)  i
+register         8.015961         10.763300        4.592292e+04         64.702019
+                                                                                 (  13.35%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational   96.334564         30.630606        6.439516e+04        191.360199
+                                                                                 (  39.49%)
+--------------------------------------------------------------------------------------------------
+Total          332.897644 uW      41.393906 uW     1.103181e+05 nW     484.609314 uW
+1

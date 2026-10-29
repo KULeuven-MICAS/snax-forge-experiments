@@ -1,0 +1,36 @@
+== forge busy
+Questa  sim/runs/probe/n45/forge/busy.saif: DURATION 750000, 3572 nets, T0+T1+TX = DURATION on 0, = window (660000) on 3326, T0 = T1 = TX = 0 on 246, IG > 0 on 1483 (sum IG 36234)
+vcd2saif sim/runs/probe/n45/forge/busy_v2s.saif: DURATION 660000, 3570 nets, T0+T1+TX = DURATION on 3570, IG > 0 on 0
+common nets 3570: TC differs on 3326 (Questa below vcd2saif on 3266); sum TC Questa 77599, vcd2saif 94918
+  n1031: Questa T0 210000 T1 450000 TC 0 IG 56 | vcd2saif T0 225000 T1 435000 TC 29
+  n1040: Questa T0 425000 T1 235000 TC 2 IG 53 | vcd2saif T0 440000 T1 220000 TC 30
+  n1022: Questa T0 290000 T1 370000 TC 12 IG 42 | vcd2saif T0 275000 T1 385000 TC 36
+  n337: Questa T0 435000 T1 225000 TC 7 IG 42 | vcd2saif T0 440000 T1 220000 TC 30
+  n338: Questa T0 435000 T1 225000 TC 7 IG 42 | vcd2saif T0 440000 T1 220000 TC 30
+== forge idle
+Questa  sim/runs/probe/n45/forge/idle.saif: DURATION 2750000, 3572 nets, T0+T1+TX = DURATION on 0, = window (2000000) on 14, T0 = T1 = TX = 0 on 3558, IG > 0 on 0 (sum IG 0)
+vcd2saif sim/runs/probe/n45/forge/idle_v2s.saif: DURATION 2000000, 3570 nets, T0+T1+TX = DURATION on 3570, IG > 0 on 0
+common nets 3570: TC differs on 395 (Questa below vcd2saif on 395); sum TC Questa 399, vcd2saif 794
+  N129: Questa T0 0 T1 2000000 TC 0 IG 0 | vcd2saif T0 5000 T1 1995000 TC 1
+  ap_CS_fsm\[0\]: Questa T0 0 T1 2000000 TC 0 IG 0 | vcd2saif T0 5000 T1 1995000 TC 1
+  ap_CS_fsm\[2\]: Questa T0 2000000 T1 0 TC 0 IG 0 | vcd2saif T0 1995000 T1 5000 TC 1
+  ap_clk: Questa T0 995000 T1 1005000 TC 399 IG 0 | vcd2saif T0 1000000 T1 1000000 TC 400
+  ap_done: Questa T0 2000000 T1 0 TC 0 IG 0 | vcd2saif T0 1995000 T1 5000 TC 1
+== full busy
+Questa  sim/runs/probe/n45/full/busy.saif: DURATION 750000, 3572 nets, T0+T1+TX = DURATION on 0, = window (660000) on 3326, T0 = T1 = TX = 0 on 246, IG > 0 on 1483 (sum IG 30550)
+vcd2saif sim/runs/probe/n45/full/busy_v2s.saif: DURATION 660000, 3570 nets, T0+T1+TX = DURATION on 3570, IG > 0 on 0
+common nets 3570: TC differs on 3324 (Questa below vcd2saif on 3292); sum TC Questa 87686, vcd2saif 99838
+  intadd_5\/SUM\[34\]: Questa T0 315000 T1 345000 TC 15 IG 38 | vcd2saif T0 300000 T1 360000 TC 38
+  n1022: Questa T0 370000 T1 290000 TC 7 IG 41 | vcd2saif T0 345000 T1 315000 TC 30
+  n554: Questa T0 300000 T1 360000 TC 16 IG 38 | vcd2saif T0 305000 T1 355000 TC 39
+  intadd_1\/SUM\[25\]: Questa T0 285000 T1 375000 TC 17 IG 35 | vcd2saif T0 270000 T1 390000 TC 38
+  n289: Questa T0 270000 T1 390000 TC 18 IG 35 | vcd2saif T0 275000 T1 385000 TC 39
+== full idle
+Questa  sim/runs/probe/n45/full/idle.saif: DURATION 2750000, 3572 nets, T0+T1+TX = DURATION on 0, = window (2000000) on 14, T0 = T1 = TX = 0 on 3558, IG > 0 on 0 (sum IG 0)
+vcd2saif sim/runs/probe/n45/full/idle_v2s.saif: DURATION 2000000, 3570 nets, T0+T1+TX = DURATION on 3570, IG > 0 on 0
+common nets 3570: TC differs on 432 (Questa below vcd2saif on 432); sum TC Questa 399, vcd2saif 831
+  N129: Questa T0 0 T1 2000000 TC 0 IG 0 | vcd2saif T0 5000 T1 1995000 TC 1
+  ap_CS_fsm\[0\]: Questa T0 0 T1 2000000 TC 0 IG 0 | vcd2saif T0 5000 T1 1995000 TC 1
+  ap_CS_fsm\[2\]: Questa T0 2000000 T1 0 TC 0 IG 0 | vcd2saif T0 1995000 T1 5000 TC 1
+  ap_clk: Questa T0 995000 T1 1005000 TC 399 IG 0 | vcd2saif T0 1000000 T1 1000000 TC 400
+  ap_done: Questa T0 2000000 T1 0 TC 0 IG 0 | vcd2saif T0 1995000 T1 5000 TC 1

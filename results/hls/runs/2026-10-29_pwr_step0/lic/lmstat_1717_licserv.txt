@@ -1,0 +1,24 @@
+lmutil - Copyright (c) 1989-2019 Flexera. All Rights Reserved.
+Flexible License Manager status on Thu 10/29/2026 07:46
+
+License server status: 1717@licserv
+    License file(s) on licserv: /etc/flexlm/mentor.lic:
+
+   licserv: license server UP (MASTER) v11.19.8
+
+Vendor daemon status (on licserv):
+
+Users of msimcdebug:  (Total of 75 licenses issued;  Total of 0 licenses in use)
+Users of msimcompare:  (Total of 150 licenses issued;  Total of 0 licenses in use)
+Users of msimcoverage:  (Total of 125 licenses issued;  Total of 0 licenses in use)
+Users of msimdataflow:  (Total of 125 licenses issued;  Total of 0 licenses in use)
+Users of msimhdlmix:  (Total of 75 licenses issued;  Total of 0 licenses in use)
+Users of msimhdlsim:  (Total of 75 licenses issued;  Total of 0 licenses in use)
+Users of msimpevsim:  (Total of 25 licenses issued;  Total of 0 licenses in use)
+Users of msimpevsimvlog:  (Total of 25 licenses issued;  Total of 0 licenses in use)
+Users of msimprofile:  (Total of 75 licenses issued;  Total of 0 licenses in use)
+Users of msimreguvm:  (Total of 25 licenses issued;  Total of 0 licenses in use)
+Users of msimsystemc:  (Total of 50 licenses issued;  Total of 0 licenses in use)
+Users of msimviewer:  (Total of 175 licenses issued;  Total of 0 licenses in use)
+Users of mtiverification:  (Total of 75 licenses issued;  Total of 0 licenses in use)
+Users of qpasim:  (Total of 25 licenses issued;  Total of 0 licenses in use)
