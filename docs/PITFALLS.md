@@ -39,6 +39,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** parse the optional TZ, count an all-Z entry apart, fail a net that is Z for part of the window, and fail when the parser matches fewer entries than the SAIF has `(T0` fields (`saif_check` in `sim/pwr.py`).
 - **Found in:** `2026-10-29_pwr_r1.md`.
 
+### DC6. Some module headers in DC's netlists are indented
+
+- **Symptom:** a parser of the mapped netlist misses a sub-design: dot, vecmul and axpy's 64-bit multiplier (`    module dot_mul_64s_64s_64_1_1_..._WIDTH64 (` at line 9, four spaces in). In `sim/pwr.py` the multiplier's scope was not dumped, and PT annotated 1718 of 6349 nets on dot `unopt_w1` (42 of 116 points of dot, vecmul and axpy failed on nangate45: those with a multiplier on this gate, axpy opt first on Q7).
+- **Cause:** DC writes the first module after the header block with leading spaces in these netlists; the other modules start in column 0.
+- **Fix or check:** match `^\s*module` and `^\s*endmodule`. The 99 % annotation gate (X9) is what caught it; a missed small sub-design (a few nets) would pass it, so `pwr_tasks` checked that every module of all 232 netlists gets a dump scope.
+- **Found in:** `2026-10-29_pwr_tasks.md`.
+
 ## Libraries
 
 ### LIB1. nangate15's flops all have async reset or set
@@ -117,6 +124,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** the window boundaries sit on falling edges (X12). `$dumpon` at the opening falling edge writes the values after that edge, so its transition is not a value change in the VCD, and vcd2saif does not count it.
 - **Fix or check:** dump from the rising edge before the window (the edge that raises `ap_start`) to the rising edge after it (the done edge), and let `vcd2saif -time t0 t1` cut the window: TC 132 and energy as step 0 (`sim/tb/ap_ctrl_hs_seq.sv`). X9's clock check catches it.
 - **Found in:** `2026-10-29_pwr_r1.md` (building the TB).
+
+### Q7. A falling edge at time 0, and TVALID high in reset
+
+- **Symptom:** the sink of axpy `opt_w*` counts 65 beats for 64 and every beat mismatches: beat 0 is `0000000000000002` "at 0".
+- **Cause:** `logic clk = 1'b0` is an X -> 0 change at time 0, so `@(negedge clk)` fires at time 0; axpy opt's netlist drives `y_out_TVALID` = 1 while in reset (with `+initreg+0`). A sink that samples whenever TVALID = 1 takes that as a beat, and every later beat is off by one.
+- **Fix or check:** count beats only once reset is released (`rst_n === 1`), as `sim/tb/axis_sink.sv` does.
+- **Found in:** `2026-10-29_pwr_tasks.md`.
 
 ## PrimeTime
 

@@ -17,10 +17,12 @@ pixi run pwr setup-check --tech nangate15                                # (0.1 
 pixi run pwr run 'done/vecadd/*' --tech nangate45                        # rand64, 64 beats, seed 0
 pixi run pwr run 'done/vecadd/*_w8' --tech nangate45 --size n512         # at a cosim size
 pixi run pwr run done/vecadd/opt_w8 --tech nangate45 --stim forge --size n512   # data.h, validation only
+pixi run pwr run 'done/*/*' 'untiered/*/*' --tech nangate45 --size all   # whole tasks: every size in sizes.txt
+pixi run python sim/report_energy.py                                     # results/hls/report_energy.md from power_pt.csv
 pixi run pwr summary 'done/vecadd/*' --tech nangate45                    # print power_pt.csv
 ```
 
-`--seed N` changes the rand64 seed; `-j N` caps the workers below what the licences allow. Patterns are shell globs over hls-exercises' `rtl/` folders, as in `syn.py`.
+`--size all` runs every size in the point's `rtl/<point>/sizes.txt` (the task sizes), one compile per point; `--seed N` changes the rand64 seed; `-j N` caps the workers below what the licences allow. Patterns are shell globs over hls-exercises' `rtl/` folders, as in `syn.py`.
 
 ## Stages
 
@@ -30,7 +32,7 @@ One worker per point; J workers at once and nproc // J PT threads each, from the
 |---|---|---|
 | tb.json | `sim/sources/hls.py` from the top's Verilog ports, `filelist.f` and `params.json` (X14); a `# ram:` point is `skipped` | a port is not covered, or `control.kind` is not `ap_ctrl_hs` |
 | compile | `sim/tb/*.sv` and the generated `tb.sv`; the netlist with `vlog -timescale 1ns/1ps`; `vopt +initreg+0 +acc=n` against the cell models compiled once per technology into `sim/runs/<tech>/_cells` | vlog or vopt errors |
-| stimulus | rand64 (or forge) per X19, the reference from `sim/ref.py`, `$readmemh` files | an input stream bit never toggles; forge: `sim/ref.py` differs from `data.h`'s `EXP_*` |
+| stimulus | rand64 (or forge) per X19, the reference from `sim/ref.py`, `$readmemh` files | an input stream bit never toggles in a run of 64 beats or more (fewer: counted in `result.json`); forge: `sim/ref.py` differs from `data.h`'s `EXP_*` |
 | vsim | `vsim -c` with no SDF, `+nospecify +notimingchecks`, data and sizes by plusargs (`sim/scripts/run.do`); the TB compares every output beat and dumps the DUT's scopes from the edge raising `ap_start` to the done edge | a mismatch, X/Z on a valid output, a timeout |
 | cycles | the TB's count (X12) against cosim's line a x loop_count + b, or cosim exactly at a cosim size (X19) | a different count, or no integer line |
 | vcd2saif | `-instance tb/dut -time t0 t1` in the VCD's unit; the VCD is deleted at once (X8, X18) | no SAIF |
