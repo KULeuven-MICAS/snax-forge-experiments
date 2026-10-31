@@ -1,0 +1,14 @@
+point,tech,clock_ns,path,design,area_um2,comb_um2,seq_um2,bbox_um2,dyn_power_uw,leak_power_uw
+done/dot/forge3_w4,nangate45,10,csr,snax_forge_csr,1044.3160,356.7060,687.6100,0.0000,95.457,17.8
+done/dot/forge3_w4,nangate45,10,ctrl,snax_forge_ctrl,3999.8421,0.0000,0.0000,0.0000,164.146,78.6
+done/dot/forge3_w4,nangate45,10,ctrl/ctrl,snax_forge_dot_ctrl,3999.8421,2786.8820,1212.9600,0.0000,164.146,78.6
+done/dot/forge3_w4,nangate45,10,dp,snax_forge_datapath,29291.1222,0.0000,0.0000,0.0000,3810,608
+done/dot/forge3_w4,nangate45,10,dp/blocks_0_4,snax_forge_mul,27648.0401,0.0000,0.0000,0.0000,3460,577
+done/dot/forge3_w4,nangate45,10,dp/blocks_0_4/m,ElementwiseLanes_i64xi64_i64_i64_n4_mul,27648.0401,0.0000,0.0000,0.0000,3460,577
+done/dot/forge3_w4,nangate45,10,dp/blocks_0_4/m/alus_0,ElementwiseAlu_w64_mul_3,6912.0100,6912.0100,0.0000,0.0000,867.901,144
+done/dot/forge3_w4,nangate45,10,dp/blocks_0_4/m/alus_1,ElementwiseAlu_w64_mul_2,6912.0100,6912.0100,0.0000,0.0000,862.536,144
+done/dot/forge3_w4,nangate45,10,dp/blocks_0_4/m/alus_2,ElementwiseAlu_w64_mul_1,6912.0100,6912.0100,0.0000,0.0000,865.996,144
+done/dot/forge3_w4,nangate45,10,dp/blocks_0_4/m/alus_3,ElementwiseAlu_w64_mul_0,6912.0100,6912.0100,0.0000,0.0000,864.511,144
+done/dot/forge3_w4,nangate45,10,dp/blocks_1_4,snax_forge_sum,1643.0820,0.7980,0.0000,0.0000,346.76,31.6
+done/dot/forge3_w4,nangate45,10,dp/blocks_1_4/m,TreeAccumulate_i64_i64_n4,1642.2840,1301.8040,340.4800,0.0000,346.756,31.5
+done/dot/forge3_w4,nangate45,10,snax_forge_shell_wrapper,snax_forge_shell_wrapper,34337.4082,2.1280,0.0000,0.0000,4070,705

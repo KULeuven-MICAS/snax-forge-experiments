@@ -8,6 +8,7 @@
 #
 # Environment (syn.py sets all of it from the tech file):
 #   SYN_FILELIST       rtl/<tier>/<kernel>/<point>/filelist.f: '# top: <module>', then the files
+#                      (a forge point's is written into the run folder, with absolute paths)
 #   SYN_LIB_DB         the standard-cell .db
 #   SYN_LIB_NAME       the library name the .db must hold
 #   SYN_TIME_UNIT      the library time unit the tech file expects (1ns, 1ps)
@@ -20,6 +21,10 @@
 #   SYN_WIRE_LOAD      off (the library has wire-load models; keep them out) or none (it has none)
 #   SYN_CLOCK_NS       clock period in ns
 #   SYN_CORES          cores for DC
+#   SYN_FORMAT         analyze's format: verilog (default, Vitis) or sverilog (snax-forge)
+#   SYN_CLK_PORT       the clock port: ap_clk (default, Vitis) or clk_i (snax-forge)
+#   SYN_RST_PORT       the reset port, kept ideal: ap_rst_n (default, Vitis, synchronous) or
+#                      rst_ni (snax-forge, asynchronous); both active low
 #
 # The constraints are physical (ns, fF) and scaled to the library's units here; the
 # library's own name and units are checked against the tech file before any RTL is read.
@@ -38,6 +43,14 @@ set out_load_ff  $::env(SYN_OUT_LOAD_FF)
 set max_trans_ns $::env(SYN_MAX_TRANS_NS)
 set wire_load    $::env(SYN_WIRE_LOAD)
 set clock_ns     $::env(SYN_CLOCK_NS)
+# Optional, the hls values by default (constraints.sdc reads $clk_port and $rst_port)
+proc env_or {name default} {
+    if {[info exists ::env($name)]} { return $::env($name) }
+    return $default
+}
+set hdl_format   [env_or SYN_FORMAT verilog]
+set clk_port     [env_or SYN_CLK_PORT ap_clk]
+set rst_port     [env_or SYN_RST_PORT ap_rst_n]
 
 #-----------------------------
 # Setting up multiple cores
@@ -69,7 +82,7 @@ if {$target_design eq ""} {
     puts "dc_syn.tcl: no '# top:' line in $filelist"
     exit 2
 }
-puts "dc_syn.tcl: $target_design from $filelist ([llength $rtl_files] files), clock $clock_ns ns"
+puts "dc_syn.tcl: $target_design from $filelist ([llength $rtl_files] files, $hdl_format), clock $clock_ns ns on $clk_port, reset $rst_port"
 
 #-----------------------------
 # Work, log, report and output folders, inside the run folder
@@ -157,7 +170,7 @@ if {$wire_load eq "off"} {
 #-----------------------------
 # Read the design
 #-----------------------------
-analyze -format verilog $rtl_files
+analyze -format $hdl_format $rtl_files
 elaborate $target_design
 current_design $target_design
 link
@@ -191,7 +204,7 @@ report_clock -skew -nosplit >> reports/clock.rpt
 # output's max pin load in design_rules.rpt.
 set outputs [all_outputs]
 set n_out [sizeof_collection $outputs]
-set sample [get_ports [list $clk_port ap_rst_n]]
+set sample [get_ports [list $clk_port $rst_port]]
 foreach c [list $data_inputs $outputs] {
     set n [sizeof_collection $c]
     set sample [add_to_collection -unique $sample [index_collection $c 0]]

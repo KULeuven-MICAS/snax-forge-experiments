@@ -1,6 +1,6 @@
 # syn
 
-ASIC synthesis with Design Compiler, on a technology chosen per run: the Nangate 45 nm and 15 nm Open Cell Libraries. For now the points are hls-exercises' bench points: Vitis's Verilog of one point in hls-exercises' `rtl/`, nothing else, so no FPGA flow and no Vitis are needed. snax-forge's generated accelerators come next, from the same driver.
+ASIC synthesis with Design Compiler, on a technology chosen per run: the Nangate 45 nm and 15 nm Open Cell Libraries. The points come from one of two sources (`--source`): `hls` (the default), hls-exercises' bench points, Vitis's Verilog of one point in hls-exercises' `rtl/`, nothing else, so no FPGA flow and no Vitis are needed; or `forge`, snax-forge's generated accelerators, bundled into this repo's `rtl/forge/` ([the forge source](#the-forge-source)).
 
 ## Setup
 
@@ -66,9 +66,9 @@ pixi run syn summary --tech nangate15                                       # ev
 pixi run syn list --tech nangate45                                          # the points with a nangate45 row
 ```
 
-`--clock` is the ASIC clock period in ns (default 10). `--cores` is the cores per DC run (default 16). `-j` is the number of DC runs at once, each of which holds a license. Without `--tech`, `list` lists the points and `summary` shows every technology.
+`--source hls|forge` picks the points (default `hls`); `list`, `run` and `summary` all take it. `--clock` is the ASIC clock period in ns (default 10). `--cores` is the cores per DC run (default 16). `-j` is the number of DC runs at once, each of which holds a license. Without `--tech`, `list` lists the points and `summary` shows every technology.
 
-syn.py passes DC: `SYN_FILELIST`, `SYN_LIB_DB` and `SYN_LIB_NAME`, `SYN_TIME_UNIT` and `SYN_CAP_UNIT` (the units to expect), `SYN_T_SCALE` and `SYN_C_SCALE`, `SYN_DRIVE_CELL`, `SYN_OUT_LOAD_FF`, `SYN_MAX_TRANS_NS`, `SYN_WIRE_LOAD`, `SYN_CLOCK_NS` and `SYN_CORES`.
+syn.py passes DC: `SYN_FILELIST`, `SYN_LIB_DB` and `SYN_LIB_NAME`, `SYN_TIME_UNIT` and `SYN_CAP_UNIT` (the units to expect), `SYN_T_SCALE` and `SYN_C_SCALE`, `SYN_DRIVE_CELL`, `SYN_OUT_LOAD_FF`, `SYN_MAX_TRANS_NS`, `SYN_WIRE_LOAD`, `SYN_CLOCK_NS` and `SYN_CORES`, and from the source `SYN_FORMAT` (`verilog`; forge `sverilog`), `SYN_CLK_PORT` (`ap_clk`; forge `clk_i`) and `SYN_RST_PORT` (`ap_rst_n`; forge `rst_ni`). `dc_syn.tcl` takes the hls values when the three are not set.
 
 ## What a run leaves
 
@@ -140,8 +140,8 @@ Only those eight files are committed per run (`KEPT_REPORTS` at the top of `syn.
 |---|---|
 | `syn.py` | The driver: picks points, reads the tech file, sets the environment, runs DC in the point's run folder, reads the reports into `summary.csv`, and keeps `results/hls/<tech>/` in step |
 | `tech/<tech>.json` | One technology: library, units, driving cell, output load, max transition, wire load |
-| `scripts/dc_syn.tcl` | One DC run: reads the point's `filelist.f`, sets the library and checks its name and units, writes `lib_info.txt`, keeps wire-load models out, links with DesignWare, `compile_ultra -no_autoungroup`, writes reports and the mapped netlist |
-| `scripts/constraints.sdc` | Clock on `ap_clk` at `$clock_ns`, uncertainties, the tech file's input drive, output load and max transition, small IO delays, all scaled to the library's units, and the synchronous reset `ap_rst_n` kept as an ideal network (its tree belongs to place and route) |
+| `scripts/dc_syn.tcl` | One DC run: reads the point's `filelist.f` (as `SYN_FORMAT`: `verilog`, or `sverilog` for forge), sets the library and checks its name and units, writes `lib_info.txt`, keeps wire-load models out, links with DesignWare, `compile_ultra -no_autoungroup`, writes reports and the mapped netlist |
+| `scripts/constraints.sdc` | Clock on `$clk_port` (`ap_clk`; forge `clk_i`) at `$clock_ns`, uncertainties, the tech file's input drive, output load and max transition, small IO delays, all scaled to the library's units, and the reset `$rst_port` (`ap_rst_n`, synchronous; forge `rst_ni`, asynchronous) kept as an ideal network (its tree belongs to place and route) |
 
 ## The filelist
 
@@ -153,3 +153,25 @@ vecadd.v
 ```
 
 A `# ram:` line names a memory Vitis built. Neither library has RAM cells, and DC would build the memory from flops (hours, and no fair area), so `run` parks such a point with the status `skipped: needs a RAM macro (<files>); <tech> has no RAM cells, RAM1 builds one (OpenRAM)`. `--with-ram` runs it anyway.
+
+## The forge source
+
+`--source forge` synthesizes snax-forge's accelerators: per point, the accelerator `snax_forge_shell_wrapper` (its modules `snax_forge_csr`, `snax_forge_ctrl` and `snax_forge_datapath`, snax-forge `docs/CONTRACTS.md` §17–18), with no streamers, as the HLS blocks have none.
+
+**Where the points come from.** `forge/points.json` lists them: name, snax-forge recipe and W. `pixi run forge-rtl [patterns] [--list] [--dry-run] [-j N] [--allow-dirty]` (`forge/bundles.py`) runs, per point, snax-forge's `sandbox` (the recipe at `--set W=<w>`), `design` (its last `.snaxdfg` on `platforms/snax_forge.json`) and `bundle`, in the snax-forge checkout next to this repo (`SNAX_FORGE`, default `../snax-forge`) and through that checkout's own pixi environment, into `rtl/forge/<point>/`. git ignores `rtl/`: a bundle is rebuilt from its commit. A bundle whose `bundle.json` says `dirty: true` is refused unless `--allow-dirty`. Each bundle gets `point.json` (point, recipe, W, `snax_forge_commit`, `dirty`, date) and `forge-rtl.log` (the three tasks' output). The names join with hls-exercises': vecadd and vecmul `done/<kernel>/forge_w<W>`, vsum_tree `done/vsum/forge_w<W>`, dot_k `done/dot/forge<k>_w<W>`.
+
+**The points.** A forge point is a folder under `rtl/forge/` (`SYN_RTL_FORGE` overrides) holding a `bundle.json`; its top is `bundle.json`'s `top`. Sizes are run-time CSRs, so one bundle serves every N.
+
+**The filelist.** `run` writes the point's `filelist.f` into the run folder: `# top: <top>`, then the bundle's `rtl/files.f` with each path (relative to the bundle's `rtl/`) made absolute. `dc_syn.tcl` reads it as it reads an HLS filelist. There is no `# ram:` handling.
+
+**The ports.** The RTL is SystemVerilog (`SYN_FORMAT=sverilog`); the clock is `clk_i` and the reset `rst_ni`, active low and asynchronous (firtool's flops take the active-high `reset` the wrapper derives from it). `rst_ni` is kept ideal like `ap_rst_n`.
+
+**The results tree.** As for HLS, under `forge` in place of `hls`: runs in `syn/runs/forge/<tech>/<tier>/<kernel>/<point>/` with `syn/runs/forge/<tech>/summary.csv`, committed results in `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `reports/` with `KEPT_REPORTS`). A forge row of `synth_dc.csv` has three more columns after `run`: `recipe`, `W` (from `point.json`) and `snax_forge_commit` (from `bundle.json`).
+
+```bash
+pixi run forge-rtl --list 'done/dot/*'                                     # the forge points
+pixi run forge-rtl -j 6                                                    # all 48 bundles into rtl/forge/
+pixi run syn list --source forge                                           # the bundles syn.py sees
+pixi run syn run done/dot/forge3_w4 --source forge --tech nangate45        # one point
+pixi run syn summary --source forge                                        # every forge run so far
+```

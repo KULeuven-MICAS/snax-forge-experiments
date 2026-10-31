@@ -18,6 +18,7 @@ repo too, or are pointed to with environment variables.
 <parent>/
   snax-forge-experiments/   this repo
   hls-exercises/            rtl/<tier>/<kernel>/<point>/filelist.f
+  snax-forge/               recipes/, platforms/; forge/bundles.py runs its sandbox, design and bundle tasks
   RTL_flow_Nangate15/       tech/nangate45/NangateOpenCellLibrary_typical.db
                             tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db
 ```
@@ -31,13 +32,15 @@ repo too, or are pointed to with environment variables.
 | `syn/` | ASIC synthesis with Design Compiler on the Nangate 45 nm and 15 nm Open Cell Libraries, one tech file per technology in `syn/tech/` ([`syn/README.md`](syn/README.md)). Runs stay local in `syn/runs/`. |
 | `results/hls/` | hls-exercises' bench summaries (`hls_cycles.csv`, `hls_loops.csv`, `forge_cycles.csv`, `report_<tier>.md`) and the run notes in `runs/`. hls-exercises' `bench/bench.py` writes here; `sim/report_energy.py` writes `report_energy.md`. |
 | `sim/` | Gate-level simulation and PrimePower: `pwr.py` (the driver), `sources/` (tb.json adapters), `ref.py`, `tb/`, `scripts/`, and step 0's `probe/` ([`docs/power.md`](docs/power.md)). Runs stay local in `sim/runs/`. |
+| `forge/` | snax-forge's points (`points.json`: name, recipe, W) and the driver that bundles them, `bundles.py` (`pixi run forge-rtl`), run in the snax-forge checkout next to this repo ([`syn/README.md`](syn/README.md#the-forge-source)). |
+| `rtl/forge/` | The bundles, one folder per point (`bundle.json`, `point.json`, `rtl/sv/`, `rtl/files.f`); git ignores `rtl/`, a bundle is rebuilt from its commit. |
+| `results/forge/<tech>/` | snax-forge's accelerators per technology (`syn/syn.py --source forge`): `synth_dc.csv` (with `recipe`, `W`, `snax_forge_commit`), `synth_dc_modules.csv`, `reports/`; run notes in `results/forge/runs/`. |
 | `results/hls/<tech>/` | The results per technology (`nangate45`, `nangate15`): `synth_dc.csv`, `synth_dc_modules.csv` and every run's reports in `reports/` (`syn/syn.py`); `power_pt.csv`, `power_pt_modules.csv` and `power_reports/` (`sim/pwr.py`). |
 
 Planned:
 
 - `ram/`: OpenRAM macros, with a `tc_sram`-compatible wrapper for each.
 - `cost/`: the fitted area and energy tables per technology, for snax-forge's first-order estimates.
-- `results/forge/`: snax-forge's accelerators.
 
 ## Run
 
@@ -46,6 +49,8 @@ pixi install                                                  # once: the repo's
 pixi run syn list 'done/vecadd/*'                             # hls-exercises' points
 pixi run syn run done/vecadd/opt_w8 --tech nangate45          # one point at 10 ns on nangate45
 pixi run syn summary                                          # every run so far, both technologies
+pixi run forge-rtl -j 6                                       # snax-forge's 48 bundles into rtl/forge/
+pixi run syn run done/dot/forge3_w4 --source forge --tech nangate45   # one forge point
 pixi run pwr run 'done/vecadd/*' --tech nangate45             # dynamic energy of the synthesized points (docs/power.md)
 ```
 

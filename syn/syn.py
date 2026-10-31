@@ -7,9 +7,21 @@ hardware point: case and W, every size runs on it), holding Vitis's Verilog and
 a filelist.f that hls-exercises' bench/bench.py writes. Patterns are shell
 globs over those names.
 
-  pixi run syn list    [PATTERN ...] [--tech T]
-  pixi run syn run     PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run]
-  pixi run syn summary [PATTERN ...] [--tech T]
+  pixi run syn list    [PATTERN ...] [--tech T] [--source S]
+  pixi run syn run     PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run] [--source S]
+  pixi run syn summary [PATTERN ...] [--tech T] [--source S]
+
+--source picks where the points come from: hls (the default, as above) or
+forge, snax-forge's accelerator bundles that forge/bundles.py (pixi run
+forge-rtl) writes into rtl/forge/ in this repo. A forge point is a folder
+there holding a bundle.json, named as an HLS point (e.g. done/dot/forge3_w4);
+its top is bundle.json's "top", and run writes the point's filelist.f into
+the run folder: '# top: <top>', then rtl/files.f's paths made absolute. Forge
+RTL is SystemVerilog with clock clk_i and an asynchronous active-low reset
+rst_ni (SYN_FORMAT, SYN_CLK_PORT, SYN_RST_PORT below). Runs go to
+syn/runs/forge/<tech>/, results to results/forge/<tech>/, and a forge row has
+three more columns: recipe, W, snax_forge_commit (from point.json and
+bundle.json).
 
 A technology is a file syn/tech/<tech>.json: the library (.db path and the
 library name it must hold), its time and capacitance units, the driving cell,
@@ -39,13 +51,16 @@ runs it anyway (for when a macro or a black-box stub is in place).
 
 Environment, all optional:
   DC_SHELL            dc_shell                 (Design Compiler)
-  SYN_RTL             ../hls-exercises/rtl     (the points)
+  SYN_RTL             ../hls-exercises/rtl     (the hls points)
+  SYN_RTL_FORGE       rtl/forge                (the forge points)
   SYN_LIB_NANGATE45   the nangate45 .db, instead of the tech file's lib_default
   SYN_LIB_NANGATE15   the nangate15 .db, instead of the tech file's lib_default
                       (in general: the tech file's lib_env)
 syn.py passes DC: SYN_FILELIST, SYN_LIB_DB, SYN_LIB_NAME, SYN_TIME_UNIT,
 SYN_CAP_UNIT, SYN_T_SCALE, SYN_C_SCALE, SYN_DRIVE_CELL, SYN_OUT_LOAD_FF,
-SYN_MAX_TRANS_NS, SYN_WIRE_LOAD, SYN_CLOCK_NS and SYN_CORES.
+SYN_MAX_TRANS_NS, SYN_WIRE_LOAD, SYN_CLOCK_NS, SYN_CORES, and from the
+source SYN_FORMAT (verilog; forge sverilog), SYN_CLK_PORT (ap_clk; forge clk_i)
+and SYN_RST_PORT (ap_rst_n; forge rst_ni).
 Standard library only.
 """
 
@@ -67,10 +82,26 @@ from pathlib import Path
 
 SYN = Path(__file__).resolve().parent
 ROOT = SYN.parent
-RTL = Path(os.environ.get("SYN_RTL", ROOT.parent / "hls-exercises" / "rtl")).resolve()
 TECH_DIR = SYN / "tech"
+# Per source: the points' folder, the HDL format, the clock and reset ports (dc_syn.tcl's defaults
+# are the hls values). use_source() sets SOURCE, RTL, RUNS and RESULTS.
+SOURCES = {
+    "hls": {"rtl": Path(os.environ.get("SYN_RTL", ROOT.parent / "hls-exercises" / "rtl")),
+            "format": "verilog", "clk": "ap_clk", "rst": "ap_rst_n"},
+    "forge": {"rtl": Path(os.environ.get("SYN_RTL_FORGE", ROOT / "rtl" / "forge")),
+              "format": "sverilog", "clk": "clk_i", "rst": "rst_ni"},
+}
+SOURCE = "hls"
+RTL = SOURCES["hls"]["rtl"].resolve()
 RUNS = SYN / "runs" / "hls"
 RESULTS = ROOT / "results" / "hls"
+
+
+def use_source(name: str) -> None:
+    global SOURCE, RTL, RUNS, RESULTS
+    SOURCE, RTL = name, SOURCES[name]["rtl"].resolve()
+    RUNS, RESULTS = SYN / "runs" / name, ROOT / "results" / name
+
 SCRIPT = SYN / "scripts" / "dc_syn.tcl"
 DEFAULT_CLOCK = "10"
 MAX_REPORT_BYTES = 1 << 20  # reports copied to results/ above this size are skipped
@@ -85,6 +116,7 @@ COLUMNS = ["point", "top", "tech", "clock_ns", "status", "errors", "area_um2", "
            "maxtrans_nets", "dyn_power_uw", "leak_power_uw", "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj",
            "e_total_pj", "leak_clk_uw", "leak_reg_uw", "leak_seq_uw", "leak_comb_uw", "lib_md5", "dc_version",
            "date", "run"]
+FORGE_COLUMNS = ["recipe", "W", "snax_forge_commit"]   # after COLUMNS, forge rows only
 MODULE_COLUMNS = ["point", "tech", "clock_ns", "path", "design", "area_um2", "comb_um2", "seq_um2", "bbox_um2",
                   "dyn_power_uw", "leak_power_uw"]
 # power.rpt group -> CSV suffix
@@ -153,7 +185,25 @@ def techs_with_summary(only: str | None) -> list[str]:
 
 # ---------------------------------------------------------------- points
 def all_points() -> list[str]:
+    if SOURCE == "forge":
+        return sorted(str(f.parent.relative_to(RTL)) for f in RTL.rglob("bundle.json"))
     return sorted(str(f.parent.relative_to(RTL)) for f in RTL.glob("*/*/*/filelist.f"))
+
+
+def columns() -> list[str]:
+    return COLUMNS + FORGE_COLUMNS if SOURCE == "forge" else COLUMNS
+
+
+def forge_json(point: str, name: str) -> dict:
+    f = RTL / point / name
+    return json.loads(f.read_text()) if f.is_file() else {}
+
+
+def forge_filelist(point: str) -> list[str]:
+    """The bundle's rtl/files.f, each path made absolute."""
+    rtl = RTL / point / "rtl"
+    return [str((rtl / ln.strip()).resolve()) for ln in (rtl / "files.f").read_text().splitlines()
+            if ln.strip() and not ln.strip().startswith("#")]
 
 
 def select(patterns: list[str]) -> list[str]:
@@ -164,16 +214,20 @@ def select(patterns: list[str]) -> list[str]:
 
 
 def top_of(point: str) -> str:
+    if SOURCE == "forge":
+        return forge_json(point, "bundle.json").get("top", "")
     m = re.search(r"^#\s*top:\s*(\S+)", (RTL / point / "filelist.f").read_text(), re.M)
     return m.group(1) if m else ""
 
 
 def rams_of(point: str) -> list[str]:
+    if SOURCE == "forge":
+        return []
     return re.findall(r"^#\s*ram:\s*(\S+)", (RTL / point / "filelist.f").read_text(), re.M)
 
 
 def parked_row(tech: str, point: str, clock: str, rams: list[str]) -> dict:
-    row = {c: "" for c in COLUMNS}
+    row = {c: "" for c in columns()}
     row.update({"point": point, "top": top_of(point), "tech": tech, "clock_ns": clock,
                 "status": f"skipped: needs a RAM macro ({', '.join(rams)}); {tech} has no RAM cells, "
                           "RAM1 builds one (OpenRAM)",
@@ -242,7 +296,7 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
     log_text = log.read_text(errors="replace") if log.is_file() else ""
     info = lib_info(rdir)
     tj = rdir / "tech.json"
-    row = {c: "" for c in COLUMNS}
+    row = {c: "" for c in columns()}
     row.update({
         "point": point, "top": top_of(point), "tech": tech["name"], "clock_ns": clock,
         "errors": len(re.findall(r"^Error:", log_text, re.M)) if log.is_file() else "",
@@ -259,6 +313,10 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         "date": dt.datetime.now().isoformat(timespec="seconds"),
         "run": str(rdir.relative_to(ROOT)),
     })
+    if SOURCE == "forge":
+        pj = forge_json(point, "point.json")
+        row.update({"recipe": pj.get("recipe", ""), "W": pj.get("W", ""),
+                    "snax_forge_commit": forge_json(point, "bundle.json").get("snax_forge_commit", "")})
     crit = _first(qor, r"Critical Path Length:\s*([0-9.eE+-]+)")
     slack = _first(qor, r"Critical Path Slack:\s*([0-9.eE+-]+)")
     if crit:
@@ -385,7 +443,7 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
     name = tech["name"]
     key = lambda r: (r["point"], r["clock_ns"])  # noqa: E731
     done = {key(r) for r in rows}
-    _merge(summary_of(name), COLUMNS, key, rows, done)
+    _merge(summary_of(name), columns(), key, rows, done)
     out = RESULTS / name
     out.mkdir(parents=True, exist_ok=True)
     shutil.copy2(summary_of(name), out / "synth_dc.csv")
@@ -435,8 +493,11 @@ def cmd_list(args) -> int:
 
 
 def dc_env(tech: dict, res: dict, point: str, args) -> dict:
+    src = SOURCES[SOURCE]
+    filelist = (run_dir(tech["name"], point, args.clock) / "filelist.f" if SOURCE == "forge"
+                else RTL / point / "filelist.f")
     return {
-        "SYN_FILELIST": str(RTL / point / "filelist.f"),
+        "SYN_FILELIST": str(filelist),
         "SYN_LIB_DB": res["lib_db"],
         "SYN_LIB_NAME": tech["lib_name"],
         "SYN_TIME_UNIT": tech["units"]["time"],
@@ -449,6 +510,9 @@ def dc_env(tech: dict, res: dict, point: str, args) -> dict:
         "SYN_WIRE_LOAD": tech["wire_load"],
         "SYN_CLOCK_NS": args.clock,
         "SYN_CORES": str(args.cores),
+        "SYN_FORMAT": src["format"],
+        "SYN_CLK_PORT": src["clk"],
+        "SYN_RST_PORT": src["rst"],
     }
 
 
@@ -463,6 +527,9 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
     cmd = [dc, "-f", str(SCRIPT), "-output_log_file", "logs/dc_shell.log"]
     if args.dry_run:
         print(f"\n# {point} on {name}")
+        if SOURCE == "forge":
+            print(f"# run writes {syn_env['SYN_FILELIST']}: '# top: {top_of(point)}', "
+                  f"then {len(forge_filelist(point))} files from {RTL / point / 'rtl' / 'files.f'}")
         for k, v in syn_env.items():
             print(f"export {k}='{v}'")
         print(f"mkdir -p {rdir}/logs && cd {rdir} && {' '.join(cmd)}")
@@ -470,6 +537,9 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
     if rdir.exists():
         shutil.rmtree(rdir)
     (rdir / "logs").mkdir(parents=True)
+    if SOURCE == "forge":
+        Path(syn_env["SYN_FILELIST"]).write_text(
+            f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in forge_filelist(point)))
     print(f"run  {point} on {name} at {args.clock} ns in {rdir.relative_to(ROOT)}", flush=True)
     with (rdir / "logs" / "dc_stdout.log").open("w") as fh:
         rc = subprocess.run(cmd, cwd=rdir, env=dict(os.environ, **syn_env), stdout=fh,
@@ -513,7 +583,7 @@ def cmd_run(args) -> int:
 
 def cmd_summary(args) -> int:
     if not techs_with_summary(args.tech):
-        sys.exit(f"no syn/runs/hls/{args.tech or '<tech>'}/summary.csv yet")
+        sys.exit(f"no syn/runs/{SOURCE}/{args.tech or '<tech>'}/summary.csv yet")
     print_rows(summary_rows(args.tech, args.patterns))
     return 0
 
@@ -525,6 +595,8 @@ def main() -> int:
     for name in ("list", "run", "summary"):
         p = sub.add_parser(name)
         p.add_argument("patterns", nargs="*", help="globs over <tier>/<kernel>/<point>, e.g. done/vecadd/unopt_*")
+        p.add_argument("--source", choices=sorted(SOURCES), default="hls",
+                       help="hls (hls-exercises' rtl/, the default) or forge (rtl/forge/, pixi run forge-rtl)")
         if name == "run":
             p.add_argument("--tech", required=True, choices=techs, help="technology: one of syn/tech/*.json")
             p.add_argument("--clock", default=DEFAULT_CLOCK, help=f"clock period in ns (default {DEFAULT_CLOCK})")
@@ -536,6 +608,7 @@ def main() -> int:
         else:
             p.add_argument("--tech", choices=techs, help="only this technology's runs")
     args = ap.parse_args()
+    use_source(args.source)
     if args.cmd == "run" and not args.patterns:
         ap.error("run needs at least one pattern, e.g. done/vecadd/unopt_n512_w8")
     return {"list": cmd_list, "run": cmd_run, "summary": cmd_summary}[args.cmd](args)

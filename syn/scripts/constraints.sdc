@@ -3,9 +3,11 @@
 # Sourced by dc_syn.tcl after link. Every value is physical (ns, fF) and scaled
 # to the library's units: $t_scale library time units per ns, $c_scale library
 # capacitance units per fF. dc_syn.tcl also sets $clock_ns, $drive_cell,
-# $out_load_ff and $max_trans_ns from the tech file (syn/tech/<tech>.json).
+# $out_load_ff and $max_trans_ns from the tech file (syn/tech/<tech>.json),
+# and $clk_port and $rst_port from SYN_CLK_PORT and SYN_RST_PORT.
 # Vitis's tops have one clock, ap_clk, and a synchronous active-low reset,
-# ap_rst_n, which is treated as an ordinary input here.
+# ap_rst_n; snax-forge's have clk_i and an asynchronous active-low reset,
+# rst_ni. Either reset is an ordinary input here, kept ideal.
 ################################
 
 #-----------------------------
@@ -21,7 +23,6 @@ set_max_fanout 32 [current_design]
 #-----------------------------
 # Declare clocks
 #-----------------------------
-set clk_port ap_clk
 create_clock -name clk -period [expr {$clock_ns * $t_scale}] [get_ports $clk_port]
 
 #-----------------------------
@@ -52,7 +53,8 @@ set_output_delay -max [expr {0.01 * $t_scale}] -clock clk [all_outputs]
 #-----------------------------
 # Reset
 #-----------------------------
-# ap_rst_n is synchronous and reaches nearly every flop. Keep it ideal here, so
-# DC builds no buffer tree for it and does not report its fanout as max-cap
-# violations; the reset tree belongs to place and route.
-set_ideal_network [get_ports ap_rst_n]
+# The reset ($rst_port: ap_rst_n, synchronous; rst_ni, asynchronous) reaches
+# nearly every flop. Keep it ideal here, so DC builds no buffer tree for it and
+# does not report its fanout as max-cap violations; the reset tree belongs to
+# place and route.
+set_ideal_network [get_ports $rst_port]

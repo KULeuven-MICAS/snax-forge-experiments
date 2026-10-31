@@ -6,3 +6,5 @@ __pycache__/
 .pixi/
 # Simulation and power runs stay local, as syn/runs/; the probe scripts are in sim/probe/
 sim/runs/
+# Generated RTL (forge/bundles.py writes rtl/forge/): never committed, a bundle is rebuilt from its commit
+rtl/

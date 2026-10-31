@@ -10,3 +10,4 @@ numpy = ">=1.26,<2"
 [tasks]
 syn = "python syn/syn.py"
 pwr = "python sim/pwr.py"
+forge-rtl = "python forge/bundles.py"
