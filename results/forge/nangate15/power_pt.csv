@@ -1,0 +1,3 @@
+point,top,tech,clock_ns,W,size,config,beats,seed,cycles,e_clk_pj,e_reg_pj,e_seq_pj,e_comb_pj,e_flop_pj,e_dyn_pj,p_dyn_uw,e_comb_fire_pj,e_flop_fire_pj,e_run_pj,flop_bits,e_bit_pj,status,recipe,snax_forge_commit
+done/dot/forge5_w4,snax_forge_shell_wrapper,nangate15,10,4,n2048,JOBS=1 mac.JOB_BEATS=512,512,0,517,1.221645,0.4519154,0,15.52807,1.67356,17.20164,1720.164,15.67972,1.689904,8893.246,648,0.002582655,ok,dot_5,2741b462f7ee8947ae7be4d61c5ba81db053ba65
+done/vecadd/forge_w4,snax_forge_shell_wrapper,nangate15,10,4,n2048,JOBS=512,512,0,512,0.3701151,0.01512246,0,0.8165887,0.3852376,1.201826,120.1826,0.8165887,0.3852376,615.335,196,0.001965498,ok,vecadd,2741b462f7ee8947ae7be4d61c5ba81db053ba65

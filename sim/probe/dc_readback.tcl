@@ -22,6 +22,15 @@ foreach {var key} {lib_db lib_db lib_name lib_name wire_load wire_load t_scale t
 }
 regexp {"out_load_ff":\s*([0-9.eE+-]+)} $tj -> out_load_ff
 regexp {"max_transition_ns":\s*([0-9.eE+-]+)} $tj -> max_trans_ns
+# The clock and reset ports constraints.sdc names: tech.json's dc_env (SYN_CLK_PORT, SYN_RST_PORT, which
+# syn.py records since SYN1 R0, clk_i and rst_ni for snax-forge), else Vitis's ap_clk and ap_rst_n.
+proc tj_env {key default} {
+    global tj
+    if {[regexp "\"$key\":\\s*\"(\[^\"\]*)\"" $tj -> v]} { return $v }
+    return $default
+}
+set clk_port [tj_env SYN_CLK_PORT ap_clk]
+set rst_port [tj_env SYN_RST_PORT ap_rst_n]
 
 set target_library $lib_db
 set link_library [list * $lib_db]
@@ -34,7 +43,7 @@ link
 if {$wire_load eq "off"} { remove_wire_load_model [current_design] }
 source [file join $repo syn scripts constraints.sdc]
 if {$mode eq "uniform"} {
-    set nets [remove_from_collection [get_nets -hierarchical *] [get_nets -of_objects [get_ports ap_clk]]]
+    set nets [remove_from_collection [get_nets -hierarchical *] [get_nets -of_objects [get_ports $clk_port]]]
     set_switching_activity -toggle_rate $power_default_toggle_rate -base_clock clk \
         -static_probability $power_default_static_probability $nets
 }

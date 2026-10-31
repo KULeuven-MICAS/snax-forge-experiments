@@ -31,10 +31,10 @@ repo too, or are pointed to with environment variables.
 |---|---|
 | `syn/` | ASIC synthesis with Design Compiler on the Nangate 45 nm and 15 nm Open Cell Libraries, one tech file per technology in `syn/tech/` ([`syn/README.md`](syn/README.md)). Runs stay local in `syn/runs/`. |
 | `results/hls/` | hls-exercises' bench summaries (`hls_cycles.csv`, `hls_loops.csv`, `forge_cycles.csv`, `report_<tier>.md`) and the run notes in `runs/`. hls-exercises' `bench/bench.py` writes here; `sim/report_energy.py` writes `report_energy.md`. |
-| `sim/` | Gate-level simulation and PrimePower: `pwr.py` (the driver), `sources/` (tb.json adapters), `ref.py`, `tb/`, `scripts/`, and step 0's `probe/` ([`docs/power.md`](docs/power.md)). Runs stay local in `sim/runs/`. |
-| `forge/` | snax-forge's points (`points.json`: name, recipe, W) and the driver that bundles them, `bundles.py` (`pixi run forge-rtl`), run in the snax-forge checkout next to this repo ([`syn/README.md`](syn/README.md#the-forge-source)). |
+| `sim/` | Gate-level simulation and PrimePower: `pwr.py` (the driver; `--source hls` or `forge`), `sources/` (tb.json adapters: `hls.py`, `forge.py`), `ref.py`, `tb/`, `scripts/`, and step 0's `probe/` ([`docs/power.md`](docs/power.md)). Runs stay local in `sim/runs/` (forge's in `sim/runs/forge/`). |
+| `forge/` | snax-forge's points (`points.json`: name, recipe, W), the driver that bundles them, `bundles.py` (`pixi run forge-rtl`), run in the snax-forge checkout next to this repo ([`syn/README.md`](syn/README.md#the-forge-source)), and `query.py`, which answers the power flow's questions with snax-forge's own code ([`docs/power.md`](docs/power.md#forge---source-forge)). |
 | `rtl/forge/` | The bundles, one folder per point (`bundle.json`, `point.json`, `rtl/sv/`, `rtl/files.f`); git ignores `rtl/`, a bundle is rebuilt from its commit. |
-| `results/forge/<tech>/` | snax-forge's accelerators per technology (`syn/syn.py --source forge`): `synth_dc.csv` (with `recipe`, `W`, `snax_forge_commit`), `synth_dc_modules.csv`, `reports/`; run notes in `results/forge/runs/`. |
+| `results/forge/<tech>/` | snax-forge's accelerators per technology (`syn/syn.py --source forge`): `synth_dc.csv` (with `recipe`, `W`, `snax_forge_commit`), `synth_dc_modules.csv`, `reports/`; `power_pt.csv`, `power_pt_modules.csv`, `power_reports/` (`sim/pwr.py --source forge`); run notes in `results/forge/runs/`. |
 | `results/hls/<tech>/` | The results per technology (`nangate45`, `nangate15`): `synth_dc.csv`, `synth_dc_modules.csv` and every run's reports in `reports/` (`syn/syn.py`); `power_pt.csv`, `power_pt_modules.csv` and `power_reports/` (`sim/pwr.py`). |
 
 Planned:

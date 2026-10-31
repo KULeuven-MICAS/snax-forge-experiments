@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """sim/pwr.py - dynamic energy of mapped netlists from simulated activity (docs/power.md).
 
-  pixi run pwr tbjson      POINT
-  pixi run pwr run         PATTERN ... --tech T [--stim rand64|forge] [--size TAG|all] [--seed N] [-j N]
-  pixi run pwr setup-check --tech T [--point P]
-  pixi run pwr summary     [PATTERN ...] [--tech T]
+  pixi run pwr tbjson      POINT [--source hls|forge] [--tech T]
+  pixi run pwr run         PATTERN ... --tech T [--source hls|forge] [--stim rand64|forge] [--size TAG|all]
+                                       [--seed N] [-j N]
+  pixi run pwr setup-check --tech T [--source hls|forge] [--point P]
+  pixi run pwr summary     [PATTERN ...] [--source hls|forge] [--tech T]
+
+--source hls (the default) takes hls-exercises' points, as below; --source forge takes snax-forge's bundles in
+rtl/forge/ (forge/bundles.py) and their netlists in syn/runs/forge/<tech>/: tb.json from sim/sources/forge.py
+(control forge_csr: the wrapper driven through its CSRs by sim/tb/csr_seq.sv), the size n2048, the window
+from the edge accepting START to the run's end, whose cycles must equal the COUNTER read back and the group's
+cycles from snax-forge's model; the stimulus rand64; the reference sim/ref.py, checked once per kernel and batch
+against snax-forge's kernel body; runs in sim/runs/forge/<tech>/, results in results/forge/<tech>/ with the
+columns recipe and snax_forge_commit added (docs/power.md, Forge).
 
 A point is an hls-exercises rtl/ folder, <tier>/<kernel>/<point>, whose mapped netlist is already in
 syn/runs/hls/<tech>/<point>/out/ (syn/syn.py). Per point, one worker runs, start to end:
@@ -44,6 +53,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -54,6 +64,7 @@ SIM = Path(__file__).resolve().parent
 ROOT = SIM.parent
 sys.path.insert(0, str(SIM))
 from sources import hls  # noqa: E402
+from sources import forge as forge_src  # noqa: E402
 from ref import ref  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location("syn_driver", ROOT / "syn" / "syn.py")
@@ -61,16 +72,20 @@ syn = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(syn)
 
 RUNS = SIM / "runs"
+SOURCE = "hls"
 SYN_RUNS = ROOT / "syn" / "runs" / "hls"
 RESULTS = ROOT / "results" / "hls"
 TB_DIR = SIM / "tb"
-TB_FILES = ["ap_ctrl_hs_seq.sv", "axis_src.sv", "axis_sink.sv"]
+TB_FILES = {"hls": ["ap_ctrl_hs_seq.sv", "axis_src.sv", "axis_sink.sv"],
+            "forge": ["csr_seq.sv", "axis_src.sv", "axis_sink.sv"]}
+SOURCES = {"hls": hls, "forge": forge_src}
 PT_SCRIPT = SIM / "scripts" / "pt_power.tcl"
 RUN_DO = SIM / "scripts" / "run.do"
 DC_READBACK = SIM / "probe" / "dc_readback.tcl"
 TB_TOP, DUT = "tb", "dut"
 CLOCK_NS = 10.0
 SETUP_POINT = "done/vecadd/opt_w8"
+SETUP_POINT_FORGE = "done/vecadd/forge_w4"
 SETUP_TOL = 1e-3            # setup-check: every power group within 0.1% ...
 # ... except where PT and DC are known to differ on a library feature, not on the setup (docs X10):
 # nangate15's non-switching internal power on inverting multi-input cells (PITFALLS PT5). PT is the reference.
@@ -83,6 +98,7 @@ CELL_MODELS = {"nangate45": ("NangateOpenCellLibrary.v", []),
 COLUMNS = ["point", "top", "tech", "clock_ns", "W", "size", "config", "beats", "seed", "cycles",
            "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw",
            "e_comb_fire_pj", "e_flop_fire_pj", "e_run_pj", "flop_bits", "e_bit_pj", "status"]
+FORGE_COLUMNS = ["recipe", "snax_forge_commit"]
 MODULE_COLUMNS = ["point", "tech", "path", "design", "e_dyn_pj"]
 KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
 LICENCE_ERR = re.compile(r"(?i)(licen[sc]\w*\s+(error|fail\w*|not available|denied|checkout)|unable to check\s*out"
@@ -92,6 +108,27 @@ MASK64 = (1 << 64) - 1
 
 class Fail(Exception):
     """A check that fails the run: str(e) is the status after 'failed: '."""
+
+
+def use_source(name: str) -> None:
+    """hls (hls-exercises) or forge (snax-forge's bundles): where points, netlists and results are."""
+    global SOURCE, SYN_RUNS, RESULTS
+    SOURCE = name
+    syn.use_source(name)
+    SYN_RUNS, RESULTS = ROOT / "syn" / "runs" / name, ROOT / "results" / name
+
+
+def src():
+    return SOURCES[SOURCE]
+
+
+def columns() -> list[str]:
+    return COLUMNS + (FORGE_COLUMNS if SOURCE == "forge" else [])
+
+
+def tech_runs(tech: str) -> Path:
+    """sim/runs/<tech>/ (hls, as before) or sim/runs/forge/<tech>/; the cell models stay in sim/runs/<tech>/_cells."""
+    return RUNS / tech if SOURCE == "hls" else RUNS / SOURCE / tech
 
 
 # ---------------------------------------------------------------- tools and licences
@@ -150,8 +187,9 @@ def netlist_of(tech: str, point: str) -> Path:
     return found[0]
 
 
-def scopes(netlist: Path, top: str) -> list[str]:
-    """Instance paths below the top that are designs of the netlist (sub-designs, not cells)."""
+def scopes(netlist: Path, top: str, reached: set | None = None) -> list[str]:
+    """Instance paths below the top that are designs of the netlist (sub-designs, not cells); `reached`, when
+    given, gets every design instantiated on the way."""
     text = netlist.read_text()
     # DC indents some module headers (dot's multiplier: '    module dot_mul_64s_...'), so allow leading space
     bodies = dict(re.findall(r"^\s*module\s+(\S+)\s*\((.*?)^\s*endmodule", text, re.M | re.S))
@@ -164,13 +202,71 @@ def scopes(netlist: Path, top: str) -> list[str]:
             if m in bodies:
                 p = path + [inst.strip()]
                 out.append(p)
+                if reached is not None:
+                    reached.add(m)
                 walk(m, p)
     walk(top, [])
     return [".".join(x if not x.startswith("\\") else x + " " for x in p) for p in out]
 
 
+def dump_block(tb: dict, netlist: Path) -> list[str]:
+    L = ["    // The DUT's own nets and those of its sub-designs, not the cells' (no `celldefine in the models,",
+         "    // docs/PITFALLS.md LIB2); the sequencer turns dumping on and off around the busy window.",
+         "    initial begin : dump", "        string vcd;", "        if ($value$plusargs(\"VCD=%s\", vcd)) begin",
+         "            $dumpfile(vcd);", f"            $dumpvars(1, {TB_TOP}.{DUT});"]
+    L += [f"            $dumpvars(1, {TB_TOP}.{DUT}.{s});" for s in scopes(netlist, tb["top"])]
+    L += ["            $dumpoff;", "        end", "    end"]
+    return L
+
+
+def stream_block(tb: dict, s: dict, clk: str, rst: str, go: str = "go") -> tuple[list[str], str | None]:
+    dw = 64 * s["lanes"]
+    L = [f"    wire [{dw - 1}:0] {s['data']};", f"    wire {s['valid']}, {s['ready']};"]
+    if s["dir"] == "in":
+        L += [f"    axis_src #(.DW({dw}), .NAME(\"{s['arg']}\")) src_{s['arg']} (.clk({clk}), "
+              f".go({go}), .tdata({s['data']}), .tvalid({s['valid']}), .tready({s['ready']}));"]
+        return L, None
+    L += [f"    wire complete_{s['arg']};",
+          f"    axis_sink #(.DW({dw}), .NAME(\"{s['arg']}\")) snk_{s['arg']} (.clk({clk}), "
+          f".rst_n({rst}), .tdata({s['data']}), .tvalid({s['valid']}), .tready({s['ready']}), "
+          f".complete(complete_{s['arg']}));"]
+    return L, f"complete_{s['arg']}"
+
+
+def tb_top_forge(tb: dict, netlist: Path) -> str:
+    """The forge top: csr_seq on the wrapper's CSR port, the streams as for HLS (axis_src, axis_sink)."""
+    c, clk, rst, L = tb["control"], tb["clock"]["port"], tb["reset"]["port"], []
+    L += ["// Generated by sim/pwr.py from tb.json (source forge): do not edit.", "`timescale 1ns/1ps", "",
+          f"module {TB_TOP};",
+          f"    wire {clk}, {rst}, go, sinks_complete;",
+          f"    wire [31:0] {c['req_addr']}, {c['req_data']}, {c['rsp_data']};",
+          f"    wire {c['req_write']}, {c['req_valid']}, {c['req_ready']}, {c['rsp_valid']}, {c['rsp_ready']};",
+          f"    wire {c['busy']}, {c['done']};", "",
+          f"    csr_seq #(.T_NS({CLOCK_NS})) seq (.clk({clk}), .rst_n({rst}), .go(go), .req_addr({c['req_addr']}), "
+          f".req_data({c['req_data']}), .req_write({c['req_write']}), .req_valid({c['req_valid']}), "
+          f".req_ready({c['req_ready']}), .rsp_data({c['rsp_data']}), .rsp_valid({c['rsp_valid']}), "
+          f".rsp_ready({c['rsp_ready']}), .done({c['done']}), .sinks_complete(sinks_complete));", ""]
+    done = []
+    for s in tb["streams"]:
+        lines, comp = stream_block(tb, s, clk, rst)
+        L += lines + [""]
+        if comp:
+            done.append(comp)
+    L += [f"    assign sinks_complete = {' & '.join(done)};", ""]
+    ports = [clk, rst, c["busy"], c["done"]]
+    ports += [c[k] for k in ("req_addr", "req_data", "req_write", "req_valid", "req_ready", "rsp_data", "rsp_valid",
+                             "rsp_ready")]
+    ports += [s[k] for s in tb["streams"] for k in ("data", "valid", "ready")]
+    L += [f"    {tb['top']} {DUT} ("] + [f"        .{p}({p}){',' if i < len(ports) - 1 else ''}"
+                                         for i, p in enumerate(ports)] + ["    );", ""]
+    L += dump_block(tb, netlist) + ["endmodule", ""]
+    return "\n".join(L)
+
+
 def tb_top(tb: dict, netlist: Path) -> str:
     """The thin per-point top: tb.json's ports wired to the fixed modules of sim/tb/."""
+    if tb["control"]["kind"] == "forge_csr":
+        return tb_top_forge(tb, netlist)
     c, L = tb["control"], []
     L += ["// Generated by sim/pwr.py from tb.json: do not edit.", "`timescale 1ns/1ps", "",
           f"module {TB_TOP};",
@@ -223,6 +319,59 @@ def beats_hex(x: np.ndarray, lanes: int) -> str:
             v |= (int(x[b * lanes + lane]) & MASK64) << (64 * lane)
         out.append(f"{v:0{lanes * 16}x}\n")
     return "".join(out)
+
+
+def untoggled_bits(x: np.ndarray, beats: int, lanes: int) -> int:
+    seen = np.bitwise_or.reduce(x.view(np.uint64).reshape(beats, lanes), axis=0)
+    return sum(64 - bin(int(v)).count("1") for v in seen)
+
+
+def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
+    """rand64 (X19): N full-range int64 per input stream, seed `seed`, stream by stream in tb.json order;
+    the reference from sim/ref.py; every input bit must toggle (N / W beats, 64 or more at n2048)."""
+    z = tb["sizes"][size]
+    n = z["N"]
+    ins_s = [s for s in tb["streams"] if s["dir"] == "in"]
+    rng = np.random.default_rng(seed)
+    info = np.iinfo(np.int64)
+    ins = {s["arg"]: rng.integers(info.min, info.max, size=n, dtype=np.int64, endpoint=True) for s in ins_s}
+    outs = ref(tb["kernel"], ins, {})
+    untoggled = {}
+    for s in ins_s:
+        k = untoggled_bits(ins[s["arg"]], n // s["lanes"], s["lanes"])
+        if k:
+            untoggled[s["arg"]] = k
+            if n // s["lanes"] >= TOGGLE_BEATS:
+                raise Fail(f"stimulus: {k} bits of {s['arg']} never toggle")
+    for s in tb["streams"]:
+        if s["dir"] == "out" and len(outs[s["arg"]]) % s["lanes"]:
+            raise Fail(f"reference {s['arg']}: {len(outs[s['arg']])} values do not fill {s['lanes']} lanes")
+    return {"ins": ins, "pins": {}, "outs": outs, "beats": n // ins_s[0]["lanes"], "untoggled": untoggled}
+
+
+# The forge reference check: sim/ref.py against snax-forge's kernel body (forge/query.py ref), once per kernel,
+# size and seed in a batch (the inputs depend on N and the seed only, not on W)
+REF_CHECKED: dict = {}
+REF_LOCK = threading.Lock()
+
+
+def forge_ref_check(tb: dict, size: str, seed: int, st: dict, rdir: Path) -> dict:
+    key = (tb["kernel"], size, seed)
+    with REF_LOCK:
+        if key not in REF_CHECKED:
+            got = forge_src.kernel_ref(tb["kernel"], st["ins"], rdir / "ref_check")
+            shutil.rmtree(rdir / "ref_check", ignore_errors=True)
+            same = {a: bool(np.array_equal(np.asarray(got["outs"][a]).ravel()[: len(v)], v)
+                            and np.asarray(got["outs"][a]).size >= len(v)) for a, v in st["outs"].items()}
+            REF_CHECKED[key] = {"func": got["info"]["func"], "point": tb["point"], "equal": same,
+                                "outs": {a: np.asarray(v).copy() for a, v in st["outs"].items()}}
+        chk = REF_CHECKED[key]
+    if not all(chk["equal"].values()):
+        raise Fail(f"sim/ref.py differs from snax-forge's {chk['func']}: {chk['equal']}")
+    for a, v in st["outs"].items():
+        if not np.array_equal(v, chk["outs"][a]):
+            raise Fail(f"reference {a} differs from the batch's first {tb['kernel']} run on the same inputs")
+    return {"against": chk["func"], "checked_on": chk["point"], "equal": chk["equal"]}
 
 
 def stimulus(tb: dict, size: str, stim: str, seed: int) -> dict:
@@ -307,7 +456,7 @@ def expected_cycles(tb: dict, size: str) -> tuple[int | None, str]:
 
 
 # ---------------------------------------------------------------- activity and power
-def saif_check(saif: Path, cycles: int) -> dict:
+def saif_check(saif: Path, cycles: int, clock: str = "ap_clk") -> dict:
     """X9: T0 + T1 + TX = DURATION on every net, DURATION = cycles x clock, the clock toggles 2 x cycles.
 
     vcd2saif adds (TZ t) for time at Z. DC leaves undriven bits in declared vector wires (b_fu_76[1] when
@@ -324,7 +473,7 @@ def saif_check(saif: Path, cycles: int) -> dict:
     driven = [n for n in nets if n[4] != dur]
     bad = [n for n in driven if n[1] + n[2] + n[3] != dur or n[4]]
     want = round(cycles * CLOCK_NS * 1e-9 / unit)
-    clk = [n for n in nets if n[0] == "ap_clk"]
+    clk = [n for n in nets if n[0] == clock]
     info = {"entries": entries, "nets": len(driven), "z_nets": len(z_nets), "duration": dur, "unit_s": unit,
             "bad_nets": len(bad), "tx_nets": sum(1 for n in driven if n[3]), "clk_tc": clk[0][5] if clk else None}
     if len(nets) != entries:
@@ -334,8 +483,46 @@ def saif_check(saif: Path, cycles: int) -> dict:
     if dur != want:
         raise Fail(f"saif: DURATION {dur} is not {cycles} cycles ({want})")
     if not clk or clk[0][5] != 2 * cycles:
-        raise Fail(f"saif: ap_clk TC {info['clk_tc']}, expected {2 * cycles}")
+        raise Fail(f"saif: {clock} TC {info['clk_tc']}, expected {2 * cycles}")
     return info
+
+
+def saif_floating(saif: Path) -> set:
+    """Paths (instance/.../net, below the DUT, escapes dropped) of the SAIF's nets at Z for the whole window."""
+    s = saif.read_text()
+    dur = re.search(r"\(DURATION\s+(\d+)\)", s).group(1)
+    toks = re.findall(r"\(|\)|[^\s()]+", s)
+    out, path, stack, i = set(), [], [], 0
+    while i < len(toks):
+        tk = toks[i]
+        if tk == "(":
+            nxt = toks[i + 1] if i + 1 < len(toks) else ""
+            if nxt == "INSTANCE":
+                path.append(toks[i + 2].replace("\\", ""))
+                stack.append("inst")
+                i += 3
+                continue
+            if nxt not in ("T0", "T1", "TX", "TZ", "TC", "IG", "NET", "PORT", "SAIFILE", "SAIFVERSION", "DIRECTION",
+                           "DESIGN", "DATE", "VENDOR", "PROGRAM_NAME", "VERSION", "DIVIDER", "TIMESCALE",
+                           "DURATION") and i + 2 < len(toks) and toks[i + 2] == "(":
+                j, vals = i + 2, {}
+                while j + 3 < len(toks) and toks[j] == "(" and toks[j + 1] in ("T0", "T1", "TX", "TZ", "TC", "IG"):
+                    vals[toks[j + 1]] = toks[j + 2]
+                    j += 4
+                if vals.get("TZ") == dur:
+                    out.add("/".join(path[2:] + [nxt.replace("\\", "")]))      # below tb/dut
+            stack.append(None)
+        elif tk == ")":
+            if stack and stack.pop() == "inst":
+                path.pop()
+        i += 1
+    return out
+
+
+def not_annotated(rpt: Path) -> list[str]:
+    text = rpt.read_text()
+    at = text.find("List of nonannotated nets")
+    return [ln.strip() for ln in text[at:].splitlines()[1:] if ln.startswith("\t") and ln.strip()] if at >= 0 else []
 
 
 def coverage(rpt: Path) -> tuple[int, int]:
@@ -437,7 +624,14 @@ def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -
     (pdir / "tb.sv").write_text(tb_top(tb, netlist))
     work = pdir / "work"
     subprocess.run([tool("vlib"), str(work)], check=True, capture_output=True)
-    steps = [("vlog_tb", [tool("vlog"), "-sv", "-work", str(work), *(str(TB_DIR / f) for f in TB_FILES),
+    if tb["control"]["kind"] == "forge_csr":      # every module of the netlist gets a dump scope (PITFALLS DC6)
+        reached = set()
+        scopes(netlist, tb["top"], reached)
+        missing = sorted(forge_src.netlist_modules(netlist) - reached - {tb["top"]})
+        if missing:
+            raise Fail(f"scopes: modules of the netlist with no dump scope: {missing}")
+    steps = [("vlog_tb", [tool("vlog"), "-sv", "-work", str(work),
+                          *(str(TB_DIR / f) for f in TB_FILES[tb.get("source", "hls")]),
                           str(pdir / "tb.sv")]),
              ("vlog_netlist", [tool("vlog"), "-timescale", "1ns/1ps", "-work", str(work), str(netlist)]),
              ("vopt", [tool("vopt"), "-work", str(work), "-L", str(cells), TB_TOP, "+initreg+0", "+acc=n",
@@ -457,12 +651,23 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         shutil.rmtree(rdir)
     (rdir / "stim").mkdir(parents=True)
     cfg = tb["sizes"][size]
-    row.update({"config": " ".join(f"{k}={v}" for k, v in cfg.items()), "beats": cfg["loop_count"]})
+    forge = tb["control"]["kind"] == "forge_csr"
+    if forge:
+        row.update({"config": " ".join(f"{name}={v}" for _, v, name in cfg["writes"][:-1]),
+                    "beats": cfg["N"] // next(s["lanes"] for s in tb["streams"] if s["dir"] == "in")})
+    else:
+        row.update({"config": " ".join(f"{k}={v}" for k, v in cfg.items()), "beats": cfg["loop_count"]})
     info = {"run": str(rdir.relative_to(ROOT)), "times": times}
 
     t = time.time()
-    st = stimulus(tb, size, stim, seed)
+    st = stimulus_forge(tb, size, seed) if forge else stimulus(tb, size, stim, seed)
     plus = []
+    if forge:
+        info["ref_check"] = forge_ref_check(tb, size, seed, st, rdir)
+        f = rdir / "stim" / "csr.hex"
+        f.write_text("".join(f"{off:08x}{val & 0xFFFFFFFF:08x}\n" for off, val, _ in cfg["writes"]))
+        plus += [f"+CSR_HEX={f}", f"+CSR_N={len(cfg['writes'])}",
+                 f"+COUNTER_ADDR={tb['control']['csrs']['COUNTER']:x}"]
     for s in tb["streams"]:
         x = st["ins"][s["arg"]] if s["dir"] == "in" else st["outs"][s["arg"]]
         f = rdir / "stim" / f"{s['arg']}.hex"
@@ -472,7 +677,8 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         plus.append(f"+PIN_{p['port']}={st['pins'][p['port']] & ((1 << p['bits']) - 1):x}")
     (rdir / "stim" / "pins.json").write_text(json.dumps(st["pins"], indent=1) + "\n")
     info["untoggled_bits"] = st["untoggled"]
-    exp, how = expected_cycles(tb, size)
+    exp, how = (cfg["expected_cycles"], f"snax-forge's group_counter: {cfg['expected_from']}") if forge \
+        else expected_cycles(tb, size)
     info["expected_cycles"], info["expected_from"] = exp, how
     times["stim"] = time.time() - t
 
@@ -497,6 +703,13 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         cycles = int(win.group(3))
         row["cycles"] = cycles
         info["window_ns"] = [float(win.group(1)), float(win.group(2))]
+        if forge and "TB: FAIL" in log:
+            raise Fail("sim: " + re.search(r"TB: FAIL: (.*)", log).group(1))
+        if forge:
+            cnt = re.search(r"TB: counter (\d+)", log)
+            info["counter"] = int(cnt.group(1)) if cnt else None
+            if info["counter"] != cycles:
+                raise Fail(f"cycles: window {cycles}, COUNTER {info['counter']}")
         if exp is None:
             raise Fail(f"cycles: no expected value ({how})")
         if cycles != exp:
@@ -518,7 +731,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         vcd.unlink(missing_ok=True)      # X18: no VCD is kept, whatever the result
 
     t = time.time()
-    info["saif"] = saif_check(saif, cycles)
+    info["saif"] = saif_check(saif, cycles, tb["clock"]["port"])
     times["saif_check"] = time.time() - t
 
     t = time.time()
@@ -534,6 +747,17 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
     ann, total = coverage(ptd / "switching_activity.rpt")
     info["annotated"] = [ann, total]
     shutil.copy2(ptd / "not_annotated.rpt", rdir / "not_annotated.rpt")
+    if forge:
+        # A net PT did not annotate that is Z for the whole window in the SAIF has no driver: DC left ports of a
+        # constant output floating (STATUS bits 2-31 of <tag>_ctrl, and their <tag>_csr inputs), with no cell on
+        # them. They are nets for PT (hierarchical pins), unlike DC5's undriven wire bits, and cost nothing; they
+        # leave the denominator, every other net must be annotated as for HLS (docs/power.md, Forge).
+        missed = not_annotated(rdir / "not_annotated.rpt")
+        floating = saif_floating(saif)
+        info["floating"] = sorted(n for n in missed if n in floating)
+        rest = [n for n in missed if n not in floating]
+        info["not_annotated_driven"] = rest[:50]
+        total -= len(info["floating"])
     if ann < MIN_ANNOTATED / 100 * total:
         raise Fail(f"pt: {ann} of {total} nets annotated, under {MIN_ANNOTATED:g}%")
     groups = pt_groups(ptd)
@@ -543,21 +767,30 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
     return info
 
 
+def build_tb(point: str, tech: str) -> dict:
+    """The point's tb.json from its source's adapter (forge: from the bundle and the netlist's ports)."""
+    if SOURCE == "forge":
+        tb = forge_src.build(point, netlist_of(tech, point))
+    else:
+        tb = hls.build(point)
+    src().check(tb)
+    return tb
+
+
 def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict, dict]]:
     """One worker: tb.json, compile, every requested run, cleanup. Returns [(row, info)]."""
-    pdir = RUNS / tech / point
+    pdir = tech_runs(tech) / point
     out = []
     try:
-        fl = hls.filelist(point)
+        fl = hls.filelist(point) if SOURCE == "hls" else {"rams": []}
         if fl["rams"]:
             row = {c: "" for c in COLUMNS}
             row.update({"point": point, "top": fl["top"], "tech": tech, "clock_ns": _num(CLOCK_NS), "size": "",
                         "seed": "", "status": f"skipped: needs a RAM macro ({', '.join(fl['rams'])}); "
                                               f"{tech} has no RAM cells, RAM1 builds one (OpenRAM)"})
             return [(row, {})]
-        tb = hls.build(point)
-        hls.check(tb)
-    except (ValueError, KeyError, FileNotFoundError) as e:
+        tb = build_tb(point, tech)
+    except (ValueError, KeyError, FileNotFoundError, Fail) as e:
         row = {c: "" for c in COLUMNS}
         row.update({"point": point, "tech": tech, "size": "", "seed": "", "status": f"failed: tb.json: {e}"})
         return [(row, {})]
@@ -572,22 +805,27 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
         t = time.time()
         try:
             netlist = netlist_of(tech, point)
-            compile_point(tb, tech, pdir, netlist, RUNS / tech / "_cells")
+            compile_point(tb, tech, pdir, netlist, RUNS / tech / "_cells")     # the cells: one per technology
             compile_err = None
         except Fail as e:
             compile_err = str(e)
         compile_times["compile"] = time.time() - t
         expanded = []
         for size, stim, seed in runs:     # --size all: every size in the point's sizes.txt
-            sizes = hls.sizes_txt(point) if size == "all" else [size or hls.default_size(tb)]
+            if size == "all" and SOURCE != "hls":
+                sizes = list(tb["sizes"])
+            else:
+                sizes = hls.sizes_txt(point) if size == "all" else [size or src().default_size(tb)]
             expanded += [(z, stim, seed) for z in sizes]
         for size, stim, seed in expanded:
             times = dict(compile_times) if not out else {}
-            base = {c: "" for c in COLUMNS}
+            base = {c: "" for c in columns()}
             base.update({"point": point, "top": tb["top"], "tech": tech, "clock_ns": _num(CLOCK_NS), "W": tb["W"],
                          "size": size, "seed": "forge" if stim == "forge" else seed})
+            if SOURCE == "forge":
+                base.update({"recipe": tb["recipe"], "snax_forge_commit": tb["snax_forge_commit"]})
             info = {"run": str((pdir / run_tag(size, stim, seed)).relative_to(ROOT)), "times": times,
-                    "default": (stim, seed, size) == ("rand64", 0, hls.default_size(tb))}
+                    "default": (stim, seed, size) == ("rand64", 0, src().default_size(tb))}
             try:
                 if size not in tb["sizes"]:
                     raise Fail(f"size {size} not in tb.json ({', '.join(tb['sizes'])})")
@@ -633,7 +871,7 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
     out = RESULTS / tech
     key = lambda r: (r["point"], r["size"], str(r["seed"]))  # noqa: E731
     rows = [r for r, _ in results]
-    _merge(out / "power_pt.csv", COLUMNS, key, rows, {key(r) for r in rows})
+    _merge(out / "power_pt.csv", columns(), key, rows, {key(r) for r in rows})
     mods, mod_points = [], set()
     for r, info in results:
         if not info.get("default"):
@@ -667,13 +905,20 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
 
 # ---------------------------------------------------------------- commands
 def cmd_tbjson(args) -> int:
-    tb = hls.build(args.point)
-    hls.check(tb)
+    use_source(args.source)
+    if args.source == "hls":
+        tb = hls.build(args.point)
+        hls.check(tb)
+    else:
+        tb = build_tb(args.point, args.tech)
     print(json.dumps(tb, indent=1))
     return 0
 
 
 def cmd_run(args) -> int:
+    use_source(args.source)
+    if args.source == "forge" and args.stim != "rand64":
+        sys.exit("--source forge runs rand64 only (--stim forge is hls-exercises' data.h)")
     points = syn.select(args.patterns)
     if not points:
         sys.exit(f"no point matches {args.patterns}")
@@ -692,9 +937,9 @@ def cmd_run(args) -> int:
     print(f"pwr: {len(points)} points on {args.tech}; free msimhdlsim {lic['msimhdlsim']['free']}, "
           f"PrimePower {lic['PrimePower']['free']}, PrimeTime {lic['PrimeTime']['free']}, nproc {nproc} "
           f"-> J = {j}, PT threads {threads}", flush=True)
-    (RUNS / args.tech).mkdir(parents=True, exist_ok=True)
-    with (RUNS / args.tech / "batches.jsonl").open("a") as fh:
-        fh.write(json.dumps({"date": stamp, "patterns": args.patterns, "stim": args.stim, "size": args.size,
+    tech_runs(args.tech).mkdir(parents=True, exist_ok=True)
+    with (tech_runs(args.tech) / "batches.jsonl").open("a") as fh:
+        fh.write(json.dumps({"date": stamp, "source": args.source, "patterns": args.patterns, "stim": args.stim, "size": args.size,
                              "seed": args.seed, "licences": lic, "nproc": nproc, "J": j, "threads": threads}) + "\n")
     t = time.time()
     cells_lib(args.tech)
@@ -717,7 +962,7 @@ def cmd_run(args) -> int:
     print(f"pwr: batch {time.time() - t:.1f} s", flush=True)
     write_results(args.tech, results)
     bad = [r for r, _ in results if r["status"] != "ok"]
-    print(f"pwr: {len(results) - len(bad)} ok, {len(bad)} not ok -> results/hls/{args.tech}/power_pt.csv")
+    print(f"pwr: {len(results) - len(bad)} ok, {len(bad)} not ok -> {(RESULTS / args.tech / 'power_pt.csv').relative_to(ROOT)}")
     return 1 if any(r["status"].startswith("failed") for r in bad) else 0
 
 
@@ -737,8 +982,10 @@ def dc_groups(rpt: Path) -> dict:
 
 def cmd_setup_check(args) -> int:
     """X10: PT and DC on the same netlist with the same forced activity agree per power group."""
-    point, tech = args.point, args.tech
-    base = RUNS / tech / "setup_check" / point
+    use_source(args.source)
+    point = args.point or (SETUP_POINT if args.source == "hls" else SETUP_POINT_FORGE)
+    tech = args.tech
+    base = tech_runs(tech) / "setup_check" / point
     shutil.rmtree(base, ignore_errors=True)
     (base / "pt").mkdir(parents=True)
     (base / "dc").mkdir(parents=True)
@@ -783,6 +1030,7 @@ def cmd_setup_check(args) -> int:
 
 
 def cmd_summary(args) -> int:
+    use_source(args.source)
     cols = ["point", "size", "seed", "cycles", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "e_comb_fire_pj",
             "e_flop_fire_pj", "flop_bits", "e_bit_pj", "status"]
     for tech in ([args.tech] if args.tech else syn.tech_names()):
@@ -806,23 +1054,30 @@ def main() -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("tbjson", help="print a point's tb.json")
     p.add_argument("point")
+    p.add_argument("--source", choices=list(SOURCES), default="hls")
+    p.add_argument("--tech", choices=syn.tech_names(), default="nangate45",
+                   help="forge: the netlist whose ports tb.json covers (the same on both technologies)")
     p.set_defaults(fn=cmd_tbjson)
     p = sub.add_parser("run", help="simulate and run PrimePower on points")
     p.add_argument("patterns", nargs="+")
     p.add_argument("--tech", required=True, choices=syn.tech_names())
+    p.add_argument("--source", choices=list(SOURCES), default="hls")
     p.add_argument("--stim", default="rand64", choices=["rand64", "forge"])
     p.add_argument("--size", default=None,
-                   help="a tb.json size tag (default b64, rowsum m8_n64), or 'all': every size in the point's sizes.txt")
+                   help="a tb.json size tag (default b64, rowsum m8_n64; forge n2048), or 'all': every size in "
+                        "the point's sizes.txt (forge: every size in tb.json)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("-j", type=int, default=0, help="at most this many workers (default: from the licences)")
     p.set_defaults(fn=cmd_run)
     p = sub.add_parser("setup-check", help="PT and DC with forced activity agree per power group (X10)")
     p.add_argument("--tech", required=True, choices=syn.tech_names())
-    p.add_argument("--point", default=SETUP_POINT)
+    p.add_argument("--source", choices=list(SOURCES), default="hls")
+    p.add_argument("--point", default=None, help=f"default {SETUP_POINT} (hls), {SETUP_POINT_FORGE} (forge)")
     p.set_defaults(fn=cmd_setup_check)
     p = sub.add_parser("summary", help="print power_pt.csv")
     p.add_argument("patterns", nargs="*")
     p.add_argument("--tech", choices=syn.tech_names())
+    p.add_argument("--source", choices=list(SOURCES), default="hls")
     p.set_defaults(fn=cmd_summary)
     args = ap.parse_args()
     if args.cmd == "run" and args.stim == "forge" and not args.size:

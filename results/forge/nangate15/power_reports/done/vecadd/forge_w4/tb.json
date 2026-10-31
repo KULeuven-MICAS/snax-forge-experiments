@@ -1,0 +1,104 @@
+{
+ "tb_version": 1,
+ "source": "forge",
+ "point": "done/vecadd/forge_w4",
+ "kernel": "vecadd",
+ "recipe": "vecadd",
+ "top": "snax_forge_shell_wrapper",
+ "case": "forge",
+ "W": 4,
+ "snax_forge_commit": "2741b462f7ee8947ae7be4d61c5ba81db053ba65",
+ "clock": {
+  "port": "clk_i"
+ },
+ "reset": {
+  "port": "rst_ni",
+  "active": "low",
+  "sync": false
+ },
+ "control": {
+  "kind": "forge_csr",
+  "group": "acc",
+  "req_addr": "csr_req_addr_i",
+  "req_data": "csr_req_data_i",
+  "req_write": "csr_req_write_i",
+  "req_valid": "csr_req_valid_i",
+  "req_ready": "csr_req_ready_o",
+  "rsp_data": "csr_rsp_data_o",
+  "rsp_valid": "csr_rsp_valid_o",
+  "rsp_ready": "csr_rsp_ready_i",
+  "busy": "acc_busy_o",
+  "done": "acc_done_o",
+  "csrs": {
+   "START": 0,
+   "JOBS": 1,
+   "STATUS": 2,
+   "COUNTER": 3
+  }
+ },
+ "streams": [
+  {
+   "arg": "A",
+   "end": "acc.a",
+   "dir": "in",
+   "kind": "stream",
+   "lanes": 4,
+   "num_ch": 4,
+   "dtype": "int64",
+   "data": "stream2acc_0_data_i",
+   "valid": "stream2acc_0_valid_i",
+   "ready": "stream2acc_0_ready_o"
+  },
+  {
+   "arg": "B",
+   "end": "acc.b",
+   "dir": "in",
+   "kind": "stream",
+   "lanes": 4,
+   "num_ch": 4,
+   "dtype": "int64",
+   "data": "stream2acc_1_data_i",
+   "valid": "stream2acc_1_valid_i",
+   "ready": "stream2acc_1_ready_o"
+  },
+  {
+   "arg": "C",
+   "end": "acc.out",
+   "dir": "out",
+   "kind": "stream",
+   "lanes": 4,
+   "num_ch": 4,
+   "dtype": "int64",
+   "data": "acc2stream_0_data_o",
+   "valid": "acc2stream_0_valid_o",
+   "ready": "acc2stream_0_ready_i"
+  }
+ ],
+ "pins": [],
+ "sizes": {
+  "n2048": {
+   "N": 2048,
+   "jobs": 512,
+   "beats": {},
+   "writes": [
+    [
+     1,
+     512,
+     "JOBS"
+    ],
+    [
+     0,
+     1,
+     "START"
+    ]
+   ],
+   "stream_beats": {
+    "A": 512,
+    "B": 512,
+    "C": null
+   },
+   "expected_cycles": 512,
+   "expected_from": "The group's COUNTER counts its busy cycles. The group rule (snax-gvsoc's snax_group_rule.py) stepped with inputs always valid and the output always ready, JOBS 512, T acc 1: E - s = 512"
+  }
+ }
+}

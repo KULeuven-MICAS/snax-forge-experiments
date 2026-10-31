@@ -52,6 +52,15 @@ set clock_ns     [tj_str clock_ns]
 set drive_cell   [tj_str drive_cell]
 set out_load_ff  [tj_num out_load_ff]
 set max_trans_ns [tj_num max_transition_ns]
+# The clock and reset ports constraints.sdc names: tech.json's dc_env (SYN_CLK_PORT, SYN_RST_PORT, which
+# syn.py records since SYN1 R0, clk_i and rst_ni for snax-forge), else Vitis's ap_clk and ap_rst_n.
+proc tj_env {key default} {
+    global tj
+    if {[regexp "\"$key\":\\s*\"(\[^\"\]*)\"" $tj -> v]} { return $v }
+    return $default
+}
+set clk_port [tj_env SYN_CLK_PORT ap_clk]
+set rst_port [tj_env SYN_RST_PORT ap_rst_n]
 
 set md5 [lindex [exec md5sum $lib_db] 0]
 if {$md5 ne $lib_md5} {
@@ -97,7 +106,8 @@ redirect [file join $out wire_load.rpt] {
 }
 
 #-----------------------------
-# Constraints: syn/scripts/constraints.sdc unchanged, with dc_syn.tcl's variables
+# Constraints: syn/scripts/constraints.sdc unchanged, with dc_syn.tcl's variables ($clk_port and
+# $rst_port above)
 #-----------------------------
 source [file join $repo syn scripts constraints.sdc]
 
@@ -108,7 +118,7 @@ if {$mode eq "uniform"} {
     set fh [open [file join $run reports lib_info.txt] r]; set li [read $fh]; close $fh
     regexp {power_default_toggle_rate:\s*(\S+)} $li -> tr
     regexp {power_default_static_probability:\s*(\S+)} $li -> sp
-    set nets [remove_from_collection $all_nets [get_nets -of_objects [get_ports ap_clk]]]
+    set nets [remove_from_collection $all_nets [get_nets -of_objects [get_ports $clk_port]]]
     set_switching_activity -toggle_rate $tr -base_clock clk -static_probability $sp $nets
     puts "pt_power.tcl: uniform, toggle rate $tr per clk cycle and static probability $sp on [sizeof_collection $nets] nets"
 } elseif {$mode eq "saif"} {
