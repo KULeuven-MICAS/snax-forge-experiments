@@ -23,7 +23,7 @@
     "c_scale": "1",
     "lib_md5": "86fdb9ac95951e07419ef62d7f3323bb",
     "clock_ns": "10",
-    "cores": 4,
+    "cores": 3,
     "dc_env": {
       "SYN_FILELIST": "/users/micas/rantonio/no_backup/kul_main/snax-forge-experiments/syn/runs/forge/nangate15/done/dot/forge5_w4/filelist.f",
       "SYN_LIB_DB": "/users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db",
@@ -37,7 +37,7 @@
       "SYN_MAX_TRANS_NS": "0.25",
       "SYN_WIRE_LOAD": "none",
       "SYN_CLOCK_NS": "10",
-      "SYN_CORES": "4",
+      "SYN_CORES": "3",
       "SYN_FORMAT": "sverilog",
       "SYN_CLK_PORT": "clk_i",
       "SYN_RST_PORT": "rst_ni"

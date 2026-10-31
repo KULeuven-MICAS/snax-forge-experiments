@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 17:11:11 2026
+Date   : Sat Oct 31 21:08:49 2026
 ****************************************
 
 
@@ -33,11 +33,11 @@ Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
 snax_forge_shell_wrapper                  0.983    1.178 6.79e+08    2.840 100.0
   dp (snax_forge_datapath)                0.982    1.115 6.52e+08    2.750  96.8
-    blocks_1_4 (snax_forge_sum)           0.000 1.22e-02 1.15e+07 2.37e-02   0.8
-      m (SerialAccumulate_i64_i64_n8)     0.000 1.22e-02 1.15e+07 2.37e-02   0.8
+    blocks_1_4 (snax_forge_sum)           0.000 1.22e-02 1.17e+07 2.38e-02   0.8
+      m (SerialAccumulate_i64_i64_n8)     0.000 1.22e-02 1.17e+07 2.38e-02   0.8
     blocks_0_4 (snax_forge_mac)           0.982    1.103 6.41e+08    2.726  96.0
       m (Mac_i64xi64_i64_i64_n8_acc)      0.982    1.103 6.41e+08    2.725  96.0
-  ctrl (snax_forge_ctrl)               6.47e-06 3.81e-02 1.86e+07 5.67e-02   2.0
-    ctrl (snax_forge_dot_ctrl)         6.47e-06 3.81e-02 1.86e+07 5.67e-02   2.0
+  ctrl (snax_forge_ctrl)               6.41e-06 3.81e-02 1.87e+07 5.68e-02   2.0
+    ctrl (snax_forge_dot_ctrl)         6.41e-06 3.81e-02 1.87e+07 5.68e-02   2.0
   csr (snax_forge_csr)                 1.96e-04 2.48e-02 8.20e+06 3.32e-02   1.2
 1

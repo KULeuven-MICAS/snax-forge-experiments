@@ -3,7 +3,7 @@
 Report : area
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:29:08 2026
+Date   : Sat Oct 31 20:56:21 2026
 ****************************************
 
 Library(s) Used:
@@ -19,12 +19,12 @@ Number of macros/black boxes:               0
 Number of buf/inv:                       4424
 Number of references:                       4
 
-Combinational area:             121391.760597
-Buf/Inv area:                     2794.063978
+Combinational area:             121392.026597
+Buf/Inv area:                     2794.595978
 Noncombinational area:           12998.090419
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                134389.851017
+Total cell area:                134390.117017
 Total area:                 undefined
 1

@@ -4,7 +4,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:17:19 2026
+Date   : Sat Oct 31 20:51:22 2026
 ****************************************
 
 
@@ -31,12 +31,12 @@ Attributes
 i - Including register clock pin internal power
 
 
-  Cell Internal Power  = 2.523303 mW   (62%)
-  Net Switching Power  = 1.524436 mW   (38%)
+  Cell Internal Power  = 2.522993 mW   (62%)
+  Net Switching Power  = 1.524320 mW   (38%)
                          ---------
-Total Dynamic Power    = 4.047739 mW  (100%)
+Total Dynamic Power    = 4.047313 mW  (100%)
 
-Cell Leakage Power     = 679.6509 uW
+Cell Leakage Power     = 684.5750 uW
 
 
                  Internal         Switching           Leakage            Total
@@ -45,12 +45,12 @@ Power Group      Power            Power               Power              Power  
 io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
 memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
 black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
-clock_network  463.615417          0.000000          0.000000        463.615417  (   9.81%)  i
-register         0.861725          0.203274        5.149118e+04         52.556061
+clock_network  463.469879          0.000000          0.000000        463.469879  (   9.79%)  i
+register         0.906952          0.258356        5.149729e+04         52.663548
                                                                                  (   1.11%)
 sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
-combinational  2.058818e+03        1.524232e+03        6.281598e+05        4.211217e+03
-                                                                                 (  89.08%)
+combinational  2.058616e+03        1.524059e+03        6.330777e+05        4.215763e+03
+                                                                                 (  89.09%)
 --------------------------------------------------------------------------------------------------
-Total          2.523295e+03 uW     1.524435e+03 uW     6.796509e+05 nW     4.727389e+03 uW
+Total          2.522993e+03 uW     1.524317e+03 uW     6.845750e+05 nW     4.731896e+03 uW
 1

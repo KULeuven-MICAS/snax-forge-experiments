@@ -4,22 +4,22 @@ Information: Updating design information... (UID-85)
 Report : qor
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 17:06:47 2026
+Date   : Sat Oct 31 21:06:54 2026
 ****************************************
 
 
   Timing Path Group 'clk'
   -----------------------------------
-  Levels of Logic:           99.00000
-  Critical Path Length:     817.89221
-  Critical Path Slack:     9073.32520
+  Levels of Logic:           98.00000
+  Critical Path Length:     816.45337
+  Critical Path Slack:     9073.18848
   Critical Path Clk Period:
                           10000.00000
   Total Negative Slack:       0.00000
   No. of Violating Paths:     0.00000
   Worst Hold Violation:     -19.79586
-  Total Hold Violation:   -4196.89111
-  No. of Hold Violations:   583.00000
+  Total Hold Violation:   -4196.23828
+  No. of Hold Violations:   584.00000
   -----------------------------------
 
 
@@ -27,12 +27,12 @@ Date   : Sat Oct 31 17:06:47 2026
   -----------------------------------
   Hierarchical Cell Count:          8
   Hierarchical Port Count:       3300
-  Leaf Cell Count:              23401
+  Leaf Cell Count:              23402
   Buf/Inv Cell Count:            2599
-  Buf Cell Count:                 471
-  Inv Cell Count:                2128
+  Buf Cell Count:                 470
+  Inv Cell Count:                2129
   CT Buf/Inv Cell Count:            0
-  Combinational Cell Count:     22753
+  Combinational Cell Count:     22754
   Sequential Cell Count:          648
   Macro Count:                      0
   -----------------------------------
@@ -40,44 +40,44 @@ Date   : Sat Oct 31 17:06:47 2026
 
   Area
   -----------------------------------
-  Combinational Area:      9929.09742
+  Combinational Area:      9928.90081
   Noncombinational Area:    828.11287
-  Buf/Inv Area:             429.53934
-  Total Buffer Area:        115.75296
-  Total Inverter Area:      313.78638
+  Buf/Inv Area:             429.44103
+  Total Buffer Area:        115.50720
+  Total Inverter Area:      313.93384
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:              10757.21028
-  Design Area:            10757.21028
+  Cell Area:              10757.01368
+  Design Area:            10757.01368
 
 
   Design Rules
   -----------------------------------
-  Total Number of Nets:         27989
+  Total Number of Nets:         27990
   Nets With Violations:             0
   Max Trans Violations:             0
   Max Cap Violations:               0
   -----------------------------------
 
 
-  Hostname: barnard3.esat.kuleuven.be
+  Hostname: micas-lapserv1.esat.kuleuven.be
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 5.41089
-  Logic Optimization:              10.57219
-  Mapping Optimization:            28.95874
+  Resource Sharing:                 5.39099
+  Logic Optimization:               8.90790
+  Mapping Optimization:            27.59015
   -----------------------------------------
-  Overall Compile Time:            129.40042
-  Overall Compile Wall Clock Time: 104.77203
+  Overall Compile Time:            127.09676
+  Overall Compile Wall Clock Time: 105.98936
 
   --------------------------------------------------------------------
 
   Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
 
 
-  Design (Hold)  WNS: 19.79586  TNS: 4196.89111  Number of Violating Paths: 583
+  Design (Hold)  WNS: 19.79586  TNS: 4196.23828  Number of Violating Paths: 584
 
   --------------------------------------------------------------------
 

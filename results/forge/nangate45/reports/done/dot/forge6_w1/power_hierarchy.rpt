@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:21:16 2026
+Date   : Sat Oct 31 20:39:58 2026
 ****************************************
 
 
@@ -31,8 +31,15 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-snax_forge_shell_wrapper                  1.021  235.031 5.81e+04  294.170 100.0
-  ctrl (snax_forge_ctrl)                  0.122  141.954 3.96e+04  181.637  61.7
-    ctrl (snax_forge_dot_ctrl)            0.122  141.954 3.96e+04  181.637  61.7
-  csr (snax_forge_csr)                    0.897   93.068 1.85e+04  112.490  38.2
+snax_forge_shell_wrapper                381.150  887.661 2.22e+05 1.49e+03 100.0
+  dp (snax_forge_datapath)              380.130  652.587 1.65e+05 1.20e+03  80.4
+    bufs_0_4 (snax_forge_out_partial)  1.98e-03   45.905 6.87e+03   52.777   3.5
+      m (LinkBuffer_i64_n1_d1)         1.98e-03   45.905 6.87e+03   52.777   3.5
+    blocks_1_4 (snax_forge_sum)           0.000   45.904 6.87e+03   52.773   3.5
+      m (SerialAccumulate_i64_i64_n1)     0.000   45.904 6.87e+03   52.773   3.5
+    blocks_0_4 (snax_forge_mac)         380.127  560.779 1.51e+05 1.09e+03  73.3
+      m (Mac_i64xi64_i64_i64_n1_acc)    380.127  560.779 1.51e+05 1.09e+03  73.3
+  ctrl (snax_forge_ctrl)                  0.102  141.991 3.82e+04  180.321  12.1
+    ctrl (snax_forge_dot_ctrl)            0.102  141.991 3.82e+04  180.321  12.1
+  csr (snax_forge_csr)                    0.919   93.072 1.85e+04  112.516   7.5
 1

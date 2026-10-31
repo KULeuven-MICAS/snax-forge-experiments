@@ -3,7 +3,7 @@
 Report : reference
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:12:45 2026
+Date   : Sat Oct 31 20:36:45 2026
 ****************************************
 
 Attributes:
@@ -20,8 +20,9 @@ Attributes:
 Reference          Library       Unit Area   Count    Total Area   Attributes
 -----------------------------------------------------------------------------
 INV_X1             NangateOpenCellLibrary     0.532000       2     1.064000
-snax_forge_csr                 1044.316031       1   1044.316031  h, n
-snax_forge_ctrl                1939.938038       1   1939.938038  h, n
+snax_forge_csr                 1066.926030       1   1066.926030  h, n
+snax_forge_ctrl                1970.262038       1   1970.262038  h, n
+snax_forge_datapath            8091.188057       1   8091.188057  h, n
 -----------------------------------------------------------------------------
-Total 3 references                                   2985.318068
+Total 4 references                                  11129.440126
 1

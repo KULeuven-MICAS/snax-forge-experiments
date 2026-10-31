@@ -3,44 +3,49 @@
 Report : area
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:12:44 2026
+Date   : Sat Oct 31 20:36:45 2026
 ****************************************
 
 Library(s) Used:
 
     NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
 
-Number of ports:                          816
-Number of nets:                          2134
-Number of cells:                         1495
-Number of combinational cells:           1164
-Number of sequential cells:               326
+Number of ports:                         1673
+Number of nets:                          8376
+Number of cells:                         6024
+Number of combinational cells:           5561
+Number of sequential cells:               454
 Number of macros/black boxes:               0
-Number of buf/inv:                        225
-Number of references:                       3
+Number of buf/inv:                        545
+Number of references:                       4
 
-Combinational area:               1249.668012
-Buf/Inv area:                      121.296001
-Noncombinational area:            1735.650056
+Combinational area:               8712.830048
+Buf/Inv area:                      323.721999
+Noncombinational area:            2416.610078
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                  2985.318068
+Total cell area:                 11129.440126
 Total area:                 undefined
 
 Hierarchical area distribution
 ------------------------------
 
-                                  Global cell area          Local cell area
-                                  ------------------  ---------------------------- 
-Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
-                                  Total      Total    national   national   boxes   Design
---------------------------------  ---------  -------  ---------  ---------  ------  -------------------
-snax_forge_shell_wrapper          2985.3181    100.0     1.0640     0.0000  0.0000  snax_forge_shell_wrapper
-csr                               1044.3160     35.0   356.7060   687.6100  0.0000  snax_forge_csr
-ctrl                              1939.9380     65.0     0.0000     0.0000  0.0000  snax_forge_ctrl
-ctrl/ctrl                         1939.9380     65.0   891.8980  1048.0400  0.0000  snax_forge_dot_ctrl
---------------------------------  ---------  -------  ---------  ---------  ------  -------------------
-Total                                                 1249.6680  1735.6501  0.0000
+                                  Global cell area           Local cell area
+                                  -------------------  ---------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-     Noncombi-  Black-
+                                  Total       Total    national   national   boxes   Design
+--------------------------------  ----------  -------  ---------  ---------  ------  ---------------------------
+snax_forge_shell_wrapper          11129.4401    100.0     1.0640     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                1066.9260      9.6   379.3160   687.6100  0.0000  snax_forge_csr
+ctrl                               1970.2620     17.7     0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                          1970.2620     17.7   922.2220  1048.0400  0.0000  snax_forge_dot_ctrl
+dp                                 8091.1881     72.7     0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                      7629.4120     68.6     0.0000     0.0000  0.0000  snax_forge_mac
+dp/blocks_0_4/m                    7629.4120     68.6  7288.9320   340.4800  0.0000  Mac_i64xi64_i64_i64_n1_acc
+dp/blocks_1_4                       461.7760      4.1     0.0000     0.0000  0.0000  snax_forge_sum
+dp/blocks_1_4/m                     461.7760      4.1   121.2960   340.4800  0.0000  SerialAccumulate_i64_i64_n1
+--------------------------------  ----------  -------  ---------  ---------  ------  ---------------------------
+Total                                                  8712.8300  2416.6101  0.0000
 
 1

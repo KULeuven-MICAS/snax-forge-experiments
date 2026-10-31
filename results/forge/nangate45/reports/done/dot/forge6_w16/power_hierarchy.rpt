@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:29:10 2026
+Date   : Sat Oct 31 20:56:24 2026
 ****************************************
 
 
@@ -35,8 +35,8 @@ snax_forge_shell_wrapper               6.09e+03 9.99e+03 2.62e+06 1.87e+04 100.0
   dp (snax_forge_datapath)             6.09e+03 9.75e+03 2.56e+06 1.84e+04  98.4
     bufs_0_4 (snax_forge_out_partial)     0.000  734.323 1.10e+05  844.040   4.5
       m (LinkBuffer_i64_n16_d1)           0.000  734.323 1.10e+05  844.040   4.5
-    blocks_1_4 (snax_forge_sum)        5.05e-02   45.925 2.73e+04   73.264   0.4
-      m (SerialAccumulate_i64_i64_n16) 5.05e-02   45.925 2.73e+04   73.264   0.4
+    blocks_1_4 (snax_forge_sum)        5.12e-02   45.925 2.73e+04   73.257   0.4
+      m (SerialAccumulate_i64_i64_n16) 5.12e-02   45.925 2.73e+04   73.257   0.4
     blocks_0_4 (snax_forge_mac)        6.09e+03 8.97e+03 2.42e+06 1.75e+04  93.5
       m (Mac_i64xi64_i64_i64_n16_acc)  6.09e+03 8.97e+03 2.42e+06 1.75e+04  93.5
   ctrl (snax_forge_ctrl)                  0.110  144.856 4.07e+04  185.671   1.0

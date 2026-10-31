@@ -3,7 +3,7 @@
 Report : area
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:22:01 2026
+Date   : Sat Oct 31 20:53:04 2026
 ****************************************
 
 Library(s) Used:
@@ -11,21 +11,21 @@ Library(s) Used:
     NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
 
 Number of ports:                         7064
-Number of nets:                         49773
-Number of cells:                        36831
-Number of combinational cells:          35917
+Number of nets:                         50053
+Number of cells:                        37110
+Number of combinational cells:          36196
 Number of sequential cells:               905
 Number of macros/black boxes:               0
-Number of buf/inv:                       2342
+Number of buf/inv:                       2408
 Number of references:                       4
 
-Combinational area:              60600.120312
-Buf/Inv area:                     1467.787990
+Combinational area:              60634.434305
+Buf/Inv area:                     1503.697990
 Noncombinational area:            4815.930155
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                 65416.050467
+Total cell area:                 65450.364460
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,16 +36,16 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
                                   Total       Total    national    national   boxes   Design
 --------------------------------  ----------  -------  ----------  ---------  ------  ---------------------------
-snax_forge_shell_wrapper          65416.0505    100.0      1.0640     0.0000  0.0000  snax_forge_shell_wrapper
+snax_forge_shell_wrapper          65450.3645    100.0      1.0640     0.0000  0.0000  snax_forge_shell_wrapper
 csr                                1066.9260      1.6    379.3160   687.6100  0.0000  snax_forge_csr
-ctrl                               2049.2640      3.1      0.0000     0.0000  0.0000  snax_forge_ctrl
-ctrl/ctrl                          2049.2640      3.1    985.2640  1064.0000  0.0000  snax_forge_dot_ctrl
-dp                                62298.7964     95.2      0.0000     0.0000  0.0000  snax_forge_datapath
-dp/blocks_0_4                     61050.7244     93.3      0.0000     0.0000  0.0000  snax_forge_mac
-dp/blocks_0_4/m                   61050.7244     93.3  58326.8843  2723.8401  0.0000  Mac_i64xi64_i64_i64_n8_acc
-dp/blocks_1_4                      1248.0720      1.9      0.0000     0.0000  0.0000  snax_forge_sum
-dp/blocks_1_4/m                    1248.0720      1.9    907.5920   340.4800  0.0000  SerialAccumulate_i64_i64_n8
+ctrl                               2049.5300      3.1      0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                          2049.5300      3.1    985.5300  1064.0000  0.0000  snax_forge_dot_ctrl
+dp                                62332.8444     95.2      0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                     61051.2564     93.3      0.0000     0.0000  0.0000  snax_forge_mac
+dp/blocks_0_4/m                   61051.2564     93.3  58327.4163  2723.8401  0.0000  Mac_i64xi64_i64_i64_n8_acc
+dp/blocks_1_4                      1281.5880      2.0      0.0000     0.0000  0.0000  snax_forge_sum
+dp/blocks_1_4/m                    1281.5880      2.0    941.1080   340.4800  0.0000  SerialAccumulate_i64_i64_n8
 --------------------------------  ----------  -------  ----------  ---------  ------  ---------------------------
-Total                                                  60600.1203  4815.9302  0.0000
+Total                                                  60634.4343  4815.9302  0.0000
 
 1

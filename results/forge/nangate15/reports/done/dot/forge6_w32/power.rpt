@@ -4,7 +4,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 17:30:37 2026
+Date   : Sat Oct 31 21:21:02 2026
 ****************************************
 
 
@@ -31,10 +31,10 @@ Attributes
 i - Including register clock pin internal power
 
 
-  Cell Internal Power  = 4.879904 mW   (55%)
-  Net Switching Power  = 3.955775 mW   (45%)
+  Cell Internal Power  = 4.880273 mW   (55%)
+  Net Switching Power  = 3.955987 mW   (45%)
                          ---------
-Total Dynamic Power    = 8.835680 mW  (100%)
+Total Dynamic Power    = 8.836260 mW  (100%)
 
 Cell Leakage Power     =   2.6462 mW
 
@@ -49,8 +49,8 @@ clock_network    0.849074          0.000000          0.000000          0.849074 
 register       6.361604e-03        2.382480e-05        1.652687e+08          0.171654
                                                                                  (   1.49%)
 sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
-combinational    4.024467          3.955890        2.480901e+09         10.461220
+combinational    4.024839          3.956099        2.480952e+09         10.461848
                                                                                  (  91.11%)
 --------------------------------------------------------------------------------------------------
-Total            4.879903 mW       3.955914 mW     2.646169e+09 pW      11.481948 mW
+Total            4.880275 mW       3.956123 mW     2.646221e+09 pW      11.482576 mW
 1

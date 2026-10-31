@@ -5,15 +5,15 @@ Warning: Design 'snax_forge_shell_wrapper' contains 3 high-fanout nets. A fanout
 Report : qor
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:29:07 2026
+Date   : Sat Oct 31 20:56:21 2026
 ****************************************
 
 
   Timing Path Group 'clk'
   -----------------------------------
   Levels of Logic:           76.00000
-  Critical Path Length:       6.78850
-  Critical Path Slack:        3.06128
+  Critical Path Length:       6.78851
+  Critical Path Slack:        3.06126
   Critical Path Clk Period:  10.00000
   Total Negative Slack:       0.00000
   No. of Violating Paths:     0.00000
@@ -40,16 +40,16 @@ Date   : Sat Oct 31 16:29:07 2026
 
   Area
   -----------------------------------
-  Combinational Area:    121391.76060
+  Combinational Area:    121392.02660
   Noncombinational Area:  12998.09042
-  Buf/Inv Area:            2794.06398
+  Buf/Inv Area:            2794.59598
   Total Buffer Area:       1296.48396
-  Total Inverter Area:     1497.58001
+  Total Inverter Area:     1498.11201
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:             134389.85102
-  Design Area:           134389.85102
+  Cell Area:             134390.11702
+  Design Area:           134390.11702
 
 
   Design Rules
@@ -61,16 +61,16 @@ Date   : Sat Oct 31 16:29:07 2026
   -----------------------------------
 
 
-  Hostname: barnard3.esat.kuleuven.be
+  Hostname: micas-lapserv1.esat.kuleuven.be
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                30.58484
-  Logic Optimization:              21.84195
-  Mapping Optimization:            74.63074
+  Resource Sharing:                31.07129
+  Logic Optimization:              34.39291
+  Mapping Optimization:            111.15796
   -----------------------------------------
-  Overall Compile Time:            406.16696
-  Overall Compile Wall Clock Time: 408.97711
+  Overall Compile Time:            485.95251
+  Overall Compile Wall Clock Time: 392.42487
 
   --------------------------------------------------------------------
 

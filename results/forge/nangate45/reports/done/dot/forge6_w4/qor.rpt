@@ -4,7 +4,7 @@ Information: Updating design information... (UID-85)
 Report : qor
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:25:52 2026
+Date   : Sat Oct 31 20:51:19 2026
 ****************************************
 
 
@@ -60,16 +60,16 @@ Date   : Sat Oct 31 16:25:52 2026
   -----------------------------------
 
 
-  Hostname: barnard3.esat.kuleuven.be
+  Hostname: micas-lapserv1.esat.kuleuven.be
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 7.81006
-  Logic Optimization:               5.36279
-  Mapping Optimization:            17.93243
+  Resource Sharing:                 7.98370
+  Logic Optimization:               8.02126
+  Mapping Optimization:            25.88068
   -----------------------------------------
-  Overall Compile Time:            105.16524
-  Overall Compile Wall Clock Time: 106.34801
+  Overall Compile Time:            117.58530
+  Overall Compile Wall Clock Time: 95.09686
 
   --------------------------------------------------------------------
 
