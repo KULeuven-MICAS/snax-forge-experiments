@@ -1,0 +1,46 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 15:54:01 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+snax_forge_shell_wrapper                356.045  852.554 2.64e+05 1.47e+03 100.0
+  dp (snax_forge_datapath)              354.958  593.673 1.69e+05 1.12e+03  75.9
+    bufs_0_4 (snax_forge_tmp0)         2.97e-02   46.043 7.54e+03   53.616   3.6
+      m (LinkBuffer_i64_n1_d1)         2.97e-02   46.043 7.54e+03   53.616   3.6
+    blocks_1_4 (snax_forge_sum)           0.232   45.973 1.69e+04   63.100   4.3
+      m (TreeAccumulate_i64_i64_n1)       0.232   45.973 1.69e+04   63.100   4.3
+    blocks_0_4 (snax_forge_mul)         354.696  501.657 1.44e+05 1.00e+03  68.0
+      m (ElementwiseLanes_i64xi64_i64_i64_n1_mul)  354.696  501.657 1.44e+05 1.00e+03  68.0
+        alus_0 (ElementwiseAlu_w64_mul)  354.696  501.657 1.44e+05 1.00e+03  68.0
+  ctrl (snax_forge_ctrl)                  0.139  164.376 7.69e+04  241.419  16.4
+    ctrl (snax_forge_dot_ctrl)            0.139  164.376 7.69e+04  241.419  16.4
+  csr (snax_forge_csr)                    0.942   94.496 1.79e+04  113.289   7.7
+1

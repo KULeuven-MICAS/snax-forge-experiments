@@ -1,0 +1,30 @@
+ 
+****************************************
+Report : area
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 17:27:08 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                         4368
+Number of nets:                         27989
+Number of cells:                        20179
+Number of combinational cells:          19973
+Number of sequential cells:               196
+Number of macros/black boxes:               0
+Number of buf/inv:                       2072
+Number of references:                       4
+
+Combinational area:               9053.847738
+Buf/Inv area:                      349.274118
+Noncombinational area:             250.478583
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  9304.326321
+Total area:                 undefined
+1

@@ -1,0 +1,77 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:01:44 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+snax_forge_shell_wrapper               1.13e+04 1.78e+04 5.06e+06 3.42e+04 100.0
+  dp (snax_forge_datapath)             1.13e+04 1.76e+04 4.97e+06 3.39e+04  99.0
+    bufs_0_4 (snax_forge_tmp0)            1.130 1.47e+03 2.39e+05 1.71e+03   5.0
+      m (LinkBuffer_i64_n32_d1)           1.130 1.47e+03 2.39e+05 1.71e+03   5.0
+    blocks_1_4 (snax_forge_sum)           1.187   47.591 1.13e+05  161.633   0.5
+      m (TreeAccumulate_i64_i64_n32)      1.187   47.591 1.13e+05  161.633   0.5
+    blocks_0_4 (snax_forge_mul)        1.13e+04 1.60e+04 4.62e+06 3.20e+04  93.5
+      m (ElementwiseLanes_i64xi64_i64_i64_n32_mul) 1.13e+04 1.60e+04 4.62e+06 3.20e+04  93.5
+        alus_31 (ElementwiseAlu_w64_mul_0)  354.115  501.100 1.44e+05  999.443   2.9
+        alus_30 (ElementwiseAlu_w64_mul_1)  353.801  500.334 1.44e+05  998.383   2.9
+        alus_29 (ElementwiseAlu_w64_mul_2)  353.624  500.170 1.44e+05  998.047   2.9
+        alus_28 (ElementwiseAlu_w64_mul_3)  355.138  502.571 1.44e+05 1.00e+03   2.9
+        alus_27 (ElementwiseAlu_w64_mul_4)  354.726  501.587 1.44e+05 1.00e+03   2.9
+        alus_26 (ElementwiseAlu_w64_mul_5)  354.272  501.284 1.44e+05  999.794   2.9
+        alus_25 (ElementwiseAlu_w64_mul_6)  354.056  500.822 1.44e+05  999.094   2.9
+        alus_24 (ElementwiseAlu_w64_mul_7)  353.883  500.461 1.44e+05  998.576   2.9
+        alus_23 (ElementwiseAlu_w64_mul_8)  354.524  501.819 1.44e+05 1.00e+03   2.9
+        alus_22 (ElementwiseAlu_w64_mul_9)  353.935  500.746 1.44e+05  998.913   2.9
+        alus_21 (ElementwiseAlu_w64_mul_10)  353.801  500.590 1.44e+05  998.602   2.9
+        alus_20 (ElementwiseAlu_w64_mul_11)  354.980  501.898 1.44e+05 1.00e+03   2.9
+        alus_19 (ElementwiseAlu_w64_mul_12)  353.427  500.252 1.44e+05  997.857   2.9
+        alus_18 (ElementwiseAlu_w64_mul_13)  354.454  501.560 1.44e+05 1.00e+03   2.9
+        alus_17 (ElementwiseAlu_w64_mul_14)  354.599  501.431 1.44e+05 1.00e+03   2.9
+        alus_16 (ElementwiseAlu_w64_mul_15)  354.269  501.185 1.44e+05  999.711   2.9
+        alus_15 (ElementwiseAlu_w64_mul_16)  354.700  501.985 1.44e+05 1.00e+03   2.9
+        alus_14 (ElementwiseAlu_w64_mul_17)  354.307  501.169 1.44e+05  999.693   2.9
+        alus_13 (ElementwiseAlu_w64_mul_18)  354.350  501.210 1.44e+05  999.797   2.9
+        alus_12 (ElementwiseAlu_w64_mul_19)  353.581  500.046 1.44e+05  997.893   2.9
+        alus_11 (ElementwiseAlu_w64_mul_20)  354.779  501.798 1.44e+05 1.00e+03   2.9
+        alus_10 (ElementwiseAlu_w64_mul_21)  354.698  501.368 1.44e+05 1.00e+03   2.9
+        alus_9 (ElementwiseAlu_w64_mul_22)  355.122  502.319 1.44e+05 1.00e+03   2.9
+        alus_8 (ElementwiseAlu_w64_mul_23)  354.204  501.509 1.44e+05  999.939   2.9
+        alus_7 (ElementwiseAlu_w64_mul_24)  353.990  500.739 1.44e+05  998.985   2.9
+        alus_6 (ElementwiseAlu_w64_mul_25)  353.881  500.489 1.44e+05  998.613   2.9
+        alus_5 (ElementwiseAlu_w64_mul_26)  353.912  500.626 1.44e+05  998.779   2.9
+        alus_4 (ElementwiseAlu_w64_mul_27)  354.679  501.705 1.44e+05 1.00e+03   2.9
+        alus_3 (ElementwiseAlu_w64_mul_28)  354.329  501.293 1.44e+05  999.821   2.9
+        alus_2 (ElementwiseAlu_w64_mul_29)  354.175  500.884 1.44e+05  999.293   2.9
+        alus_1 (ElementwiseAlu_w64_mul_30)  353.911  500.782 1.44e+05  998.940   2.9
+        alus_0 (ElementwiseAlu_w64_mul_31)  354.170  501.044 1.44e+05  999.469   2.9
+  ctrl (snax_forge_ctrl)                  0.148  164.012 7.71e+04  241.230   0.7
+    ctrl (snax_forge_dot_ctrl)            0.148  164.012 7.71e+04  241.230   0.7
+  csr (snax_forge_csr)                    0.914   93.744 1.82e+04  112.808   0.3
+1

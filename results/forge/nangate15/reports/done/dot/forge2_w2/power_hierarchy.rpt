@@ -1,0 +1,47 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:43:54 2026
+****************************************
+
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+
+Operating Conditions: typical   Library: NanGate_15nm_OCL
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 0.8  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ps
+    Dynamic Power Units = 1mW    (derived from V,C,T units)
+    Leakage Power Units = 1pW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+snax_forge_shell_wrapper                  0.234    0.348 2.11e+08    0.793 100.0
+  dp (snax_forge_datapath)                0.233    0.279 1.64e+08    0.677  85.4
+    bufs_0_4 (snax_forge_tmp0)            0.000 2.49e-02 7.45e+06 3.23e-02   4.1
+      m (LinkBuffer_i64_n2_d1)            0.000 2.49e-02 7.45e+06 3.23e-02   4.1
+    blocks_1_4 (snax_forge_sum)           0.000 1.22e-02 9.89e+06 2.21e-02   2.8
+      m (TreeAccumulate_i64_i64_n2)       0.000 1.22e-02 9.89e+06 2.21e-02   2.8
+    blocks_0_4 (snax_forge_mul)           0.233    0.242 1.47e+08    0.622  78.5
+      m (ElementwiseLanes_i64xi64_i64_i64_n2_mul)    0.233    0.242 1.47e+08    0.622  78.5
+        alus_1 (ElementwiseAlu_w64_mul_0)    0.117    0.121 7.33e+07    0.311  39.3
+        alus_0 (ElementwiseAlu_w64_mul_1)    0.117    0.121 7.33e+07    0.311  39.2
+  ctrl (snax_forge_ctrl)               3.05e-06 4.36e-02 3.90e+07 8.26e-02  10.4
+    ctrl (snax_forge_dot_ctrl)         3.05e-06 4.36e-02 3.90e+07 8.26e-02  10.4
+  csr (snax_forge_csr)                 1.93e-04 2.48e-02 8.20e+06 3.32e-02   4.2
+1

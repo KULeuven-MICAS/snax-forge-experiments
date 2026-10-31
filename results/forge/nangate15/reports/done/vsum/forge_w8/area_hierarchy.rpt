@@ -1,0 +1,49 @@
+ 
+****************************************
+Report : area
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 17:32:54 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                         2938
+Number of nets:                          5669
+Number of cells:                         2497
+Number of combinational cells:           2134
+Number of sequential cells:               357
+Number of macros/black boxes:               0
+Number of buf/inv:                        408
+Number of references:                       4
+
+Combinational area:                971.489304
+Buf/Inv area:                       61.145090
+Noncombinational area:             456.228848
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  1427.718152
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  -------------------------
+snax_forge_shell_wrapper          1427.7182    100.0    0.2949     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                262.0293     18.4   97.1735   164.8558  0.0000  snax_forge_csr
+ctrl                               422.2157     29.6    0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                          422.2157     29.6  212.6316   209.5841  0.0000  snax_forge_acc_ctrl
+dp                                 743.1783     52.1    0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                      743.1783     52.1    0.0000     0.0000  0.0000  snax_forge_acc
+dp/blocks_0_4/m                    743.1783     52.1  661.3893    81.7889  0.0000  TreeAccumulate_i64_i64_n8
+--------------------------------  ---------  -------  --------  ---------  ------  -------------------------
+Total                                                 971.4893   456.2288  0.0000
+
+1

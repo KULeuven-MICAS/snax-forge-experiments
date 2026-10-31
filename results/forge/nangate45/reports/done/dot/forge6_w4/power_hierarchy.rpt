@@ -1,0 +1,45 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:25:53 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+snax_forge_shell_wrapper               1.52e+03 2.71e+03 7.05e+05 4.94e+03 100.0
+  dp (snax_forge_datapath)             1.52e+03 2.47e+03 6.48e+05 4.64e+03  94.0
+    bufs_0_4 (snax_forge_out_partial)     0.000  183.589 2.74e+04  211.027   4.3
+      m (LinkBuffer_i64_n4_d1)            0.000  183.589 2.74e+04  211.027   4.3
+    blocks_1_4 (snax_forge_sum)        2.46e-02   45.907 1.48e+04   60.744   1.2
+      m (SerialAccumulate_i64_i64_n4)  2.46e-02   45.907 1.48e+04   60.744   1.2
+    blocks_0_4 (snax_forge_mac)        1.52e+03 2.24e+03 6.06e+05 4.37e+03  88.5
+      m (Mac_i64xi64_i64_i64_n4_acc)   1.52e+03 2.24e+03 6.06e+05 4.37e+03  88.5
+  ctrl (snax_forge_ctrl)               9.15e-02  143.415 3.86e+04  182.063   3.7
+    ctrl (snax_forge_dot_ctrl)         9.15e-02  143.415 3.86e+04  182.063   3.7
+  csr (snax_forge_csr)                    0.896   93.053 1.85e+04  112.474   2.3
+1

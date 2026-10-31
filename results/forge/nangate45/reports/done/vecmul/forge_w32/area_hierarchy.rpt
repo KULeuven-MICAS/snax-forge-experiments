@@ -1,0 +1,81 @@
+ 
+****************************************
+Report : area
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:41:55 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                        31248
+Number of nets:                        179991
+Number of cells:                       129499
+Number of combinational cells:         129265
+Number of sequential cells:               196
+Number of macros/black boxes:               0
+Number of buf/inv:                       8298
+Number of references:                       4
+
+Combinational area:             221956.785066
+Buf/Inv area:                     5139.651969
+Noncombinational area:            1042.720034
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                222999.505100
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area             Local cell area
+                                  --------------------  ------------------------------ 
+Hierarchical cell                 Absolute     Percent  Combi-       Noncombi-  Black-
+                                  Total        Total    national     national   boxes   Design
+--------------------------------  -----------  -------  -----------  ---------  ------  ----------------------------------------
+snax_forge_shell_wrapper          222999.5051    100.0       1.5960     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                  787.6260      0.4     271.5860   516.0400  0.0000  snax_forge_csr
+ctrl                                1008.9380      0.5       0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                           1008.9380      0.5     482.2580   526.6800  0.0000  snax_forge_acc_ctrl
+dp                                221201.3451     99.2       0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                     221201.3451     99.2       0.0000     0.0000  0.0000  snax_forge_acc
+dp/blocks_0_4/m                   221201.3451     99.2       0.0000     0.0000  0.0000  ElementwiseLanes_i64xi64_i64_i64_n32_mul
+dp/blocks_0_4/m/alus_0              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_31
+dp/blocks_0_4/m/alus_1              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_30
+dp/blocks_0_4/m/alus_10             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_21
+dp/blocks_0_4/m/alus_11             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_20
+dp/blocks_0_4/m/alus_12             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_19
+dp/blocks_0_4/m/alus_13             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_18
+dp/blocks_0_4/m/alus_14             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_17
+dp/blocks_0_4/m/alus_15             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_16
+dp/blocks_0_4/m/alus_16             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_15
+dp/blocks_0_4/m/alus_17             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_14
+dp/blocks_0_4/m/alus_18             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_13
+dp/blocks_0_4/m/alus_19             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_12
+dp/blocks_0_4/m/alus_2              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_29
+dp/blocks_0_4/m/alus_20             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_11
+dp/blocks_0_4/m/alus_21             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_10
+dp/blocks_0_4/m/alus_22             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_9
+dp/blocks_0_4/m/alus_23             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_8
+dp/blocks_0_4/m/alus_24             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_7
+dp/blocks_0_4/m/alus_25             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_6
+dp/blocks_0_4/m/alus_26             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_5
+dp/blocks_0_4/m/alus_27             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_4
+dp/blocks_0_4/m/alus_28             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_3
+dp/blocks_0_4/m/alus_29             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_2
+dp/blocks_0_4/m/alus_3              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_28
+dp/blocks_0_4/m/alus_30             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_1
+dp/blocks_0_4/m/alus_31             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_0
+dp/blocks_0_4/m/alus_4              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_27
+dp/blocks_0_4/m/alus_5              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_26
+dp/blocks_0_4/m/alus_6              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_25
+dp/blocks_0_4/m/alus_7              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_24
+dp/blocks_0_4/m/alus_8              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_23
+dp/blocks_0_4/m/alus_9              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_22
+--------------------------------  -----------  -------  -----------  ---------  ------  ----------------------------------------
+Total                                                   221956.7851  1042.7200  0.0000
+
+1

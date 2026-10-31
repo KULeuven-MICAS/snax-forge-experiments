@@ -1,0 +1,50 @@
+ 
+****************************************
+Report : area
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:33:30 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         1488
+Number of nets:                          6887
+Number of cells:                         4879
+Number of combinational cells:           4676
+Number of sequential cells:               196
+Number of macros/black boxes:               0
+Number of buf/inv:                        362
+Number of references:                       4
+
+Combinational area:               7667.982035
+Buf/Inv area:                      216.789999
+Noncombinational area:            1042.720034
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  8710.702069
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  ---------------------------------------
+snax_forge_shell_wrapper          8710.7021    100.0     1.5960     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                787.6260      9.0   271.5860   516.0400  0.0000  snax_forge_csr
+ctrl                              1008.9380     11.6     0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                         1008.9380     11.6   482.2580   526.6800  0.0000  snax_forge_acc_ctrl
+dp                                6912.5420     79.4     0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                     6912.5420     79.4     0.0000     0.0000  0.0000  snax_forge_acc
+dp/blocks_0_4/m                   6912.5420     79.4     0.0000     0.0000  0.0000  ElementwiseLanes_i64xi64_i64_i64_n1_mul
+dp/blocks_0_4/m/alus_0            6912.5420     79.4  6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul
+--------------------------------  ---------  -------  ---------  ---------  ------  ---------------------------------------
+Total                                                 7667.9820  1042.7200  0.0000
+
+1

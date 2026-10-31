@@ -1,0 +1,46 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:43:43 2026
+****************************************
+
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+
+Operating Conditions: typical   Library: NanGate_15nm_OCL
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 0.8  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ps
+    Dynamic Power Units = 1mW    (derived from V,C,T units)
+    Leakage Power Units = 1pW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+snax_forge_shell_wrapper                  0.117    0.214 1.32e+08    0.463 100.0
+  dp (snax_forge_datapath)                0.117    0.146 8.46e+07    0.347  75.0
+    bufs_0_4 (snax_forge_tmp0)            0.000 1.24e-02 3.73e+06 1.62e-02   3.5
+      m (LinkBuffer_i64_n1_d1)            0.000 1.24e-02 3.73e+06 1.62e-02   3.5
+    blocks_1_4 (snax_forge_sum)           0.000 1.22e-02 7.56e+06 1.98e-02   4.3
+      m (TreeAccumulate_i64_i64_n1)       0.000 1.22e-02 7.56e+06 1.98e-02   4.3
+    blocks_0_4 (snax_forge_mul)           0.117    0.121 7.33e+07    0.311  67.2
+      m (ElementwiseLanes_i64xi64_i64_i64_n1_mul)    0.117    0.121 7.33e+07    0.311  67.2
+        alus_0 (ElementwiseAlu_w64_mul)    0.117    0.121 7.33e+07    0.311  67.2
+  ctrl (snax_forge_ctrl)               3.05e-06 4.36e-02 3.90e+07 8.26e-02  17.8
+    ctrl (snax_forge_dot_ctrl)         3.05e-06 4.36e-02 3.90e+07 8.26e-02  17.8
+  csr (snax_forge_csr)                 1.87e-04 2.48e-02 8.20e+06 3.32e-02   7.2
+1

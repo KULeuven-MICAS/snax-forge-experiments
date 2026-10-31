@@ -1,0 +1,49 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:38:38 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+snax_forge_shell_wrapper               3.47e+03 4.15e+03 1.19e+06 8.81e+03 100.0
+  dp (snax_forge_datapath)             3.47e+03 4.01e+03 1.15e+06 8.63e+03  98.0
+    blocks_0_4 (snax_forge_acc)        3.47e+03 4.01e+03 1.15e+06 8.63e+03  98.0
+      m (ElementwiseLanes_i64xi64_i64_i64_n8_mul) 3.47e+03 4.01e+03 1.15e+06 8.63e+03  98.0
+        alus_7 (ElementwiseAlu_w64_mul_0)  432.864  500.202 1.44e+05 1.08e+03  12.2
+        alus_6 (ElementwiseAlu_w64_mul_1)  433.479  501.010 1.44e+05 1.08e+03  12.2
+        alus_5 (ElementwiseAlu_w64_mul_2)  434.576  501.971 1.44e+05 1.08e+03  12.3
+        alus_4 (ElementwiseAlu_w64_mul_3)  434.242  501.616 1.44e+05 1.08e+03  12.3
+        alus_3 (ElementwiseAlu_w64_mul_4)  434.810  502.318 1.44e+05 1.08e+03  12.3
+        alus_2 (ElementwiseAlu_w64_mul_5)  434.297  502.069 1.44e+05 1.08e+03  12.3
+        alus_1 (ElementwiseAlu_w64_mul_6)  432.718  500.081 1.44e+05 1.08e+03  12.2
+        alus_0 (ElementwiseAlu_w64_mul_7)  433.437  500.755 1.44e+05 1.08e+03  12.2
+  ctrl (snax_forge_ctrl)               5.18e-02   70.983 1.88e+04   89.883   1.0
+    ctrl (snax_forge_acc_ctrl)         5.18e-02   70.983 1.88e+04   89.883   1.0
+  csr (snax_forge_csr)                    0.534   69.827 1.26e+04   82.946   0.9
+1

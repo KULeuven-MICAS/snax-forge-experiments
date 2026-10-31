@@ -46,6 +46,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** match `^\s*module` and `^\s*endmodule`. The 99 % annotation gate (X9) is what caught it; a missed small sub-design (a few nets) would pass it, so `pwr_tasks` checked that every module of all 232 netlists gets a dump scope.
 - **Found in:** `2026-10-29_pwr_tasks.md`.
 
+### DC7. DC crashes on snax-forge's two-lane serial accumulator
+
+- **Symptom:** `compile_ultra` dies with `Error id=834758` and `Fatal: Internal system error, cannot recover`, in DC's compile child process (`dcfarm: detected bad exit for job ...`), on snax-forge's dot_5 and dot_6 at W = 2, both technologies; `syn.py` writes `failed: no area report` (before SYN1 R1 it wrote `failed: library mismatch`, see the fix in R1's run note). W = 4 to 32 of the same designs pass.
+- **Cause:** a DC Y-2026.03-SP2 internal error on `SerialAccumulate_i64_i64_n2` (37 lines: a 64-bit accumulator whose add takes `io_lane ? io_in_1 : io_in_0` inside `if (io_lane)`); synthesized alone as top it crashes the same way, while `Mac_i64xi64_i64_i64_n2_acc` alone passes. Not the disk (also crashes in tmpfs with 125 GB free; a 1 GB write to the home works; DC's resource line shows 1427 GB free), not parallel runs (crashes run one at a time with no other DC process on the host), not the core count or adaptive multithreading (crashes at 1 core with it off), not boundary optimization or sequential output inversion (crashes with `-no_boundary_optimization` and with `-no_seq_output_inversion`).
+- **Fix or check:** open. Another DC release, or a different n = 2 form from snax-forge's generator, are the candidates.
+- **Found in:** `results/forge/runs/2026-10-31_syn1_r1.md`.
+
 ## Libraries
 
 ### LIB1. nangate15's flops all have async reset or set
@@ -175,8 +182,8 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 
 - **Symptom:** `Design-Compiler Internal licensing error number -92: Feature removed during lmreread` at start, with 0 of 10 licences in use.
 - **Cause:** the licence server reread its file while DC checked out.
-- **Fix or check:** retry once (X17); the rerun seconds later worked.
-- **Found in:** `2026-10-29_pwr_step0.md` (Licences).
+- **Fix or check:** retry once (X17); the rerun seconds later worked. `syn.py run` does this itself since SYN1 R1 (`syn/README.md`, Licence errors): it prints the matched line, reruns the point once and counts the retry; a second licence failure is `failed: licence (<the line>)`. The first try may print only `Fatal: Design Compiler is not enabled. (DCSH-1)`, with no "licens" in it (SYN1 R0).
+- **Found in:** `2026-10-29_pwr_step0.md` (Licences), `results/forge/runs/2026-10-31_syn1_r0.md`.
 
 ### L2. Feature names
 

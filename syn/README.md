@@ -108,7 +108,7 @@ Only those eight files are committed per run (`KEPT_REPORTS` at the top of `syn.
 | column | what it is |
 |---|---|
 | `point`, `top`, `tech`, `clock_ns` | the point, its top module, the technology, the clock period |
-| `status` | `ok`, `ok, timing violated`, `failed: ...` (no area report, library mismatch, a wire-load model applied, power groups that do not sum) or `skipped: needs a RAM macro ...` |
+| `status` | `ok`, `ok, timing violated`, `failed: ...` (no area report, `licence (<the line>)`, library mismatch, a wire-load model applied, power groups that do not sum) or `skipped: needs a RAM macro ...` |
 | `errors` | `Error:` lines in `dc_shell.log` |
 | `area_um2`, `comb_area_um2`, `seq_area_um2`, `buf_inv_area_um2` | `area.rpt`: total cell, combinational, noncombinational, buf/inv area |
 | `cells`, `seq_cells` | number of cells, of sequential cells |
@@ -123,7 +123,13 @@ Only those eight files are committed per run (`KEPT_REPORTS` at the top of `syn.
 
 `power.rpt` states its units (`Dynamic Power Units`, `Leakage Power Units`: 1 uW and 1 nW on nangate45, 1 mW and 1 pW on nangate15), and the totals carry their own suffix; syn.py reads both and converts to uW.
 
+A forge row has seven more columns after `run`, described in [the forge source](#the-forge-source): `recipe`, `W`, `snax_forge_commit`, `csr_um2`, `ctrl_um2`, `datapath_um2`, `glue_um2`.
+
 `synth_dc_modules.csv`: `point, tech, clock_ns, path, design, area_um2, comb_um2, seq_um2, bbox_um2, dyn_power_uw, leak_power_uw`, one row per hierarchical cell of `area_hierarchy.rpt` (the top, then the paths below it) joined by path with `power_hierarchy.rpt`. `area_um2` is the cell's absolute total, its children included; `comb_um2`, `seq_um2` and `bbox_um2` count only the cell's own level. The power columns include the children and carry about 3 digits: DC's hierarchical power report ignores `-significant_digits`. A flat top gives one row.
+
+## Licence errors
+
+A DC run that fails on a licence is rerun once by `run` itself (docs X17, PITFALLS L1). After each DC run, `syn.py` looks in `logs/dc_shell.log` and `logs/dc_stdout.log` for a licence failure (`LICENCE_ERROR` at the top of `syn.py`): a line with `licensing error`, `Unable to obtain feature` or `is not enabled. (DCSH-1)`, or an `Error:` or `Fatal:` line that names a licence. A bare "license" is not enough, as every good run's banner says `license agreement` and its DesignWare table `Licensed DW Building Blocks`. On a match it prints `retry <point> on <tech>: licence error: <the line>`, empties the run folder and runs DC again; the run ends with `licence retries: <n> (<points>)`. After a second licence failure the row's status is `failed: licence (<the line>)`. A rerun that fails otherwise gets the usual status. This applies to both sources.
 
 ## Caveats
 
@@ -166,7 +172,9 @@ A `# ram:` line names a memory Vitis built. Neither library has RAM cells, and D
 
 **The ports.** The RTL is SystemVerilog (`SYN_FORMAT=sverilog`); the clock is `clk_i` and the reset `rst_ni`, active low and asynchronous (firtool's flops take the active-high `reset` the wrapper derives from it). `rst_ni` is kept ideal like `ap_rst_n`.
 
-**The results tree.** As for HLS, under `forge` in place of `hls`: runs in `syn/runs/forge/<tech>/<tier>/<kernel>/<point>/` with `syn/runs/forge/<tech>/summary.csv`, committed results in `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `reports/` with `KEPT_REPORTS`). A forge row of `synth_dc.csv` has three more columns after `run`: `recipe`, `W` (from `point.json`) and `snax_forge_commit` (from `bundle.json`).
+**The results tree.** As for HLS, under `forge` in place of `hls`: runs in `syn/runs/forge/<tech>/<tier>/<kernel>/<point>/` with `syn/runs/forge/<tech>/summary.csv`, committed results in `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `reports/` with `KEPT_REPORTS`). A forge row of `synth_dc.csv` has seven more columns after `run`: `recipe`, `W` (from `point.json`), `snax_forge_commit` (from `bundle.json`), and the area split of the wrapper, in um2: `csr_um2`, `ctrl_um2` and `datapath_um2` (the absolute total, children included, of the rows of `synth_dc_modules.csv` whose design is `snax_forge_csr`, `snax_forge_ctrl` and `snax_forge_datapath`, the keys of `bundle.json`'s `modules`), and `glue_um2` = `area_um2` minus the three.
+
+**The glue.** DC's boundary optimization is left on, so forge compiles like the HLS points (`compile_ultra -no_autoungroup`). It moves a few cells to the wrapper's own level: the inverter that turns `rst_ni` into the active-high `reset` of firtool's flops, and inverters on outputs taken out of the modules (R0's `dot_3` W=4: 2.1 um2 on nangate45, 0.3 um2 on nangate15). `glue_um2` is their area. `run` prints a point whose glue is negative or above 1 % of the total (`GLUE_MAX`), or that has no row for one of the three modules (then the glue is empty); it does not fail it.
 
 ```bash
 pixi run forge-rtl --list 'done/dot/*'                                     # the forge points

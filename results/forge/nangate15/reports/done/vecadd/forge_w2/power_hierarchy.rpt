@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 17:21:53 2026
+****************************************
+
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+
+Operating Conditions: typical   Library: NanGate_15nm_OCL
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 0.8  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ps
+    Dynamic Power Units = 1mW    (derived from V,C,T units)
+    Leakage Power Units = 1pW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+snax_forge_shell_wrapper               1.90e-02 4.24e-02 1.91e+07 8.05e-02 100.0
+  dp (snax_forge_datapath)             1.88e-02 4.95e-03 3.77e+06 2.75e-02  34.2
+    blocks_0_4 (snax_forge_acc)        1.88e-02 4.95e-03 3.77e+06 2.75e-02  34.2
+      m (ElementwiseLanes_i64xi64_i64_i64_n2_add) 1.88e-02 4.95e-03 3.77e+06 2.75e-02  34.2
+        alus_1 (ElementwiseAlu_w64_add_0) 9.40e-03 2.48e-03 1.88e+06 1.38e-02  17.1
+        alus_0 (ElementwiseAlu_w64_add_1) 9.39e-03 2.48e-03 1.88e+06 1.37e-02  17.1
+  ctrl (snax_forge_ctrl)                  0.000 1.89e-02 9.31e+06 2.82e-02  35.0
+    ctrl (snax_forge_acc_ctrl)            0.000 1.89e-02 9.31e+06 2.82e-02  35.0
+  csr (snax_forge_csr)                 1.69e-04 1.86e-02 5.97e+06 2.48e-02  30.8
+1

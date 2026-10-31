@@ -1,0 +1,28 @@
+ 
+****************************************
+Report : reference
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 15:57:07 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+INV_X1             NangateOpenCellLibrary     0.532000       4     2.128000
+snax_forge_csr                 1059.478031       1   1059.478031  h, n
+snax_forge_ctrl                4061.022052       1   4061.022052  h, n
+snax_forge_datapath           61700.562376       1  61700.562376  h, n
+-----------------------------------------------------------------------------
+Total 4 references                                  66823.190459
+1

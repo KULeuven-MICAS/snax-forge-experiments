@@ -1,0 +1,57 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:29:09 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 9.985353 mW   (62%)
+  Net Switching Power  = 6.090764 mW   (38%)
+                         ---------
+Total Dynamic Power    = 16.076117 mW  (100%)
+
+Cell Leakage Power     =   2.6184 mW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network  1.750340e+03          0.000000          0.000000        1.750340e+03
+                                                                                 (   9.36%)  i
+register         2.663330          0.413456        1.941872e+05        197.263794
+                                                                                 (   1.06%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational  8.232230e+03        6.090297e+03        2.424232e+06        1.674717e+04
+                                                                                 (  89.58%)
+--------------------------------------------------------------------------------------------------
+Total          9.985234e+03 uW     6.090710e+03 uW     2.618419e+06 nW     1.869477e+04 uW
+1

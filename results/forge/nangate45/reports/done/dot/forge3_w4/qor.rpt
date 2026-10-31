@@ -4,7 +4,7 @@ Information: Updating design information... (UID-85)
 Report : qor
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 15:22:44 2026
+Date   : Sat Oct 31 16:01:36 2026
 ****************************************
 
 
@@ -64,12 +64,12 @@ Date   : Sat Oct 31 15:22:44 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 2.57440
-  Logic Optimization:              12.38809
-  Mapping Optimization:            32.33722
+  Resource Sharing:                 2.74243
+  Logic Optimization:               5.34340
+  Mapping Optimization:            16.88788
   -----------------------------------------
-  Overall Compile Time:            126.18742
-  Overall Compile Wall Clock Time: 52.71239
+  Overall Compile Time:            87.68921
+  Overall Compile Wall Clock Time: 88.52459
 
   --------------------------------------------------------------------
 

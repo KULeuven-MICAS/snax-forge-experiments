@@ -1,0 +1,28 @@
+ 
+****************************************
+Report : reference
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:53:34 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+INV_X1             NanGate_15nm_OCL     0.147456       1     0.147456
+snax_forge_csr                  261.931003       1    261.931003  h, n
+snax_forge_ctrl                 515.801084       1    515.801084  h, n
+snax_forge_datapath            2537.324587       1   2537.324587  h, n
+-----------------------------------------------------------------------------
+Total 4 references                                   3315.204129
+1

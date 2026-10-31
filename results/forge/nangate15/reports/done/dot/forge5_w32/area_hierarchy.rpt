@@ -1,0 +1,51 @@
+ 
+****************************************
+Report : area
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 17:21:50 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                        25506
+Number of nets:                        220937
+Number of cells:                       163922
+Number of combinational cells:         161471
+Number of sequential cells:              2443
+Number of macros/black boxes:               0
+Number of buf/inv:                      16850
+Number of references:                       4
+
+Combinational area:              74718.414296
+Buf/Inv area:                     2863.792172
+Noncombinational area:            3122.036628
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 77840.450924
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  ----------------------------
+snax_forge_shell_wrapper          77840.4509    100.0      0.2949     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                 262.0293      0.3     97.1735   164.8558  0.0000  snax_forge_csr
+ctrl                                532.3653      0.7      0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                           532.3653      0.7    274.2190   258.1463  0.0000  snax_forge_dot_ctrl
+dp                                77045.7614     99.0      0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                     76334.5320     98.1      7.6186     0.0000  0.0000  snax_forge_mac
+dp/blocks_0_4/m                   76326.9134     98.1  73709.6678  2617.2456  0.0000  Mac_i64xi64_i64_i64_n32_acc
+dp/blocks_1_4                       711.2294      0.9      0.0000     0.0000  0.0000  snax_forge_sum
+dp/blocks_1_4/m                     711.2294      0.9    629.4405    81.7889  0.0000  SerialAccumulate_i64_i64_n32
+--------------------------------  ----------  -------  ----------  ---------  ------  ----------------------------
+Total                                                  74718.4143  3122.0366  0.0000
+
+1

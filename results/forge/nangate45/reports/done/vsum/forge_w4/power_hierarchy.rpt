@@ -1,0 +1,41 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:40:33 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+snax_forge_shell_wrapper                 48.521  322.370 8.14e+04  452.284 100.0
+  dp (snax_forge_datapath)               46.972  111.261 3.14e+04  189.616  41.9
+    blocks_0_4 (snax_forge_acc)          46.972  111.261 3.14e+04  189.616  41.9
+      m (TreeAccumulate_i64_i64_n4)      46.972  111.261 3.14e+04  189.616  41.9
+  ctrl (snax_forge_ctrl)               8.41e-02  118.080 3.08e+04  148.986  32.9
+    ctrl (snax_forge_acc_ctrl)         8.41e-02  118.080 3.08e+04  148.986  32.9
+  csr (snax_forge_csr)                    1.465   93.020 1.92e+04  113.641  25.1
+1

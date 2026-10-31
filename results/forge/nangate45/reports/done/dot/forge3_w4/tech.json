@@ -23,7 +23,7 @@
     "c_scale": "1",
     "lib_md5": "09a484fa91bd090e4975b6a605c0aa9c",
     "clock_ns": "10",
-    "cores": 16,
+    "cores": 4,
     "dc_env": {
       "SYN_FILELIST": "/users/micas/rantonio/no_backup/kul_main/snax-forge-experiments/syn/runs/forge/nangate45/done/dot/forge3_w4/filelist.f",
       "SYN_LIB_DB": "/users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db",
@@ -37,7 +37,7 @@
       "SYN_MAX_TRANS_NS": "0.25",
       "SYN_WIRE_LOAD": "off",
       "SYN_CLOCK_NS": "10",
-      "SYN_CORES": "16",
+      "SYN_CORES": "4",
       "SYN_FORMAT": "sverilog",
       "SYN_CLK_PORT": "clk_i",
       "SYN_RST_PORT": "rst_ni"

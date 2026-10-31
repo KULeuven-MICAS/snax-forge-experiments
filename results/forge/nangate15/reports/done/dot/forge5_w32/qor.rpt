@@ -1,0 +1,86 @@
+Information: Updating design information... (UID-85)
+Warning: Design 'snax_forge_shell_wrapper' contains 2 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+ 
+****************************************
+Report : qor
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 17:21:50 2026
+****************************************
+
+
+  Timing Path Group 'clk'
+  -----------------------------------
+  Levels of Logic:          100.00000
+  Critical Path Length:     812.19012
+  Critical Path Slack:     9079.11426
+  Critical Path Clk Period:
+                          10000.00000
+  Total Negative Slack:       0.00000
+  No. of Violating Paths:     0.00000
+  Worst Hold Violation:     -19.79586
+  Total Hold Violation:  -16225.68945
+  No. of Hold Violations:  2377.00000
+  -----------------------------------
+
+
+  Cell Count
+  -----------------------------------
+  Hierarchical Cell Count:          8
+  Hierarchical Port Count:      21235
+  Leaf Cell Count:             163914
+  Buf/Inv Cell Count:           16850
+  Buf Cell Count:                3857
+  Inv Cell Count:               12993
+  CT Buf/Inv Cell Count:            0
+  Combinational Cell Count:    161471
+  Sequential Cell Count:         2443
+  Macro Count:                      0
+  -----------------------------------
+
+
+  Area
+  -----------------------------------
+  Combinational Area:     74718.41430
+  Noncombinational Area:   3122.03663
+  Buf/Inv Area:            2863.79217
+  Total Buffer Area:        947.89630
+  Total Inverter Area:     1915.89588
+  Macro/Black Box Area:       0.00000
+  Net Area:                   0.00000
+  -----------------------------------
+  Cell Area:              77840.45092
+  Design Area:            77840.45092
+
+
+  Design Rules
+  -----------------------------------
+  Total Number of Nets:        199826
+  Nets With Violations:             0
+  Max Trans Violations:             0
+  Max Cap Violations:               0
+  -----------------------------------
+
+
+  Hostname: barnard3.esat.kuleuven.be
+
+  Compile CPU Statistics
+  -----------------------------------------
+  Resource Sharing:                37.05762
+  Logic Optimization:              118.34204
+  Mapping Optimization:            275.76123
+  -----------------------------------------
+  Overall Compile Time:            1208.67236
+  Overall Compile Wall Clock Time: 1010.68274
+
+  --------------------------------------------------------------------
+
+  Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
+
+
+  Design (Hold)  WNS: 19.79586  TNS: 16225.68945  Number of Violating Paths: 2377
+
+  --------------------------------------------------------------------
+
+
+1

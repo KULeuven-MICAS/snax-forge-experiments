@@ -1,0 +1,67 @@
+ 
+****************************************
+Report : area
+Design : snax_forge_shell_wrapper
+Version: Y-2026.03-SP2
+Date   : Sat Oct 31 16:54:24 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                        16256
+Number of nets:                        113986
+Number of cells:                        81445
+Number of combinational cells:          81000
+Number of sequential cells:               421
+Number of macros/black boxes:               0
+Number of buf/inv:                       8072
+Number of references:                       4
+
+Combinational area:              37585.011479
+Buf/Inv area:                     1365.737494
+Noncombinational area:             538.017773
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 38123.029252
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  ----------------------------------------
+snax_forge_shell_wrapper          38123.0293    100.0      0.2949     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                 262.0293      0.7     97.1735   164.8558  0.0000  snax_forge_csr
+ctrl                               1123.3690      2.9      0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                          1123.3690      2.9    831.9959   291.3730  0.0000  snax_forge_dot_ctrl
+dp                                36737.3361     96.4      0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                     35401.5813     92.9      0.0000     0.0000  0.0000  snax_forge_mul
+dp/blocks_0_4/m                   35401.5813     92.9      0.0000     0.0000  0.0000  ElementwiseLanes_i64xi64_i64_i64_n16_mul
+dp/blocks_0_4/m/alus_0             2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_15
+dp/blocks_0_4/m/alus_1             2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_14
+dp/blocks_0_4/m/alus_10            2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_5
+dp/blocks_0_4/m/alus_11            2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_4
+dp/blocks_0_4/m/alus_12            2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_3
+dp/blocks_0_4/m/alus_13            2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_2
+dp/blocks_0_4/m/alus_14            2212.3807      5.8   2212.3807     0.0000  0.0000  ElementwiseAlu_w64_mul_1
+dp/blocks_0_4/m/alus_15            2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_0
+dp/blocks_0_4/m/alus_2             2212.5282      5.8   2212.5282     0.0000  0.0000  ElementwiseAlu_w64_mul_13
+dp/blocks_0_4/m/alus_3             2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_12
+dp/blocks_0_4/m/alus_4             2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_11
+dp/blocks_0_4/m/alus_5             2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_10
+dp/blocks_0_4/m/alus_6             2212.5282      5.8   2212.5282     0.0000  0.0000  ElementwiseAlu_w64_mul_9
+dp/blocks_0_4/m/alus_7             2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_8
+dp/blocks_0_4/m/alus_8             2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_7
+dp/blocks_0_4/m/alus_9             2212.6265      5.8   2212.6265     0.0000  0.0000  ElementwiseAlu_w64_mul_6
+dp/blocks_1_4                      1335.7548      3.5      0.0000     0.0000  0.0000  snax_forge_sum
+dp/blocks_1_4/m                    1335.7548      3.5   1253.9659    81.7889  0.0000  TreeAccumulate_i64_i64_n16
+--------------------------------  ----------  -------  ----------  ---------  ------  ----------------------------------------
+Total                                                  37585.0115   538.0178  0.0000
+
+1
