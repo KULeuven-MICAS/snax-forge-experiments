@@ -20,8 +20,16 @@ the run folder: '# top: <top>', then rtl/files.f's paths made absolute. Forge
 RTL is SystemVerilog with clock clk_i and an asynchronous active-low reset
 rst_ni (SYN_FORMAT, SYN_CLK_PORT, SYN_RST_PORT below). Runs go to
 syn/runs/forge/<tech>/, results to results/forge/<tech>/, and a forge row has
-three more columns: recipe, W, snax_forge_commit (from point.json and
-bundle.json).
+more columns: recipe, W, snax_forge_commit (from point.json and
+bundle.json), and csr_um2, ctrl_um2, datapath_um2 (the area of the wrapper's
+three modules, bundle.json's "modules", from synth_dc_modules.csv's rows) and
+glue_um2 = area_um2 minus the three (the cells DC leaves at the top's own
+level); run reports a glue that is negative or above 1 % of the total.
+
+A DC run that fails on a licence (LICENCE_ERROR in logs/dc_shell.log or
+logs/dc_stdout.log) is rerun once (docs X17); the retry is printed and
+counted. After a second licence failure the row's status is
+"failed: licence (<the matched line>)".
 
 A technology is a file syn/tech/<tech>.json: the library (.db path and the
 library name it must hold), its time and capacitance units, the driving cell,
@@ -77,6 +85,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -116,7 +125,15 @@ COLUMNS = ["point", "top", "tech", "clock_ns", "status", "errors", "area_um2", "
            "maxtrans_nets", "dyn_power_uw", "leak_power_uw", "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj",
            "e_total_pj", "leak_clk_uw", "leak_reg_uw", "leak_seq_uw", "leak_comb_uw", "lib_md5", "dc_version",
            "date", "run"]
-FORGE_COLUMNS = ["recipe", "W", "snax_forge_commit"]   # after COLUMNS, forge rows only
+FORGE_COLUMNS = ["recipe", "W", "snax_forge_commit",   # after COLUMNS, forge rows only
+                 "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2"]
+GLUE_MAX = 0.01   # a glue share above this (or below 0) is reported, not failed
+# A licence failure, as DC prints it (PITFALLS L1): 'Error: Design-Compiler Internal licensing error
+# number -92 ...', 'Unable to obtain feature ...', 'Fatal: Design Compiler is not enabled. (DCSH-1)'.
+# A bare 'license' is not enough: every good run's banner says 'license agreement' and its
+# DesignWare table 'Licensed DW Building Blocks'.
+LICENCE_ERROR = re.compile(r"^.*(licensing error|unable to obtain feature|is not enabled\. \(DCSH-1\)"
+                           r"|^(error|fatal):.*licen[cs]e).*$", re.I | re.M)
 MODULE_COLUMNS = ["point", "tech", "clock_ns", "path", "design", "area_um2", "comb_um2", "seq_um2", "bbox_um2",
                   "dyn_power_uw", "leak_power_uw"]
 # power.rpt group -> CSV suffix
@@ -317,6 +334,7 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         pj = forge_json(point, "point.json")
         row.update({"recipe": pj.get("recipe", ""), "W": pj.get("W", ""),
                     "snax_forge_commit": forge_json(point, "bundle.json").get("snax_forge_commit", "")})
+        row.update(module_shares(tech, point, clock, row["area_um2"]))
     crit = _first(qor, r"Critical Path Length:\s*([0-9.eE+-]+)")
     slack = _first(qor, r"Critical Path Slack:\s*([0-9.eE+-]+)")
     if crit:
@@ -344,7 +362,9 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
             energy_ok = abs(e_total - e_dyn) <= 1e-3 * max(abs(e_dyn), 1e-9) + 1e-6
     if not row["area_um2"]:
         mismatch = "dc_syn.tcl: library mismatch" in log_text
-        row["status"] = "failed: library mismatch (logs/dc_shell.log)" if mismatch else "failed: no area report"
+        lic = licence_error(rdir)
+        row["status"] = ("failed: library mismatch (logs/dc_shell.log)" if mismatch
+                         else f"failed: licence ({lic})" if lic else "failed: no area report")
     elif "No wire load specified" not in area:
         row["status"] = "failed: a wire-load model applied"
     elif not energy_ok:
@@ -354,6 +374,35 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
     else:
         row["status"] = "ok"
     return row
+
+
+def licence_error(rdir: Path) -> str:
+    """The first licence-failure line (LICENCE_ERROR) of the run's dc_shell.log or dc_stdout.log,
+    the most telling first ('licensing error' over the rest); '' if none."""
+    found = []
+    for name in ("dc_shell.log", "dc_stdout.log"):
+        f = rdir / "logs" / name
+        if f.is_file():
+            found += [m.group(0).strip() for m in LICENCE_ERROR.finditer(f.read_text(errors="replace"))]
+    found.sort(key=lambda x: "licensing error" not in x.lower())
+    return found[0] if found else ""
+
+
+def module_shares(tech: dict, point: str, clock: str, total: str) -> dict:
+    """forge: csr_um2, ctrl_um2, datapath_um2 (bundle.json's three modules, by design name, from
+    read_modules) and glue_um2 = total - the three; '' where a module has no row."""
+    designs = list(forge_json(point, "bundle.json").get("modules", {}))
+    keys = ["csr_um2", "ctrl_um2", "datapath_um2"]
+    area = {m["design"]: float(m["area_um2"]) for m in read_modules(tech, point, clock)}
+    out = {k: "" for k in [*keys, "glue_um2"]}
+    if len(designs) != 3 or not total:
+        return out
+    for k, d in zip(keys, designs):
+        if d in area:
+            out[k] = f"{area[d]:.4f}"
+    if all(out[k] for k in keys):
+        out["glue_um2"] = f"{float(total) - sum(float(out[k]) for k in keys):.4f}"
+    return out
 
 
 def _floats(xs: list[str]) -> bool:
@@ -516,6 +565,10 @@ def dc_env(tech: dict, res: dict, point: str, args) -> dict:
     }
 
 
+RETRIES: list[str] = []          # points rerun on a licence error, this invocation
+RETRIES_LOCK = threading.Lock()
+
+
 def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
     name = tech["name"]
     rams = rams_of(point)
@@ -534,16 +587,24 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
             print(f"export {k}='{v}'")
         print(f"mkdir -p {rdir}/logs && cd {rdir} && {' '.join(cmd)}")
         return None
-    if rdir.exists():
-        shutil.rmtree(rdir)
-    (rdir / "logs").mkdir(parents=True)
-    if SOURCE == "forge":
-        Path(syn_env["SYN_FILELIST"]).write_text(
-            f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in forge_filelist(point)))
-    print(f"run  {point} on {name} at {args.clock} ns in {rdir.relative_to(ROOT)}", flush=True)
-    with (rdir / "logs" / "dc_stdout.log").open("w") as fh:
-        rc = subprocess.run(cmd, cwd=rdir, env=dict(os.environ, **syn_env), stdout=fh,
-                            stderr=subprocess.STDOUT, check=False).returncode
+    for attempt in (1, 2):
+        if rdir.exists():
+            shutil.rmtree(rdir)
+        (rdir / "logs").mkdir(parents=True)
+        if SOURCE == "forge":
+            Path(syn_env["SYN_FILELIST"]).write_text(
+                f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in forge_filelist(point)))
+        print(f"run  {point} on {name} at {args.clock} ns in {rdir.relative_to(ROOT)}"
+              + (" (licence retry)" if attempt == 2 else ""), flush=True)
+        with (rdir / "logs" / "dc_stdout.log").open("w") as fh:
+            rc = subprocess.run(cmd, cwd=rdir, env=dict(os.environ, **syn_env), stdout=fh,
+                                stderr=subprocess.STDOUT, check=False).returncode
+        lic = licence_error(rdir)
+        if not lic or attempt == 2:
+            break
+        with RETRIES_LOCK:
+            RETRIES.append(point)
+        print(f"retry {point} on {name}: licence error: {lic}", flush=True)
     (rdir / "tech.json").write_text(json.dumps({
         "tech_file": str((TECH_DIR / f"{name}.json").relative_to(ROOT)),
         "tech": tech,
@@ -554,6 +615,11 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
     row = read_run(tech, point, args.clock)
     print(f"done {point} on {name}: {row['status']}  area {row['area_um2'] or '-'} um2"
           f"  slack {row['slack_ns'] or '-'} ns  errors {row['errors']}", flush=True)
+    glue = row.get("glue_um2", "")
+    if glue and (float(glue) < 0 or float(glue) > GLUE_MAX * float(row["area_um2"])):
+        print(f"glue {point} on {name}: {glue} um2 of {row['area_um2']} "
+              f"({100 * float(glue) / float(row['area_um2']):.3f} %): negative or above "
+              f"{100 * GLUE_MAX:g} %", flush=True)
     return row
 
 
@@ -578,6 +644,8 @@ def cmd_run(args) -> int:
         write_summary(tech, rows)
         print(f"\nwrote {summary_of(tech['name']).relative_to(ROOT)} and {(RESULTS / tech['name']).relative_to(ROOT)}/")
         print_rows(rows)
+    if not args.dry_run:
+        print(f"licence retries: {len(RETRIES)}" + (f" ({', '.join(RETRIES)})" if RETRIES else ""))
     return 0 if rows and all(r["status"].startswith(("ok", "skipped")) for r in rows) or args.dry_run else 1
 
 
