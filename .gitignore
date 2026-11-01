@@ -6,5 +6,7 @@ __pycache__/
 .pixi/
 # Simulation and power runs stay local, as syn/runs/; the probe scripts are in sim/probe/
 sim/runs/
+# SYN1's control/datapath split: PrimePower's per-cell dumps (report/flop_split.py pt)
+sim/split_runs/
 # Generated RTL (forge/bundles.py writes rtl/forge/): never committed, a bundle is rebuilt from its commit
 rtl/

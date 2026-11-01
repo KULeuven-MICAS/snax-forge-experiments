@@ -13,6 +13,8 @@ Reads only what is committed or checked out read-only, and changes none of it:
   results/hls/<tech>/reports/<point>/reference.rpt  the flop cell's unit area
   ../hls-exercises/rtl/done/<kernel>/<point>/*.v  Vitis's Verilog: which registers are flops, by name
   rtl/forge/<point>/rtl/sv/*.sv                   forge's bundles: the registers of csr and ctrl, by name
+  results/analysis/syn1/split_<tech>.csv          every cell on the control or datapath side (report/flop_split.py)
+  results/analysis/syn1/split_checks_<tech>.csv   its checks per point
 and writes results/analysis/syn1/syn1_analysis.md and its PNG figures. Every number in the note is computed
 here; nothing is typed by hand. The note decides nothing: it lays out observations, explanations (with how
 sure each is) and open questions for review.
@@ -109,10 +111,26 @@ def flop_unit_area(tech: str) -> float:
     return float(m.group(2))
 
 
-def hls_registers(kernel: str, case: str, w: int) -> tuple[Counter, int, dict]:
-    """Bits of every name Vitis assigns on the clock edge, by class; the loop pipeline's depth; the names per class."""
-    c = Counter()
-    names = defaultdict(set)
+def hls_reg_class(n: str, b: int) -> str:
+    """The class of a Vitis register by its name and width (section 3; report/flop_split.py uses it too)."""
+    base = re.sub(r"_pp\d+_iter\d+_reg$", "", n)
+    if n.startswith("ap_") or n.endswith("_ap_start_reg"):
+        return "control (FSM, pipeline enables)"
+    if base.endswith("_preg"):
+        return "pins (loop_count, len)"
+    if re.search(r"_fu_\d+$", base):
+        return "loop state (accumulator, counters)"
+    if re.search(r"_reg_\d+$", base) and b > 1:
+        return "data pipeline (operands, products)"
+    if re.search(r"_reg_\d+$", base):
+        return "conditions"
+    return "other"
+
+
+def hls_reg_entries(kernel: str, case: str, w: int) -> tuple[list[tuple[str, str, str, int | None]], int]:
+    """(file, name, class, bits) of every name Vitis assigns on the clock edge, per Verilog file (bits None:
+    a parameterized width); and the loop pipeline's depth."""
+    out = []
     depth = 0
     for v in sorted((HLS_RTL / "done" / kernel / f"{case}_w{w}").glob("*.v")):
         t = v.read_text()
@@ -129,29 +147,27 @@ def hls_registers(kernel: str, case: str, w: int) -> tuple[Counter, int, dict]:
                 mm = re.compile(r"\bbegin\b|\bend\b").search(t, j)
                 lvl += 1 if mm.group(0) == "begin" else -1
                 j = mm.end()
-            flops |= set(re.findall(r"(\w+)\s*<=", t[k:j]))
+            flops |= set(re.findall(r"(\w+)\s*(?:\[[^\]]*\])?\s*<=", t[k:j]))
         for n in sorted(flops):
             b = width.get(n)
-            if b is None:
-                c["parameter-width names"] += 1
-                continue
-            base = re.sub(r"_pp\d+_iter\d+_reg$", "", n)
-            if n.startswith("ap_") or n.endswith("_ap_start_reg"):
-                k2 = "control (FSM, pipeline enables)"
-            elif base.endswith("_preg"):
-                k2 = "pins (loop_count, len)"
-            elif re.search(r"_fu_\d+$", base):
-                k2 = "loop state (accumulator, counters)"
-            elif re.search(r"_reg_\d+$", base) and b > 1:
-                k2 = "data pipeline (operands, products)"
-            elif re.search(r"_reg_\d+$", base):
-                k2 = "conditions"
-            else:
-                k2 = "other"
-            c[k2] += b
-            names[k2].add(re.sub(r"(_\d+)?_reg_\d+$", "", base))
+            out.append((v.stem, n, "parameter-width names" if b is None else hls_reg_class(n, b), b))
         for m in re.finditer(r"ap_enable_reg_pp\d+_iter(\d+)", t):
             depth = max(depth, int(m.group(1)) + 1)
+    return out, depth
+
+
+def hls_registers(kernel: str, case: str, w: int) -> tuple[Counter, int, dict]:
+    """Bits of every name Vitis assigns on the clock edge, by class; the loop pipeline's depth; the names per class."""
+    c = Counter()
+    names = defaultdict(set)
+    entries, depth = hls_reg_entries(kernel, case, w)
+    for _, n, k2, b in entries:
+        if b is None:
+            c[k2] += 1
+            continue
+        c[k2] += b
+        base = re.sub(r"_pp\d+_iter\d+_reg$", "", n)
+        names[k2].add(re.sub(r"(_\d+)?_reg_\d+$", "", base))
     return c, depth, names
 
 
@@ -554,7 +570,8 @@ def main() -> int:
     md += table(["tech", "kernel", "what", "slope µm²/lane", "intercept µm²", "R²"], afit)
     md.append("")
     # flops
-    md.append("**Flops**, nangate45 (DC's `seq_cells`), and where they sit. Forge per module (nangate15's sequential area over the flop's area, the same counts on both technologies); HLS by class, from the names Vitis assigns on the clock edge in its Verilog (their bit sum next to DC's count, which differs by a few bits where DC merged or removed constant flops).")
+    hg = [(sum(cc.values()) - get("nangate45", k, c, w)["flops"], k, c, w) for (k, c, w), cc in sorted(hregs.items()) if get("nangate45", k, c, w)]
+    md.append(f"**Flops**, nangate45 (DC's `seq_cells`), and where they sit. Forge per module (nangate15's sequential area over the flop's area, the same counts on both technologies); HLS by class, from the names Vitis assigns on the clock edge in its Verilog (their bit sum next to DC's count. The Verilog's sum minus DC's count is {min(hg)[0]} to {max(hg)[0]} bits over every HLS point ({pt(*max(hg)[1:])} the most): DC removed register bits that hold constants; section 9 checks every flop against the Verilog by name).")
     md.append("")
     frows = []
     for k in KERNELS:
@@ -905,6 +922,183 @@ def main() -> int:
     M.append("csr + ctrl share of area and e_run against W (fig2): answers the overhead question directly; it depends on what the boundary excludes (the streamers).")
     M.append("The two-term fit e_run = α C + β per design (fig7): the HWCOST shape; it needs the per-cycle term to include the datapath's clocked registers.")
 
+    # ------------------------------------------------ 9. control and datapath, cell by cell
+    SP = defaultdict(list)        # (tech, point) -> split rows (report/flop_split.py)
+    CHK = {}                      # (tech, point) -> its checks
+    for tech in TECHS:
+        for r in read(OUT / f"split_{tech}.csv"):
+            r["cells"], r["area"], r["e"] = int(r["cells"]), float(r["area_um2"]), float(r["e_dyn_pj"])
+            SP[(tech, r["point"])].append(r)
+        for r in read(OUT / f"split_checks_{tech}.csv"):
+            CHK[(tech, r["point"])] = r
+
+    def part(tech, k, c, w, field, **want):
+        rows = SP[(tech, get(tech, k, c, w)["point"])]
+        return sum(r[field] for r in rows if all(r[a] == b for a, b in want.items()))
+
+    def ctrl(tech, k, c, w):
+        d = get(tech, k, c, w)
+        a, e = part(tech, k, c, w, "area", cone="control"), part(tech, k, c, w, "e", cone="control")
+        return {"area": a, "e": e, "a_pct": pct(a, d["area"]), "e_pct": pct(e, d["e_dyn"]),
+                "flops": part(tech, k, c, w, "cells", cone="control", kind="flop"),
+                "fa": part(tech, k, c, w, "area", cone="control", kind="flop"),
+                "fe": part(tech, k, c, w, "e", cone="control", kind="flop"),
+                "e_run": e * d["cycles"] / 1000}
+
+    allpts = [(tech, k, c, w) for tech in TECHS for k in KERNELS for c in cases(k) for w in WS if get(tech, k, c, w)]
+    md9 = ["## 9. Control and datapath, cell by cell", ""]
+    md9.append("Section 2 splits forge by its wrapper's instances (csr, ctrl, dp); Vitis writes HLS's control flat beside its datapath, so section 3 could only name HLS's registers. Here every cell of every n2048 point, HLS and forge, both technologies, is put on one side by one structural rule: **datapath** is the forward cone of the data input ports (Vitis `*_TDATA`, forge `stream2acc_*_data_i`), through logic and through every flop it reaches until nothing new is reached; **control** is every other cell (the FSM, pipeline enables, the pin registers or CSRs, the loop counters, their logic, the handshakes). The cells, their area and their dynamic energy come from PrimePower run again on each point's netlist with the SAIF its power run kept (`sim/scripts/pt_cells.tcl`: `pt_power.tcl` unchanged, then each leaf cell's power and the cone; `report/flop_split.py`, `pixi run split`); the result is `split_<tech>.csv` (per point: kind flop or comb, cone, unit) and `split_checks_<tech>.csv` beside this note. Energy per cycle is a cell's internal plus switching power (its output nets) times 10 ns, as `e_dyn` (X20); control's share of e_run is its share of e_dyn, the window being the same.")
+    md9.append("")
+    ck = [CHK[(t, get(t, k, c, w)["point"])] for t, k, c, w in allpts]
+    da = max(abs(float(x["area_um2"]) - float(x["area_dc_um2"])) for x in ck)
+    de = max(abs(float(x["e_dyn_pj"]) - float(x["e_dyn_csv_pj"])) / float(x["e_dyn_csv_pj"]) for x in ck)
+    dfl = max(abs(float(x["e_flop_pj"]) - float(x["e_flop_csv_pj"])) / float(x["e_flop_csv_pj"]) for x in ck)
+    hck = [x for x in ck if x["side"] == "hls"]
+    removed = [(x["point"], x["tech"], int(x["removed_bits"])) for x in hck if int(x["removed_bits"])]
+    md9.append(f"**Checks** ({len(ck)} point-technology pairs, every one passed; `split_checks_<tech>.csv`): PrimePower's Power Group table equals the committed run's on every point; the cells' area equals `synth_dc.csv`'s area_um2 within {da:.4f} µm²; their energy per cycle equals `power_pt.csv`'s e_dyn_pj within {100 * de:.4f} % and the flops' its e_flop_pj within {100 * dfl:.4f} %; the flop count equals flop_bits; every HLS flop is a register of the point's Verilog, by name, and no register has more flops than bits (DC removed {sum(b for *_, b in removed)} register bits on {len(removed)} HLS point-technology pairs" + (": " + ", ".join(f"`{p}` {t} {b}" for p, t, b in removed[:8]) + ("; …" if len(removed) > 8 else "") if removed else "") + ").")
+    md9.append("")
+
+    # forge: the cone against the hierarchy
+    fpts = [x for x in allpts if not x[2] in HLS_CASES]
+    mis = []
+    for t, k, c, w in fpts:
+        rows = SP[(t, get(t, k, c, w)["point"])]
+        dp_out = [r for r in rows if r["unit"] == "dp" and r["cone"] == "control"]
+        cc_in = [r for r in rows if r["unit"] in ("csr", "ctrl") and r["cone"] == "data"]
+        d = get(t, k, c, w)
+        mis.append((t, k, c, w, sum(r["cells"] for r in dp_out), sum(r["area"] for r in dp_out), sum(r["e"] for r in dp_out),
+                    sum(r["cells"] for r in dp_out if r["kind"] == "flop"), sum(r["cells"] for r in cc_in),
+                    pct(sum(r["area"] for r in dp_out), d["area"]), pct(sum(r["e"] for r in dp_out), d["e_dyn"])))
+    wa = max(mis, key=lambda x: x[9])
+    we = max(mis, key=lambda x: x[10])
+    md9.append(f"**The rule against forge's hierarchy** ({len(mis)} forge point-technology pairs): no cell of csr or ctrl is in the data cone ({sum(x[8] for x in mis)} cells in all), and every flop of dp is ({sum(x[7] for x in mis)} dp flops outside it). What the rule calls control inside dp is logic only, at most {max(x[4] for x in mis)} cells, {max(x[5] for x in mis):.1f} µm² ({wa[9]:.2f} % of the accelerator's area, {pt(wa[1], wa[2], wa[3])} {wa[0]}) and {we[10]:.3f} % of e_dyn ({pt(we[1], we[2], we[3])} {we[0]}), all of it inside dp's MAC, serial-sum and link-buffer instances (`dp/blocks_*/m`, `dp/bufs_*/m` in the per-cell dumps). These blocks take only ctrl's signals besides the data: the enables (`io_fire` on the MAC, `io_read` on the serial sum) and the serial sum's lane select (`io_lane`), so the cells are their buffering and decoding. Fairly sure: the cells' places and the blocks' ports are certain; the cells were not traced one by one. So on forge the rule gives csr + ctrl plus that logic; applied to HLS it draws the line where forge's hierarchy would.")
+    md9.append("")
+
+    for tech in TECHS:
+        md9.append(f"**Control area, {tech}**: µm² (share of the accelerator's area); forge's is csr + ctrl + the dp logic above")
+        md9.append("")
+        rows = []
+        for k in KERNELS:
+            for c in cases(k):
+                if not any(get(tech, k, c, w) for w in WS):
+                    continue
+                rows.append([k, label(c)] + [f"{g(ctrl(tech, k, c, w)['area'], 0)} ({ctrl(tech, k, c, w)['a_pct']:.0f} %)" if get(tech, k, c, w) else "" for w in WS])
+        md9 += table(["kernel", "case"] + [f"W = {w}" for w in WS], rows)
+        md9.append("")
+        md9.append(f"**Control energy, {tech}**: pJ per cycle (share of e_run)")
+        md9.append("")
+        rows = []
+        for k in KERNELS:
+            for c in cases(k):
+                if not any(get(tech, k, c, w) for w in WS):
+                    continue
+                rows.append([k, label(c)] + [f"{ctrl(tech, k, c, w)['e']:.2f} ({ctrl(tech, k, c, w)['e_pct']:.1f} %)" if get(tech, k, c, w) else "" for w in WS])
+        md9 += table(["kernel", "case"] + [f"W = {w}" for w in WS], rows)
+        md9.append("")
+
+    md9.append("**Control's flops and logic, nangate45**: control flops; the flops' share of control's area and of its energy, at W = 1 and W = 32")
+    md9.append("")
+    rows = []
+    for k in KERNELS:
+        for c in cases(k):
+            ws = [w for w in (1, 32) if get("nangate45", k, c, w)]
+            if not ws:
+                continue
+            r = [k, label(c)]
+            for w in (1, 32):
+                if get("nangate45", k, c, w):
+                    x = ctrl("nangate45", k, c, w)
+                    r.append(f"{x['flops']} · {pct(x['fa'], x['area']):.0f} % · {pct(x['fe'], x['e']):.0f} %")
+                else:
+                    r.append("")
+            rows.append(r)
+    md9 += table(["kernel", "case", "W = 1: flops · area · energy", "W = 32: flops · area · energy"], rows)
+    md9.append("")
+
+    # HLS flops by name (section 3's classes) and by the rule
+    CLS = ["pins (loop_count, len)", "control (FSM, pipeline enables)", "conditions", "loop state (accumulator, counters)",
+           "data pipeline (operands, products)", "other", "parameter-width names"]
+    SHORT = {CLS[0]: "pins", CLS[1]: "FSM, enables", CLS[2]: "conditions", CLS[3]: "loop state", CLS[4]: "data pipeline",
+             CLS[5]: "other", CLS[6]: "parameter width"}
+    hpts = [x for x in allpts if x[2] in HLS_CASES]
+    used = [cl for cl in CLS if any(part(t, k, c, w, "cells", kind="flop", unit=cl) for t, k, c, w in hpts)]
+    md9.append("**HLS's flops by name and by the rule, nangate45** (options 1 and 2: each register class of section 3, its flops and their energy in pJ per cycle; c = control by the rule, d = datapath)")
+    md9.append("")
+    rows = []
+    for t, k, c, w in hpts:
+        if t != "nangate45":
+            continue
+        r = [k, label(c), str(w)]
+        for cl in used:
+            cells_ = []
+            for cone, tag in (("control", "c"), ("data", "d")):
+                n = part(t, k, c, w, "cells", kind="flop", unit=cl, cone=cone)
+                if n:
+                    cells_.append(f"{tag} {n} · {part(t, k, c, w, 'e', kind='flop', unit=cl, cone=cone):.2f}")
+            r.append("; ".join(cells_))
+        rows.append(r)
+    md9 += table(["kernel", "case", "W"] + [SHORT[cl] for cl in used], rows)
+    md9.append("")
+
+    # observations
+    def rng(xs, nd=2):
+        return f"{min(xs):.{nd}f}–{max(xs):.{nd}f}"
+    md9 += ["### Observations", ""]
+    for tech in TECHS:
+        parts_ = []
+        for cs, nm in ((["unopt"], "HLS unopt"), (["opt"], "HLS opt"), (["dace"], "HLS dace")):
+            xs = [ctrl(tech, k, c, w) for k in KERNELS for c in cs for w in WS if get(tech, k, c, w)]
+            parts_.append(f"{nm} {g(min(x['area'] for x in xs), 0)}–{g(max(x['area'] for x in xs), 0)} µm² and {rng([x['e'] for x in xs])} pJ/cycle")
+        xs = [ctrl(tech, k, c, w) for k in KERNELS for c in FORGE_CASES[k] for w in WS]
+        parts_.append(f"forge {g(min(x['area'] for x in xs), 0)}–{g(max(x['area'] for x in xs), 0)} µm² and {rng([x['e'] for x in xs])} pJ/cycle")
+        md9.append(f"- {tech}, control over every kernel and W: " + "; ".join(parts_) + " (the tables above).")
+    for tech in TECHS:
+        md9.append(f"- {tech}, control's share of e_run at W = 1 → 32: " + "; ".join(
+            f"{k}: " + ", ".join(f"{label(c)} {ctrl(tech, k, c, 1)['e_pct']:.1f} → {ctrl(tech, k, c, 32)['e_pct']:.1f} %" for c in (["opt"] + FORGE_CASES[k]) if get(tech, k, c, 1) and get(tech, k, c, 32))
+            for k in KERNELS) + ".")
+    ratio = [(ctrl("nangate45", k, c, w)["e"] / ctrl("nangate45", k, "opt", w)["e"], k, c, w) for k in KERNELS for c in FORGE_CASES[k] for w in WS]
+    md9.append(f"- nangate45, forge's control energy per cycle over HLS opt's, same kernel and W: {min(ratio)[0]:.1f}x to {max(ratio)[0]:.1f}x (lowest {full(min(ratio)[1], min(ratio)[2])} W = {min(ratio)[3]}, highest {full(max(ratio)[1], max(ratio)[2])} W = {max(ratio)[3]}).")
+    fsh = {side: [pct(x["fe"], x["e"]) for x in (ctrl(t, k, c, w) for t, k, c, w in allpts if (c in HLS_CASES) == (side == "hls"))] for side in ("hls", "forge")}
+    fah = {side: [pct(x["fa"], x["area"]) for x in (ctrl(t, k, c, w) for t, k, c, w in allpts if (c in HLS_CASES) == (side == "hls"))] for side in ("hls", "forge")}
+    md9.append(f"- The flops' share of control's energy: HLS {rng(fsh['hls'], 0)} %, forge {rng(fsh['forge'], 0)} %; of control's area: HLS {rng(fah['hls'], 0)} %, forge {rng(fah['forge'], 0)} % (every point, both technologies).")
+    split_ls = sorted({(k, c) for t, k, c, w in hpts if part(t, k, c, w, "cells", kind="flop", unit=CLS[3], cone="control") and part(t, k, c, w, "cells", kind="flop", unit=CLS[3], cone="data")})
+    dp_ctrl = sorted({(k, c, w) for t, k, c, w in hpts if part(t, k, c, w, "cells", kind="flop", unit=CLS[4], cone="control")})
+    ctl_data = sorted({(k, c, w) for t, k, c, w in hpts if sum(part(t, k, c, w, "cells", kind="flop", unit=cl, cone="data") for cl in CLS[:3])})
+    md9.append(f"- By name against the rule: section 3's loop state holds both sides in {len(split_ls)} HLS designs (" + ", ".join(f"{k} {label(c)}" for k, c in split_ls) + "); data pipeline names hold control flops in " + (", ".join(pt(k, c, w) for k, c, w in dp_ctrl) if dp_ctrl else "no point") + "; pins, FSM and conditions hold data flops in " + (", ".join(pt(k, c, w) for k, c, w in ctl_data) if ctl_data else "no point") + ".")
+    md9 += ["", "### Explanations", ""]
+    fl45 = {side: [ctrl("nangate45", k, c, 1)["flops"] for k in KERNELS for c in (["opt", "dace"] if side == "hls" else FORGE_CASES[k]) if get("nangate45", k, c, 1)] for side in ("hls", "forge")}
+    pf = {side: [1000 * ctrl("nangate45", k, c, 1)["fe"] / ctrl("nangate45", k, c, 1)["flops"] for k in KERNELS for c in (["opt", "dace"] if side == "hls" else FORGE_CASES[k]) if get("nangate45", k, c, 1)] for side in ("hls", "forge")}
+    fsh_c = {cs: [pct(x["fe"], x["e"]) for x in (ctrl(t, k, c, w) for t, k, c, w in allpts if c in cs)] for cs in (("opt", "dace"), ("unopt",))}
+    md9.append(f"- **Forge's control is the larger per cycle because it has more control flops.** At W = 1 on nangate45 HLS opt and dace have {min(fl45['hls'])}–{max(fl45['hls'])} control flops (one or two 32-bit pins, one or two 32-bit loop counters, the FSM, the pipeline enables: section 3), forge {min(fl45['forge'])}–{max(fl45['forge'])} (csr's 32-bit CSRs, ctrl's 32-bit counters; section 2). A control flop costs about the same per cycle on both sides ({rng(pf['hls'], 1)} fJ for HLS opt and dace, {rng(pf['forge'], 1)} fJ for forge, W = 1, nangate45), and the flops carry {rng(fsh_c[('opt', 'dace')], 0)} % of HLS opt's and dace's control energy and {rng(fsh['forge'], 0)} % of forge's, so control's energy follows the flop count. Sure: counts and energies are measured per cell.")
+    csr_comb = max(part(t, k, c, w, "e", unit="csr", kind="comb") for t, k, c, w in fpts)
+    md9.append(f"- **Control's logic is most of its area but little of its energy**, except in HLS unopt: logic is {rng([100 - x for x in fah['forge']], 0)} % of forge's control area and {rng([100 - x for x in fsh['forge']], 0)} % of its control energy; HLS unopt's logic reaches {100 - min(fsh_c[('unopt',)]):.0f} % of its control energy. The counters' adders and comparators switch a few low bits per cycle, and the CSRs' logic is idle during the task (written before START: csr's logic is at most {csr_comb:.4f} pJ/cycle on any forge point). HLS unopt's control also holds the lane index and the loop's address increments (`l_reg_*`, `add_ln*_reg_*` below), whose logic changes every cycle. Sure for the shares and csr's idle logic (measured); fairly sure for unopt's cause (the names, not traced per cell).")
+    md9.append("- **The rule sorts registers by what they hold, the names by how Vitis named them.** A loop-state name (`*_fu_<n>`) is an accumulator (data) or a counter (control); a loop index or its increment, registered by Vitis, takes a data pipeline name (`*_reg_<n>`: `l_reg_103`, `add_ln22_reg_338` in `dot/unopt_w4`, `add_ln9_reg_234` in `vecadd/unopt_w4`, `N_reg_64` and `add_ln19_reg_49` in `vecadd/dace_w4`) and is control. Sure: the rule's side for every flop is in the per-cell dumps, and the names are Vitis's.")
+    md9 += ["", "### Questions", ""]
+    md9.append("- Should SYN1's comparisons put HLS and forge on this rule's split (control = not reached from the data inputs) instead of forge's hierarchy against HLS's whole block? On forge the two agree but for the enable and lane-select logic inside dp above; it gives HLS a control number it lacks.")
+    md9.append("- Forge's control per cycle is several times HLS's (above) for the same task: how much of it would narrower counters (12 bits at n2048) and one shared counter per group remove? The rule's control flops per point are the inventory to start from.")
+    md9.append("")
+    Q.append("Control split: should the comparisons use section 9's rule (control = cells not reached from the data inputs) on both sides? It agrees with forge's csr + ctrl but for a little enable logic inside dp, and gives HLS a control number (section 9).")
+    S.append(f"- **Control, HLS and forge alike** (section 9, every cell by one rule: datapath is what the data inputs reach): forge's control costs {min(ratio)[0]:.1f}x to {max(ratio)[0]:.1f}x HLS opt's energy per cycle on nangate45, same kernel and W; the flops carry {rng(fsh['hls'], 0)} % of HLS's control energy and {rng(fsh['forge'], 0)} % of forge's.")
+
+    fig, axs = plt.subplots(len(TECHS), 4, figsize=(16, 7), sharex=True)
+    for row, tech in zip(axs, TECHS):
+        for ax, k in zip(row, KERNELS):
+            for c in cases(k):
+                s = [(w, ctrl(tech, k, c, w)["e_pct"]) for w in WS if get(tech, k, c, w)]
+                if len(s) < 2:
+                    continue
+                col, mk, ls = STYLE[c]
+                ax.plot([x for x, _ in s], [y for _, y in s], marker=mk, color=col, ls=ls, label=label(c))
+            ax.set_xscale("log", base=2); ax.set_yscale("log"); ax.set_xticks(WS, [str(w) for w in WS])
+            ax.set_title(f"{k}, {tech}"); ax.grid(True, which="both", alpha=0.3)
+            ax.legend(fontsize=6)
+        row[0].set_ylabel(f"control share of e_run, % ({tech})")
+    for ax in axs[-1]:
+        ax.set_xlabel("W")
+    fig.suptitle("Control's share of e_run at n2048, one rule on both sides (control = cells the data inputs do not reach)")
+    fig.tight_layout()
+    savefig(fig, "fig8_control_split.png")
+
     # ------------------------------------------------ summary and lists
     best_dot = {}
     for tech in TECHS:
@@ -928,7 +1122,7 @@ def main() -> int:
     S.append("- **Not answerable from SYN1:** the streamers' share (forge's registers), narrower counters, J > 1, the cluster-level cycles (open questions).")
 
     head = ["# SYN1 analysis: snax-forge beside HLS tier done", ""]
-    head.append(f"Written by `report/analysis_syn1.py` (`pixi run analysis`) from the committed CSVs (R4's `results/forge_vs_hls_<tech>.csv`, `results/{{hls,forge}}/<tech>/synth_dc*.csv`, `power_pt*.csv`, `results/hls/hls_cycles.csv`), the committed `reference.rpt` (the flop's area), hls-exercises' Verilog and forge's bundles (the registers by name). Every number is computed; nothing is typed by hand. n2048 only, both technologies, W = 1 to 32: {n_ok[('nangate45', 'hls')]} HLS and {n_ok[('nangate45', 'forge')]} forge points per technology (HLS dot `dace_w1` parked). This note decides nothing: it is for review, before the comparisons are chosen. PT is the reference for energy (X25). Each section gives observations, explanations (with how sure each is and its evidence) and questions.")
+    head.append(f"Written by `report/analysis_syn1.py` (`pixi run analysis`) from the committed CSVs (R4's `results/forge_vs_hls_<tech>.csv`, `results/{{hls,forge}}/<tech>/synth_dc*.csv`, `power_pt*.csv`, `results/hls/hls_cycles.csv`), the committed `reference.rpt` (the flop's area), hls-exercises' Verilog and forge's bundles (the registers by name), and for section 9 `results/analysis/syn1/split_<tech>.csv` (`report/flop_split.py`: every cell on the control or datapath side). Every number is computed; nothing is typed by hand. n2048 only, both technologies, W = 1 to 32: {n_ok[('nangate45', 'hls')]} HLS and {n_ok[('nangate45', 'forge')]} forge points per technology (HLS dot `dace_w1` parked). This note decides nothing: it is for review, before the comparisons are chosen. PT is the reference for energy (X25). Each section gives observations, explanations (with how sure each is and its evidence) and questions.")
     head += ["", "## Summary", ""] + S + [""]
     tail = ["## Open questions", ""] + [f"- {q}" for q in Q] + [
         "- fmax: on nangate45 forge's dot variants report " + f"{min(get('nangate45', 'dot', c, w)['fmax'] for c in DOT_FORGE for w in WS):.0f}–{max(get('nangate45', 'dot', c, w)['fmax'] for c in DOT_FORGE for w in WS):.0f} MHz against HLS dot's {min(get('nangate45', 'dot', c, w)['fmax'] for c in DOT_HLS for w in WS):.0f}–{max(get('nangate45', 'dot', c, w)['fmax'] for c in DOT_HLS for w in WS):.0f} MHz; it is DC's lower bound at 10 ns (X2), so a synthesis at a tighter clock would be needed to compare speed, and SYN1 does not.", ""]
@@ -940,8 +1134,9 @@ def main() -> int:
         "- `fig4_energy.png`: pJ per element against W, per kernel and case; top row nangate45, bottom row nangate15 (section 4).",
         "- `fig5_dot_variants.png`: A x C and E x C against W for dot 2–6 and HLS dot unopt and opt (section 5).",
         "- `fig6_tech_ratio.png`: nangate45 / nangate15 ratios of area and e_run against the sequential share (section 6).",
-        "- `fig7_two_term_fit.png`: forge's e_run against the cycles over W, with the fit e_run = α C + β (section 2).", ""]
-    (OUT / "syn1_analysis.md").write_text("\n".join(head + md + tail))
+        "- `fig7_two_term_fit.png`: forge's e_run against the cycles over W, with the fit e_run = α C + β (section 2).",
+        "- `fig8_control_split.png`: control's share of e_run against W, per kernel and case, by one rule on both sides; top row nangate45, bottom row nangate15 (section 9).", ""]
+    (OUT / "syn1_analysis.md").write_text("\n".join(head + md + tail + md9))
     print(f"wrote {(OUT / 'syn1_analysis.md').relative_to(ROOT)} and {len(list(OUT.glob('*.png')))} figures")
     return 0
 
