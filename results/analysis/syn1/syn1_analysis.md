@@ -858,6 +858,7 @@ Candidate metrics side by side, per kernel and W: the lowest-energy-per-element,
 - `fig6_tech_ratio.png`: nangate45 / nangate15 ratios of area and e_run against the sequential share (section 6).
 - `fig7_two_term_fit.png`: forge's e_run against the cycles over W, with the fit e_run = α C + β (section 2).
 - `fig8_control_split.png`: control's share of e_run against W, per kernel and case, by one rule on both sides; top row nangate45, bottom row nangate15 (section 9).
+- `fig9_energy_split.png`: e_run per task as stacked bars, control on the datapath's flops and logic, per kernel (rows), technology (columns), W and case (section 9).
 
 ## 9. Control and datapath, cell by cell
 
@@ -1053,6 +1054,66 @@ Section 2 splits forge by its wrapper's instances (csr, ctrl, dp); Vitis writes 
 | dot | HLS opt | 16 | c 66 · 0.46 | c 7 · 0.05 | c 3 · 0.02 | c 64 · 0.46; d 64 · 0.60 | d 3456 · 42.35 |
 | dot | HLS opt | 32 | c 66 · 0.46 | c 7 · 0.05 | c 3 · 0.02 | c 64 · 0.47; d 64 · 0.59 | d 6528 · 79.50 |
 
+**Energy per task in three parts, nangate45** (nJ per task of 2048 elements: control, the datapath's flops, the datapath's logic; their sum is e_run). Figure `fig9_energy_split.png`: every case and W, both technologies.
+
+| kernel | W | case | e_run nJ | control | datapath flops | datapath logic |
+|---|---|---|---|---|---|---|
+| vecadd | 1 | HLS unopt | 2.58 | 0.99 | 0.00 | 1.58 |
+| vecadd | 1 | HLS opt | 4.02 | 1.04 | 2.13 | 0.85 |
+| vecadd | 1 | HLS dace | 4.41 | 1.43 | 2.13 | 0.85 |
+| vecadd | 1 | forge | 4.57 | 2.98 | 0.00 | 1.58 |
+| vecadd | 8 | HLS unopt | 66.74 | 8.59 | 53.52 | 4.63 |
+| vecadd | 8 | HLS opt | 3.12 | 0.14 | 2.14 | 0.85 |
+| vecadd | 8 | HLS dace | 3.22 | 0.23 | 2.14 | 0.85 |
+| vecadd | 8 | forge | 1.97 | 0.38 | 0.00 | 1.59 |
+| vecadd | 32 | HLS unopt | 183.17 | 9.35 | 167.47 | 6.35 |
+| vecadd | 32 | HLS opt | 3.03 | 0.04 | 2.15 | 0.84 |
+| vecadd | 32 | HLS dace | 3.05 | 0.06 | 2.15 | 0.84 |
+| vecadd | 32 | forge | 1.68 | 0.10 | 0.00 | 1.58 |
+| vecmul | 1 | HLS unopt | 26.34 | 2.43 | 0.00 | 23.91 |
+| vecmul | 1 | HLS opt | 29.43 | 1.04 | 3.80 | 24.59 |
+| vecmul | 1 | HLS dace | 29.83 | 1.43 | 3.79 | 24.60 |
+| vecmul | 1 | forge | 26.14 | 2.98 | 0.00 | 23.15 |
+| vecmul | 8 | HLS unopt | 93.36 | 8.60 | 54.95 | 29.81 |
+| vecmul | 8 | HLS opt | 28.46 | 0.14 | 3.79 | 24.53 |
+| vecmul | 8 | HLS dace | 28.55 | 0.23 | 3.79 | 24.52 |
+| vecmul | 8 | forge | 23.50 | 0.38 | 0.00 | 23.12 |
+| vecmul | 32 | HLS unopt | 207.92 | 9.35 | 168.97 | 29.60 |
+| vecmul | 32 | HLS opt | 28.43 | 0.05 | 3.83 | 24.55 |
+| vecmul | 32 | HLS dace | 28.44 | 0.06 | 3.85 | 24.53 |
+| vecmul | 32 | forge | 23.22 | 0.10 | 0.00 | 23.13 |
+| vsum | 1 | HLS unopt | 11.00 | 7.24 | 1.77 | 1.99 |
+| vsum | 1 | HLS opt | 6.92 | 2.04 | 2.56 | 2.32 |
+| vsum | 1 | HLS dace | 6.32 | 1.50 | 3.56 | 1.27 |
+| vsum | 1 | forge | 8.26 | 4.40 | 2.33 | 1.53 |
+| vsum | 8 | HLS unopt | 29.42 | 8.88 | 15.28 | 5.26 |
+| vsum | 8 | HLS opt | 2.41 | 0.26 | 1.11 | 1.03 |
+| vsum | 8 | forge | 1.69 | 0.56 | 0.29 | 0.84 |
+| vsum | 32 | HLS unopt | 51.23 | 8.11 | 37.86 | 5.27 |
+| vsum | 32 | HLS opt | 2.07 | 0.08 | 1.09 | 0.91 |
+| vsum | 32 | forge | 0.97 | 0.14 | 0.07 | 0.75 |
+| dot | 1 | HLS unopt | 41.54 | 10.31 | 4.46 | 26.77 |
+| dot | 1 | HLS opt | 34.33 | 2.05 | 6.36 | 25.92 |
+| dot | 1 | dot 2 | 33.00 | 5.42 | 3.61 | 23.97 |
+| dot | 1 | dot 3 | 31.56 | 5.42 | 2.31 | 23.83 |
+| dot | 1 | dot 4 | 30.70 | 4.89 | 2.27 | 23.54 |
+| dot | 1 | dot 5 | 30.71 | 4.88 | 2.27 | 23.56 |
+| dot | 1 | dot 6 | 31.67 | 4.91 | 3.21 | 23.56 |
+| dot | 8 | HLS unopt | 86.58 | 12.98 | 40.44 | 33.16 |
+| dot | 8 | HLS opt | 30.54 | 0.28 | 5.55 | 24.72 |
+| dot | 8 | dot 2 | 25.53 | 0.69 | 1.62 | 23.21 |
+| dot | 8 | dot 3 | 24.16 | 0.69 | 0.29 | 23.18 |
+| dot | 8 | dot 4 | 26.32 | 0.63 | 1.54 | 24.15 |
+| dot | 8 | dot 5 | 25.84 | 0.65 | 1.49 | 23.70 |
+| dot | 8 | dot 6 | 26.61 | 0.66 | 2.42 | 23.54 |
+| dot | 32 | HLS unopt | 152.80 | 12.20 | 109.05 | 31.55 |
+| dot | 32 | HLS opt | 30.15 | 0.09 | 5.45 | 24.62 |
+| dot | 32 | dot 2 | 24.75 | 0.19 | 1.42 | 23.15 |
+| dot | 32 | dot 3 | 23.32 | 0.18 | 0.07 | 23.07 |
+| dot | 32 | dot 4 | 25.97 | 0.18 | 1.47 | 24.32 |
+| dot | 32 | dot 5 | 25.73 | 0.26 | 1.75 | 23.73 |
+| dot | 32 | dot 6 | 26.83 | 0.27 | 2.86 | 23.69 |
+
 ### Observations
 
 - nangate45, control over every kernel and W: HLS unopt 591–1,959 µm² and 0.48–2.09 pJ/cycle; HLS opt 623–1,435 µm² and 0.51–1.32 pJ/cycle; HLS dace 742–1,073 µm² and 0.70–0.91 pJ/cycle; forge 1,798–5,177 µm² and 1.46–2.81 pJ/cycle (the tables above).
@@ -1062,12 +1123,14 @@ Section 2 splits forge by its wrapper's instances (csr, ctrl, dp); Vitis writes 
 - nangate45, forge's control energy per cycle over HLS opt's, same kernel and W: 1.9x to 2.9x (lowest vsum forge W = 32, highest vecadd forge W = 1).
 - The flops' share of control's energy: HLS 41–97 %, forge 83–98 %; of control's area: HLS 36–60 %, forge 32–59 % (every point, both technologies).
 - By name against the rule: section 3's loop state holds both sides in 5 HLS designs (dot HLS opt, dot HLS unopt, vsum HLS dace, vsum HLS opt, vsum HLS unopt); data pipeline names hold control flops in `dot/unopt_w1`, `dot/unopt_w2`, `dot/unopt_w4`, `dot/unopt_w8`, `dot/unopt_w16`, `dot/unopt_w32`, `vecadd/dace_w1`, `vecadd/dace_w2`, `vecadd/dace_w4`, `vecadd/dace_w8`, `vecadd/dace_w16`, `vecadd/dace_w32`, `vecadd/unopt_w2`, `vecadd/unopt_w4`, `vecadd/unopt_w8`, `vecadd/unopt_w16`, `vecadd/unopt_w32`, `vecmul/dace_w1`, `vecmul/dace_w2`, `vecmul/dace_w4`, `vecmul/dace_w8`, `vecmul/dace_w16`, `vecmul/dace_w32`, `vecmul/unopt_w2`, `vecmul/unopt_w4`, `vecmul/unopt_w8`, `vecmul/unopt_w16`, `vecmul/unopt_w32`, `vsum/dace_w1`, `vsum/unopt_w1`, `vsum/unopt_w2`, `vsum/unopt_w4`, `vsum/unopt_w8`, `vsum/unopt_w16`, `vsum/unopt_w32`; pins, FSM and conditions hold data flops in no point.
+- Forge against HLS opt, same kernel and W (96 forge design-W-technology triples): forge's e_run is lower while its control energy is higher in 91; in 90 of them the datapath flops HLS opt has and forge has not (0.30–5.53 nJ less on forge's side) outweigh forge's extra control (0.01–3.37 nJ); in the other dot 2 W = 1 nangate45 (flops 2.75 nJ less, logic 1.95 nJ less, control 3.37 nJ more). Forge's e_run is the higher in 5: vecadd forge W = 1 nangate45, vsum forge W = 1 nangate45, vsum forge W = 2 nangate45, vecadd forge W = 1 nangate15, vsum forge W = 1 nangate15 (the table above, `split_<tech>.csv`).
 
 ### Explanations
 
 - **Forge's control is the larger per cycle because it has more control flops.** At W = 1 on nangate45 HLS opt and dace have 70–138 control flops (one or two 32-bit pins, one or two 32-bit loop counters, the FSM, the pipeline enables: section 3), forge 196–358 (csr's 32-bit CSRs, ctrl's 32-bit counters; section 2). A control flop costs about the same per cycle on both sides (6.8–6.9 fJ for HLS opt and dace, 7.1–7.2 fJ for forge, W = 1, nangate45), and the flops carry 57–97 % of HLS opt's and dace's control energy and 83–98 % of forge's, so control's energy follows the flop count. Sure: counts and energies are measured per cell.
 - **Control's logic is most of its area but little of its energy**, except in HLS unopt: logic is 41–68 % of forge's control area and 2–17 % of its control energy; HLS unopt's logic reaches 59 % of its control energy. The counters' adders and comparators switch a few low bits per cycle, and the CSRs' logic is idle during the task (written before START: csr's logic is at most 0.0041 pJ/cycle on any forge point). HLS unopt's control also holds the lane index and the loop's address increments (`l_reg_*`, `add_ln*_reg_*` below), whose logic changes every cycle. Sure for the shares and csr's idle logic (measured); fairly sure for unopt's cause (the names, not traced per cell).
 - **The rule sorts registers by what they hold, the names by how Vitis named them.** A loop-state name (`*_fu_<n>`) is an accumulator (data) or a counter (control); a loop index or its increment, registered by Vitis, takes a data pipeline name (`*_reg_<n>`: `l_reg_103`, `add_ln22_reg_338` in `dot/unopt_w4`, `add_ln9_reg_234` in `vecadd/unopt_w4`, `N_reg_64` and `add_ln19_reg_49` in `vecadd/dace_w4`) and is control. Sure: the rule's side for every flop is in the per-cell dumps, and the names are Vitis's.
+- **More control, less energy: the operand registers sit elsewhere.** Forge's control is the larger, but its datapath has no operand registers: they are in snax_cluster's streamers, outside SYN1's boundary (section 3), and its datapath flops are only accumulators and dot 2's and dot 6's link buffer. HLS opt registers every operand (and product) per lane inside its block. On nangate45 the datapath's flops cost 1.03–6.36 nJ per task on HLS opt and 0.00–3.61 nJ on forge. That difference exceeds forge's extra control except for the one-adder kernels at W = 1 or 2, where forge's control is a large part of a small total, and dot 2 at W = 1, where its datapath logic makes up the rest (the lists above). Sure for the accounting (every cell measured); the comparison is of the blocks as synthesized, so forge's lead would shrink by what its streamers' registers cost (open question, section 3).
 
 ### Questions
 

@@ -35,6 +35,8 @@ import matplotlib  # noqa: E402
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.patches  # noqa: E402,F401
+import matplotlib.colors  # noqa: E402,F401
 
 ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "results"
@@ -1040,9 +1042,36 @@ def main() -> int:
     md9 += table(["kernel", "case", "W"] + [SHORT[cl] for cl in used], rows)
     md9.append("")
 
-    # observations
     def rng(xs, nd=2):
         return f"{min(xs):.{nd}f}–{max(xs):.{nd}f}"
+    # e_run per task in three parts: control, datapath flops, datapath logic (nJ)
+    def esplit(tech, k, c, w):
+        cy = get(tech, k, c, w)["cycles"] / 1000
+        return {"ctrl": part(tech, k, c, w, "e", cone="control") * cy,
+                "dflop": part(tech, k, c, w, "e", cone="data", kind="flop") * cy,
+                "dcomb": part(tech, k, c, w, "e", cone="data", kind="comb") * cy}
+    md9.append("**Energy per task in three parts, nangate45** (nJ per task of 2048 elements: control, the datapath's flops, the datapath's logic; their sum is e_run). Figure `fig9_energy_split.png`: every case and W, both technologies.")
+    md9.append("")
+    rows = []
+    for k in KERNELS:
+        for w in (1, 8, 32):
+            for c in cases(k):
+                if not get("nangate45", k, c, w):
+                    continue
+                x = esplit("nangate45", k, c, w)
+                rows.append([k, str(w), label(c), f"{sum(x.values()):.2f}", f"{x['ctrl']:.2f}", f"{x['dflop']:.2f}", f"{x['dcomb']:.2f}"])
+    md9 += table(["kernel", "W", "case", "e_run nJ", "control", "datapath flops", "datapath logic"], rows)
+    md9.append("")
+    para = []      # forge design below HLS opt in total while above it in control
+    for t, k, c, w in fpts:
+        if not get(t, k, "opt", w):
+            continue
+        f_, h_ = esplit(t, k, c, w), esplit(t, k, "opt", w)
+        para.append((t, k, c, w, sum(f_.values()) - sum(h_.values()), f_["ctrl"] - h_["ctrl"], f_["dflop"] - h_["dflop"], f_["dcomb"] - h_["dcomb"]))
+    both = [x for x in para if x[4] < 0 and x[5] > 0]
+    above = [x for x in para if x[4] >= 0]
+    fl_cover = [x for x in both if -x[6] > x[5]]
+    # observations
     md9 += ["### Observations", ""]
     for tech in TECHS:
         parts_ = []
@@ -1065,6 +1094,7 @@ def main() -> int:
     dp_ctrl = sorted({(k, c, w) for t, k, c, w in hpts if part(t, k, c, w, "cells", kind="flop", unit=CLS[4], cone="control")})
     ctl_data = sorted({(k, c, w) for t, k, c, w in hpts if sum(part(t, k, c, w, "cells", kind="flop", unit=cl, cone="data") for cl in CLS[:3])})
     md9.append(f"- By name against the rule: section 3's loop state holds both sides in {len(split_ls)} HLS designs (" + ", ".join(f"{k} {label(c)}" for k, c in split_ls) + "); data pipeline names hold control flops in " + (", ".join(pt(k, c, w) for k, c, w in dp_ctrl) if dp_ctrl else "no point") + "; pins, FSM and conditions hold data flops in " + (", ".join(pt(k, c, w) for k, c, w in ctl_data) if ctl_data else "no point") + ".")
+    md9.append(f"- Forge against HLS opt, same kernel and W ({len(para)} forge design-W-technology triples): forge's e_run is lower while its control energy is higher in {len(both)}; in {len(fl_cover)} of them the datapath flops HLS opt has and forge has not ({rng([-x[6] for x in both])} nJ less on forge's side) outweigh forge's extra control ({rng([x[5] for x in both])} nJ)" + ("; in the other " + ", ".join(f"{full(k, c)} W = {w} {t} (flops {-fl:.2f} nJ less, logic {-lo:.2f} nJ less, control {ct:.2f} nJ more)" for t, k, c, w, _, ct, fl, lo in both if -fl <= ct) if len(fl_cover) < len(both) else "") + f". Forge's e_run is the higher in {len(above)}: " + ", ".join(f"{full(k, c)} W = {w} {t}" for t, k, c, w, *_ in above) + " (the table above, `split_<tech>.csv`).")
     md9 += ["", "### Explanations", ""]
     fl45 = {side: [ctrl("nangate45", k, c, 1)["flops"] for k in KERNELS for c in (["opt", "dace"] if side == "hls" else FORGE_CASES[k]) if get("nangate45", k, c, 1)] for side in ("hls", "forge")}
     pf = {side: [1000 * ctrl("nangate45", k, c, 1)["fe"] / ctrl("nangate45", k, c, 1)["flops"] for k in KERNELS for c in (["opt", "dace"] if side == "hls" else FORGE_CASES[k]) if get("nangate45", k, c, 1)] for side in ("hls", "forge")}
@@ -1073,6 +1103,8 @@ def main() -> int:
     csr_comb = max(part(t, k, c, w, "e", unit="csr", kind="comb") for t, k, c, w in fpts)
     md9.append(f"- **Control's logic is most of its area but little of its energy**, except in HLS unopt: logic is {rng([100 - x for x in fah['forge']], 0)} % of forge's control area and {rng([100 - x for x in fsh['forge']], 0)} % of its control energy; HLS unopt's logic reaches {100 - min(fsh_c[('unopt',)]):.0f} % of its control energy. The counters' adders and comparators switch a few low bits per cycle, and the CSRs' logic is idle during the task (written before START: csr's logic is at most {csr_comb:.4f} pJ/cycle on any forge point). HLS unopt's control also holds the lane index and the loop's address increments (`l_reg_*`, `add_ln*_reg_*` below), whose logic changes every cycle. Sure for the shares and csr's idle logic (measured); fairly sure for unopt's cause (the names, not traced per cell).")
     md9.append("- **The rule sorts registers by what they hold, the names by how Vitis named them.** A loop-state name (`*_fu_<n>`) is an accumulator (data) or a counter (control); a loop index or its increment, registered by Vitis, takes a data pipeline name (`*_reg_<n>`: `l_reg_103`, `add_ln22_reg_338` in `dot/unopt_w4`, `add_ln9_reg_234` in `vecadd/unopt_w4`, `N_reg_64` and `add_ln19_reg_49` in `vecadd/dace_w4`) and is control. Sure: the rule's side for every flop is in the per-cell dumps, and the names are Vitis's.")
+    dff = {side: [esplit(t, k, c, w)["dflop"] for t, k, c, w in allpts if t == "nangate45" and ((c == "opt") if side == "hls" else c not in HLS_CASES)] for side in ("hls", "forge")}
+    md9.append(f"- **More control, less energy: the operand registers sit elsewhere.** Forge's control is the larger, but its datapath has no operand registers: they are in snax_cluster's streamers, outside SYN1's boundary (section 3), and its datapath flops are only accumulators and dot 2's and dot 6's link buffer. HLS opt registers every operand (and product) per lane inside its block. On nangate45 the datapath's flops cost {rng(dff['hls'])} nJ per task on HLS opt and {rng(dff['forge'])} nJ on forge. That difference exceeds forge's extra control except for the one-adder kernels at W = 1 or 2, where forge's control is a large part of a small total, and dot 2 at W = 1, where its datapath logic makes up the rest (the lists above). Sure for the accounting (every cell measured); the comparison is of the blocks as synthesized, so forge's lead would shrink by what its streamers' registers cost (open question, section 3).")
     md9 += ["", "### Questions", ""]
     md9.append("- Should SYN1's comparisons put HLS and forge on this rule's split (control = not reached from the data inputs) instead of forge's hierarchy against HLS's whole block? On forge the two agree but for the enable and lane-select logic inside dp above; it gives HLS a control number it lacks.")
     md9.append("- Forge's control per cycle is several times HLS's (above) for the same task: how much of it would narrower counters (12 bits at n2048) and one shared counter per group remove? The rule's control flops per point are the inventory to start from.")
@@ -1098,6 +1130,51 @@ def main() -> int:
     fig.suptitle("Control's share of e_run at n2048, one rule on both sides (control = cells the data inputs do not reach)")
     fig.tight_layout()
     savefig(fig, "fig8_control_split.png")
+
+    # figure 9: e_run per task in three stacked parts, every case and W
+    def tint(col, f):
+        r, g_, b = matplotlib.colors.to_rgb(col)
+        return (1 - f * (1 - r), 1 - f * (1 - g_), 1 - f * (1 - b))
+    fig, axs = plt.subplots(len(KERNELS), len(TECHS), figsize=(17.5, 17))
+    for ci, tech in enumerate(TECHS):
+        for ri, k in enumerate(KERNELS):
+            ax = axs[ri][ci]
+            cs = [c for c in cases(k) if any(get(tech, k, c, w) for w in WS)]
+            bw = 0.84 / len(cs)
+            tops = [sum(esplit(tech, k, c, w).values()) for c in cs if c != "unopt" for w in WS if get(tech, k, c, w)]
+            ylim = 1.18 * max(tops)
+            for j, c in enumerate(cs):
+                col = STYLE[c][0]
+                for i, w in enumerate(WS):
+                    if not get(tech, k, c, w):
+                        continue
+                    x = esplit(tech, k, c, w)
+                    xpos = i + (j - (len(cs) - 1) / 2) * bw
+                    y0 = 0
+                    for seg, fc, hatch in (("dcomb", col, None), ("dflop", tint(col, 0.45), None), ("ctrl", "white", "////")):
+                        h = x[seg]
+                        ax.bar(xpos, min(h, max(ylim - y0, 0)), bw * 0.92, bottom=y0, color=fc, edgecolor=col if hatch else "white",
+                               linewidth=0.6 if hatch else 0.4, hatch=hatch)
+                        y0 += h
+                    if y0 > ylim:
+                        ax.text(xpos, ylim * 0.985, f"{y0:.0f}", ha="center", va="top", fontsize=6, rotation=90, color="0.15")
+            ax.set_ylim(0, ylim)
+            ax.set_xticks(range(len(WS)), [f"W = {w}" for w in WS])
+            ax.set_title(f"{k}, {tech}")
+            ax.grid(True, axis="y", alpha=0.3)
+            ax.set_axisbelow(True)
+            if ci == 0:
+                ax.set_ylabel("e_run per task, nJ")
+            if ci == len(TECHS) - 1:
+                handles = [matplotlib.patches.Patch(color=STYLE[c][0], label=label(c)) for c in cs]
+                ax.legend(handles=handles, fontsize=8, loc="upper left", bbox_to_anchor=(1.01, 1.0), title=k, title_fontsize=8)
+    seg_h = [matplotlib.patches.Patch(facecolor="0.35", edgecolor="white", label="datapath logic"),
+             matplotlib.patches.Patch(facecolor=tint("0.35", 0.45), edgecolor="white", label="datapath flops"),
+             matplotlib.patches.Patch(facecolor="white", edgecolor="0.35", hatch="////", label="control")]
+    fig.legend(handles=seg_h, loc="upper center", ncol=3, fontsize=9, bbox_to_anchor=(0.5, 0.985))
+    fig.suptitle("Energy per task at n2048 (2048 elements): control (hatched) on the datapath's flops (light) and logic (solid); bars past the axis carry their total in nJ", y=0.997, fontsize=11)
+    fig.tight_layout(rect=(0, 0, 1, 0.965))
+    savefig(fig, "fig9_energy_split.png")
 
     # ------------------------------------------------ summary and lists
     best_dot = {}
@@ -1135,7 +1212,8 @@ def main() -> int:
         "- `fig5_dot_variants.png`: A x C and E x C against W for dot 2–6 and HLS dot unopt and opt (section 5).",
         "- `fig6_tech_ratio.png`: nangate45 / nangate15 ratios of area and e_run against the sequential share (section 6).",
         "- `fig7_two_term_fit.png`: forge's e_run against the cycles over W, with the fit e_run = α C + β (section 2).",
-        "- `fig8_control_split.png`: control's share of e_run against W, per kernel and case, by one rule on both sides; top row nangate45, bottom row nangate15 (section 9).", ""]
+        "- `fig8_control_split.png`: control's share of e_run against W, per kernel and case, by one rule on both sides; top row nangate45, bottom row nangate15 (section 9).",
+        "- `fig9_energy_split.png`: e_run per task as stacked bars, control on the datapath's flops and logic, per kernel (rows), technology (columns), W and case (section 9).", ""]
     (OUT / "syn1_analysis.md").write_text("\n".join(head + md + tail + md9))
     print(f"wrote {(OUT / 'syn1_analysis.md').relative_to(ROOT)} and {len(list(OUT.glob('*.png')))} figures")
     return 0
