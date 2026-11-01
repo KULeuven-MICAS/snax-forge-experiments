@@ -16,12 +16,13 @@ pixi run pwr setup-check --tech nangate45                                # PT ag
 pixi run pwr setup-check --tech nangate15                                # (0.1 % per group; nangate15 combinational 2.5 %)
 pixi run pwr run 'done/vecadd/*' --tech nangate45                        # rand64, 64 beats, seed 0
 pixi run pwr run 'done/vecadd/*_w8' --tech nangate45 --size n512         # at a cosim size
+pixi run pwr run 'done/*/*_w*' --tech nangate45 --size n2048             # SYN1: one task of N = 2048 (tier done)
 pixi run pwr run done/vecadd/opt_w8 --tech nangate45 --stim forge --size n512   # data.h, validation only
 pixi run pwr run 'done/*/*' 'untiered/*/*' --tech nangate45 --size all   # whole tasks: every size in sizes.txt
 pixi run python sim/report_energy.py                                     # results/hls/report_energy.md from power_pt.csv
 pixi run pwr summary 'done/vecadd/*' --tech nangate45                    # print power_pt.csv
 pixi run pwr tbjson done/dot/forge5_w4 --source forge                    # a forge point's tb.json
-pixi run pwr run done/vecadd/forge_w4 done/dot/forge5_w4 --source forge --tech nangate45 --size n2048
+pixi run pwr run 'done/*/forge*' --source forge --tech nangate45 --size n2048
 pixi run pwr setup-check --source forge --tech nangate45                 # on done/vecadd/forge_w4
 ```
 
@@ -58,7 +59,7 @@ snax-forge's accelerators (SYN1): the bundles in `rtl/forge/<point>/` (`forge/bu
 - **Checks:** every output beat against `sim/ref.py` (vecadd, vecmul, vsum, dot); the window's cycles = COUNTER read back = `expected_cycles`, any mismatch fails the point; once per kernel, size and seed in a batch, `sim/ref.py` against snax-forge's kernel body (`kernels/<...>/<kernel>.py`, its `SPEC.func`, run by `forge/query.py ref` on the same inputs; the inputs depend on N and the seed only). The SAIF check is X9's with `clk_i`; PT must annotate 99 % of the nets that are not floating: a net PT leaves at default that the SAIF has at Z for the whole window has no driver (STATUS bits 2 to 31, PITFALLS PT6) and leaves the denominator. Every module of the netlist must get a dump scope (PITFALLS DC6).
 - **Stimulus:** rand64 only (X19): N full-range int64 per input stream, seed 0, stream by stream in tb.json order; N / W beats, at least 64 at every W, so the toggle check applies.
 - **Runs and results:** `sim/runs/forge/<tech>/<point>/n2048_s0/` (the cell models stay in `sim/runs/<tech>/_cells/`); `results/forge/<tech>/power_pt.csv`, `power_pt_modules.csv` and `power_reports/`, with X20's columns plus `recipe` and `snax_forge_commit`. `config` is the CSR writes before START, `beats` the beats per input stream, and per firing is per input beat.
-- **Setup check:** `pt_power.tcl` and `dc_readback.tcl` take the clock and reset ports from the run's `tech.json` (`dc_env`'s `SYN_CLK_PORT`, `SYN_RST_PORT`), else `ap_clk` and `ap_rst_n`, since `constraints.sdc` names them (SYN1 R0). On the forge point nangate15's register group is -0.55 % (PITFALLS PT5).
+- **Setup check:** `pt_power.tcl` and `dc_readback.tcl` take the clock and reset ports from the run's `tech.json` (`dc_env`'s `SYN_CLK_PORT`, `SYN_RST_PORT`), else `ap_clk` and `ap_rst_n`, since `constraints.sdc` names them (SYN1 R0). On nangate15 the forge points' register group is below DC's by more than 0.1 %: -0.55 % (`done/vecadd/forge_w4`), -1.08 % (`done/dot/forge5_w4`), -0.25 % (`done/vsum/forge_w8`); nangate45 and the HLS point pass (PITFALLS PT5, open for R4).
 
 ## Run folder
 
@@ -90,6 +91,8 @@ In `results/hls/<tech>/` (X20):
 - `power_reports/<tier>/<kernel>/<point>/`: `power.rpt`, `power_hierarchy.rpt`, `switching_activity.rpt` of the default run and the point's `tb.json`; other runs of the point in `<size>_<seed>/` below it.
 
 Tool versions, licence counts, the setup check and the validation go into the run note in `results/hls/runs/`.
+
+**n2048 for tier done (SYN1).** A tier-done point's `tb.json` (vecadd, vecmul, vsum, dot) has the size `n2048` after cosim's and `b64` (`sim/sources/hls.py` `EXTRA_SIZES`): one task of N = 2048 elements, the size every forge row runs. Its pins come from `params.json`'s `config` at n = 2048 (vecadd and vecmul `loop_count` = 2048 / W; vsum and dot `loop_count` = `len` = 2048 / W), its expected cycles from cosim's line through n64 and n512 (X19; every tier-done point's line is integer), its stimulus rand64 at 2048 / W beats. It is not the default run (`b64` stays that): its rows are in `power_pt.csv` with size `n2048`, its reports in `power_reports/<point>/n2048_s0/`, and `power_pt_modules.csv` keeps the default run's modules. The untiered points have no `n2048` (matadd and rowsum are vecadd's and vsum's Verilog, PITFALLS DC3; relu and axpy have no forge counterpart). First run in SYN1 R3 (`results/forge/runs/2026-11-01_syn1_r3.md`).
 
 `setup-check` passes when PT and DC, given the same uniform activity, agree within 0.1 % in every power group (dynamic and leakage), except nangate15's combinational group within 2.5 % (PITFALLS PT5). PT is the reference tool for energy; DC only checks that PT's setup (netlist, library, loads, constraints) is DC's.
 

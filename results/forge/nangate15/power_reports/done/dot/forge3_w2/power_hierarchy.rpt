@@ -1,0 +1,27 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : snax_forge_shell_wrapper
+Version: W-2024.09-SP5
+Date   : Sun Nov  1 10:28:36 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+snax_forge_shell_wrapper              4.184982e-04              4.596854e-04              2.078566e-04              1.086040e-03              100.0
+  ctrl (snax_forge_ctrl)              4.611571e-05              2.619830e-06              4.061228e-05              8.934782e-05                8.2
+    ctrl (snax_forge_dot_ctrl)        4.611571e-05              2.619830e-06              4.061228e-05              8.934782e-05                8.2
+  dp (snax_forge_datapath)            3.479966e-04              4.570569e-04              1.583095e-04              9.633630e-04               88.7
+    blocks_0_4 (snax_forge_mul)       3.107576e-04              4.242796e-04              1.466095e-04              8.816467e-04               81.2
+      m (ElementwiseLanes_i64xi64_i64_i64_n2_mul) 3.107576e-04        4.242796e-04        1.466095e-04              8.816467e-04               81.2
+        alus_0 (ElementwiseAlu_w64_mul_1) 1.551019e-04          2.119510e-04              7.330248e-05              4.403553e-04               40.5
+        alus_1 (ElementwiseAlu_w64_mul_0) 1.556558e-04          2.123286e-04              7.330703e-05              4.412914e-04               40.6
+    blocks_1_4 (snax_forge_sum)       3.723895e-05              3.277734e-05              1.170002e-05              8.171632e-05                7.5
+      m (TreeAccumulate_i64_i64_n2)   3.723895e-05              3.277734e-05              1.170002e-05              8.171632e-05                7.5
+  csr (snax_forge_csr)                2.438589e-05              8.236478e-09              8.919359e-06              3.331349e-05                3.1
+1

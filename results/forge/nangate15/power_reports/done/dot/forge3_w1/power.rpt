@@ -1,0 +1,34 @@
+****************************************
+Report : Averaged Power
+	-significant_digits
+	-nosplit
+Design : snax_forge_shell_wrapper
+Version: W-2024.09-SP5
+Date   : Sun Nov  1 10:28:28 2026
+****************************************
+
+
+
+  Attributes
+  ----------
+      i  -  Including register clock pin internal power
+      u  -  User defined power group
+
+                        Internal             Switching            Leakage              Total
+Power Group             Power                Power                Power                Power               (     %)   Attrs
+----------------------------------------------------------------------------------------------------------------------------
+clock_network           7.944449e-05         0.000000e+00         0.000000e+00         7.944449e-05        (12.47%)   i
+register                9.510102e-06         1.632552e-05         1.751276e-05         4.334838e-05        ( 6.81%)   
+combinational           1.702387e-04         2.288869e-04         1.150717e-04         5.141974e-04        (80.72%)   
+sequential              0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+memory                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+io_pad                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+black_box               0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+
+  Net Switching Power  = 2.452125e-04          (38.50%)
+  Cell Internal Power  = 2.591933e-04          (40.69%)
+  Cell Leakage Power   = 1.325845e-04          (20.81%)
+                         -------------------------
+Total Power            = 6.369903e-04         (100.00%)
+
+1

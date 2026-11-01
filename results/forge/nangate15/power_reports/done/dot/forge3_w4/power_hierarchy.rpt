@@ -1,0 +1,29 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : snax_forge_shell_wrapper
+Version: W-2024.09-SP5
+Date   : Sun Nov  1 10:28:44 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+snax_forge_shell_wrapper              7.366746e-04              8.878097e-04              3.582065e-04              1.982691e-03              100.0
+  ctrl (snax_forge_ctrl)              4.614823e-05              2.671718e-06              4.061721e-05              8.943716e-05                4.5
+    ctrl (snax_forge_dot_ctrl)        4.614823e-05              2.671718e-06              4.061721e-05              8.943716e-05                4.5
+  dp (snax_forge_datapath)            6.661381e-04              8.851206e-04              3.086581e-04              1.859917e-03               93.8
+    blocks_0_4 (snax_forge_mul)       6.196827e-04              8.455139e-04              2.932314e-04              1.758428e-03               88.7
+      m (ElementwiseLanes_i64xi64_i64_i64_n4_mul) 6.196827e-04        8.455139e-04        2.932314e-04              1.758428e-03               88.7
+        alus_2 (ElementwiseAlu_w64_mul_1) 1.551135e-04          2.118490e-04              7.329559e-05              4.402582e-04               22.2
+        alus_3 (ElementwiseAlu_w64_mul_0) 1.556951e-04          2.129781e-04              7.328045e-05              4.419537e-04               22.3
+        alus_0 (ElementwiseAlu_w64_mul_3) 1.542382e-04          2.103844e-04              7.332091e-05              4.379435e-04               22.1
+        alus_1 (ElementwiseAlu_w64_mul_2) 1.546359e-04          2.103023e-04              7.333449e-05              4.382727e-04               22.1
+    blocks_1_4 (snax_forge_sum)       4.645544e-05              3.960671e-05              1.542667e-05              1.014888e-04                5.1
+      m (TreeAccumulate_i64_i64_n4)   4.645544e-05              3.960671e-05              1.542667e-05              1.014888e-04                5.1
+  csr (snax_forge_csr)                2.438820e-05              1.659346e-08              8.915776e-06              3.332056e-05                1.7
+1

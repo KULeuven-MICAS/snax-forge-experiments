@@ -1,0 +1,39 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : snax_forge_shell_wrapper
+Version: W-2024.09-SP5
+Date   : Sun Nov  1 10:29:14 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+snax_forge_shell_wrapper              1.170804e-04              2.402590e-04              4.656603e-05              4.039054e-04              100.0
+  ctrl (snax_forge_ctrl)              2.089199e-05              1.895284e-06              9.936181e-06              3.272346e-05                8.1
+    ctrl (snax_forge_acc_ctrl)        2.089199e-05              1.895284e-06              9.936181e-06              3.272346e-05                8.1
+  dp (snax_forge_datapath)            7.782975e-05              2.383010e-04              3.013323e-05              3.462639e-04               85.7
+    blocks_0_4 (snax_forge_acc)       7.782975e-05              2.383010e-04              3.013323e-05              3.462639e-04               85.7
+      m (ElementwiseLanes_i64xi64_i64_i64_n16_add) 7.782975e-05        2.383010e-04        3.013323e-05             3.462639e-04               85.7
+        alus_3 (ElementwiseAlu_w64_add_12) 4.936001e-06         1.507378e-05              1.882401e-06              2.189219e-05                5.4
+        alus_4 (ElementwiseAlu_w64_add_11) 4.907675e-06         1.508245e-05              1.880865e-06              2.187099e-05                5.4
+        alus_5 (ElementwiseAlu_w64_add_10) 4.859296e-06         1.490419e-05              1.883418e-06              2.164690e-05                5.4
+        alus_6 (ElementwiseAlu_w64_add_9) 4.835860e-06          1.495850e-05              1.882399e-06              2.167676e-05                5.4
+        alus_7 (ElementwiseAlu_w64_add_8) 4.821409e-06          1.481126e-05              1.885046e-06              2.151771e-05                5.3
+        alus_10 (ElementwiseAlu_w64_add_5) 4.797128e-06         1.476750e-05              1.881631e-06              2.144626e-05                5.3
+        alus_8 (ElementwiseAlu_w64_add_7) 4.867849e-06          1.494192e-05              1.884268e-06              2.169404e-05                5.4
+        alus_11 (ElementwiseAlu_w64_add_4) 4.882067e-06         1.496661e-05              1.884154e-06              2.173283e-05                5.4
+        alus_9 (ElementwiseAlu_w64_add_6) 4.891473e-06          1.493396e-05              1.884054e-06              2.170949e-05                5.4
+        alus_12 (ElementwiseAlu_w64_add_3) 4.913396e-06         1.492378e-05              1.884506e-06              2.172168e-05                5.4
+        alus_13 (ElementwiseAlu_w64_add_2) 4.843317e-06         1.470503e-05              1.883569e-06              2.143192e-05                5.3
+        alus_0 (ElementwiseAlu_w64_add_15) 4.905135e-06         1.504627e-05              1.884417e-06              2.183583e-05                5.4
+        alus_14 (ElementwiseAlu_w64_add_1) 4.883115e-06         1.481333e-05              1.883775e-06              2.158022e-05                5.3
+        alus_1 (ElementwiseAlu_w64_add_14) 4.770934e-06         1.460486e-05              1.882968e-06              2.125877e-05                5.3
+        alus_15 (ElementwiseAlu_w64_add_0) 4.866682e-06         1.488467e-05              1.882857e-06              2.163421e-05                5.4
+        alus_2 (ElementwiseAlu_w64_add_13) 4.848408e-06         1.488285e-05              1.882900e-06              2.161415e-05                5.4
+  csr (snax_forge_csr)                1.835843e-05              5.945467e-08              6.481221e-06              2.489911e-05                6.2
+1

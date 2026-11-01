@@ -1,0 +1,23 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : snax_forge_shell_wrapper
+Version: W-2024.09-SP5
+Date   : Sun Nov  1 10:29:43 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+snax_forge_shell_wrapper              1.221559e-04              5.439068e-05              4.760521e-05              2.241518e-04              100.0
+  ctrl (snax_forge_ctrl)              3.300082e-05              1.895178e-06              1.583136e-05              5.072736e-05               22.6
+    ctrl (snax_forge_acc_ctrl)        3.300082e-05              1.895178e-06              1.583136e-05              5.072736e-05               22.6
+  dp (snax_forge_datapath)            6.476214e-05              5.246350e-05              2.284643e-05              1.400721e-04               62.5
+    blocks_0_4 (snax_forge_acc)       6.476214e-05              5.246350e-05              2.284643e-05              1.400721e-04               62.5
+      m (TreeAccumulate_i64_i64_n8)   6.476214e-05              5.246350e-05              2.284643e-05              1.400721e-04               62.5
+  csr (snax_forge_csr)                2.439278e-05              3.036165e-08              8.912024e-06              3.333517e-05               14.9
+1

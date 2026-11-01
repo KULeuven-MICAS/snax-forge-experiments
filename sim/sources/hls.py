@@ -15,7 +15,8 @@ tb.json describes the DUT's ports for the generated TB top (sim/pwr.py):
   pins    [{port, bits, vld, from: "config" | "data:<arg>"}]
   sizes   {tag: {pin: value}}  cosim's sizes valid at this W, and 'b64' (64 beats) when every config
                                pin equals loop_count at cosim's sizes (rowsum's len does not, so it
-                               has no b64 and runs at a cosim size)
+                               has no b64 and runs at a cosim size), then SYN1's sizes for the tier
+                               (EXTRA_SIZES: n2048 for tier done), from params.json's config expressions
 """
 from __future__ import annotations
 
@@ -32,6 +33,11 @@ BEATS = 64
 # control kinds: only ap_ctrl_hs is built; the forge kinds are reserved for sim/sources/forge.py (SYN1)
 CONTROL_KINDS = {"ap_ctrl_hs"}
 RESERVED_KINDS = {"forge_csr", "forge_datapath"}
+# SYN1's comparison size per tier, beyond cosim's: one task of N = 2048 elements, the size every forge row
+# runs (sim/sources/forge.py SIZES); its pins from params.json's config expressions at n = 2048 and its
+# expected cycles from cosim's line (sim/pwr.py expected_cycles, X19). The untiered points have no forge
+# counterpart of their own (matadd and rowsum are vecadd's and vsum's Verilog, PITFALLS DC3).
+EXTRA_SIZES = {"done": [{"n": 2048}]}
 
 
 def filelist(point: str) -> dict:
@@ -132,6 +138,12 @@ def build(point: str) -> dict:
         sizes[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in prm["config"].items()}
     if all(all(v == cfg["loop_count"] for v in cfg.values()) for cfg in sizes.values()):
         sizes["b64"] = {k: BEATS for k in prm["config"]}
+    for size in EXTRA_SIZES.get(point.split("/")[0], []):
+        if "valid" in prm and not _eval(prm["valid"], size, w):
+            continue
+        if any(v % w for v in size.values()):
+            raise ValueError(f"{point}: size {size_tag(size)} is not a multiple of W {w}")
+        sizes[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in prm["config"].items()}
 
     return {"tb_version": TB_VERSION, "point": point, "kernel": prm["kernel"], "top": top, "case": case, "W": w,
             "clock": {"port": "ap_clk"},
