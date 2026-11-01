@@ -4,7 +4,6 @@ Written by `report/analysis_syn1.py` (`pixi run analysis`) from the committed CS
 
 ## Summary
 
-- **Control, HLS and forge alike** (section 9, every cell by one rule: datapath is what the data inputs reach): forge's control costs 1.9x to 2.9x HLS opt's energy per cycle on nangate45, same kernel and W; the flops carry 41–97 % of HLS's control energy and 83–98 % of forge's.
 - **Control overhead.** Forge's csr + ctrl is a fixed block (1,796–5,120 µm² on nangate45; 98 % of its flops are 32-bit counters and CSRs) with a near-constant energy per cycle, so its share of e_run halves with each doubling of W. On nangate45 at W = 1 it is vecadd 65 %, vecmul 11 %, vsum 53 %, dot 2 16 %, dot 3 17 %, dot 4 16 %, dot 5 16 %, dot 6 15 % of e_run; at W = 32 5.8 %, 0.4 %, 14.9 %, 0.7 %, 0.8 %, 0.6 %, 0.9 %, 0.9 % (section 2, rows `done/*/forge*_w1`, `_w32`).
 - **Against HLS's own fixed cost.** HLS opt's per-cycle term α is vecadd 0.50, vecmul 0.53, vsum 2.49, dot 2.07 pJ/cycle against forge's vecadd 1.45, vecmul 1.47, vsum 3.68, dot 3 4.16 on nangate45 (fits over W, section 2): forge's overhead is the larger per cycle, and it matters where the datapath is small (one adder: vecadd, vsum) and W is small.
 - **Latency.** Forge's window is N / W + 0 to 2 cycles and HLS opt's and dace's N / W + 2 to 4, except dot 5 and 6 (N / W + W + 1, + 2: 97 and 98 cycles at W = 32) and HLS unopt (2.09 to 4.50 cycles per element at W ≥ 2) (section 1).
@@ -12,6 +11,8 @@ Written by `report/analysis_syn1.py` (`pixi run analysis`) from the committed CS
 - **dot variants below both HLS dot cases at every W** (unopt, opt): nangate45: area none, e_run dot 2, dot 3, dot 4, dot 5, dot 6, AxC none, ExC dot 2, dot 3, dot 4; nangate15: area none, e_run dot 2, dot 3, dot 4, dot 5, dot 6, AxC none, ExC dot 2, dot 3, dot 4. Lowest area per W: nangate45 HLS unopt; nangate15 HLS unopt; HLS has the lowest A x C at W = nangate45 1, 2; nangate15 1, 2 (section 5).
 - **Metrics disagree** on the winning side in 9 of 48 (tech, kernel, W) cells, all at W = 1 and 2; the patterns (pJ/elem, A x C, E x C, throughput per area; f forge, h HLS): f/h/f/h 8x, h/h/f/h 1x (section 8).
 - **HWCOST's shape** e_run = α C + β fits 15 of 16 forge design-technology pairs within 2 % over W (worst dot 6 on nangate15, 2.1 %); α is csr + ctrl plus every datapath block that works once per beat (section 2).
+- **Control, HLS and forge alike** (section 9, every cell by one rule: datapath is what the data inputs reach): forge's control costs 1.9x to 2.9x HLS opt's energy per cycle on nangate45, same kernel and W; the flops carry 41–97 % of HLS's control energy and 83–98 % of forge's.
+- **Why forge's control costs more, and what the boundary does** (section 10): forge holds more 32-bit words, not wider ones (the configuration twice, a START word, a CSR read buffer, a cycle counter; HLS's pins are 32 bits too); without those its control is 0.9–1.3x HLS opt's instead of 2.1–2.9x. Forge's e_run is below HLS opt's in 91 of 96 cases but below HLS opt without its pipeline registers' internal energy (an estimate) in 47: its lead comes mostly from the boundary.
 - **Not answerable from SYN1:** the streamers' share (forge's registers), narrower counters, J > 1, the cluster-level cycles (open questions).
 
 ## 1. Cycles
@@ -839,6 +840,7 @@ Candidate metrics side by side, per kernel and W: the lowest-energy-per-element,
 - Energy: what do the streamers add per beat? A cluster-level power run (snax_cluster) would tell whether forge's lead at large W or its cost at W = 1 changes (section 4).
 - dot: at J > 1 dot 5's tail repeats per job and dot 6 overlaps it (C§17). Does dot 6's buffer pay off for matvec-like work? Needs SYN1-style runs of a J > 1 task (section 5).
 - Control split: should the comparisons use section 9's rule (control = cells not reached from the data inputs) on both sides? It agrees with forge's csr + ctrl but for a little enable logic inside dp, and gives HLS a control number (section 9).
+- HLS's register stage: a 10 ns HLS clock did not remove it (`results/hls/runs/2026-11-01_hls_c10.md`). Would a latency directive on the beat loop (`set_directive_latency -max 0`) or a combinational top, and would HLS opt's energy then fall to section 10's estimate `opt − int.`? (section 10)
 - fmax: on nangate45 forge's dot variants report 141–176 MHz against HLS dot's 176–179 MHz; it is DC's lower bound at 10 ns (X2), so a synthesis at a tighter clock would be needed to compare speed, and SYN1 does not.
 
 ## Candidate metrics or figures for the paper
@@ -1136,3 +1138,65 @@ Section 2 splits forge by its wrapper's instances (csr, ctrl, dp); Vitis writes 
 
 - Should SYN1's comparisons put HLS and forge on this rule's split (control = not reached from the data inputs) instead of forge's hierarchy against HLS's whole block? On forge the two agree but for the enable and lane-select logic inside dp above; it gives HLS a control number it lacks.
 - Forge's control per cycle is several times HLS's (above) for the same task: how much of it would narrower counters (12 bits at n2048) and one shared counter per group remove? The rule's control flops per point are the inventory to start from.
+
+
+## 10. Why forge's control costs more, and what the boundary does (review notes)
+
+Notes from the review of section 9, kept so the reasoning is not lost. Section 9's control flops, register by register (`split_regs_<tech>.csv`, written by `report/flop_split.py collect` from the same per-cell dumps), each given a role by its name (`role()` in this script): **config** (forge's CSRs JOBS and JOB_BEATS, `regs_1`…; HLS's pins `*_preg`), **config copy** (the same values held again: forge ctrl's `*_r`, `*_t`, set from the CSRs at START; HLS dace's `N_reg_*`, `trunc_*`), **START word** (forge's START CSR `regs_0`), **CSR read buffer** (forge's `answer`, `answerKept`), **cycle counter** (forge's COUNTER, `counter`), **progress counters** (forge's `*_given`, `*_d`, `sum_lane`; HLS's loop counters and registered indices), **state bits** (busy, done, valid, FSM, pipeline enables, loop conditions). The roles are read from forge's bundles (`snax_forge_csr.sv`, `snax_forge_*_ctrl.sv`) and Vitis's Verilog.
+
+**Control registers by role, nangate45, W = 8**: flops · pJ per cycle
+
+| kernel | case | config | config copy | START word | CSR read buffer | cycle counter | progress counters | state bits | all control flops |
+|---|---|---|---|---|---|---|---|---|---|
+| vecadd | HLS opt | 33 · 0.23 |  |  |  |  | 32 · 0.23 | 5 · 0.03 | 70 · 0.49 |
+| vecadd | HLS dace | 29 · 0.20 | 28 · 0.19 |  |  |  | 57 · 0.39 | 10 · 0.07 | 124 · 0.86 |
+| vecadd | forge | 32 · 0.23 | 32 · 0.23 | 32 · 0.23 | 33 · 0.24 | 32 · 0.24 | 32 · 0.24 | 3 · 0.02 | 196 · 1.42 |
+| vecmul | HLS opt | 33 · 0.23 |  |  |  |  | 32 · 0.23 | 5 · 0.03 | 70 · 0.49 |
+| vecmul | HLS dace | 29 · 0.20 | 28 · 0.19 |  |  |  | 57 · 0.39 | 10 · 0.07 | 124 · 0.86 |
+| vecmul | forge | 32 · 0.23 | 32 · 0.23 | 32 · 0.23 | 33 · 0.24 | 32 · 0.24 | 32 · 0.24 | 3 · 0.02 | 196 · 1.42 |
+| vsum | HLS opt | 66 · 0.46 |  |  |  |  | 64 · 0.46 | 6 · 0.04 | 136 · 0.96 |
+| vsum | forge | 64 · 0.46 | 64 · 0.46 | 32 · 0.23 | 33 · 0.24 | 32 · 0.24 | 64 · 0.47 | 4 · 0.03 | 293 · 2.12 |
+| dot | HLS opt | 66 · 0.46 |  |  |  |  | 64 · 0.45 | 10 · 0.07 | 140 · 0.98 |
+| dot | dot 2 | 64 · 0.46 | 96 · 0.69 | 32 · 0.23 | 33 · 0.24 | 32 · 0.24 | 96 · 0.70 | 5 · 0.04 | 358 · 2.59 |
+| dot | dot 3 | 64 · 0.46 | 96 · 0.69 | 32 · 0.23 | 33 · 0.24 | 32 · 0.24 | 96 · 0.71 | 4 · 0.03 | 357 · 2.60 |
+| dot | dot 4 | 64 · 0.46 | 64 · 0.46 | 32 · 0.23 | 33 · 0.24 | 32 · 0.24 | 96 · 0.69 | 5 · 0.04 | 326 · 2.37 |
+| dot | dot 5 | 64 · 0.46 | 64 · 0.46 | 32 · 0.23 | 33 · 0.24 | 32 · 0.23 | 99 · 0.72 | 5 · 0.04 | 329 · 2.37 |
+| dot | dot 6 | 64 · 0.46 | 64 · 0.46 | 32 · 0.23 | 33 · 0.24 | 32 · 0.23 | 99 · 0.71 | 6 · 0.04 | 330 · 2.39 |
+
+### Observations
+
+- A control flop costs about the same on both sides, nangate45, every control flop of every point: hls median 6.95 fJ per cycle, 90 % between 6.04 and 7.31; forge median 7.17 fJ per cycle, 90 % between 7.12 and 7.45. 91–100 % of control's flop energy is internal power (the clock pin's), so a register costs about the same whether it changes or not: neither side gates its clocks.
+- HLS's pins are 32 bits wide too: `loop_count_preg` and `len_preg` hold 32 flops on every opt and unopt point (dace's `loop_count_preg` 26–31: DC removed the bits its copies make constant). So HLS saves no width; it holds fewer words.
+- Forge's control flops over HLS opt's, same kernel, W and technology: 2.1–2.9x in energy per cycle. Without its config copies, START word, CSR read buffer and cycle counter (the roles HLS has no counterpart for), 0.9–1.3x (96 forge design-W-technology triples, the table above).
+
+### Explanations
+
+- **Forge holds more 32-bit words, not wider ones.** From the bundles: the START CSR is a full 32-bit register although a write of bit 0 is the start; JOBS and JOB_BEATS sit in the CSRs and again in ctrl (`sum_t <= beats`, `sum_r <= jobs`, `mul_r <= jobs * beats` at START), so each unit keeps its own targets; each unit counts its own progress (`mul_given`, `sum_d`, `sum_given`), where HLS's single loop has one counter per loop level; `answer` registers every CSR read; COUNTER counts every busy cycle for software to read back. HLS has a pin register per run-time value, its loop counters, an FSM and pipeline enables, and nothing else: no CSR bus to buffer, no start word, no cycle counter (the testbench counts). Sure: read from the RTL and the per-register energies.
+- **Some of forge's extra words buy features HLS's block lacks**: J > 1 jobs per START (the copies and per-unit counters), read-back over the CSR bus (the buffer), a cycle count without a testbench (COUNTER). A like-for-like comparison would either give HLS those features or count forge without them (the second ratio above). Narrower counters (12 bits at n2048) would shrink both sides alike. Fairly sure: the features are forge's documented ones; what each would cost HLS was not measured.
+
+**HLS opt's datapath flops, and what removing them could save, nangate45** (nJ per task): their internal energy (clock pin and internal nodes) and switching energy (their output nets, including the output port's load where a register drives it); `opt − int.` is HLS opt's e_run without its datapath flops' internal energy, an estimate of an HLS opt without the pipeline registers; forge's e_run beside it (dot: dot 3)
+
+| kernel | W | HLS opt e_run | datapath flops: internal | switching | opt − int. | forge e_run |
+|---|---|---|---|---|---|---|
+| vecadd | 1 | 4.02 | 1.10 | 1.03 | 2.92 | 4.57 |
+| vecadd | 8 | 3.12 | 1.10 | 1.03 | 2.02 | 1.97 |
+| vecadd | 32 | 3.03 | 1.12 | 1.03 | 1.91 | 1.68 |
+| vecmul | 1 | 29.43 | 2.19 | 1.61 | 27.24 | 26.14 |
+| vecmul | 8 | 28.46 | 2.19 | 1.60 | 26.27 | 23.50 |
+| vecmul | 32 | 28.43 | 2.23 | 1.61 | 26.20 | 23.22 |
+| vsum | 1 | 6.92 | 2.17 | 0.39 | 4.75 | 8.26 |
+| vsum | 8 | 2.40 | 0.95 | 0.15 | 1.45 | 1.69 |
+| vsum | 32 | 2.07 | 0.94 | 0.14 | 1.13 | 0.96 |
+| dot | 1 | 34.33 | 4.36 | 2.00 | 29.97 | 31.56 |
+| dot | 8 | 30.54 | 3.70 | 1.84 | 26.84 | 24.16 |
+| dot | 32 | 30.15 | 3.63 | 1.82 | 26.52 | 23.32 |
+
+### Observations
+
+- Forge's e_run is below HLS opt's in 91 of 96 forge design-W-technology triples, and below the estimate `opt − int.` in 47: vecadd: 6 of 12; vecmul: 11 of 12; vsum: 4 of 12; dot: 26 of 60.
+- dot's datapath logic alone (no flops): dot 3 over HLS opt 0.92–1.01x over W and technology, about the same (`split_<tech>.csv`, cone data, kind comb).
+
+### Explanations
+
+- **HLS opt's datapath flops are Vitis's pipeline registers, not interface registers.** The axis register slices are already off (hls-exercises `params.json` `"axis_register_mode": "off"`, `docs/HLS_VS_FORGE.md`). What remains are register stages between the stream read and the stream write: one in vecadd (the results, `add_ln*_reg` or `c`), vecmul (the operands, `temp_*_reg`) and vsum (the operands), two in dot (the operands `temp_*_reg` and the products `mul_*_reg`); dot and vsum also keep their accumulator. Forge's lanes have no such stage: its operands are registered in the streamers, outside SYN1. A first try at an HLS clock of 10 ns (the ASIC's) instead of 3.33 ns kept vecadd's and vecmul's stage: vecadd's Verilog came out identical, vecmul's moved its registers from the operands to the products (`results/hls/runs/2026-11-01_hls_c10.md`). Sure: the names, the axis setting and the 10 ns Verilog are in the RTL and the bench.
+- **Removing them would save their internal energy, not their switching.** A register that drives the output port pays the port's load; without it the logic pays it, as forge's datapath logic does. So `opt − int.` is the better estimate of an HLS opt without that stage, and against it the two sides are close: forge is below it in about half the cases (the counts above), its larger control set against kernel-dependent differences in datapath logic. Section 9's energy lead of forge comes mostly from the boundary: its operand registers are outside SYN1, HLS's inside. Fairly sure: an estimate, since removing the stage can also change the logic Vitis builds, and no HLS design without it exists yet.

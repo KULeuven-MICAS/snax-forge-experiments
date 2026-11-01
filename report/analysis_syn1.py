@@ -15,6 +15,7 @@ Reads only what is committed or checked out read-only, and changes none of it:
   rtl/forge/<point>/rtl/sv/*.sv                   forge's bundles: the registers of csr and ctrl, by name
   results/analysis/syn1/split_<tech>.csv          every cell on the control or datapath side (report/flop_split.py)
   results/analysis/syn1/split_checks_<tech>.csv   its checks per point
+  results/analysis/syn1/split_regs_<tech>.csv     every register's flops and energy, its side (section 10)
 and writes results/analysis/syn1/syn1_analysis.md and its PNG figures. Every number in the note is computed
 here; nothing is typed by hand. The note decides nothing: it lays out observations, explanations (with how
 sure each is) and open questions for review.
@@ -948,6 +949,7 @@ def main() -> int:
                 "e_run": e * d["cycles"] / 1000}
 
     allpts = [(tech, k, c, w) for tech in TECHS for k in KERNELS for c in cases(k) for w in WS if get(tech, k, c, w)]
+    S_late: list[str] = []   # summary lines of sections 9 and 10, placed before the last one
     md9 = ["## 9. Control and datapath, cell by cell", ""]
     md9.append("Section 2 splits forge by its wrapper's instances (csr, ctrl, dp); Vitis writes HLS's control flat beside its datapath, so section 3 could only name HLS's registers. Here every cell of every n2048 point, HLS and forge, both technologies, is put on one side by one structural rule: **datapath** is the forward cone of the data input ports (Vitis `*_TDATA`, forge `stream2acc_*_data_i`), through logic and through every flop it reaches until nothing new is reached; **control** is every other cell (the FSM, pipeline enables, the pin registers or CSRs, the loop counters, their logic, the handshakes). The cells, their area and their dynamic energy come from PrimePower run again on each point's netlist with the SAIF its power run kept (`sim/scripts/pt_cells.tcl`: `pt_power.tcl` unchanged, then each leaf cell's power and the cone; `report/flop_split.py`, `pixi run split`); the result is `split_<tech>.csv` (per point: kind flop or comb, cone, unit) and `split_checks_<tech>.csv` beside this note. Energy per cycle is a cell's internal plus switching power (its output nets) times 10 ns, as `e_dyn` (X20); control's share of e_run is its share of e_dyn, the window being the same.")
     md9.append("")
@@ -1110,7 +1112,7 @@ def main() -> int:
     md9.append("- Forge's control per cycle is several times HLS's (above) for the same task: how much of it would narrower counters (12 bits at n2048) and one shared counter per group remove? The rule's control flops per point are the inventory to start from.")
     md9.append("")
     Q.append("Control split: should the comparisons use section 9's rule (control = cells not reached from the data inputs) on both sides? It agrees with forge's csr + ctrl but for a little enable logic inside dp, and gives HLS a control number (section 9).")
-    S.append(f"- **Control, HLS and forge alike** (section 9, every cell by one rule: datapath is what the data inputs reach): forge's control costs {min(ratio)[0]:.1f}x to {max(ratio)[0]:.1f}x HLS opt's energy per cycle on nangate45, same kernel and W; the flops carry {rng(fsh['hls'], 0)} % of HLS's control energy and {rng(fsh['forge'], 0)} % of forge's.")
+    S_late.append(f"- **Control, HLS and forge alike** (section 9, every cell by one rule: datapath is what the data inputs reach): forge's control costs {min(ratio)[0]:.1f}x to {max(ratio)[0]:.1f}x HLS opt's energy per cycle on nangate45, same kernel and W; the flops carry {rng(fsh['hls'], 0)} % of HLS's control energy and {rng(fsh['forge'], 0)} % of forge's.")
 
     fig, axs = plt.subplots(len(TECHS), 4, figsize=(16, 7), sharex=True)
     for row, tech in zip(axs, TECHS):
@@ -1176,6 +1178,121 @@ def main() -> int:
     fig.tight_layout(rect=(0, 0, 1, 0.965))
     savefig(fig, "fig9_energy_split.png")
 
+    # ------------------------------------------------ 10. control inventory and the boundary (review notes)
+    REGS = defaultdict(list)       # (tech, point) -> per-register rows (report/flop_split.py)
+    for tech in TECHS:
+        for r in read(OUT / f"split_regs_{tech}.csv"):
+            r["flops"], r["ei"], r["es"] = int(r["flops"]), float(r["e_int_pj"]), float(r["e_sw_pj"])
+            REGS[(tech, r["point"])].append(r)
+    ROLES = ["config", "config copy", "START word", "CSR read buffer", "cycle counter", "progress counters", "state bits"]
+
+    def role(side, reg, flops):
+        name = reg.split("/")[-1]
+        if side == "forge":
+            if reg.startswith("csr/"):
+                if name == "regs_0":
+                    return "START word"
+                if name.startswith("regs_"):
+                    return "config"
+                return "CSR read buffer"
+            if name == "counter":
+                return "cycle counter"
+            if re.search(r"_(r|t)$", name):
+                return "config copy"
+            if re.search(r"_(given|d)$", name) or name == "sum_lane":
+                return "progress counters"
+            return "state bits"
+        if "_preg" in name:
+            return "config"
+        if name.startswith(("N_reg_", "trunc_")):
+            return "config copy"
+        if name.startswith("ap_") or name.endswith("_ap_start_reg") or "flow_control" in reg or flops == 1:
+            return "state bits"
+        return "progress counters"
+
+    def inv(tech, k, c, w):
+        out = defaultdict(lambda: [0, 0.0])
+        d = get(tech, k, c, w)
+        for r in REGS[(tech, d["point"])]:
+            if r["cone"] == "control":
+                x = out[role(d["side"], r["register"], r["flops"])]
+                x[0] += r["flops"]
+                x[1] += r["ei"] + r["es"]
+        return out
+
+    md10 = ["", "## 10. Why forge's control costs more, and what the boundary does (review notes)", ""]
+    md10.append("Notes from the review of section 9, kept so the reasoning is not lost. Section 9's control flops, register by register (`split_regs_<tech>.csv`, written by `report/flop_split.py collect` from the same per-cell dumps), each given a role by its name (`role()` in this script): **config** (forge's CSRs JOBS and JOB_BEATS, `regs_1`…; HLS's pins `*_preg`), **config copy** (the same values held again: forge ctrl's `*_r`, `*_t`, set from the CSRs at START; HLS dace's `N_reg_*`, `trunc_*`), **START word** (forge's START CSR `regs_0`), **CSR read buffer** (forge's `answer`, `answerKept`), **cycle counter** (forge's COUNTER, `counter`), **progress counters** (forge's `*_given`, `*_d`, `sum_lane`; HLS's loop counters and registered indices), **state bits** (busy, done, valid, FSM, pipeline enables, loop conditions). The roles are read from forge's bundles (`snax_forge_csr.sv`, `snax_forge_*_ctrl.sv`) and Vitis's Verilog.")
+    md10.append("")
+    md10.append("**Control registers by role, nangate45, W = 8**: flops · pJ per cycle")
+    md10.append("")
+    rows = []
+    for k in KERNELS:
+        for c in ["opt", "dace"] + FORGE_CASES[k]:
+            if not get("nangate45", k, c, 8):
+                continue
+            x = inv("nangate45", k, c, 8)
+            rows.append([k, label(c)] + [f"{x[rl][0]} · {x[rl][1]:.2f}" if x[rl][0] else "" for rl in ROLES] + [f"{sum(v[0] for v in x.values())} · {sum(v[1] for v in x.values()):.2f}"])
+    md10 += table(["kernel", "case"] + ROLES + ["all control flops"], rows)
+    md10.append("")
+    cflop = {side: sorted(e for (t, p), rr in REGS.items() for r in rr if r["cone"] == "control" and t == "nangate45" and r["side"] == side
+                          for e in [(r["ei"] + r["es"]) / r["flops"] * 1000] * r["flops"]) for side in ("hls", "forge")}
+
+    def pctl(xs, q):
+        return xs[min(len(xs) - 1, int(q * len(xs)))]
+    cint = [pct(sum(r["ei"] for r in rr if r["cone"] == "control"), sum(r["ei"] + r["es"] for r in rr if r["cone"] == "control")) for (t, p), rr in REGS.items() if t == "nangate45"]
+    pins = sorted({r["flops"] for (t, p), rr in REGS.items() for r in rr if t == "nangate45" and re.search(r"(loop_count|len)_preg$", r["register"]) and ("/opt_" in p or "/unopt_" in p)})
+    pins_d = sorted({r["flops"] for (t, p), rr in REGS.items() for r in rr if t == "nangate45" and r["register"].endswith("loop_count_preg") and "/dace_" in p})
+    lean = []
+    for t, k, c, w in fpts:
+        x, h = inv(t, k, c, w), inv(t, k, "opt", w) if get(t, k, "opt", w) else None
+        if h is None:
+            continue
+        drop = sum(x[rl][1] for rl in ("config copy", "START word", "CSR read buffer", "cycle counter"))
+        lean.append((sum(v[1] for v in x.values()) / sum(v[1] for v in h.values()), (sum(v[1] for v in x.values()) - drop) / sum(v[1] for v in h.values()), t, k, c, w))
+    md10 += ["### Observations", ""]
+    md10.append("- A control flop costs about the same on both sides, nangate45, every control flop of every point: " + "; ".join(f"{side} median {pctl(cflop[side], 0.5):.2f} fJ per cycle, 90 % between {pctl(cflop[side], 0.05):.2f} and {pctl(cflop[side], 0.95):.2f}" for side in ("hls", "forge")) + f". {rng(cint, 0)} % of control's flop energy is internal power (the clock pin's), so a register costs about the same whether it changes or not: neither side gates its clocks.")
+    md10.append(f"- HLS's pins are 32 bits wide too: `loop_count_preg` and `len_preg` hold {', '.join(map(str, pins))} flops on every opt and unopt point (dace's `loop_count_preg` {pins_d[0]}–{pins_d[-1]}: DC removed the bits its copies make constant). So HLS saves no width; it holds fewer words.")
+    md10.append(f"- Forge's control flops over HLS opt's, same kernel, W and technology: {rng([x[0] for x in lean], 1)}x in energy per cycle. Without its config copies, START word, CSR read buffer and cycle counter (the roles HLS has no counterpart for), {rng([x[1] for x in lean], 1)}x ({len(lean)} forge design-W-technology triples, the table above).")
+    md10 += ["", "### Explanations", ""]
+    md10.append("- **Forge holds more 32-bit words, not wider ones.** From the bundles: the START CSR is a full 32-bit register although a write of bit 0 is the start; JOBS and JOB_BEATS sit in the CSRs and again in ctrl (`sum_t <= beats`, `sum_r <= jobs`, `mul_r <= jobs * beats` at START), so each unit keeps its own targets; each unit counts its own progress (`mul_given`, `sum_d`, `sum_given`), where HLS's single loop has one counter per loop level; `answer` registers every CSR read; COUNTER counts every busy cycle for software to read back. HLS has a pin register per run-time value, its loop counters, an FSM and pipeline enables, and nothing else: no CSR bus to buffer, no start word, no cycle counter (the testbench counts). Sure: read from the RTL and the per-register energies.")
+    md10.append("- **Some of forge's extra words buy features HLS's block lacks**: J > 1 jobs per START (the copies and per-unit counters), read-back over the CSR bus (the buffer), a cycle count without a testbench (COUNTER). A like-for-like comparison would either give HLS those features or count forge without them (the second ratio above). Narrower counters (12 bits at n2048) would shrink both sides alike. Fairly sure: the features are forge's documented ones; what each would cost HLS was not measured.")
+    md10.append("")
+
+    # the datapath boundary: HLS opt's pipeline registers
+    md10.append("**HLS opt's datapath flops, and what removing them could save, nangate45** (nJ per task): their internal energy (clock pin and internal nodes) and switching energy (their output nets, including the output port's load where a register drives it); `opt − int.` is HLS opt's e_run without its datapath flops' internal energy, an estimate of an HLS opt without the pipeline registers; forge's e_run beside it (dot: dot 3)")
+    md10.append("")
+    rows = []
+    est = []
+    for t, k, c, w in fpts:
+        if not get(t, k, "opt", w):
+            continue
+        ho = get(t, k, "opt", w)
+        rr = REGS[(t, ho["point"])]
+        di = sum(r["ei"] for r in rr if r["cone"] == "data") * ho["cycles"] / 1000
+        est.append((ho["e_run"] - di, get(t, k, c, w)["e_run"], ho["e_run"], t, k, c, w))
+    for k in KERNELS:
+        fc = "forge3" if k == "dot" else "forge"
+        for w in (1, 8, 32):
+            ho = get("nangate45", k, "opt", w)
+            rr = REGS[("nangate45", ho["point"])]
+            di = sum(r["ei"] for r in rr if r["cone"] == "data") * ho["cycles"] / 1000
+            ds = sum(r["es"] for r in rr if r["cone"] == "data") * ho["cycles"] / 1000
+            rows.append([k, str(w), f"{ho['e_run']:.2f}", f"{di:.2f}", f"{ds:.2f}", f"{ho['e_run'] - di:.2f}", f"{get('nangate45', k, fc, w)['e_run']:.2f}"])
+    md10 += table(["kernel", "W", "HLS opt e_run", "datapath flops: internal", "switching", "opt − int.", "forge e_run"], rows)
+    md10.append("")
+    below = [x for x in est if x[1] < x[2]]
+    below_est = [x for x in est if x[1] < x[0]]
+    dl = [(part(t, k, "opt", w, "e", cone="data", kind="comb") * get(t, k, "opt", w)["cycles"] / 1000, part(t, k, "forge3", w, "e", cone="data", kind="comb") * get(t, k, "forge3", w)["cycles"] / 1000, t, w) for t in TECHS for w in WS]
+    md10 += ["### Observations", ""]
+    md10.append(f"- Forge's e_run is below HLS opt's in {len(below)} of {len(est)} forge design-W-technology triples, and below the estimate `opt − int.` in {len(below_est)}: " + "; ".join(f"{k}: {sum(1 for x in below_est if x[4] == k)} of {sum(1 for x in est if x[4] == k)}" for k in KERNELS) + ".")
+    md10.append(f"- dot's datapath logic alone (no flops): dot 3 over HLS opt {rng([b / a for a, b, *_ in dl])}x over W and technology, about the same (`split_<tech>.csv`, cone data, kind comb).")
+    md10 += ["", "### Explanations", ""]
+    md10.append("- **HLS opt's datapath flops are Vitis's pipeline registers, not interface registers.** The axis register slices are already off (hls-exercises `params.json` `\"axis_register_mode\": \"off\"`, `docs/HLS_VS_FORGE.md`). What remains are register stages between the stream read and the stream write: one in vecadd (the results, `add_ln*_reg` or `c`), vecmul (the operands, `temp_*_reg`) and vsum (the operands), two in dot (the operands `temp_*_reg` and the products `mul_*_reg`); dot and vsum also keep their accumulator. Forge's lanes have no such stage: its operands are registered in the streamers, outside SYN1. A first try at an HLS clock of 10 ns (the ASIC's) instead of 3.33 ns kept vecadd's and vecmul's stage: vecadd's Verilog came out identical, vecmul's moved its registers from the operands to the products (`results/hls/runs/2026-11-01_hls_c10.md`). Sure: the names, the axis setting and the 10 ns Verilog are in the RTL and the bench.")
+    md10.append("- **Removing them would save their internal energy, not their switching.** A register that drives the output port pays the port's load; without it the logic pays it, as forge's datapath logic does. So `opt − int.` is the better estimate of an HLS opt without that stage, and against it the two sides are close: forge is below it in about half the cases (the counts above), its larger control set against kernel-dependent differences in datapath logic. Section 9's energy lead of forge comes mostly from the boundary: its operand registers are outside SYN1, HLS's inside. Fairly sure: an estimate, since removing the stage can also change the logic Vitis builds, and no HLS design without it exists yet.")
+    md10.append("")
+    S_late.append(f"- **Why forge's control costs more, and what the boundary does** (section 10): forge holds more 32-bit words, not wider ones (the configuration twice, a START word, a CSR read buffer, a cycle counter; HLS's pins are 32 bits too); without those its control is {rng([x[1] for x in lean], 1)}x HLS opt's instead of {rng([x[0] for x in lean], 1)}x. Forge's e_run is below HLS opt's in {len(below)} of {len(est)} cases but below HLS opt without its pipeline registers' internal energy (an estimate) in {len(below_est)}: its lead comes mostly from the boundary.")
+    Q.append("HLS's register stage: a 10 ns HLS clock did not remove it (`results/hls/runs/2026-11-01_hls_c10.md`). Would a latency directive on the beat loop (`set_directive_latency -max 0`) or a combinational top, and would HLS opt's energy then fall to section 10's estimate `opt − int.`? (section 10)")
+
     # ------------------------------------------------ summary and lists
     best_dot = {}
     for tech in TECHS:
@@ -1200,7 +1317,7 @@ def main() -> int:
 
     head = ["# SYN1 analysis: snax-forge beside HLS tier done", ""]
     head.append(f"Written by `report/analysis_syn1.py` (`pixi run analysis`) from the committed CSVs (R4's `results/forge_vs_hls_<tech>.csv`, `results/{{hls,forge}}/<tech>/synth_dc*.csv`, `power_pt*.csv`, `results/hls/hls_cycles.csv`), the committed `reference.rpt` (the flop's area), hls-exercises' Verilog and forge's bundles (the registers by name), and for section 9 `results/analysis/syn1/split_<tech>.csv` (`report/flop_split.py`: every cell on the control or datapath side). Every number is computed; nothing is typed by hand. n2048 only, both technologies, W = 1 to 32: {n_ok[('nangate45', 'hls')]} HLS and {n_ok[('nangate45', 'forge')]} forge points per technology (HLS dot `dace_w1` parked). This note decides nothing: it is for review, before the comparisons are chosen. PT is the reference for energy (X25). Each section gives observations, explanations (with how sure each is and its evidence) and questions.")
-    head += ["", "## Summary", ""] + S + [""]
+    head += ["", "## Summary", ""] + S[:-1] + S_late + S[-1:] + [""]
     tail = ["## Open questions", ""] + [f"- {q}" for q in Q] + [
         "- fmax: on nangate45 forge's dot variants report " + f"{min(get('nangate45', 'dot', c, w)['fmax'] for c in DOT_FORGE for w in WS):.0f}–{max(get('nangate45', 'dot', c, w)['fmax'] for c in DOT_FORGE for w in WS):.0f} MHz against HLS dot's {min(get('nangate45', 'dot', c, w)['fmax'] for c in DOT_HLS for w in WS):.0f}–{max(get('nangate45', 'dot', c, w)['fmax'] for c in DOT_HLS for w in WS):.0f} MHz; it is DC's lower bound at 10 ns (X2), so a synthesis at a tighter clock would be needed to compare speed, and SYN1 does not.", ""]
     tail += ["## Candidate metrics or figures for the paper", ""] + [f"- {m}" for m in M] + [""]
@@ -1214,7 +1331,7 @@ def main() -> int:
         "- `fig7_two_term_fit.png`: forge's e_run against the cycles over W, with the fit e_run = α C + β (section 2).",
         "- `fig8_control_split.png`: control's share of e_run against W, per kernel and case, by one rule on both sides; top row nangate45, bottom row nangate15 (section 9).",
         "- `fig9_energy_split.png`: e_run per task as stacked bars, control on the datapath's flops and logic, per kernel (rows), technology (columns), W and case (section 9).", ""]
-    (OUT / "syn1_analysis.md").write_text("\n".join(head + md + tail + md9))
+    (OUT / "syn1_analysis.md").write_text("\n".join(head + md + tail + md9 + md10))
     print(f"wrote {(OUT / 'syn1_analysis.md').relative_to(ROOT)} and {len(list(OUT.glob('*.png')))} figures")
     return 0
 

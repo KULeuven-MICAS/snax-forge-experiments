@@ -17,7 +17,9 @@ core instance *_U<n>) or sub (another instance); forge: the wrapper's instance c
 Checks, each a failure: the cells' area equals synth_dc.csv's area_um2; their dynamic energy per cycle
 equals power_pt.csv's e_dyn_pj (all) and e_flop_pj (flops); the flop count equals flop_bits; every HLS
 flop is a Verilog register of the point (one Vitis name, _reg or _reg[<bit>] added by DC) and no register
-has more flops than bits. Writes results/analysis/syn1/split_<tech>.csv and split_checks_<tech>.csv.
+has more flops than bits. Writes results/analysis/syn1/split_<tech>.csv, split_checks_<tech>.csv and
+split_regs_<tech>.csv (per register: its hierarchy path and name, side, flops, internal and switching energy
+per cycle; a flop's internal power includes its clock pin's).
 """
 from __future__ import annotations
 
@@ -51,6 +53,8 @@ SIM = {"hls": ROOT / "sim" / "runs", "forge": ROOT / "sim" / "runs" / "forge"}
 LMUTIL_DEFAULT = "/esat/micas-data/software/Mentor/questasim_2022.4/linux_x86_64/lmutil"
 COLUMNS = ["point", "side", "kernel", "case", "W", "tech", "cycles", "kind", "cone", "unit", "cells", "area_um2",
            "e_dyn_pj"]
+REG_COLUMNS = ["point", "side", "kernel", "case", "W", "tech", "cycles", "cone", "register", "flops", "e_int_pj",
+               "e_sw_pj"]
 CHECK_COLUMNS = ["point", "side", "tech", "cells", "area_um2", "area_dc_um2", "e_dyn_pj", "e_dyn_csv_pj",
                  "e_flop_pj", "e_flop_csv_pj", "flops", "flop_bits", "verilog_bits", "removed_bits",
                  "data_flops", "data_cells", "mismatch_cells", "mismatch_area_um2", "mismatch_e_pj"]
@@ -160,7 +164,7 @@ def hls_unit_comb(cell: str) -> str:
     return "core" if re.search(r"_U\d+$", cell.split("/")[0]) else "sub"
 
 
-def collect_point(side: str, tech: str, prow: dict, srow: dict) -> tuple[list[dict], dict]:
+def collect_point(side: str, tech: str, prow: dict, srow: dict) -> tuple[list[dict], dict, list[dict]]:
     point = prow["point"]
     _, kernel, pt_ = point.split("/")
     case, w = pt_.rsplit("_w", 1)
@@ -174,6 +178,7 @@ def collect_point(side: str, tech: str, prow: dict, srow: dict) -> tuple[list[di
             bits[n] += b or 0
     agg = defaultdict(lambda: [0, 0.0, 0.0])
     per_reg = defaultdict(int)
+    regs = defaultdict(lambda: [0, 0.0, 0.0])     # (cone, register path) -> flops, internal, switching (pJ/cycle)
     unmatched = []
     n_flops = 0
     area = e_all = e_flop = 0.0
@@ -213,6 +218,11 @@ def collect_point(side: str, tech: str, prow: dict, srow: dict) -> tuple[list[di
             n_flops += 1
             e_flop += e
             data_flops += data
+            parts = c["cell"].split("/")
+            rk = regs[("data" if data else "control", "/".join(parts[:-1] + [leaf_reg(c["cell"])]))]
+            rk[0] += 1
+            rk[1] += float(c["internal_w"] or 0) * CLOCK_NS * 1e3
+            rk[2] += float(c["switching_w"] or 0) * CLOCK_NS * 1e3
         data_cells += data
     if unmatched:
         raise Fail(f"{point} ({tech}): {len(unmatched)} flops match no Verilog register: {unmatched[:8]}")
@@ -242,7 +252,10 @@ def collect_point(side: str, tech: str, prow: dict, srow: dict) -> tuple[list[di
            "data_flops": data_flops, "data_cells": data_cells,
            "mismatch_cells": mis[0] if side == "forge" else "", "mismatch_area_um2": f"{mis[1]:.4f}" if side == "forge" else "",
            "mismatch_e_pj": f"{mis[2]:.6f}" if side == "forge" else ""}
-    return rows, chk
+    regrows = [{"point": point, "side": side, "kernel": kernel, "case": case, "W": w, "tech": tech,
+                "cycles": prow["cycles"], "cone": k[0], "register": k[1], "flops": v[0], "e_int_pj": f"{v[1]:.6f}",
+                "e_sw_pj": f"{v[2]:.6f}"} for k, v in sorted(regs.items())]
+    return rows, chk, regrows
 
 
 def read_tsv(path: Path) -> list[dict]:
@@ -253,20 +266,22 @@ def read_tsv(path: Path) -> list[dict]:
 def cmd_collect(a) -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     for tech in TECHS:
-        rows, checks = [], []
+        rows, checks, regrows = [], [], []
         for side in ("hls", "forge"):
             syn = {r["point"]: r for r in read(RES / side / tech / "synth_dc.csv")}
             for prow in points(tech, side):
                 if not (RUNS / side / tech / prow["point"] / "ok").is_file():
                     raise Fail(f"{side} {tech} {prow['point']}: no checked PT run in sim/split_runs (pixi run split pt)")
-                r, c = collect_point(side, tech, prow, syn[prow["point"]])
+                r, c, g = collect_point(side, tech, prow, syn[prow["point"]])
                 rows += r
                 checks.append(c)
-        for name, cols, data in ((f"split_{tech}.csv", COLUMNS, rows), (f"split_checks_{tech}.csv", CHECK_COLUMNS, checks)):
+                regrows += g
+        for name, cols, data in ((f"split_{tech}.csv", COLUMNS, rows), (f"split_checks_{tech}.csv", CHECK_COLUMNS, checks),
+                                 (f"split_regs_{tech}.csv", REG_COLUMNS, regrows)):
             with (OUT / name).open("w", newline="") as fh:
                 wr = csv.DictWriter(fh, cols, lineterminator="\n")
                 wr.writeheader()
-                wr.writerows(sorted(data, key=lambda r: (r["side"], r["point"], r.get("kind", ""), r.get("cone", ""), r.get("unit", ""))))
+                wr.writerows(sorted(data, key=lambda r: (r["side"], r["point"], r.get("kind", ""), r.get("cone", ""), r.get("unit", ""), r.get("register", ""))))
         print(f"{tech}: {len(checks)} points, {len(rows)} rows -> {(OUT / f'split_{tech}.csv').relative_to(ROOT)}")
     return 0
 
