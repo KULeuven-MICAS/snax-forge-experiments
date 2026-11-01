@@ -676,9 +676,9 @@ def main() -> int:
     md.append("")
     Q.append("Energy: what do the streamers add per beat? A cluster-level power run (snax_cluster) would tell whether forge's lead at large W or its cost at W = 1 changes (section 4).")
 
-    for tech in TECHS:
-        fig, axs = plt.subplots(1, 4, figsize=(16, 3.8))
-        for ax, k in zip(axs, KERNELS):
+    fig, axs = plt.subplots(len(TECHS), 4, figsize=(16, 7), sharex=True)
+    for row, tech in zip(axs, TECHS):
+        for ax, k in zip(row, KERNELS):
             for c in cases(k):
                 s = series(tech, k, c, "pj_elem")
                 if len(s) < 2:
@@ -686,11 +686,14 @@ def main() -> int:
                 col, mk, ls = STYLE[c]
                 ax.plot([x for x, _ in s], [y for _, y in s], marker=mk, color=col, ls=ls, label=label(c))
             ax.set_xscale("log", base=2); ax.set_yscale("log"); ax.set_xticks(WS, [str(w) for w in WS])
-            ax.set_title(f"{k}, {tech}"); ax.set_xlabel("W"); ax.grid(True, which="both", alpha=0.3)
+            ax.set_title(f"{k}, {tech}"); ax.grid(True, which="both", alpha=0.3)
             ax.legend(fontsize=6)
-        axs[0].set_ylabel("pJ per element")
-        fig.tight_layout()
-        savefig(fig, f"fig4_energy_{tech}.png")
+        row[0].set_ylabel(f"pJ per element ({tech})")
+    for ax in axs[-1]:
+        ax.set_xlabel("W")
+    fig.suptitle("Energy per element at n2048 (top: nangate45, bottom: nangate15)")
+    fig.tight_layout()
+    savefig(fig, "fig4_energy.png")
 
     # ------------------------------------------------ 5. dot's variants
     md += ["## 5. dot's variants", ""]
@@ -934,7 +937,7 @@ def main() -> int:
         "- `fig1_cycles_overhead.png`: cycles − N / W against W, per kernel and case (section 1).",
         "- `fig2_control_share.png`: csr + ctrl as a share of area and e_run against W, per forge design, both technologies (section 2).",
         "- `fig3_area.png`: total area against W, per kernel and case, both technologies (section 3).",
-        "- `fig4_energy_nangate45.png`, `fig4_energy_nangate15.png`: pJ per element against W, per kernel and case (section 4).",
+        "- `fig4_energy.png`: pJ per element against W, per kernel and case; top row nangate45, bottom row nangate15 (section 4).",
         "- `fig5_dot_variants.png`: A x C and E x C against W for dot 2–6 and HLS dot unopt and opt (section 5).",
         "- `fig6_tech_ratio.png`: nangate45 / nangate15 ratios of area and e_run against the sequential share (section 6).",
         "- `fig7_two_term_fit.png`: forge's e_run against the cycles over W, with the fit e_run = α C + β (section 2).", ""]

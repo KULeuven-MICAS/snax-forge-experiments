@@ -851,7 +851,7 @@ Candidate metrics side by side, per kernel and W: the lowest-energy-per-element,
 - `fig1_cycles_overhead.png`: cycles − N / W against W, per kernel and case (section 1).
 - `fig2_control_share.png`: csr + ctrl as a share of area and e_run against W, per forge design, both technologies (section 2).
 - `fig3_area.png`: total area against W, per kernel and case, both technologies (section 3).
-- `fig4_energy_nangate45.png`, `fig4_energy_nangate15.png`: pJ per element against W, per kernel and case (section 4).
+- `fig4_energy.png`: pJ per element against W, per kernel and case; top row nangate45, bottom row nangate15 (section 4).
 - `fig5_dot_variants.png`: A x C and E x C against W for dot 2–6 and HLS dot unopt and opt (section 5).
 - `fig6_tech_ratio.png`: nangate45 / nangate15 ratios of area and e_run against the sequential share (section 6).
 - `fig7_two_term_fit.png`: forge's e_run against the cycles over W, with the fit e_run = α C + β (section 2).
