@@ -38,6 +38,7 @@ repo too, or are pointed to with environment variables.
 | `report/` | `forge_vs_hls.py` (`pixi run table`): SYN1's joined table from the committed CSVs. `analysis_syn1.py` (`pixi run analysis`): SYN1's analysis note and figures. `flop_split.py` (`pixi run split pt`, then `split collect`): every cell of every n2048 point on the control or datapath side (datapath = the forward cone of the data inputs), from PrimePower run again on the kept SAIFs (`sim/scripts/pt_cells.tcl`) into `sim/split_runs/` (local). |
 | `results/forge_vs_hls.md` | SYN1's table: per technology and kernel (vecadd, vecmul, vsum, dot), per W and case, the HLS points of tier done and snax-forge's accelerators at n2048 (X24): cycles, area, e_run, pJ per element, forge's csr, ctrl and datapath apart, flops, fmax; the same rows in `forge_vs_hls_<tech>.csv`. No ratios or ranking. |
 | `results/analysis/syn1/` | SYN1's analysis note `syn1_analysis.md` and its figures (`pixi run analysis`); `split_<tech>.csv`, `split_checks_<tech>.csv` and `split_regs_<tech>.csv`, the control/datapath split per point, its checks and its registers (`pixi run split collect`). |
+| `results/analysis/control/` | Every register of SYN1's points given one role read from the RTL (`roles.json`), joined with SYN1's per-register energies: `roles_<tech>.csv`, `control_roles.md` (`pixi run control`, `report/control_roles.py`); `src/`, forge's control RTL at W = 8 (X26). |
 | `results/hls/<tech>/` | The results per technology (`nangate45`, `nangate15`): `synth_dc.csv`, `synth_dc_modules.csv` and every run's reports in `reports/` (`syn/syn.py`); `power_pt.csv`, `power_pt_modules.csv` and `power_reports/` (`sim/pwr.py`). |
 
 Planned:
@@ -60,6 +61,7 @@ pixi run pwr run 'done/*/*_w*' --tech nangate45 --size n2048            # tier d
 pixi run table                                                # results/forge_vs_hls.md and _<tech>.csv
 pixi run split pt -j 12 && pixi run split collect              # the control/datapath split (results/analysis/syn1/split_*.csv)
 pixi run analysis                                             # results/analysis/syn1/syn1_analysis.md and figures
+pixi run control                                              # every register's role, forge and HLS (results/analysis/control/, needs rtl/forge/)
 ```
 
 ## Synthesis

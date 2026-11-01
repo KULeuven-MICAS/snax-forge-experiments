@@ -29,6 +29,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X23](#x23-power-of-a-forge-point) | A forge point's power: `forge_csr`, `csr_seq.sv`, window = COUNTER = snax-forge's cycles |
 | [X24](#x24-the-reference-task-n2048) | SYN1 compares one task of N = 2048 elements on both sides |
 | [X25](#x25-pt-is-the-reference-the-setup-check-is-a-diagnostic) | PT is the reference; the setup check is a diagnostic and never fails a point |
+| [X26](#x26-forge-control-rtl-copied-as-a-reading-aid) | Forge's csr, ctrl and wrapper SV at W = 8 copied into `results/analysis/control/src/`, an exception to X21 |
 
 ## Synthesis
 
@@ -226,3 +227,10 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Decision:** replaces X10's tolerances. PT with simulated activity is the reference for energy. DC's power in `synth_dc.csv` (default activity) is an early check only, and matching the two is not a goal. The PT-against-DC setup check (`pwr setup-check`, X10's forced-activity pair) stays as a diagnostic, run when the flow or a library changes: it prints its per-group differences, which go into the run note, and it never fails a point; `SETUP_TOL` and `SETUP_TOL_GROUP` are removed from `sim/pwr.py`. The checks that catch real errors stay gates: the wire-load check (PITFALLS PT1: after `set_load 0` and `set_resistance 0` no net keeps a wire capacitance or resistance; it fails a run and the setup check) and the SAIF and annotation checks (X9).
 - **Why:** on nangate15 the two tools differ for library reasons, not setup ones (PITFALLS PT5), and the differences vary with the netlist. The record, from SYN1 R3: nangate45 within 0.02 % in every group; nangate15's register group -0.08 % on HLS `done/vecadd/opt_w8` and -0.25 % to -1.08 % on the three forge points (`vecadd/forge_w4` -0.55 %, `vsum/forge_w8` -0.25 %, `dot/forge5_w4` -1.08 %), combinational +1.79 % to +2.21 %, consistent with PT5. The register group is a small part of the forge points' energy: 1.3 %, 14.0 % and 2.6 % of e_dyn at n2048 on nangate15 (vecadd W = 4, vsum W = 8, dot 5 W = 4; 1.5 %, 14.8 %, 3.5 % on nangate45), so a -1 % gap there is at most 0.04 % of e_dyn.
 - **Source:** `results/hls/runs/2026-10-29_pwr_r1.md`, `results/forge/runs/2026-10-31_syn1_r2.md`, `2026-11-01_syn1_r3.md` (Step 2).
+
+### X26. Forge control RTL copied as a reading aid
+
+- **Date:** 2026-11-01
+- **Decision:** for the control-role analysis (`report/control_roles.py`, `pixi run control`), the csr, ctrl and wrapper SystemVerilog of the eight W = 8 forge points (vecadd, vecmul, vsum, dot 2 to 6) are copied unchanged from their bundles into `results/analysis/control/src/<kernel>/<case>_w8/`, with a `point.json` naming the snax-forge commit (`32dbcc6`) and `dirty` false. They are a reading aid: `roles.json` cites their lines, and a reader needs no bundle to follow it. This is an exception to X21: `rtl/` stays uncommitted, nothing is synthesized or simulated from the copies, and the role checks still read every point's own bundle. HLS's Verilog is not copied: it is committed in hls-exercises (`rtl/done/<kernel>/<case>_w<W>/`).
+- **Why:** the roles are read from the RTL, so the lines they cite must stay reachable from a commit; the bundles are rebuilt on demand and not committed.
+- **Source:** `results/analysis/control/` (`control_roles.md`, `roles.json`).
