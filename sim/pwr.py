@@ -34,7 +34,8 @@ Results: results/hls/<tech>/power_pt.csv (one row per point, size and seed), pow
 
 Parallel workers J = min(free msimhdlsim, free PrimePower, free PrimeTime, nproc) from lmutil lmstat;
 PT threads per run = max(1, nproc // J) (X16). A tool that fails on a licence error is retried once (X17).
-setup-check: every power group within 0.1%, nangate15's combinational within 2.5% (X10).
+setup-check: a diagnostic (X25): PT against DC with the same forced activity, per power group, printed and kept in
+check.json; it fails only on the wire-load check (PITFALLS PT1), never on the groups' differences.
 
 Environment, all optional:
   PT_SHELL   pt_shell (else PATH)          LMUTIL    lmutil (else PATH)
@@ -86,10 +87,6 @@ TB_TOP, DUT = "tb", "dut"
 CLOCK_NS = 10.0
 SETUP_POINT = "done/vecadd/opt_w8"
 SETUP_POINT_FORGE = "done/vecadd/forge_w4"
-SETUP_TOL = 1e-3            # setup-check: every power group within 0.1% ...
-# ... except where PT and DC are known to differ on a library feature, not on the setup (docs X10):
-# nangate15's non-switching internal power on inverting multi-input cells (PITFALLS PT5). PT is the reference.
-SETUP_TOL_GROUP = {("nangate15", "combinational"): 2.5e-2}
 MIN_ANNOTATED = 99.0        # percent of nets annotated from the SAIF
 TOGGLE_BEATS = 64           # the input-toggle check fails a run from this many beats up
 # Questa cell models, next to each technology's .db, with the vlog options they need
@@ -760,11 +757,24 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         total -= len(info["floating"])
     if ann < MIN_ANNOTATED / 100 * total:
         raise Fail(f"pt: {ann} of {total} nets annotated, under {MIN_ANNOTATED:g}%")
+    info["wire_load"] = wire_load_check(ptd / "wire_load.rpt")
     groups = pt_groups(ptd)
     info["modules"] = pt_hierarchy(ptd)
     energy_row(row, groups, flop_bits_of(tech, tb["point"]))
     row["status"] = "ok"
     return info
+
+
+def wire_load_check(rpt: Path) -> dict:
+    """PITFALLS PT1: after set_load 0 and set_resistance 0 no net may keep a wire capacitance or resistance."""
+    m = re.search(r"nets: (\d+), with wire_capacitance_max > 0: (\d+), with net_resistance_max > 0: (\d+)",
+                  rpt.read_text() if rpt.is_file() else "")
+    if not m:
+        raise Fail(f"pt: no wire-load count in {rpt.name}")
+    nets, wc, wr = (int(x) for x in m.groups())
+    if wc or wr:
+        raise Fail(f"pt: {wc} nets with wire capacitance, {wr} with resistance (PITFALLS PT1)")
+    return {"nets": nets, "wire_cap_nets": wc, "wire_res_nets": wr}
 
 
 def build_tb(point: str, tech: str) -> dict:
@@ -981,7 +991,8 @@ def dc_groups(rpt: Path) -> dict:
 
 
 def cmd_setup_check(args) -> int:
-    """X10: PT and DC on the same netlist with the same forced activity agree per power group."""
+    """X25: PT and DC on the same netlist with the same forced activity, per power group: a diagnostic. It prints
+    the differences (for the run note) and fails only on the wire-load check (PITFALLS PT1)."""
     use_source(args.source)
     point = args.point or (SETUP_POINT if args.source == "hls" else SETUP_POINT_FORGE)
     tech = args.tech
@@ -1004,10 +1015,16 @@ def cmd_setup_check(args) -> int:
     t_dc = time.time() - t
     if rc or not (base / "dc" / "reports" / "power.rpt").is_file():
         sys.exit(f"setup-check: DC failed ({base / 'dc'})")
+    try:
+        wl = wire_load_check(base / "pt" / "reports" / "wire_load.rpt")
+    except Fail as e:
+        sys.exit(f"setup-check: {e} ({base / 'pt'})")
     pt, dc = pt_groups(base / "pt" / "reports"), dc_groups(base / "dc" / "reports" / "power.rpt")
-    ok, table = True, []
-    print(f"setup-check {tech} {point}: uniform activity, PT against DC (PT {t_pt:.1f} s, DC {t_dc:.1f} s)")
-    print(f"{'group':<14} {'PT dyn uW':>12} {'DC dyn uW':>12} {'diff %':>8} {'PT leak uW':>12} {'DC leak uW':>12} {'diff %':>8} {'tol %':>6}")
+    table = []
+    print(f"setup-check {tech} {point}: uniform activity, PT against DC (PT {t_pt:.1f} s, DC {t_dc:.1f} s); "
+          f"a diagnostic (X25), PT is the reference; wire load: {wl['wire_cap_nets']} nets with wire capacitance, "
+          f"{wl['wire_res_nets']} with resistance, of {wl['nets']}")
+    print(f"{'group':<14} {'PT dyn uW':>12} {'DC dyn uW':>12} {'diff %':>8} {'PT leak uW':>12} {'DC leak uW':>12} {'diff %':>8}")
     for g in syn.POWER_GROUPS:
         pd, dd = pt[g][0] + pt[g][1], dc[g][0] + dc[g][1]
         pl, dl = pt[g][2], dc[g][2]
@@ -1015,18 +1032,13 @@ def cmd_setup_check(args) -> int:
         def rel(a, b):
             return 0.0 if max(abs(a), abs(b)) < 1e-9 else (a - b) / b if b else float("inf")
         rd, rl = rel(pd, dd), rel(pl, dl)
-        tol = SETUP_TOL_GROUP.get((tech, g), SETUP_TOL)
-        good = abs(rd) <= tol and abs(rl) <= tol
-        ok &= good
         table.append({"group": g, "pt_dyn_uw": pd, "dc_dyn_uw": dd, "dyn_diff": rd, "pt_leak_uw": pl,
-                      "dc_leak_uw": dl, "leak_diff": rl, "tol": tol, "ok": good})
-        print(f"{g:<14} {pd:12.6g} {dd:12.6g} {100 * rd:8.4f} {pl:12.6g} {dl:12.6g} {100 * rl:8.4f} {100 * tol:6g}"
-              f"{'' if good else '  FAIL'}")
-    (base / "check.json").write_text(json.dumps({"tech": tech, "point": point, "ok": ok, "groups": table,
+                      "dc_leak_uw": dl, "leak_diff": rl})
+        print(f"{g:<14} {pd:12.6g} {dd:12.6g} {100 * rd:8.4f} {pl:12.6g} {dl:12.6g} {100 * rl:8.4f}")
+    (base / "check.json").write_text(json.dumps({"tech": tech, "point": point, "wire_load": wl, "groups": table,
                                                  "pt_s": t_pt, "dc_s": t_dc}, indent=1) + "\n")
-    print(f"setup-check {tech}: {'PASS' if ok else 'FAIL'} (every group within its tolerance: {100 * SETUP_TOL:g}%"
-          + "".join(f", {g} {100 * v:g}%" for (t_, g), v in SETUP_TOL_GROUP.items() if t_ == tech) + ")")
-    return 0 if ok else 1
+    print(f"setup-check {tech}: done; the differences go into the run note (X25)")
+    return 0
 
 
 def cmd_summary(args) -> int:
@@ -1069,7 +1081,7 @@ def main() -> int:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("-j", type=int, default=0, help="at most this many workers (default: from the licences)")
     p.set_defaults(fn=cmd_run)
-    p = sub.add_parser("setup-check", help="PT and DC with forced activity agree per power group (X10)")
+    p = sub.add_parser("setup-check", help="diagnostic: PT against DC with forced activity, per power group (X25)")
     p.add_argument("--tech", required=True, choices=syn.tech_names())
     p.add_argument("--source", choices=list(SOURCES), default="hls")
     p.add_argument("--point", default=None, help=f"default {SETUP_POINT} (hls), {SETUP_POINT_FORGE} (forge)")

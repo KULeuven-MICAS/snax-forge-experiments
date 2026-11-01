@@ -12,8 +12,8 @@ Dynamic energy per cycle and per firing of a mapped netlist, from simulated acti
 
 ```bash
 pixi run pwr tbjson done/vecadd/opt_w8                                   # print the point's tb.json
-pixi run pwr setup-check --tech nangate45                                # PT against DC, forced activity (X10)
-pixi run pwr setup-check --tech nangate15                                # (0.1 % per group; nangate15 combinational 2.5 %)
+pixi run pwr setup-check --tech nangate45                                # diagnostic: PT against DC, forced activity (X10, X25)
+pixi run pwr setup-check --tech nangate15                                # prints each group's difference for the run note
 pixi run pwr run 'done/vecadd/*' --tech nangate45                        # rand64, 64 beats, seed 0
 pixi run pwr run 'done/vecadd/*_w8' --tech nangate45 --size n512         # at a cosim size
 pixi run pwr run 'done/*/*_w*' --tech nangate45 --size n2048             # SYN1: one task of N = 2048 (tier done)
@@ -41,7 +41,7 @@ One worker per point; J workers at once and nproc // J PT threads each, from the
 | cycles | the TB's count (X12) against cosim's line a x loop_count + b, or cosim exactly at a cosim size (X19) | a different count, or no integer line |
 | vcd2saif | `-instance tb/dut -time t0 t1` in the VCD's unit; the VCD is deleted at once (X8, X18) | no SAIF |
 | SAIF check | T0 + T1 + TX = DURATION on every driven net (all-Z entries are undriven wire bits, counted apart: PITFALLS DC5), every entry parsed, DURATION = cycles x 10 ns, `ap_clk` TC = 2 x cycles (X9) | any of these |
-| PT | `sim/scripts/pt_power.tcl`: tech.json's .db (md5 checked), netlist, `constraints.sdc`, `set_load 0` / `set_resistance 0` on every net (PITFALLS PT1), `read_saif`, `report_power` and `-hierarchy` | PT errors, or under 99 % of nets annotated |
+| PT | `sim/scripts/pt_power.tcl`: tech.json's .db (md5 checked), netlist, `constraints.sdc`, `set_load 0` / `set_resistance 0` on every net (PITFALLS PT1), `read_saif`, `report_power` and `-hierarchy` | PT errors, under 99 % of nets annotated, or a net with wire capacitance or resistance in `wire_load.rpt` (PITFALLS PT1) |
 | cleanup | `work/` and `vsim.wlf` deleted, whatever happened | |
 
 The TB (`sim/tb/`): `ap_ctrl_hs_seq.sv` (10 ns clock, 5 cycles of synchronous active-low reset, `ap_start` held until an edge samples `ap_ready`, the pins' `ap_vld` pulsed on the first start cycle, the window, a timeout), `axis_src.sv` (always valid, holds each beat until its handshake) and `axis_sink.sv` (always ready, compares each beat, X/Z check). DUT outputs are sampled at falling edges, where nothing toggles, so the TB never races with the cell models' flops. `tb.sv`, generated per point, wires `tb.json`'s ports and holds `$dumpvars` on the DUT and each sub-design scope found in the netlist (not the cells': PITFALLS LIB2).
@@ -59,7 +59,7 @@ snax-forge's accelerators (SYN1): the bundles in `rtl/forge/<point>/` (`forge/bu
 - **Checks:** every output beat against `sim/ref.py` (vecadd, vecmul, vsum, dot); the window's cycles = COUNTER read back = `expected_cycles`, any mismatch fails the point; once per kernel, size and seed in a batch, `sim/ref.py` against snax-forge's kernel body (`kernels/<...>/<kernel>.py`, its `SPEC.func`, run by `forge/query.py ref` on the same inputs; the inputs depend on N and the seed only). The SAIF check is X9's with `clk_i`; PT must annotate 99 % of the nets that are not floating: a net PT leaves at default that the SAIF has at Z for the whole window has no driver (STATUS bits 2 to 31, PITFALLS PT6) and leaves the denominator. Every module of the netlist must get a dump scope (PITFALLS DC6).
 - **Stimulus:** rand64 only (X19): N full-range int64 per input stream, seed 0, stream by stream in tb.json order; N / W beats, at least 64 at every W, so the toggle check applies.
 - **Runs and results:** `sim/runs/forge/<tech>/<point>/n2048_s0/` (the cell models stay in `sim/runs/<tech>/_cells/`); `results/forge/<tech>/power_pt.csv`, `power_pt_modules.csv` and `power_reports/`, with X20's columns plus `recipe` and `snax_forge_commit`. `config` is the CSR writes before START, `beats` the beats per input stream, and per firing is per input beat.
-- **Setup check:** `pt_power.tcl` and `dc_readback.tcl` take the clock and reset ports from the run's `tech.json` (`dc_env`'s `SYN_CLK_PORT`, `SYN_RST_PORT`), else `ap_clk` and `ap_rst_n`, since `constraints.sdc` names them (SYN1 R0). On nangate15 the forge points' register group is below DC's by more than 0.1 %: -0.55 % (`done/vecadd/forge_w4`), -1.08 % (`done/dot/forge5_w4`), -0.25 % (`done/vsum/forge_w8`); nangate45 and the HLS point pass (PITFALLS PT5, open for R4).
+- **Setup check:** `pt_power.tcl` and `dc_readback.tcl` take the clock and reset ports from the run's `tech.json` (`dc_env`'s `SYN_CLK_PORT`, `SYN_RST_PORT`), else `ap_clk` and `ap_rst_n`, since `constraints.sdc` names them (SYN1 R0). On nangate15 the forge points' register group is below DC's: -0.55 % (`done/vecadd/forge_w4`), -1.08 % (`done/dot/forge5_w4`), -0.25 % (`done/vsum/forge_w8`), against -0.08 % on the HLS point and within 0.02 % on nangate45 (PITFALLS PT5); the check is a diagnostic (X25).
 
 ## Run folder
 
@@ -94,7 +94,7 @@ Tool versions, licence counts, the setup check and the validation go into the ru
 
 **n2048 for tier done (SYN1).** A tier-done point's `tb.json` (vecadd, vecmul, vsum, dot) has the size `n2048` after cosim's and `b64` (`sim/sources/hls.py` `EXTRA_SIZES`): one task of N = 2048 elements, the size every forge row runs. Its pins come from `params.json`'s `config` at n = 2048 (vecadd and vecmul `loop_count` = 2048 / W; vsum and dot `loop_count` = `len` = 2048 / W), its expected cycles from cosim's line through n64 and n512 (X19; every tier-done point's line is integer), its stimulus rand64 at 2048 / W beats. It is not the default run (`b64` stays that): its rows are in `power_pt.csv` with size `n2048`, its reports in `power_reports/<point>/n2048_s0/`, and `power_pt_modules.csv` keeps the default run's modules. The untiered points have no `n2048` (matadd and rowsum are vecadd's and vsum's Verilog, PITFALLS DC3; relu and axpy have no forge counterpart). First run in SYN1 R3 (`results/forge/runs/2026-11-01_syn1_r3.md`).
 
-`setup-check` passes when PT and DC, given the same uniform activity, agree within 0.1 % in every power group (dynamic and leakage), except nangate15's combinational group within 2.5 % (PITFALLS PT5). PT is the reference tool for energy; DC only checks that PT's setup (netlist, library, loads, constraints) is DC's.
+`setup-check` is a diagnostic (X25): it runs PT and DC on the same netlist with the same uniform activity and prints each power group's difference (dynamic and leakage) and the wire-load counts, kept in `check.json`; the differences go into the run note. It fails only on the wire-load check (PITFALLS PT1), never on a difference. Run it when the flow or a library changes. PT is the reference tool for energy; DC's power in `synth_dc.csv` is an early check only.
 
 ## Notes
 

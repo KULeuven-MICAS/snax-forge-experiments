@@ -13,7 +13,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X7](#x7-energy-from-simulated-activity) | Energy from a zero-delay Questa sim of the mapped netlist, then PrimePower, no resynthesis |
 | [X8](#x8-activity-from-the-vcd-through-vcd2saif) | Activity: VCD, then vcd2saif, then `read_saif`; the VCD is deleted at once |
 | [X9](#x9-every-activity-file-is-checked) | The SAIF is checked (DURATION, window, clock toggles) and >= 99 % of nets annotated |
-| [X10](#x10-pt-setup-check) | PT setup check per technology: the forced-activity pair, not P0 against DC |
+| [X10](#x10-pt-setup-check) | PT setup check per technology: the forced-activity pair, not P0 against DC (tolerances replaced by X25) |
 | [X11](#x11-flop-energy) | Flop energy compared as clock plus register |
 | [X12](#x12-cycles-and-windows) | Cycles from the first `ap_start` edge to the first `ap_done` edge, as cosim |
 | [X13](#x13-dynamic-energy-only) | Dynamic energy only, busy window, E_comb and E_flop per cycle |
@@ -24,6 +24,11 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X18](#x18-no-dumps-kept) | No VCD, WLF or compiled design is kept; SAIFs stay in `sim/runs/` |
 | [X19](#x19-stimulus-and-expected-cycles) | Stimulus rand64, 64 beats, seed 0 (rowsum at m8_n64); expected cycles from cosim's line |
 | [X20](#x20-power-results) | `power_pt.csv`'s columns and definitions; checks fail a point but are not stored |
+| [X21](#x21-the-forge-source) | The forge source: `forge/points.json`, `forge-rtl`, bundles in `rtl/forge/`, one snax-forge commit per result |
+| [X22](#x22-synthesis-of-a-forge-point) | A forge point synthesizes `<tag>_shell_wrapper`, hierarchy kept; csr, ctrl, datapath and glue columns |
+| [X23](#x23-power-of-a-forge-point) | A forge point's power: `forge_csr`, `csr_seq.sv`, window = COUNTER = snax-forge's cycles |
+| [X24](#x24-the-reference-task-n2048) | SYN1 compares one task of N = 2048 elements on both sides |
+| [X25](#x25-pt-is-the-reference-the-setup-check-is-a-diagnostic) | PT is the reference; the setup check is a diagnostic and never fails a point |
 
 ## Synthesis
 
@@ -97,7 +102,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Date:** 2026-10-29 (tolerance amended after `pwr_r1` the same day)
 - **Decision:** the PT setup check per technology is the forced-activity pair: `pt_power.tcl` and `dc_readback.tcl` with `PWR_MODE=uniform` (DC's default toggle rate and static probability annotated on every net but the clock), agreeing per power group within 0.1 %, except nangate15's combinational group within 2.5 %. PT is the reference tool for energy. P0 (PT with DC's defaults, propagated) against DC's `power.rpt` is not the check.
 - **Why:** with identical annotated activity PT and DC agree to 0.00 % in every group on nangate45; with default activity they differ by 2.4 % (register 35 %) because their vectorless propagation differs, which says nothing about the setup (PITFALLS PT2). nangate15's combinational gap (+1.95 %) is non-switching internal power, which PT and DC handle differently (PITFALLS PT5), not the setup; PT, the sign-off power tool that reads the simulated activity, is the one the results use.
-- **Status:** `pwr setup-check` implements it (`SETUP_TOL`, `SETUP_TOL_GROUP` in `sim/pwr.py`). Both technologies pass: nangate45 within 0.0013 %, nangate15 within 0.08 % and combinational +1.95 %.
+- **Status:** the tolerances are replaced by X25 (2026-11-01): the check is a diagnostic, `SETUP_TOL` and `SETUP_TOL_GROUP` are gone from `sim/pwr.py`. At the time both technologies passed: nangate45 within 0.0013 %, nangate15 within 0.08 % and combinational +1.95 %.
 - **Source:** `2026-10-29_pwr_step0.md` (P0 against DC), `2026-10-29_pwr_r1.md`.
 
 ### X11. Flop energy
@@ -124,7 +129,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 ### X14. tb.json is internal
 
 - **Date:** 2026-10-29
-- **Decision:** `tb.json`, the description the TB is built from, is internal to this repo. Producers are not changed: hls-exercises keeps writing `rtl/<point>/filelist.f` and `sizes.txt`; snax-forge keeps its bundle and `rtl.json`. One adapter per source builds `tb.json`: `sim/sources/hls.py`, from the point's Verilog ports and `params.json`; `sim/sources/forge.py`, later, at SYN1, from `rtl.json`. `tb.json` is written into each run folder at run time and committed with the point's reports in `power_reports/` (X20).
+- **Decision:** `tb.json`, the description the TB is built from, is internal to this repo. Producers are not changed: hls-exercises keeps writing `rtl/<point>/filelist.f` and `sizes.txt`; snax-forge keeps its bundle and `accelerator.json` (snax-forge C§17). One adapter per source builds `tb.json`: `sim/sources/hls.py`, from the point's Verilog ports and `params.json`; `sim/sources/forge.py` (SYN1 R2, X23), from the bundle's `accelerator.json`, `bundle.json`, `point.json` and the netlist's ports. `tb.json` is written into each run folder at run time and committed with the point's reports in `power_reports/` (X20).
 - **Why:** this repo is the data-collection side, and snax-forge must not need changes to be measured.
 - **Source:** agreed 2026-10-29, after `2026-10-29_pwr_step0.md`.
 
@@ -168,6 +173,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Decision:** the default stimulus is `rand64`: uniform full-range int64 from numpy `default_rng(seed)`, seed 0, drawn stream by stream in `tb.json` order, then the data pins (axpy's alpha). Every point runs 64 beats whatever W: loop_count = 64 (and len = 64 for dot and vsum), so n = 64 x W elements; matadd loop_count = 64. rowsum runs its cosim size m8_n64 as is. Every input stream bit must toggle at least once before the sim, enforced from 64 beats up; a task size with fewer beats (n64 at W = 32 is 2 beats, and a random bit stays 0 with probability 2^-beats) records the count of bits that never toggle in its `result.json` and runs (amended in `pwr_tasks`). Task runs (`--size all`) take every size in the point's `sizes.txt`, compared exactly with cosim's cycles. `--stim forge` (hls-exercises' `data.h` at a cosim size, with `sim/ref.py` asserted equal to its `EXP_*`) is for validation only. Expected cycles come from `results/hls/hls_cycles.csv`: cosim's two sizes of the point give cycles = a x loop_count + b, with a and b integers; at a cosim size the comparison is exact. A mismatch fails the point.
 - **Why:** full-range data toggles every bit, so the energy does not depend on how narrow a test's values are (forge's data cost 4.3 % less per busy cycle in step 0); 64 beats keeps every W's run the same work per beat. The cycle line checks the netlist against cosim at sizes cosim never ran.
 - **Source:** `2026-10-29_pwr_step0.md` (forge against full), `2026-10-29_pwr_r1.md`, `2026-10-29_pwr_tasks.md`.
+- **See also:** X24, SYN1's reference task n2048; this entry stays as it is.
 
 ### X20. Power results
 
@@ -183,3 +189,40 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
   No leakage columns (X13). `power_pt_modules.csv` (`point, tech, path, design, e_dyn_pj`) has one row per hierarchical cell of the default run. Committed per point in `power_reports/<tier>/<kernel>/<point>/`: `power.rpt`, `power_hierarchy.rpt`, `switching_activity.rpt`, `tb.json` (other runs of the point in a subfolder `<size>_<seed>/`). The checks (X9, X19) fail a point but are not stored as columns; tool versions go in the run note.
 - **Why:** the HWCOST model needs energy per cycle and per firing, split into combinational and flop energy, across the W sweeps; everything else is either a check or recoverable from the run folder.
 - **Source:** `2026-10-29_pwr_r1.md`.
+
+## SYN1: snax-forge
+
+### X21. The forge source
+
+- **Date:** 2026-11-01 (built in SYN1 R0 to R1b, 2026-10-31)
+- **Decision:** `forge/points.json` lists the forge points, one snax-forge recipe at one W each, named as hls-exercises names its points (`<tier>/<kernel>/<case>_w<W>`, e.g. `done/dot/forge3_w4`) so a forge row joins the HLS rows of the same kernel and W. `pixi run forge-rtl` (`forge/bundles.py`) runs snax-forge's sandbox, design and bundle tasks in the sibling checkout (`SNAX_FORGE`, default `../snax-forge`) through its own pixi, with this repo's `PIXI_*` and `CONDA_*` variables and `.pixi` PATH entries removed and the inner `CONDA_PREFIX` checked. Bundles go to `rtl/forge/<point>/`, which git ignores: a bundle is rebuilt from its commit. Each bundle's `point.json` records `snax_forge_commit` and `dirty`, and every forge row carries `recipe`, `W` and `snax_forge_commit`; a dirty bundle is refused. Every row of a result names one snax-forge commit: when the commit moves without an RTL change, all points are rebundled and their `rtl/sv/` and `rtl/files.f` diffed byte for byte before the rows are re-labelled.
+- **Why:** snax-forge must not change to be measured (X14), and a result must be traceable to exactly the RTL that was synthesized; rebundling and diffing proves a re-label instead of assuming it.
+- **Source:** `results/forge/runs/2026-10-31_syn1_r0.md`, `2026-10-31_syn1_r1b.md`, `b79c371` (all 48 points rebundled from snax-forge `32dbcc6`, SV identical, every row re-labelled).
+
+### X22. Synthesis of a forge point
+
+- **Date:** 2026-11-01 (built in SYN1 R0 and R1, 2026-10-31)
+- **Decision:** a forge point synthesizes the bundle's top `<tag>_shell_wrapper` (C§17's wrapper, `snax_forge_shell_wrapper`) with its hierarchy kept (`compile_ultra -no_autoungroup`), with the same libraries, clock, constraints and reports as HLS (X1 to X5). The source adapter sets `SYN_FORMAT` (`sverilog`), `SYN_CLK_PORT` (`clk_i`) and `SYN_RST_PORT` (`rst_ni`); the HLS defaults (`verilog`, `ap_clk`, `ap_rst_n`) are unchanged. Forge rows of `synth_dc.csv` add `csr_um2`, `ctrl_um2`, `datapath_um2` (the wrapper's three instances, children included, from `synth_dc_modules.csv`) and `glue_um2`, the total minus the three: the cells DC moves to the wrapper's own level. DC's boundary optimization is left on, so forge is compiled as HLS is.
+- **Why:** the comparison needs forge's control and datapath apart, which only a kept hierarchy gives; turning boundary optimization off would compile forge differently from HLS (and `-no_boundary_optimization` crashed DC, PITFALLS DC7). The glue is small: at most 0.08 % of the total on nangate45 and 0.06 % on nangate15 (0.5 to 2.1 µm² and 0.15 to 0.44 µm² over the 48 points); `syn.py` reports a glue below 0 or above 1 %.
+- **Source:** `results/forge/runs/2026-10-31_syn1_r0.md`, `2026-10-31_syn1_r1.md` (the glue share), `2026-10-31_syn1_r1b.md`.
+
+### X23. Power of a forge point
+
+- **Date:** 2026-11-01 (built in SYN1 R2, 2026-10-31)
+- **Decision:** `sim/sources/forge.py` builds `tb.json` with control kind `forge_csr` (X14) from the bundle and the netlist's ports, every port covered as C§17's wrapper has them; the container per port, the kernel and the expected cycles come from snax-forge's own code through `forge/query.py` in snax-forge's environment (`gen/rtl.py`'s `group_counter`). The TB's CSR sequencer `sim/tb/csr_seq.sv` writes JOBS (and a fold's JOB_BEATS), then START. The window opens at the falling edge before the edge that accepts START and closes one cycle before the first falling edge that samples `<group>_done_o` = 1; its cycles must equal the COUNTER the TB reads back and snax-forge's expected cycles, and every output must match `sim/ref.py` (itself checked against snax-forge's kernel body once per batch). Nets PT leaves unannotated that the SAIF has at Z for the whole window (constant outputs whose ports DC left floating) leave the annotation check's denominator (PITFALLS PT6); every other net is checked as for HLS (X9). Results in `results/forge/<tech>/` with X20's columns plus `recipe` and `snax_forge_commit`; `power_pt_modules.csv` gives csr, ctrl and datapath apart.
+- **Why:** the same flow as HLS (X7 to X13, X20), driven the way the cluster drives forge; three independent cycle counts (the TB's window, the RTL's COUNTER, snax-forge's model) agreeing is the check that the window is the task.
+- **Source:** `results/forge/runs/2026-10-31_syn1_r2.md`, `2026-11-01_syn1_r3.md`.
+
+### X24. The reference task n2048
+
+- **Date:** 2026-11-01
+- **Decision:** SYN1's comparisons use one task of N = 2048 elements on both sides, size `n2048`: 2048 / W beats per input stream (64 at W = 32), rand64 stimulus with seed 0 (X19's). The forge points have only this size; the HLS points of tier done (vecadd, vecmul, vsum, dot) have it beside cosim's sizes and `b64` (`sim/sources/hls.py` `EXTRA_SIZES`), its pins from `params.json`'s config at n = 2048 and its expected cycles from cosim's line through n64 and n512 (X19). The existing HLS results (64 beats, cosim sizes) are kept as extra data; X19 stays as it is. The joined table is `results/forge_vs_hls.md` (`pixi run table`).
+- **Why:** the same task on both sides makes e_run per task and per element comparable whatever W; 64 beats per W (X19) is a different task at each W. N = 2048 gives at least 64 beats at every W, so the toggle check applies everywhere.
+- **Source:** `results/forge/runs/2026-11-01_syn1_r3.md`, `results/hls/runs/2026-11-01_syn1_r3_hls.md`.
+
+### X25. PT is the reference; the setup check is a diagnostic
+
+- **Date:** 2026-11-01
+- **Decision:** replaces X10's tolerances. PT with simulated activity is the reference for energy. DC's power in `synth_dc.csv` (default activity) is an early check only, and matching the two is not a goal. The PT-against-DC setup check (`pwr setup-check`, X10's forced-activity pair) stays as a diagnostic, run when the flow or a library changes: it prints its per-group differences, which go into the run note, and it never fails a point; `SETUP_TOL` and `SETUP_TOL_GROUP` are removed from `sim/pwr.py`. The checks that catch real errors stay gates: the wire-load check (PITFALLS PT1: after `set_load 0` and `set_resistance 0` no net keeps a wire capacitance or resistance; it fails a run and the setup check) and the SAIF and annotation checks (X9).
+- **Why:** on nangate15 the two tools differ for library reasons, not setup ones (PITFALLS PT5), and the differences vary with the netlist. The record, from SYN1 R3: nangate45 within 0.02 % in every group; nangate15's register group -0.08 % on HLS `done/vecadd/opt_w8` and -0.25 % to -1.08 % on the three forge points (`vecadd/forge_w4` -0.55 %, `vsum/forge_w8` -0.25 %, `dot/forge5_w4` -1.08 %), combinational +1.79 % to +2.21 %, consistent with PT5. The register group is a small part of the forge points' energy: 1.3 %, 14.0 % and 2.6 % of e_dyn at n2048 on nangate15 (vecadd W = 4, vsum W = 8, dot 5 W = 4; 1.5 %, 14.8 %, 3.5 % on nangate45), so a -1 % gap there is at most 0.04 % of e_dyn.
+- **Source:** `results/hls/runs/2026-10-29_pwr_r1.md`, `results/forge/runs/2026-10-31_syn1_r2.md`, `2026-11-01_syn1_r3.md` (Step 2).
