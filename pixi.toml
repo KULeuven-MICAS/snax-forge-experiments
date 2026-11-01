@@ -6,9 +6,11 @@ platforms = ["linux-64"]
 [dependencies]
 python = "3.11.*"
 numpy = ">=1.26,<2"
+matplotlib = ">=3.11.2,<4"
 
 [tasks]
 syn = "python syn/syn.py"
 pwr = "python sim/pwr.py"
 forge-rtl = "python forge/bundles.py"
 table = "python report/forge_vs_hls.py"
+analysis = "python report/analysis_syn1.py"
