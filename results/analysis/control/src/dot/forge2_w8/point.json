@@ -1,0 +1,12 @@
+{
+ "point": "done/dot/forge2_w8",
+ "snax_forge_commit": "32dbcc6112eccb8a4943029a61a99220ec206f88",
+ "dirty": false,
+ "files": [
+  "snax_forge_csr.sv",
+  "snax_forge_ctrl.sv",
+  "snax_forge_dot_ctrl.sv",
+  "snax_forge_shell_wrapper.sv"
+ ],
+ "from": "rtl/forge/done/dot/forge2_w8/rtl/sv/ (forge/bundles.py), copied unchanged as a reading aid (docs/DECISIONS.md X26)"
+}
