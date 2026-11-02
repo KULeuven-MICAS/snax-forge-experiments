@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 15:56:11 2026
+Date   : Mon Nov  2 18:30:25 2026
 ****************************************
 
 
@@ -31,19 +31,19 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-snax_forge_shell_wrapper               1.42e+03 2.50e+03 7.29e+05 4.64e+03 100.0
-  dp (snax_forge_datapath)             1.42e+03 2.24e+03 6.34e+05 4.29e+03  92.4
-    bufs_0_4 (snax_forge_tmp0)            0.154  184.480 3.03e+04  214.962   4.6
-      m (LinkBuffer_i64_n4_d1)            0.154  184.480 3.03e+04  214.962   4.6
-    blocks_1_4 (snax_forge_sum)           0.411   46.280 2.71e+04   73.833   1.6
-      m (TreeAccumulate_i64_i64_n4)       0.411   46.280 2.71e+04   73.833   1.6
-    blocks_0_4 (snax_forge_mul)        1.42e+03 2.01e+03 5.77e+05 4.00e+03  86.1
-      m (ElementwiseLanes_i64xi64_i64_i64_n4_mul) 1.42e+03 2.01e+03 5.77e+05 4.00e+03  86.1
-        alus_3 (ElementwiseAlu_w64_mul_0)  354.067  500.818 1.44e+05  999.101  21.5
-        alus_2 (ElementwiseAlu_w64_mul_1)  354.347  501.084 1.44e+05  999.656  21.5
-        alus_1 (ElementwiseAlu_w64_mul_2)  354.397  501.255 1.44e+05  999.900  21.5
-        alus_0 (ElementwiseAlu_w64_mul_3)  355.307  502.428 1.44e+05 1.00e+03  21.6
-  ctrl (snax_forge_ctrl)                  0.137  164.951 7.65e+04  241.559   5.2
-    ctrl (snax_forge_dot_ctrl)            0.137  164.951 7.65e+04  241.559   5.2
-  csr (snax_forge_csr)                    0.932   94.517 1.79e+04  113.299   2.4
+snax_forge_shell_wrapper               1.42e+03 2.47e+03 6.96e+05 4.58e+03 100.0
+  dp (snax_forge_datapath)             1.42e+03 2.24e+03 6.34e+05 4.29e+03  93.5
+    bufs_0_4 (snax_forge_tmp0)            0.000  183.589 2.98e+04  213.395   4.7
+      m (LinkBuffer_i64_n4_d1)            0.000  183.589 2.98e+04  213.395   4.7
+    blocks_1_4 (snax_forge_sum)           0.133   45.891 2.71e+04   73.146   1.6
+      m (TreeAccumulate_i64_i64_n4)       0.133   45.891 2.71e+04   73.146   1.6
+    blocks_0_4 (snax_forge_mul)        1.42e+03 2.01e+03 5.77e+05 4.00e+03  87.3
+      m (ElementwiseLanes_i64xi64_i64_i64_n4_mul) 1.42e+03 2.01e+03 5.77e+05 4.00e+03  87.3
+        alus_3 (ElementwiseAlu_w64_mul_0)  353.987  500.798 1.44e+05  999.002  21.8
+        alus_2 (ElementwiseAlu_w64_mul_1)  354.560  501.212 1.44e+05  999.998  21.8
+        alus_1 (ElementwiseAlu_w64_mul_2)  354.322  501.255 1.44e+05  999.825  21.8
+        alus_0 (ElementwiseAlu_w64_mul_3)  355.444  502.516 1.44e+05 1.00e+03  21.9
+  ctrl (snax_forge_ctrl)               8.69e-02  140.368 4.33e+04  183.709   4.0
+    ctrl (snax_forge_dot_ctrl)         8.69e-02  140.368 4.33e+04  183.709   4.0
+  csr (snax_forge_csr)                    0.582   93.485 1.85e+04  112.563   2.5
 1

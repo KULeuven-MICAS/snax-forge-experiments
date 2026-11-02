@@ -3,29 +3,29 @@
 Report : area
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 21:07:00 2026
+Date   : Mon Nov  2 19:12:01 2026
 ****************************************
 
 Library(s) Used:
 
     NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
 
-Number of ports:                         5020
-Number of nets:                         32994
-Number of cells:                        24207
-Number of combinational cells:          23292
-Number of sequential cells:               905
+Number of ports:                         4832
+Number of nets:                         32764
+Number of cells:                        24075
+Number of combinational cells:          23192
+Number of sequential cells:               873
 Number of macros/black boxes:               0
-Number of buf/inv:                       2874
+Number of buf/inv:                       2840
 Number of references:                       4
 
-Combinational area:              10059.104458
-Buf/Inv area:                      470.482954
-Noncombinational area:            1156.546520
+Combinational area:              10031.677642
+Buf/Inv area:                      464.879625
+Noncombinational area:            1115.652057
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                 11215.650978
+Total cell area:                 11147.329699
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,18 +36,18 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
                                   Total       Total    national    national   boxes   Design
 --------------------------------  ----------  -------  ----------  ---------  ------  ---------------------------
-snax_forge_shell_wrapper          11215.6510    100.0      0.2949     0.0000  0.0000  snax_forge_shell_wrapper
-csr                                 262.0293      2.3     97.1735   164.8558  0.0000  snax_forge_csr
-ctrl                                522.6824      4.7      0.0000     0.0000  0.0000  snax_forge_ctrl
-ctrl/ctrl                           522.6824      4.7    267.0920   255.5904  0.0000  snax_forge_dot_ctrl
-dp                                10430.6444     93.0      0.0000     0.0000  0.0000  snax_forge_datapath
-dp/blocks_0_4                      9692.0373     86.4      0.0000     0.0000  0.0000  snax_forge_mac
-dp/blocks_0_4/m                    9692.0373     86.4   9364.8816   327.1557  0.0000  Mac_i64xi64_i64_i64_n4_acc
+snax_forge_shell_wrapper          11147.3297    100.0      0.1475     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                 273.3834      2.5    107.2497   166.1338  0.0000  snax_forge_csr
+ctrl                                443.7934      4.0      0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                           443.7934      4.0    230.3754   213.4180  0.0000  snax_forge_dot_ctrl
+dp                                10430.0054     93.6      0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                      9691.3983     86.9      0.0000     0.0000  0.0000  snax_forge_mac
+dp/blocks_0_4/m                    9691.3983     86.9   9364.2426   327.1557  0.0000  Mac_i64xi64_i64_i64_n4_acc
 dp/blocks_1_4                       282.4765      2.5      0.0000     0.0000  0.0000  snax_forge_sum
 dp/blocks_1_4/m                     282.4765      2.5    200.6876    81.7889  0.0000  SerialAccumulate_i64_i64_n4
 dp/bufs_0_4                         456.1305      4.1      0.0000     0.0000  0.0000  snax_forge_out_partial
 dp/bufs_0_4/m                       456.1305      4.1    128.9748   327.1557  0.0000  LinkBuffer_i64_n4_d1
 --------------------------------  ----------  -------  ----------  ---------  ------  ---------------------------
-Total                                                  10059.1045  1156.5465  0.0000
+Total                                                  10031.6776  1115.6521  0.0000
 
 1

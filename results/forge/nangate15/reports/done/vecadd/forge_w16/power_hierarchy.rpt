@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 17:21:36 2026
+Date   : Mon Nov  2 19:12:59 2026
 ****************************************
 
 
@@ -31,27 +31,27 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-snax_forge_shell_wrapper                  0.150 7.72e-02 4.54e+07    0.273 100.0
-  dp (snax_forge_datapath)                0.150 3.97e-02 3.01e+07    0.220  80.6
-    blocks_0_4 (snax_forge_acc)           0.150 3.97e-02 3.01e+07    0.220  80.6
-      m (ElementwiseLanes_i64xi64_i64_i64_n16_add)    0.150 3.97e-02 3.01e+07    0.220  80.6
-        alus_15 (ElementwiseAlu_w64_add_0) 9.40e-03 2.48e-03 1.88e+06 1.38e-02   5.0
-        alus_14 (ElementwiseAlu_w64_add_1) 9.42e-03 2.49e-03 1.88e+06 1.38e-02   5.1
-        alus_13 (ElementwiseAlu_w64_add_2) 9.41e-03 2.48e-03 1.88e+06 1.38e-02   5.0
-        alus_12 (ElementwiseAlu_w64_add_3) 9.40e-03 2.48e-03 1.88e+06 1.38e-02   5.0
-        alus_11 (ElementwiseAlu_w64_add_4) 9.38e-03 2.48e-03 1.88e+06 1.37e-02   5.0
-        alus_10 (ElementwiseAlu_w64_add_5) 9.37e-03 2.47e-03 1.88e+06 1.37e-02   5.0
-        alus_9 (ElementwiseAlu_w64_add_6) 9.40e-03 2.48e-03 1.88e+06 1.38e-02   5.0
-        alus_8 (ElementwiseAlu_w64_add_7) 9.37e-03 2.47e-03 1.88e+06 1.37e-02   5.0
-        alus_7 (ElementwiseAlu_w64_add_8) 9.36e-03 2.47e-03 1.88e+06 1.37e-02   5.0
-        alus_6 (ElementwiseAlu_w64_add_9) 9.43e-03 2.49e-03 1.88e+06 1.38e-02   5.1
-        alus_5 (ElementwiseAlu_w64_add_10) 9.36e-03 2.47e-03 1.88e+06 1.37e-02   5.0
-        alus_4 (ElementwiseAlu_w64_add_11) 9.38e-03 2.47e-03 1.88e+06 1.37e-02   5.0
-        alus_3 (ElementwiseAlu_w64_add_12) 9.41e-03 2.48e-03 1.88e+06 1.38e-02   5.0
-        alus_2 (ElementwiseAlu_w64_add_13) 9.39e-03 2.48e-03 1.88e+06 1.38e-02   5.0
-        alus_1 (ElementwiseAlu_w64_add_14) 9.42e-03 2.48e-03 1.88e+06 1.38e-02   5.0
-        alus_0 (ElementwiseAlu_w64_add_15) 9.39e-03 2.48e-03 1.88e+06 1.38e-02   5.0
-  ctrl (snax_forge_ctrl)                  0.000 1.89e-02 9.31e+06 2.82e-02  10.3
-    ctrl (snax_forge_acc_ctrl)            0.000 1.89e-02 9.31e+06 2.82e-02  10.3
-  csr (snax_forge_csr)                 1.73e-04 1.86e-02 5.97e+06 2.48e-02   9.1
+snax_forge_shell_wrapper                  0.150 7.10e-02 4.32e+07    0.265 100.0
+  dp (snax_forge_datapath)                0.150 3.97e-02 3.01e+07    0.220  83.1
+    blocks_0_4 (snax_forge_acc)           0.150 3.97e-02 3.01e+07    0.220  83.1
+      m (ElementwiseLanes_i64xi64_i64_i64_n16_add)    0.150 3.97e-02 3.01e+07    0.220  83.1
+        alus_15 (ElementwiseAlu_w64_add_0) 9.40e-03 2.48e-03 1.88e+06 1.38e-02   5.2
+        alus_14 (ElementwiseAlu_w64_add_1) 9.42e-03 2.49e-03 1.88e+06 1.38e-02   5.2
+        alus_13 (ElementwiseAlu_w64_add_2) 9.41e-03 2.48e-03 1.88e+06 1.38e-02   5.2
+        alus_12 (ElementwiseAlu_w64_add_3) 9.40e-03 2.48e-03 1.88e+06 1.38e-02   5.2
+        alus_11 (ElementwiseAlu_w64_add_4) 9.38e-03 2.48e-03 1.88e+06 1.37e-02   5.2
+        alus_10 (ElementwiseAlu_w64_add_5) 9.37e-03 2.47e-03 1.88e+06 1.37e-02   5.2
+        alus_9 (ElementwiseAlu_w64_add_6) 9.40e-03 2.48e-03 1.88e+06 1.38e-02   5.2
+        alus_8 (ElementwiseAlu_w64_add_7) 9.37e-03 2.47e-03 1.88e+06 1.37e-02   5.2
+        alus_7 (ElementwiseAlu_w64_add_8) 9.36e-03 2.47e-03 1.88e+06 1.37e-02   5.2
+        alus_6 (ElementwiseAlu_w64_add_9) 9.43e-03 2.49e-03 1.88e+06 1.38e-02   5.2
+        alus_5 (ElementwiseAlu_w64_add_10) 9.36e-03 2.47e-03 1.88e+06 1.37e-02   5.2
+        alus_4 (ElementwiseAlu_w64_add_11) 9.38e-03 2.47e-03 1.88e+06 1.37e-02   5.2
+        alus_3 (ElementwiseAlu_w64_add_12) 9.41e-03 2.48e-03 1.88e+06 1.38e-02   5.2
+        alus_2 (ElementwiseAlu_w64_add_13) 9.39e-03 2.48e-03 1.88e+06 1.38e-02   5.2
+        alus_1 (ElementwiseAlu_w64_add_14) 9.42e-03 2.48e-03 1.88e+06 1.38e-02   5.2
+        alus_0 (ElementwiseAlu_w64_add_15) 9.39e-03 2.48e-03 1.88e+06 1.38e-02   5.2
+  ctrl (snax_forge_ctrl)                  0.000 1.26e-02 6.85e+06 1.94e-02   7.3
+    ctrl (snax_forge_acc_ctrl)            0.000 1.26e-02 6.85e+06 1.94e-02   7.3
+  csr (snax_forge_csr)                 1.73e-04 1.88e-02 6.23e+06 2.52e-02   9.5
 1

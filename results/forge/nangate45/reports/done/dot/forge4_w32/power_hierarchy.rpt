@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:21:29 2026
+Date   : Mon Nov  2 18:48:59 2026
 ****************************************
 
 
@@ -32,12 +32,12 @@ Power-specific unit information :
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
 snax_forge_shell_wrapper               1.22e+04 1.82e+04 5.00e+06 3.54e+04 100.0
-  dp (snax_forge_datapath)             1.22e+04 1.80e+04 4.95e+06 3.51e+04  99.2
-    blocks_1_4 (snax_forge_sum)           0.832   47.355 1.03e+05  150.813   0.4
-      m (TreeAccumulate_i64_i64_n32)      0.832   47.355 1.03e+05  150.813   0.4
-    blocks_0_4 (snax_forge_mac)        1.22e+04 1.79e+04 4.85e+06 3.50e+04  98.7
-      m (Mac_i64xi64_i64_i64_n32_acc)  1.22e+04 1.79e+04 4.85e+06 3.50e+04  98.7
-  ctrl (snax_forge_ctrl)               8.92e-02  141.270 3.81e+04  179.427   0.5
-    ctrl (snax_forge_dot_ctrl)         8.92e-02  141.270 3.81e+04  179.427   0.5
-  csr (snax_forge_csr)                    1.478   92.999 1.92e+04  113.635   0.3
+  dp (snax_forge_datapath)             1.22e+04 1.80e+04 4.95e+06 3.51e+04  99.3
+    blocks_1_4 (snax_forge_sum)           0.649   47.034 1.03e+05  150.488   0.4
+      m (TreeAccumulate_i64_i64_n32)      0.649   47.034 1.03e+05  150.488   0.4
+    blocks_0_4 (snax_forge_mac)        1.22e+04 1.79e+04 4.85e+06 3.50e+04  98.8
+      m (Mac_i64xi64_i64_i64_n32_acc)  1.22e+04 1.79e+04 4.85e+06 3.50e+04  98.8
+  ctrl (snax_forge_ctrl)               5.06e-02  117.598 3.24e+04  150.084   0.4
+    ctrl (snax_forge_dot_ctrl)         5.06e-02  117.598 3.24e+04  150.084   0.4
+  csr (snax_forge_csr)                    0.556   93.491 1.85e+04  112.545   0.3
 1

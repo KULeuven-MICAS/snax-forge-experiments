@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 17:20:27 2026
+Date   : Mon Nov  2 19:11:53 2026
 ****************************************
 
 
@@ -31,12 +31,12 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-snax_forge_shell_wrapper               9.57e-03 4.00e-02 1.72e+07 6.67e-02 100.0
-  dp (snax_forge_datapath)             9.40e-03 2.48e-03 1.88e+06 1.38e-02  20.6
-    blocks_0_4 (snax_forge_acc)        9.40e-03 2.48e-03 1.88e+06 1.38e-02  20.6
-      m (ElementwiseLanes_i64xi64_i64_i64_n1_add) 9.40e-03 2.48e-03 1.88e+06 1.38e-02  20.6
-        alus_0 (ElementwiseAlu_w64_add) 9.40e-03 2.48e-03 1.88e+06 1.38e-02  20.6
-  ctrl (snax_forge_ctrl)                  0.000 1.89e-02 9.31e+06 2.82e-02  42.2
-    ctrl (snax_forge_acc_ctrl)            0.000 1.89e-02 9.31e+06 2.82e-02  42.2
-  csr (snax_forge_csr)                 1.73e-04 1.86e-02 5.97e+06 2.48e-02  37.1
+snax_forge_shell_wrapper               9.57e-03 3.38e-02 1.50e+07 5.84e-02 100.0
+  dp (snax_forge_datapath)             9.40e-03 2.48e-03 1.88e+06 1.38e-02  23.6
+    blocks_0_4 (snax_forge_acc)        9.40e-03 2.48e-03 1.88e+06 1.38e-02  23.6
+      m (ElementwiseLanes_i64xi64_i64_i64_n1_add) 9.40e-03 2.48e-03 1.88e+06 1.38e-02  23.6
+        alus_0 (ElementwiseAlu_w64_add) 9.40e-03 2.48e-03 1.88e+06 1.38e-02  23.6
+  ctrl (snax_forge_ctrl)                  0.000 1.26e-02 6.85e+06 1.94e-02  33.3
+    ctrl (snax_forge_acc_ctrl)            0.000 1.26e-02 6.85e+06 1.94e-02  33.3
+  csr (snax_forge_csr)                 1.70e-04 1.88e-02 6.23e+06 2.52e-02  43.1
 1

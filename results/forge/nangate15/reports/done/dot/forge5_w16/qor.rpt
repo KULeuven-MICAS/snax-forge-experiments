@@ -5,57 +5,57 @@ Warning: Design 'snax_forge_shell_wrapper' contains 2 high-fanout nets. A fanout
 Report : qor
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 21:12:44 2026
+Date   : Mon Nov  2 19:10:38 2026
 ****************************************
 
 
   Timing Path Group 'clk'
   -----------------------------------
   Levels of Logic:          101.00000
-  Critical Path Length:     848.62390
-  Critical Path Slack:     9042.70215
+  Critical Path Length:     849.69476
+  Critical Path Slack:     9041.60547
   Critical Path Clk Period:
                           10000.00000
   Total Negative Slack:       0.00000
   No. of Violating Paths:     0.00000
-  Worst Hold Violation:     -19.79586
-  Total Hold Violation:   -9370.18750
-  No. of Hold Violations:  1355.00000
+  Worst Hold Violation:     -19.79924
+  Total Hold Violation:   -9012.62402
+  No. of Hold Violations:  1322.00000
   -----------------------------------
 
 
   Cell Count
   -----------------------------------
   Hierarchical Cell Count:          8
-  Hierarchical Port Count:      10990
-  Leaf Cell Count:              83160
-  Buf/Inv Cell Count:            8682
-  Buf Cell Count:                1930
-  Inv Cell Count:                6752
+  Hierarchical Port Count:      10802
+  Leaf Cell Count:              83031
+  Buf/Inv Cell Count:            8650
+  Buf Cell Count:                1922
+  Inv Cell Count:                6728
   CT Buf/Inv Cell Count:            0
-  Combinational Cell Count:     81742
-  Sequential Cell Count:         1418
+  Combinational Cell Count:     81645
+  Sequential Cell Count:         1386
   Macro Count:                      0
   -----------------------------------
 
 
   Area
   -----------------------------------
-  Combinational Area:     37608.85016
-  Noncombinational Area:   1812.13587
-  Buf/Inv Area:            1469.93974
-  Total Buffer Area:        474.31679
-  Total Inverter Area:      995.62295
+  Combinational Area:     37581.71826
+  Noncombinational Area:   1771.24141
+  Buf/Inv Area:            1464.43471
+  Total Buffer Area:        472.35071
+  Total Inverter Area:      992.08400
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:              39420.98603
-  Design Area:            39420.98603
+  Cell Area:              39352.95967
+  Design Area:            39352.95967
 
 
   Design Rules
   -----------------------------------
-  Total Number of Nets:        101168
+  Total Number of Nets:        101009
   Nets With Violations:             0
   Max Trans Violations:             0
   Max Cap Violations:               0
@@ -66,19 +66,19 @@ Date   : Sat Oct 31 21:12:44 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                20.11499
-  Logic Optimization:              43.09314
-  Mapping Optimization:            118.87622
+  Resource Sharing:                20.18115
+  Logic Optimization:              41.81454
+  Mapping Optimization:            122.98877
   -----------------------------------------
-  Overall Compile Time:            546.78235
-  Overall Compile Wall Clock Time: 452.72910
+  Overall Compile Time:            545.44690
+  Overall Compile Wall Clock Time: 451.37219
 
   --------------------------------------------------------------------
 
   Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
 
 
-  Design (Hold)  WNS: 19.79586  TNS: 9370.18750  Number of Violating Paths: 1355
+  Design (Hold)  WNS: 19.79924  TNS: 9012.62402  Number of Violating Paths: 1322
 
   --------------------------------------------------------------------
 

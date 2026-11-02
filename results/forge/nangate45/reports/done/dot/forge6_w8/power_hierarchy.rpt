@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 20:53:09 2026
+Date   : Mon Nov  2 18:46:00 2026
 ****************************************
 
 
@@ -31,15 +31,15 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-snax_forge_shell_wrapper               3.05e+03 5.14e+03 1.35e+06 9.53e+03 100.0
-  dp (snax_forge_datapath)             3.05e+03 4.90e+03 1.29e+06 9.23e+03  96.9
-    bufs_0_4 (snax_forge_out_partial)     0.000  367.167 5.49e+04  422.031   4.4
-      m (LinkBuffer_i64_n8_d1)            0.000  367.167 5.49e+04  422.031   4.4
-    blocks_1_4 (snax_forge_sum)           0.111   45.939 2.27e+04   68.762   0.7
-      m (SerialAccumulate_i64_i64_n8)     0.111   45.939 2.27e+04   68.762   0.7
-    blocks_0_4 (snax_forge_mac)        3.04e+03 4.48e+03 1.21e+06 8.74e+03  91.7
-      m (Mac_i64xi64_i64_i64_n8_acc)   3.04e+03 4.48e+03 1.21e+06 8.74e+03  91.7
-  ctrl (snax_forge_ctrl)                  0.124  144.175 3.96e+04  183.936   1.9
-    ctrl (snax_forge_dot_ctrl)            0.124  144.175 3.96e+04  183.936   1.9
-  csr (snax_forge_csr)                    0.915   93.976 1.83e+04  113.190   1.2
+snax_forge_shell_wrapper               3.04e+03 5.11e+03 1.34e+06 9.49e+03 100.0
+  dp (snax_forge_datapath)             3.04e+03 4.89e+03 1.29e+06 9.23e+03  97.2
+    bufs_0_4 (snax_forge_out_partial)     0.000  367.167 5.49e+04  422.053   4.4
+      m (LinkBuffer_i64_n8_d1)            0.000  367.167 5.49e+04  422.053   4.4
+    blocks_1_4 (snax_forge_sum)        6.08e-02   45.774 2.27e+04   68.542   0.7
+      m (SerialAccumulate_i64_i64_n8)  6.08e-02   45.774 2.27e+04   68.542   0.7
+    blocks_0_4 (snax_forge_mac)        3.04e+03 4.48e+03 1.21e+06 8.74e+03  92.0
+      m (Mac_i64xi64_i64_i64_n8_acc)   3.04e+03 4.48e+03 1.21e+06 8.74e+03  92.0
+  ctrl (snax_forge_ctrl)               6.22e-02  120.430 3.40e+04  154.530   1.6
+    ctrl (snax_forge_dot_ctrl)         6.22e-02  120.430 3.40e+04  154.530   1.6
+  csr (snax_forge_csr)                    0.548   93.464 1.84e+04  112.424   1.2
 1

@@ -4,7 +4,7 @@ Information: Updating design information... (UID-85)
 Report : qor
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 20:43:09 2026
+Date   : Mon Nov  2 19:03:29 2026
 ****************************************
 
 
@@ -17,44 +17,44 @@ Date   : Sat Oct 31 20:43:09 2026
                           10000.00000
   Total Negative Slack:       0.00000
   No. of Violating Paths:     0.00000
-  Worst Hold Violation:     -19.80192
-  Total Hold Violation:   -3283.94409
-  No. of Hold Violations:   451.00000
+  Worst Hold Violation:     -19.79924
+  Total Hold Violation:   -2953.17407
+  No. of Hold Violations:   419.00000
   -----------------------------------
 
 
   Cell Count
   -----------------------------------
   Hierarchical Cell Count:          8
-  Hierarchical Port Count:       1370
-  Leaf Cell Count:               7153
-  Buf/Inv Cell Count:             982
-  Buf Cell Count:                 123
-  Inv Cell Count:                 859
+  Hierarchical Port Count:       1182
+  Leaf Cell Count:               7015
+  Buf/Inv Cell Count:             941
+  Buf Cell Count:                 124
+  Inv Cell Count:                 817
   CT Buf/Inv Cell Count:            0
-  Combinational Cell Count:      6699
-  Sequential Cell Count:          454
+  Combinational Cell Count:      6593
+  Sequential Cell Count:          422
   Macro Count:                      0
   -----------------------------------
 
 
   Area
   -----------------------------------
-  Combinational Area:      2734.47327
-  Noncombinational Area:    580.19019
-  Buf/Inv Area:             156.89319
-  Total Buffer Area:         30.22848
-  Total Inverter Area:      126.66471
+  Combinational Area:      2708.47186
+  Noncombinational Area:    539.29573
+  Buf/Inv Area:             150.94580
+  Total Buffer Area:         30.47424
+  Total Inverter Area:      120.47156
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:               3314.66346
-  Design Area:             3314.66346
+  Cell Area:               3247.76759
+  Design Area:             3247.76759
 
 
   Design Rules
   -----------------------------------
-  Total Number of Nets:          8377
+  Total Number of Nets:          8209
   Nets With Violations:             0
   Max Trans Violations:             0
   Max Cap Violations:               0
@@ -65,19 +65,19 @@ Date   : Sat Oct 31 20:43:09 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 1.34778
-  Logic Optimization:              11.48951
-  Mapping Optimization:            32.16724
+  Resource Sharing:                 1.69949
+  Logic Optimization:               2.85783
+  Mapping Optimization:             8.20926
   -----------------------------------------
-  Overall Compile Time:            87.21035
-  Overall Compile Wall Clock Time: 27.32871
+  Overall Compile Time:            36.14093
+  Overall Compile Wall Clock Time: 29.15168
 
   --------------------------------------------------------------------
 
   Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
 
 
-  Design (Hold)  WNS: 19.80192  TNS: 3283.94409  Number of Violating Paths: 451
+  Design (Hold)  WNS: 19.79924  TNS: 2953.17407  Number of Violating Paths: 419
 
   --------------------------------------------------------------------
 

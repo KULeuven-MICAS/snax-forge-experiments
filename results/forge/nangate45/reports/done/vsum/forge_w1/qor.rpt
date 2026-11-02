@@ -4,7 +4,7 @@ Information: Updating design information... (UID-85)
 Report : qor
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:38:11 2026
+Date   : Mon Nov  2 18:49:19 2026
 ****************************************
 
 
@@ -25,51 +25,51 @@ Date   : Sat Oct 31 16:38:11 2026
   Cell Count
   -----------------------------------
   Hierarchical Cell Count:          6
-  Hierarchical Port Count:        909
-  Leaf Cell Count:               1795
-  Buf/Inv Cell Count:             241
-  Buf Cell Count:                  31
-  Inv Cell Count:                 210
+  Hierarchical Port Count:        721
+  Leaf Cell Count:               1759
+  Buf/Inv Cell Count:             274
+  Buf Cell Count:                  11
+  Inv Cell Count:                 263
   CT Buf/Inv Cell Count:            0
-  Combinational Cell Count:      1438
-  Sequential Cell Count:          357
+  Combinational Cell Count:      1434
+  Sequential Cell Count:          325
   Macro Count:                      0
   -----------------------------------
 
 
   Area
   -----------------------------------
-  Combinational Area:      1564.61201
-  Noncombinational Area:   1900.57006
-  Buf/Inv Area:             136.99000
-  Total Buffer Area:         24.73800
-  Total Inverter Area:      112.25200
+  Combinational Area:      1514.33801
+  Noncombinational Area:   1729.00006
+  Buf/Inv Area:             148.96000
+  Total Buffer Area:          8.77800
+  Total Inverter Area:      140.18200
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:               3465.18207
-  Design Area:             3465.18207
+  Cell Area:               3243.33807
+  Design Area:             3243.33807
 
 
   Design Rules
   -----------------------------------
-  Total Number of Nets:          2196
+  Total Number of Nets:          2031
   Nets With Violations:             0
   Max Trans Violations:             0
   Max Cap Violations:               0
   -----------------------------------
 
 
-  Hostname: barnard3.esat.kuleuven.be
+  Hostname: micas-lapserv1.esat.kuleuven.be
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 0.36371
-  Logic Optimization:               0.57978
-  Mapping Optimization:             2.56659
+  Resource Sharing:                 0.36646
+  Logic Optimization:               0.46530
+  Mapping Optimization:             2.38223
   -----------------------------------------
-  Overall Compile Time:             9.86196
-  Overall Compile Wall Clock Time:  8.41045
+  Overall Compile Time:             9.20355
+  Overall Compile Wall Clock Time:  8.12752
 
   --------------------------------------------------------------------
 

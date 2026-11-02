@@ -3,7 +3,7 @@
 Report : reference
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 21:08:48 2026
+Date   : Mon Nov  2 19:11:42 2026
 ****************************************
 
 Attributes:
@@ -19,10 +19,10 @@ Attributes:
 
 Reference          Library       Unit Area   Count    Total Area   Attributes
 -----------------------------------------------------------------------------
-INV_X1             NanGate_15nm_OCL     0.147456       2     0.294912
-snax_forge_csr                  262.029307       1    262.029307  h, n
-snax_forge_ctrl                 523.075579       1    523.075579  h, n
-snax_forge_datapath           19768.738162       1  19768.738162  h, n
+INV_X1             NanGate_15nm_OCL     0.147456       1     0.147456
+snax_forge_csr                  273.383419       1    273.383419  h, n
+snax_forge_ctrl                 444.383228       1    444.383228  h, n
+snax_forge_datapath           19769.327986       1  19769.327986  h, n
 -----------------------------------------------------------------------------
-Total 4 references                                  20554.137960
+Total 4 references                                  20487.242089
 1
