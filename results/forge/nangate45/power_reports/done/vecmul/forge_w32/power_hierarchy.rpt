@@ -5,7 +5,7 @@ Report : Averaged Power
 	-nosplit
 Design : snax_forge_shell_wrapper
 Version: W-2024.09-SP5
-Date   : Sun Nov  1 10:27:45 2026
+Date   : Mon Nov  2 19:34:15 2026
 ****************************************
 
 
@@ -13,43 +13,43 @@ Date   : Sun Nov  1 10:27:45 2026
                                       Int                       Switch                    Leak                      Total
 Hierarchy                             Power                     Power                     Power                     Power                     %
 ------------------------------------------------------------------------------------------------------------------------------------------------------
-snax_forge_shell_wrapper              1.810433e-02              1.818370e-02              4.647491e-03              4.093552e-02              100.0
-  ctrl (snax_forge_ctrl)              7.517249e-05              5.813467e-06              1.974962e-05              1.007356e-04                0.2
-    ctrl (snax_forge_acc_ctrl)        7.517249e-05              5.813467e-06              1.974962e-05              1.007356e-04                0.2
-  dp (snax_forge_datapath)            1.795957e-02              1.817755e-02              4.614313e-03              4.075144e-02               99.6
-    blocks_0_4 (snax_forge_acc)       1.795957e-02              1.817755e-02              4.614313e-03              4.075144e-02               99.6
-      m (ElementwiseLanes_i64xi64_i64_i64_n32_mul) 1.795957e-02        1.817755e-02        4.614313e-03             4.075144e-02               99.6
-        alus_10 (ElementwiseAlu_w64_mul_21) 5.564839e-04        5.643957e-04              1.445055e-04              1.265385e-03                3.1
-        alus_11 (ElementwiseAlu_w64_mul_20) 5.574403e-04        5.602211e-04              1.442354e-04              1.261897e-03                3.1
-        alus_12 (ElementwiseAlu_w64_mul_19) 5.633592e-04        5.711534e-04              1.443822e-04              1.278895e-03                3.1
-        alus_13 (ElementwiseAlu_w64_mul_18) 5.573419e-04        5.634214e-04              1.443033e-04              1.265067e-03                3.1
-        alus_14 (ElementwiseAlu_w64_mul_17) 5.632485e-04        5.724183e-04              1.442043e-04              1.279871e-03                3.1
-        alus_15 (ElementwiseAlu_w64_mul_16) 5.567916e-04        5.681024e-04              1.447127e-04              1.269607e-03                3.1
-        alus_16 (ElementwiseAlu_w64_mul_15) 5.609032e-04        5.650016e-04              1.444170e-04              1.270322e-03                3.1
-        alus_17 (ElementwiseAlu_w64_mul_14) 5.583384e-04        5.640028e-04              1.436087e-04              1.265950e-03                3.1
-        alus_20 (ElementwiseAlu_w64_mul_11) 5.608122e-04        5.692400e-04              1.440950e-04              1.274147e-03                3.1
-        alus_18 (ElementwiseAlu_w64_mul_13) 5.593452e-04        5.680370e-04              1.440416e-04              1.271424e-03                3.1
-        alus_0 (ElementwiseAlu_w64_mul_31) 5.576071e-04         5.669329e-04              1.439472e-04              1.268487e-03                3.1
-        alus_21 (ElementwiseAlu_w64_mul_10) 5.618264e-04        5.655382e-04              1.444715e-04              1.271836e-03                3.1
-        alus_19 (ElementwiseAlu_w64_mul_12) 5.641241e-04        5.696853e-04              1.445946e-04              1.278404e-03                3.1
-        alus_1 (ElementwiseAlu_w64_mul_30) 5.581380e-04         5.685759e-04              1.443105e-04              1.271024e-03                3.1
-        alus_22 (ElementwiseAlu_w64_mul_9) 5.630553e-04         5.728560e-04              1.437046e-04              1.279616e-03                3.1
-        alus_2 (ElementwiseAlu_w64_mul_29) 5.705715e-04         5.759826e-04              1.444108e-04              1.290965e-03                3.2
-        alus_23 (ElementwiseAlu_w64_mul_8) 5.636502e-04         5.688328e-04              1.445045e-04              1.276987e-03                3.1
-        alus_3 (ElementwiseAlu_w64_mul_28) 5.592919e-04         5.703738e-04              1.436937e-04              1.273359e-03                3.1
-        alus_24 (ElementwiseAlu_w64_mul_7) 5.550107e-04         5.635790e-04              1.437529e-04              1.262343e-03                3.1
-        alus_4 (ElementwiseAlu_w64_mul_27) 5.652369e-04         5.732665e-04              1.439179e-04              1.282421e-03                3.1
-        alus_25 (ElementwiseAlu_w64_mul_6) 5.670447e-04         5.710819e-04              1.443599e-04              1.282486e-03                3.1
-        alus_5 (ElementwiseAlu_w64_mul_26) 5.576645e-04         5.625485e-04              1.438452e-04              1.264058e-03                3.1
-        alus_26 (ElementwiseAlu_w64_mul_5) 5.621176e-04         5.655370e-04              1.440794e-04              1.271734e-03                3.1
-        alus_6 (ElementwiseAlu_w64_mul_25) 5.577981e-04         5.630984e-04              1.445619e-04              1.265458e-03                3.1
-        alus_27 (ElementwiseAlu_w64_mul_4) 5.622655e-04         5.681452e-04              1.441008e-04              1.274511e-03                3.1
-        alus_7 (ElementwiseAlu_w64_mul_24) 5.572496e-04         5.664564e-04              1.444128e-04              1.268119e-03                3.1
-        alus_30 (ElementwiseAlu_w64_mul_1) 5.676459e-04         5.740770e-04              1.437119e-04              1.285435e-03                3.1
-        alus_28 (ElementwiseAlu_w64_mul_3) 5.612057e-04         5.649697e-04              1.442026e-04              1.270378e-03                3.1
-        alus_8 (ElementwiseAlu_w64_mul_23) 5.640648e-04         5.675190e-04              1.441755e-04              1.275759e-03                3.1
-        alus_31 (ElementwiseAlu_w64_mul_0) 5.655073e-04         5.738262e-04              1.442546e-04              1.283588e-03                3.1
-        alus_29 (ElementwiseAlu_w64_mul_2) 5.580921e-04         5.662501e-04              1.441792e-04              1.268521e-03                3.1
-        alus_9 (ElementwiseAlu_w64_mul_22) 5.663416e-04         5.724264e-04              1.446152e-04              1.283383e-03                3.1
-  csr (snax_forge_csr)                6.958423e-05              2.639829e-07              1.338923e-05              8.323744e-05                0.2
+snax_forge_shell_wrapper              1.807026e-02              1.815776e-02              4.644864e-03              4.087289e-02              100.0
+  ctrl (snax_forge_ctrl)              5.040796e-05              3.639722e-06              1.410449e-05              6.815218e-05                0.2
+    ctrl (snax_forge_acc_ctrl)        5.040796e-05              3.639722e-06              1.410449e-05              6.815218e-05                0.2
+  dp (snax_forge_datapath)            1.794831e-02              1.815173e-02              4.614313e-03              4.071435e-02               99.6
+    blocks_0_4 (snax_forge_acc)       1.794831e-02              1.815173e-02              4.614313e-03              4.071435e-02               99.6
+      m (ElementwiseLanes_i64xi64_i64_i64_n32_mul) 1.794831e-02        1.815173e-02        4.614313e-03             4.071435e-02               99.6
+        alus_10 (ElementwiseAlu_w64_mul_21) 5.552386e-04        5.618401e-04              1.445055e-04              1.261584e-03                3.1
+        alus_11 (ElementwiseAlu_w64_mul_20) 5.577657e-04        5.608729e-04              1.442354e-04              1.262874e-03                3.1
+        alus_12 (ElementwiseAlu_w64_mul_19) 5.630411e-04        5.700325e-04              1.443822e-04              1.277456e-03                3.1
+        alus_13 (ElementwiseAlu_w64_mul_18) 5.568803e-04        5.622305e-04              1.443033e-04              1.263414e-03                3.1
+        alus_14 (ElementwiseAlu_w64_mul_17) 5.619519e-04        5.696561e-04              1.442043e-04              1.275812e-03                3.1
+        alus_15 (ElementwiseAlu_w64_mul_16) 5.572208e-04        5.692902e-04              1.447127e-04              1.271224e-03                3.1
+        alus_16 (ElementwiseAlu_w64_mul_15) 5.605055e-04        5.640733e-04              1.444170e-04              1.268996e-03                3.1
+        alus_17 (ElementwiseAlu_w64_mul_14) 5.585416e-04        5.647216e-04              1.436087e-04              1.266872e-03                3.1
+        alus_20 (ElementwiseAlu_w64_mul_11) 5.601067e-04        5.672527e-04              1.440950e-04              1.271454e-03                3.1
+        alus_18 (ElementwiseAlu_w64_mul_13) 5.587416e-04        5.665329e-04              1.440416e-04              1.269316e-03                3.1
+        alus_0 (ElementwiseAlu_w64_mul_31) 5.562924e-04         5.640532e-04              1.439472e-04              1.264293e-03                3.1
+        alus_21 (ElementwiseAlu_w64_mul_10) 5.617922e-04        5.652553e-04              1.444715e-04              1.271519e-03                3.1
+        alus_19 (ElementwiseAlu_w64_mul_12) 5.630606e-04        5.669723e-04              1.445946e-04              1.274628e-03                3.1
+        alus_1 (ElementwiseAlu_w64_mul_30) 5.567367e-04         5.653777e-04              1.443105e-04              1.266425e-03                3.1
+        alus_22 (ElementwiseAlu_w64_mul_9) 5.625741e-04         5.714728e-04              1.437046e-04              1.277752e-03                3.1
+        alus_2 (ElementwiseAlu_w64_mul_29) 5.713720e-04         5.782046e-04              1.444108e-04              1.293987e-03                3.2
+        alus_23 (ElementwiseAlu_w64_mul_8) 5.628366e-04         5.671838e-04              1.445045e-04              1.274525e-03                3.1
+        alus_3 (ElementwiseAlu_w64_mul_28) 5.594961e-04         5.715627e-04              1.436937e-04              1.274752e-03                3.1
+        alus_24 (ElementwiseAlu_w64_mul_7) 5.556470e-04         5.647940e-04              1.437529e-04              1.264194e-03                3.1
+        alus_4 (ElementwiseAlu_w64_mul_27) 5.654425e-04         5.739419e-04              1.439179e-04              1.283302e-03                3.1
+        alus_25 (ElementwiseAlu_w64_mul_6) 5.655845e-04         5.681528e-04              1.443599e-04              1.278097e-03                3.1
+        alus_5 (ElementwiseAlu_w64_mul_26) 5.577337e-04         5.627536e-04              1.438452e-04              1.264332e-03                3.1
+        alus_26 (ElementwiseAlu_w64_mul_5) 5.618683e-04         5.650144e-04              1.440794e-04              1.270962e-03                3.1
+        alus_6 (ElementwiseAlu_w64_mul_25) 5.576587e-04         5.627014e-04              1.445619e-04              1.264922e-03                3.1
+        alus_27 (ElementwiseAlu_w64_mul_4) 5.619000e-04         5.671755e-04              1.441008e-04              1.273176e-03                3.1
+        alus_7 (ElementwiseAlu_w64_mul_24) 5.571609e-04         5.657691e-04              1.444128e-04              1.267343e-03                3.1
+        alus_30 (ElementwiseAlu_w64_mul_1) 5.670791e-04         5.726713e-04              1.437119e-04              1.283462e-03                3.1
+        alus_28 (ElementwiseAlu_w64_mul_3) 5.610253e-04         5.646147e-04              1.442026e-04              1.269843e-03                3.1
+        alus_8 (ElementwiseAlu_w64_mul_23) 5.641724e-04         5.677541e-04              1.441755e-04              1.276102e-03                3.1
+        alus_31 (ElementwiseAlu_w64_mul_0) 5.646451e-04         5.715145e-04              1.442546e-04              1.280414e-03                3.1
+        alus_29 (ElementwiseAlu_w64_mul_2) 5.576980e-04         5.654890e-04              1.441792e-04              1.267366e-03                3.1
+        alus_9 (ElementwiseAlu_w64_mul_22) 5.665381e-04         5.727989e-04              1.446152e-04              1.283952e-03                3.1
+  csr (snax_forge_csr)                7.154557e-05              2.346963e-06              1.641830e-05              9.031084e-05                0.2
 1

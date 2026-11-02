@@ -5,7 +5,7 @@ Report : Averaged Power
 	-nosplit
 Design : snax_forge_shell_wrapper
 Version: W-2024.09-SP5
-Date   : Sun Nov  1 10:26:55 2026
+Date   : Mon Nov  2 19:33:31 2026
 ****************************************
 
 
@@ -13,11 +13,11 @@ Date   : Sun Nov  1 10:26:55 2026
                                       Int                       Switch                    Leak                      Total
 Hierarchy                             Power                     Power                     Power                     Power                     %
 ------------------------------------------------------------------------------------------------------------------------------------------------------
-snax_forge_shell_wrapper              1.000831e-03              4.839825e-04              2.169838e-04              1.701797e-03              100.0
-  ctrl (snax_forge_ctrl)              1.216939e-04              6.391785e-06              3.157697e-05              1.596627e-04                9.4
-    ctrl (snax_forge_acc_ctrl)        1.216939e-04              6.391785e-06              3.157697e-05              1.596627e-04                9.4
-  dp (snax_forge_datapath)            7.865556e-04              4.772185e-04              1.644466e-04              1.428221e-03               83.9
-    blocks_0_4 (snax_forge_acc)       7.865556e-04              4.772185e-04              1.644466e-04              1.428221e-03               83.9
-      m (TreeAccumulate_i64_i64_n32)  7.865556e-04              4.772185e-04              1.644466e-04              1.428221e-03               83.9
-  csr (snax_forge_csr)                9.258028e-05              3.489061e-07              2.092304e-05              1.138522e-04                6.7
+snax_forge_shell_wrapper              9.775071e-04              4.838054e-04              2.104732e-04              1.671786e-03              100.0
+  csr (snax_forge_csr)                9.453841e-05              2.357234e-06              1.990371e-05              1.167994e-04                7.0
+  dp (snax_forge_datapath)            7.865555e-04              4.772185e-04              1.644466e-04              1.428221e-03               85.4
+    blocks_0_4 (snax_forge_acc)       7.865555e-04              4.772185e-04              1.644466e-04              1.428221e-03               85.4
+      m (TreeAccumulate_i64_i64_n32)  7.865555e-04              4.772185e-04              1.644466e-04              1.428221e-03               85.4
+  ctrl (snax_forge_ctrl)              9.641319e-05              4.229669e-06              2.610424e-05              1.267471e-04                7.6
+    ctrl (snax_forge_acc_ctrl)        9.641319e-05              4.229669e-06              2.610424e-05              1.267471e-04                7.6
 1
