@@ -182,6 +182,7 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Symptom:** on snax-forge's wrapper, PT annotates 2130 of 2190 nets from the SAIF (97.3 %, under X9's 99 %): the 60 left are `ctrl/io_groups_0_status[2..31]` and `csr/io_status_0[2..31]`, at `Default` activity. vcd2saif has them at Z for the whole window.
 - **Cause:** STATUS bits 2 to 31 are constant 0 (R1's LINT-52). With boundary optimization DC removes the constant, bit-blasts the ports (`\io_status_0[5] `) and leaves both ends without a driver or a cell pin. Unlike DC5's undriven wire bits, they are hierarchical port nets, so PT counts them. They cost nothing: with the 60 forced to toggle rate 0, PT's power is the same in every group to seven digits.
 - **Fix or check:** `sim/pwr.py` (forge source) takes a non-annotated net that the SAIF has at Z for the whole window out of the coverage denominator, records them (`floating` in `result.json`), and still requires 99 % of the rest (X23); every other net must be annotated. The HLS check is unchanged.
+- **Since CTRL1** (snax-forge `f9764d5`, D152): STATUS is 2 bits wide, so its constant bits and their floating port nets are gone; SYN2 R2 had no floating net in any of its 96 runs and the exclusion is no longer needed. It stays in `sim/pwr.py` (it changes nothing when there is none) for SYN1's netlists.
 - **Found in:** `results/forge/runs/2026-10-31_syn1_r2.md`.
 
 ## Licences
