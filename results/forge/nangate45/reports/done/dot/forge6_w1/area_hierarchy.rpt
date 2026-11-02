@@ -3,29 +3,29 @@
 Report : area
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 20:39:58 2026
+Date   : Mon Nov  2 18:39:33 2026
 ****************************************
 
 Library(s) Used:
 
     NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
 
-Number of ports:                         1938
-Number of nets:                          8836
-Number of cells:                         6195
-Number of combinational cells:           5665
-Number of sequential cells:               519
+Number of ports:                         1750
+Number of nets:                          8590
+Number of cells:                         6086
+Number of combinational cells:           5589
+Number of sequential cells:               487
 Number of macros/black boxes:               0
-Number of buf/inv:                        578
+Number of buf/inv:                        539
 Number of references:                       4
 
-Combinational area:               8863.918047
-Buf/Inv area:                      342.342000
-Noncombinational area:            2762.410089
+Combinational area:               8777.468046
+Buf/Inv area:                      316.274000
+Noncombinational area:            2590.840084
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                 11626.328136
+Total cell area:                 11368.308129
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,18 +36,18 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute    Percent  Combi-     Noncombi-  Black-
                                   Total       Total    national   national   boxes   Design
 --------------------------------  ----------  -------  ---------  ---------  ------  ---------------------------
-snax_forge_shell_wrapper          11626.3281    100.0     1.0640     0.0000  0.0000  snax_forge_shell_wrapper
-csr                                1066.9260      9.2   379.3160   687.6100  0.0000  snax_forge_csr
-ctrl                               2005.3740     17.2     0.0000     0.0000  0.0000  snax_forge_ctrl
-ctrl/ctrl                          2005.3740     17.2   952.0140  1053.3600  0.0000  snax_forge_dot_ctrl
-dp                                 8552.9641     73.6     0.0000     0.0000  0.0000  snax_forge_datapath
-dp/blocks_0_4                      7629.4120     65.6     0.0000     0.0000  0.0000  snax_forge_mac
-dp/blocks_0_4/m                    7629.4120     65.6  7288.9320   340.4800  0.0000  Mac_i64xi64_i64_i64_n1_acc
-dp/blocks_1_4                       461.7760      4.0     0.0000     0.0000  0.0000  snax_forge_sum
-dp/blocks_1_4/m                     461.7760      4.0   121.2960   340.4800  0.0000  SerialAccumulate_i64_i64_n1
-dp/bufs_0_4                         461.7760      4.0     0.0000     0.0000  0.0000  snax_forge_out_partial
-dp/bufs_0_4/m                       461.7760      4.0   121.2960   340.4800  0.0000  LinkBuffer_i64_n1_d1
+snax_forge_shell_wrapper          11368.3081    100.0     0.5320     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                1106.8260      9.7   415.2260   691.6000  0.0000  snax_forge_csr
+ctrl                               1707.9860     15.0     0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                          1707.9860     15.0   830.1860   877.8000  0.0000  snax_forge_dot_ctrl
+dp                                 8552.9641     75.2     0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                      7629.4120     67.1     0.0000     0.0000  0.0000  snax_forge_mac
+dp/blocks_0_4/m                    7629.4120     67.1  7288.9320   340.4800  0.0000  Mac_i64xi64_i64_i64_n1_acc
+dp/blocks_1_4                       461.7760      4.1     0.0000     0.0000  0.0000  snax_forge_sum
+dp/blocks_1_4/m                     461.7760      4.1   121.2960   340.4800  0.0000  SerialAccumulate_i64_i64_n1
+dp/bufs_0_4                         461.7760      4.1     0.0000     0.0000  0.0000  snax_forge_out_partial
+dp/bufs_0_4/m                       461.7760      4.1   121.2960   340.4800  0.0000  LinkBuffer_i64_n1_d1
 --------------------------------  ----------  -------  ---------  ---------  ------  ---------------------------
-Total                                                  8863.9180  2762.4101  0.0000
+Total                                                  8777.4680  2590.8401  0.0000
 
 1

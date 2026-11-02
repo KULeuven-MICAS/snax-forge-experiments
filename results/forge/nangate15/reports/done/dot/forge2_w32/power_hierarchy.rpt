@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:51:49 2026
+Date   : Mon Nov  2 19:07:11 2026
 ****************************************
 
 
@@ -31,14 +31,14 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-snax_forge_shell_wrapper                  3.726    4.358 2.57e+09   10.653 100.0
-  dp (snax_forge_datapath)                3.726    4.290 2.52e+09   10.537  98.9
+snax_forge_shell_wrapper                  3.726    4.352 2.55e+09   10.627 100.0
+  dp (snax_forge_datapath)                3.726    4.290 2.52e+09   10.537  99.2
     bufs_0_4 (snax_forge_tmp0)            0.000    0.403 1.16e+08    0.520   4.9
       m (LinkBuffer_i64_n32_d1)           0.000    0.403 1.16e+08    0.520   4.9
     blocks_1_4 (snax_forge_sum)           0.000 1.22e-02 5.97e+07 7.19e-02   0.7
       m (TreeAccumulate_i64_i64_n32)      0.000 1.22e-02 5.97e+07 7.19e-02   0.7
-    blocks_0_4 (snax_forge_mul)           3.726    3.875 2.35e+09    9.946  93.4
-      m (ElementwiseLanes_i64xi64_i64_i64_n32_mul)    3.726    3.875 2.35e+09    9.946  93.4
+    blocks_0_4 (snax_forge_mul)           3.726    3.874 2.35e+09    9.946  93.6
+      m (ElementwiseLanes_i64xi64_i64_i64_n32_mul)    3.726    3.874 2.35e+09    9.946  93.6
         alus_31 (ElementwiseAlu_w64_mul_0)    0.116    0.121 7.33e+07    0.310   2.9
         alus_30 (ElementwiseAlu_w64_mul_1)    0.116    0.121 7.33e+07    0.310   2.9
         alus_29 (ElementwiseAlu_w64_mul_2)    0.116    0.121 7.33e+07    0.310   2.9
@@ -71,7 +71,7 @@ snax_forge_shell_wrapper                  3.726    4.358 2.57e+09   10.653 100.0
         alus_2 (ElementwiseAlu_w64_mul_29)    0.116    0.121 7.33e+07    0.311   2.9
         alus_1 (ElementwiseAlu_w64_mul_30)    0.117    0.121 7.33e+07    0.311   2.9
         alus_0 (ElementwiseAlu_w64_mul_31)    0.116    0.121 7.33e+07    0.311   2.9
-  ctrl (snax_forge_ctrl)               3.05e-06 4.36e-02 3.90e+07 8.27e-02   0.8
-    ctrl (snax_forge_dot_ctrl)         3.05e-06 4.36e-02 3.90e+07 8.27e-02   0.8
-  csr (snax_forge_csr)                 1.85e-04 2.48e-02 8.20e+06 3.32e-02   0.3
+  ctrl (snax_forge_ctrl)               8.58e-06 3.73e-02 1.92e+07 5.65e-02   0.5
+    ctrl (snax_forge_dot_ctrl)         8.58e-06 3.73e-02 1.92e+07 5.65e-02   0.5
+  csr (snax_forge_csr)                 1.97e-04 2.49e-02 8.47e+06 3.36e-02   0.3
 1

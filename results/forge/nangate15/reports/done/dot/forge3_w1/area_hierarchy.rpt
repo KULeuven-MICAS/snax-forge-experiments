@@ -3,29 +3,29 @@
 Report : area
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:47:20 2026
+Date   : Mon Nov  2 18:57:26 2026
 ****************************************
 
 Library(s) Used:
 
     NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
 
-Number of ports:                         1856
-Number of nets:                         11308
-Number of cells:                         8482
-Number of combinational cells:           8052
-Number of sequential cells:               421
+Number of ports:                         1668
+Number of nets:                          9288
+Number of cells:                         6774
+Number of combinational cells:           6440
+Number of sequential cells:               325
 Number of macros/black boxes:               0
-Number of buf/inv:                       1125
+Number of buf/inv:                        925
 Number of references:                       4
 
-Combinational area:               3283.845185
-Buf/Inv area:                      177.782788
-Noncombinational area:             538.017773
+Combinational area:               2638.282804
+Buf/Inv area:                      147.996675
+Noncombinational area:             415.334386
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                  3821.862958
+Total cell area:                  3053.617190
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,17 +36,17 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
                                   Total      Total    national   national   boxes   Design
 --------------------------------  ---------  -------  ---------  ---------  ------  ---------------------------------------
-snax_forge_shell_wrapper          3821.8630    100.0     0.2949     0.0000  0.0000  snax_forge_shell_wrapper
-csr                                262.0293      6.9    97.1735   164.8558  0.0000  snax_forge_csr
-ctrl                              1123.3690     29.4     0.0000     0.0000  0.0000  snax_forge_ctrl
-ctrl/ctrl                         1123.3690     29.4   831.9959   291.3730  0.0000  snax_forge_dot_ctrl
-dp                                2436.1698     63.7     0.0000     0.0000  0.0000  snax_forge_datapath
-dp/blocks_0_4                     2212.5282     57.9     0.0000     0.0000  0.0000  snax_forge_mul
-dp/blocks_0_4/m                   2212.5282     57.9     0.0000     0.0000  0.0000  ElementwiseLanes_i64xi64_i64_i64_n1_mul
-dp/blocks_0_4/m/alus_0            2212.5282     57.9  2212.5282     0.0000  0.0000  ElementwiseAlu_w64_mul
-dp/blocks_1_4                      223.6416      5.9     0.0000     0.0000  0.0000  snax_forge_sum
-dp/blocks_1_4/m                    223.6416      5.9   141.8527    81.7889  0.0000  TreeAccumulate_i64_i64_n1
+snax_forge_shell_wrapper          3053.6172    100.0     0.1475     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                273.3834      9.0   107.2497   166.1338  0.0000  snax_forge_csr
+ctrl                               344.2606     11.3     0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                          344.2606     11.3   176.8489   167.4117  0.0000  snax_forge_dot_ctrl
+dp                                2435.8257     79.8     0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                     2212.4299     72.5     0.0000     0.0000  0.0000  snax_forge_mul
+dp/blocks_0_4/m                   2212.4299     72.5     0.0000     0.0000  0.0000  ElementwiseLanes_i64xi64_i64_i64_n1_mul
+dp/blocks_0_4/m/alus_0            2212.4299     72.5  2212.4299     0.0000  0.0000  ElementwiseAlu_w64_mul
+dp/blocks_1_4                      223.3958      7.3     0.0000     0.0000  0.0000  snax_forge_sum
+dp/blocks_1_4/m                    223.3958      7.3   141.6069    81.7889  0.0000  TreeAccumulate_i64_i64_n1
 --------------------------------  ---------  -------  ---------  ---------  ------  ---------------------------------------
-Total                                                 3283.8452   538.0178  0.0000
+Total                                                 2638.2828   415.3344  0.0000
 
 1

@@ -3,29 +3,29 @@
 Report : area
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 17:23:22 2026
+Date   : Mon Nov  2 19:14:05 2026
 ****************************************
 
 Library(s) Used:
 
     NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
 
-Number of ports:                         8208
-Number of nets:                          9554
-Number of cells:                         1508
-Number of combinational cells:           1298
-Number of sequential cells:               196
+Number of ports:                         8020
+Number of nets:                          9330
+Number of cells:                         1382
+Number of combinational cells:           1204
+Number of sequential cells:               164
 Number of macros/black boxes:               0
-Number of buf/inv:                        197
+Number of buf/inv:                        170
 Number of references:                       4
 
-Combinational area:                801.570839
-Buf/Inv area:                       29.638657
-Noncombinational area:             250.478583
+Combinational area:                776.798231
+Buf/Inv area:                       25.460737
+Noncombinational area:             209.584121
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                  1052.049422
+Total cell area:                   986.382352
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,22 +36,22 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
                                   Total      Total    national  national   boxes   Design
 --------------------------------  ---------  -------  --------  ---------  ------  ---------------------------------------
-snax_forge_shell_wrapper          1052.0494    100.0    0.2949     0.0000  0.0000  snax_forge_shell_wrapper
-csr                                194.8385     18.5   70.8772   123.9613  0.0000  snax_forge_csr
-ctrl                               259.2276     24.6    0.0000     0.0000  0.0000  snax_forge_ctrl
-ctrl/ctrl                          259.2276     24.6  132.7104   126.5172  0.0000  snax_forge_acc_ctrl
-dp                                 597.6883     56.8    0.0000     0.0000  0.0000  snax_forge_datapath
-dp/blocks_0_4                      597.6883     56.8    0.0000     0.0000  0.0000  snax_forge_acc
-dp/blocks_0_4/m                    597.6883     56.8    0.0000     0.0000  0.0000  ElementwiseLanes_i64xi64_i64_i64_n8_add
-dp/blocks_0_4/m/alus_0              74.7110      7.1   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_7
-dp/blocks_0_4/m/alus_1              74.7110      7.1   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_6
-dp/blocks_0_4/m/alus_2              74.7110      7.1   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_5
-dp/blocks_0_4/m/alus_3              74.7110      7.1   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_4
-dp/blocks_0_4/m/alus_4              74.7110      7.1   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_3
-dp/blocks_0_4/m/alus_5              74.7110      7.1   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_2
-dp/blocks_0_4/m/alus_6              74.7110      7.1   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_1
-dp/blocks_0_4/m/alus_7              74.7110      7.1   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_0
+snax_forge_shell_wrapper           986.3824    100.0    0.1475     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                207.8147     21.1   82.5754   125.2393  0.0000  snax_forge_csr
+ctrl                               180.7319     18.3    0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                          180.7319     18.3   96.3871    84.3448  0.0000  snax_forge_acc_ctrl
+dp                                 597.6883     60.6    0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                      597.6883     60.6    0.0000     0.0000  0.0000  snax_forge_acc
+dp/blocks_0_4/m                    597.6883     60.6    0.0000     0.0000  0.0000  ElementwiseLanes_i64xi64_i64_i64_n8_add
+dp/blocks_0_4/m/alus_0              74.7110      7.6   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_7
+dp/blocks_0_4/m/alus_1              74.7110      7.6   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_6
+dp/blocks_0_4/m/alus_2              74.7110      7.6   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_5
+dp/blocks_0_4/m/alus_3              74.7110      7.6   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_4
+dp/blocks_0_4/m/alus_4              74.7110      7.6   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_3
+dp/blocks_0_4/m/alus_5              74.7110      7.6   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_2
+dp/blocks_0_4/m/alus_6              74.7110      7.6   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_1
+dp/blocks_0_4/m/alus_7              74.7110      7.6   74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_0
 --------------------------------  ---------  -------  --------  ---------  ------  ---------------------------------------
-Total                                                 801.5708   250.4786  0.0000
+Total                                                 776.7982   209.5841  0.0000
 
 1

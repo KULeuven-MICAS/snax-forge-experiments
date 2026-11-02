@@ -4,7 +4,7 @@ Report : Averaged Power
 	-nosplit
 Design : snax_forge_shell_wrapper
 Version: W-2024.09-SP5
-Date   : Sun Nov  1 10:26:39 2026
+Date   : Mon Nov  2 19:33:18 2026
 ****************************************
 
 
@@ -17,18 +17,18 @@ Date   : Sun Nov  1 10:26:39 2026
                         Internal             Switching            Leakage              Total
 Power Group             Power                Power                Power                Power               (     %)   Attrs
 ----------------------------------------------------------------------------------------------------------------------------
-clock_network           8.148729e-04         0.000000e+00         0.000000e+00         8.148729e-04        ( 7.17%)   i
-register                2.599070e-04         7.180885e-05         1.237285e-04         4.554444e-04        ( 4.01%)   
-combinational           4.586509e-03         4.271818e-03         1.230316e-03         1.008864e-02        (88.82%)   
+clock_network           7.908983e-04         0.000000e+00         0.000000e+00         7.908983e-04        ( 6.98%)   i
+register                2.599907e-04         7.151204e-05         1.207712e-04         4.522739e-04        ( 3.99%)   
+combinational           4.586003e-03         4.272951e-03         1.227672e-03         1.008663e-02        (89.03%)   
 sequential              0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
 memory                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
 io_pad                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
 black_box               0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
 
-  Net Switching Power  = 4.343627e-03          (38.24%)
-  Cell Internal Power  = 5.661290e-03          (49.84%)
-  Cell Leakage Power   = 1.354045e-03          (11.92%)
+  Net Switching Power  = 4.344463e-03          (38.35%)
+  Cell Internal Power  = 5.636892e-03          (49.75%)
+  Cell Leakage Power   = 1.348443e-03          (11.90%)
                          -------------------------
-Total Power            = 1.135896e-02         (100.00%)
+Total Power            = 1.132980e-02         (100.00%)
 
 1

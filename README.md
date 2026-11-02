@@ -62,6 +62,7 @@ pixi run table                                                # results/forge_vs
 pixi run split pt -j 12 && pixi run split collect              # the control/datapath split (results/analysis/syn1/split_*.csv)
 pixi run analysis                                             # results/analysis/syn1/syn1_analysis.md and figures
 pixi run control                                              # every register's role, forge and HLS (results/analysis/control/, needs rtl/forge/)
+pixi run syn2                                                 # SYN2: forge before (SYN1 from git, X27) and after CTRL1, and against HLS (results/analysis/syn2/)
 ```
 
 ## Synthesis

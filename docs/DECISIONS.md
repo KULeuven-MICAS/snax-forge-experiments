@@ -30,6 +30,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X24](#x24-the-reference-task-n2048) | SYN1 compares one task of N = 2048 elements on both sides |
 | [X25](#x25-pt-is-the-reference-the-setup-check-is-a-diagnostic) | PT is the reference; the setup check is a diagnostic and never fails a point |
 | [X26](#x26-forge-control-rtl-copied-as-a-reading-aid) | Forge's csr, ctrl and wrapper SV at W = 8 copied into `results/analysis/control/src/`, an exception to X21 |
+| [X27](#x27-syn2-syn1-read-from-git-results-hold-syn2) | SYN2: SYN1 read from git at `f99c423`; `results/forge/<tech>/` holds SYN2; SYN1's local runs kept in `*_syn1/` |
 
 ## Synthesis
 
@@ -234,3 +235,26 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Decision:** for the control-role analysis (`report/control_roles.py`, `pixi run control`), the csr, ctrl and wrapper SystemVerilog of the eight W = 8 forge points (vecadd, vecmul, vsum, dot 2 to 6) are copied unchanged from their bundles into `results/analysis/control/src/<kernel>/<case>_w8/`, with a `point.json` naming the snax-forge commit (`32dbcc6`) and `dirty` false. They are a reading aid: `roles.json` cites their lines, and a reader needs no bundle to follow it. This is an exception to X21: `rtl/` stays uncommitted, nothing is synthesized or simulated from the copies, and the role checks still read every point's own bundle. HLS's Verilog is not copied: it is committed in hls-exercises (`rtl/done/<kernel>/<case>_w<W>/`).
 - **Why:** the roles are read from the RTL, so the lines they cite must stay reachable from a commit; the bundles are rebuilt on demand and not committed.
 - **Source:** `results/analysis/control/` (`control_roles.md`, `roles.json`).
+
+## SYN2: snax-forge after CTRL1
+
+### X27. SYN2: SYN1 read from git, results hold SYN2
+
+- **Date:** 2026-11-02
+- **Decision:** SYN2 reruns SYN1's 48 forge points with SYN1's flow and settings on snax-forge's CTRL1 (`f9764d5`, D152 and D153). Its "before" is SYN1 read from git at the pinned commit `f99c4238e4653b82ed4bded7344b5c48be4516f7` (`git show`, never a copy); `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `power_pt.csv`, `power_pt_modules.csv`, `reports/`, `power_reports/`) now holds SYN2, and `pixi run syn2` (`report/analysis_syn2.py`) writes `results/analysis/syn2/syn2_before_after.md`. SYN1's analysis files (`results/analysis/syn1/syn1_analysis.md` and figures, the split's `split_*.csv`, `results/analysis/control/`, `results/forge_vs_hls*.md` and `.csv`) describe SYN1 and stay as committed; they are regenerated from the pinned commit, not from this tree: `pixi run table`, `analysis`, `split` or `control` run here would write SYN2's forge rows into SYN1's files. SYN1's local runs are kept, ignored by git: its netlists in `syn/runs/forge_syn1/`, its bundles in `rtl/forge_syn1/`, its power runs and SAIFs in `sim/runs/forge_syn1/`; the split's PrimePower runs stay in `sim/split_runs/`.
+- **How to regenerate SYN1's files:** the scripts have no path option (`rtl/forge`, `syn/runs/forge`, `sim/runs/forge` and `results/` are fixed from the repo root), so use a worktree of the pinned commit, beside this repo (`analysis` reads `../hls-exercises`), with temporary symlinks to the kept folders; no code change:
+
+  ```bash
+  R=$PWD; git worktree add ../sfe-syn1 f99c4238e4653b82ed4bded7344b5c48be4516f7 && cd ../sfe-syn1
+  mkdir -p rtl syn/runs sim/runs
+  ln -s $R/rtl/forge_syn1 rtl/forge;  ln -s $R/syn/runs/forge_syn1 syn/runs/forge;  ln -s $R/syn/runs/hls syn/runs/hls
+  ln -s $R/sim/runs/forge_syn1 sim/runs/forge;  ln -s $R/sim/runs/nangate45 sim/runs/nangate45
+  ln -s $R/sim/runs/nangate15 sim/runs/nangate15;  ln -s $R/sim/split_runs sim/split_runs
+  pixi install && pixi run control && pixi run split collect && pixi run analysis && pixi run table
+  git status --short        # only the untracked sim/split_runs link: the committed files are reproduced
+  cd $R && git worktree remove --force ../sfe-syn1   # removes the links, not their targets
+  ```
+
+  `pixi run split pt` (PrimePower again on SYN1's SAIFs) works the same way; it writes into `sim/split_runs/`, so point that link at a scratch folder to rerun without replacing the kept runs.
+- **Why:** git already holds SYN1's results exactly, so a copy could only drift; the local runs (netlists, bundles, SAIFs) are not in git and are kept so SYN1's analyses can be rerun without resynthesis or resimulation.
+- **Source:** `results/forge/runs/2026-11-02_syn2_r1.md`, `2026-11-02_syn2_r2.md`, `2026-11-02_syn2_r3.md` (the worktree recipe checked: `control`, `split collect`, `analysis` and `table` reproduce the committed files byte for byte; `split pt` on `done/dot/forge3_w4` into a scratch folder gives the kept run's `cells.tsv`).

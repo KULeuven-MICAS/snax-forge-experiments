@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:49:02 2026
+Date   : Mon Nov  2 18:59:05 2026
 ****************************************
 
 
@@ -31,15 +31,15 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-snax_forge_shell_wrapper                  0.259    0.345 2.04e+08    0.808 100.0
-  dp (snax_forge_datapath)                0.259    0.277 1.57e+08    0.693  85.7
-    blocks_1_4 (snax_forge_sum)        2.34e-02 3.44e-02 1.04e+07 6.81e-02   8.4
-      m (TreeAccumulate_i64_i64_n2)    2.34e-02 3.44e-02 1.04e+07 6.81e-02   8.4
-    blocks_0_4 (snax_forge_mul)           0.236    0.242 1.47e+08    0.624  77.2
-      m (ElementwiseLanes_i64xi64_i64_i64_n2_mul)    0.236    0.242 1.47e+08    0.624  77.2
-        alus_1 (ElementwiseAlu_w64_mul_0)    0.118    0.121 7.33e+07    0.312  38.6
-        alus_0 (ElementwiseAlu_w64_mul_1)    0.118    0.121 7.33e+07    0.312  38.6
-  ctrl (snax_forge_ctrl)               3.10e-06 4.34e-02 3.93e+07 8.27e-02  10.2
-    ctrl (snax_forge_dot_ctrl)         3.10e-06 4.34e-02 3.93e+07 8.27e-02  10.2
-  csr (snax_forge_csr)                 1.93e-04 2.48e-02 8.20e+06 3.32e-02   4.1
+snax_forge_shell_wrapper                  0.259    0.327 1.78e+08    0.764 100.0
+  dp (snax_forge_datapath)                0.259    0.277 1.57e+08    0.693  90.6
+    blocks_1_4 (snax_forge_sum)        2.34e-02 3.44e-02 1.03e+07 6.81e-02   8.9
+      m (TreeAccumulate_i64_i64_n2)    2.34e-02 3.44e-02 1.03e+07 6.81e-02   8.9
+    blocks_0_4 (snax_forge_mul)           0.236    0.242 1.47e+08    0.624  81.7
+      m (ElementwiseLanes_i64xi64_i64_i64_n2_mul)    0.236    0.242 1.47e+08    0.624  81.7
+        alus_1 (ElementwiseAlu_w64_mul_0)    0.118    0.121 7.33e+07    0.312  40.9
+        alus_0 (ElementwiseAlu_w64_mul_1)    0.118    0.121 7.33e+07    0.312  40.8
+  ctrl (snax_forge_ctrl)               7.02e-06 2.50e-02 1.29e+07 3.79e-02   5.0
+    ctrl (snax_forge_dot_ctrl)         7.02e-06 2.50e-02 1.29e+07 3.79e-02   5.0
+  csr (snax_forge_csr)                 2.03e-04 2.49e-02 8.47e+06 3.36e-02   4.4
 1

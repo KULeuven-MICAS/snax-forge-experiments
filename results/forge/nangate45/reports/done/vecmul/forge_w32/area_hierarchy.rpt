@@ -3,29 +3,29 @@
 Report : area
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 16:41:55 2026
+Date   : Mon Nov  2 18:54:10 2026
 ****************************************
 
 Library(s) Used:
 
     NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
 
-Number of ports:                        31248
-Number of nets:                        179991
-Number of cells:                       129499
-Number of combinational cells:         129265
-Number of sequential cells:               196
+Number of ports:                        31060
+Number of nets:                        179784
+Number of cells:                       129390
+Number of combinational cells:         129187
+Number of sequential cells:               164
 Number of macros/black boxes:               0
-Number of buf/inv:                       8298
+Number of buf/inv:                       8285
 Number of references:                       4
 
-Combinational area:             221956.785066
-Buf/Inv area:                     5139.651969
-Noncombinational area:            1042.720034
+Combinational area:             221891.083065
+Buf/Inv area:                     5139.119969
+Noncombinational area:             873.810028
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                222999.505100
+Total cell area:                222764.893093
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,13 +36,13 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute     Percent  Combi-       Noncombi-  Black-
                                   Total        Total    national     national   boxes   Design
 --------------------------------  -----------  -------  -----------  ---------  ------  ----------------------------------------
-snax_forge_shell_wrapper          222999.5051    100.0       1.5960     0.0000  0.0000  snax_forge_shell_wrapper
-csr                                  787.6260      0.4     271.5860   516.0400  0.0000  snax_forge_csr
-ctrl                                1008.9380      0.5       0.0000     0.0000  0.0000  snax_forge_ctrl
-ctrl/ctrl                           1008.9380      0.5     482.2580   526.6800  0.0000  snax_forge_acc_ctrl
-dp                                221201.3451     99.2       0.0000     0.0000  0.0000  snax_forge_datapath
-dp/blocks_0_4                     221201.3451     99.2       0.0000     0.0000  0.0000  snax_forge_acc
-dp/blocks_0_4/m                   221201.3451     99.2       0.0000     0.0000  0.0000  ElementwiseLanes_i64xi64_i64_i64_n32_mul
+snax_forge_shell_wrapper          222764.8931    100.0       1.0640     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                  849.8700      0.4     327.1800   522.6900  0.0000  snax_forge_csr
+ctrl                                 712.6140      0.3       0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                            712.6140      0.3     361.4940   351.1200  0.0000  snax_forge_acc_ctrl
+dp                                221201.3451     99.3       0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                     221201.3451     99.3       0.0000     0.0000  0.0000  snax_forge_acc
+dp/blocks_0_4/m                   221201.3451     99.3       0.0000     0.0000  0.0000  ElementwiseLanes_i64xi64_i64_i64_n32_mul
 dp/blocks_0_4/m/alus_0              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_31
 dp/blocks_0_4/m/alus_1              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_30
 dp/blocks_0_4/m/alus_10             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_21
@@ -76,6 +76,6 @@ dp/blocks_0_4/m/alus_7              6912.5420      3.1    6912.5420     0.0000  
 dp/blocks_0_4/m/alus_8              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_23
 dp/blocks_0_4/m/alus_9              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_22
 --------------------------------  -----------  -------  -----------  ---------  ------  ----------------------------------------
-Total                                                   221956.7851  1042.7200  0.0000
+Total                                                   221891.0831   873.8100  0.0000
 
 1

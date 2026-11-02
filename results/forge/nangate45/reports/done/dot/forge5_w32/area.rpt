@@ -3,28 +3,28 @@
 Report : area
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 21:03:28 2026
+Date   : Mon Nov  2 18:52:06 2026
 ****************************************
 
 Library(s) Used:
 
     NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
 
-Number of ports:                        25506
-Number of nets:                        190623
-Number of cells:                       141660
-Number of combinational cells:         139208
-Number of sequential cells:              2443
+Number of ports:                        25318
+Number of nets:                        190428
+Number of cells:                       141602
+Number of combinational cells:         139183
+Number of sequential cells:              2411
 Number of macros/black boxes:               0
-Number of buf/inv:                       8401
+Number of buf/inv:                       8413
 Number of references:                       4
 
-Combinational area:             237029.675202
-Buf/Inv area:                     5322.127957
-Noncombinational area:           12998.090419
+Combinational area:             236974.613201
+Buf/Inv area:                     5328.245957
+Noncombinational area:           12826.520414
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                250027.765622
+Total cell area:                249801.133615
 Total area:                 undefined
 1

@@ -3,29 +3,29 @@
 Report : area
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 17:12:59 2026
+Date   : Mon Nov  2 19:17:39 2026
 ****************************************
 
 Library(s) Used:
 
     NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
 
-Number of ports:                        25481
-Number of nets:                        222932
-Number of cells:                       164023
-Number of combinational cells:         161577
-Number of sequential cells:              2438
+Number of ports:                        25293
+Number of nets:                        222708
+Number of cells:                       163895
+Number of combinational cells:         161481
+Number of sequential cells:              2406
 Number of macros/black boxes:               0
-Number of buf/inv:                      16716
+Number of buf/inv:                      16686
 Number of references:                       4
 
-Combinational area:              76411.356713
-Buf/Inv area:                     2837.839916
-Noncombinational area:            3115.646868
+Combinational area:              76385.502761
+Buf/Inv area:                     2833.907756
+Noncombinational area:            3074.752406
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                 79527.003581
+Total cell area:                 79460.255166
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,16 +36,16 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
                                   Total       Total    national    national   boxes   Design
 --------------------------------  ----------  -------  ----------  ---------  ------  ---------------------------
-snax_forge_shell_wrapper          79527.0036    100.0      0.2949     0.0000  0.0000  snax_forge_shell_wrapper
-csr                                 262.0293      0.3     97.1735   164.8558  0.0000  snax_forge_csr
-ctrl                                515.9977      0.6      0.0000     0.0000  0.0000  snax_forge_ctrl
-ctrl/ctrl                           515.9977      0.6    264.2412   251.7565  0.0000  snax_forge_dot_ctrl
-dp                                78748.6817     99.0      0.0000     0.0000  0.0000  snax_forge_datapath
-dp/blocks_0_4                     76334.3845     96.0      7.8643     0.0000  0.0000  snax_forge_mac
-dp/blocks_0_4/m                   76326.5202     96.0  73709.2746  2617.2456  0.0000  Mac_i64xi64_i64_i64_n32_acc
+snax_forge_shell_wrapper          79460.2552    100.0      0.1475     0.0000  0.0000  snax_forge_shell_wrapper
+csr                                 273.3834      0.3    107.2497   166.1338  0.0000  snax_forge_csr
+ctrl                                437.2070      0.6      0.0000     0.0000  0.0000  snax_forge_ctrl
+ctrl/ctrl                           437.2070      0.6    227.6229   209.5841  0.0000  snax_forge_dot_ctrl
+dp                                78749.5173     99.1      0.0000     0.0000  0.0000  snax_forge_datapath
+dp/blocks_0_4                     76335.2201     96.1      7.8643     0.0000  0.0000  snax_forge_mac
+dp/blocks_0_4/m                   76327.3558     96.1  73710.1102  2617.2456  0.0000  Mac_i64xi64_i64_i64_n32_acc
 dp/blocks_1_4                      2414.2972      3.0      0.0000     0.0000  0.0000  snax_forge_sum
 dp/blocks_1_4/m                    2414.2972      3.0   2332.5082    81.7889  0.0000  TreeAccumulate_i64_i64_n32
 --------------------------------  ----------  -------  ----------  ---------  ------  ---------------------------
-Total                                                  76411.3567  3115.6469  0.0000
+Total                                                  76385.5028  3074.7524  0.0000
 
 1

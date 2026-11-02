@@ -4,15 +4,15 @@ Information: Updating design information... (UID-85)
 Report : qor
 Design : snax_forge_shell_wrapper
 Version: Y-2026.03-SP2
-Date   : Sat Oct 31 20:36:45 2026
+Date   : Mon Nov  2 18:35:02 2026
 ****************************************
 
 
   Timing Path Group 'clk'
   -----------------------------------
   Levels of Logic:           69.00000
-  Critical Path Length:       6.43975
-  Critical Path Slack:        3.40414
+  Critical Path Length:       6.41851
+  Critical Path Slack:        3.42538
   Critical Path Clk Period:  10.00000
   Total Negative Slack:       0.00000
   No. of Violating Paths:     0.00000
@@ -25,35 +25,35 @@ Date   : Sat Oct 31 20:36:45 2026
   Cell Count
   -----------------------------------
   Hierarchical Cell Count:          8
-  Hierarchical Port Count:       1370
-  Leaf Cell Count:               6015
-  Buf/Inv Cell Count:             545
-  Buf Cell Count:                 126
-  Inv Cell Count:                 419
+  Hierarchical Port Count:       1182
+  Leaf Cell Count:               5903
+  Buf/Inv Cell Count:             501
+  Buf Cell Count:                 108
+  Inv Cell Count:                 393
   CT Buf/Inv Cell Count:            0
-  Combinational Cell Count:      5561
-  Sequential Cell Count:          454
+  Combinational Cell Count:      5481
+  Sequential Cell Count:          422
   Macro Count:                      0
   -----------------------------------
 
 
   Area
   -----------------------------------
-  Combinational Area:      8712.83005
-  Noncombinational Area:   2416.61008
-  Buf/Inv Area:             323.72200
-  Total Buffer Area:        100.81400
-  Total Inverter Area:      222.90800
+  Combinational Area:      8625.05005
+  Noncombinational Area:   2245.04007
+  Buf/Inv Area:             295.52600
+  Total Buffer Area:         86.45000
+  Total Inverter Area:      209.07600
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:              11129.44013
-  Design Area:            11129.44013
+  Cell Area:              10870.09012
+  Design Area:            10870.09012
 
 
   Design Rules
   -----------------------------------
-  Total Number of Nets:          7130
+  Total Number of Nets:          6946
   Nets With Violations:             0
   Max Trans Violations:             0
   Max Cap Violations:               0
@@ -64,12 +64,12 @@ Date   : Sat Oct 31 20:36:45 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 2.33136
-  Logic Optimization:              11.00009
-  Mapping Optimization:            35.22430
+  Resource Sharing:                 2.19470
+  Logic Optimization:               2.52854
+  Mapping Optimization:             8.35831
   -----------------------------------------
-  Overall Compile Time:            91.99599
-  Overall Compile Wall Clock Time: 27.73681
+  Overall Compile Time:            34.70123
+  Overall Compile Wall Clock Time: 27.23620
 
   --------------------------------------------------------------------
 

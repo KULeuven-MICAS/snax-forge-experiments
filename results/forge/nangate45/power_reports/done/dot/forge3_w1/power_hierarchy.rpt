@@ -5,7 +5,7 @@ Report : Averaged Power
 	-nosplit
 Design : snax_forge_shell_wrapper
 Version: W-2024.09-SP5
-Date   : Sun Nov  1 10:25:51 2026
+Date   : Mon Nov  2 19:32:33 2026
 ****************************************
 
 
@@ -13,14 +13,14 @@ Date   : Sun Nov  1 10:25:51 2026
                                       Int                       Switch                    Leak                      Total
 Hierarchy                             Power                     Power                     Power                     Power                     %
 ------------------------------------------------------------------------------------------------------------------------------------------------------
-snax_forge_shell_wrapper              9.180094e-04              6.223269e-04              2.631301e-04              1.803466e-03              100.0
-  ctrl (snax_forge_ctrl)              1.632384e-04              7.327529e-06              8.058558e-05              2.511515e-04               13.9
-    ctrl (snax_forge_dot_ctrl)        1.632384e-04              7.327529e-06              8.058558e-05              2.511515e-04               13.9
-  dp (snax_forge_datapath)            6.607847e-04              6.149823e-04              1.633010e-04              1.439068e-03               79.8
-    blocks_0_4 (snax_forge_mul)       5.616511e-04              5.257778e-04              1.442201e-04              1.231649e-03               68.3
-      m (ElementwiseLanes_i64xi64_i64_i64_n1_mul) 5.616511e-04        5.257778e-04        1.442201e-04              1.231649e-03               68.3
-        alus_0 (ElementwiseAlu_w64_mul) 5.616511e-04            5.257778e-04              1.442201e-04              1.231649e-03               68.3
-    blocks_1_4 (snax_forge_sum)       9.913350e-05              8.920462e-05              1.908089e-05              2.074190e-04               11.5
-      m (TreeAccumulate_i64_i64_n1)   9.913350e-05              8.920462e-05              1.908089e-05              2.074190e-04               11.5
-  csr (snax_forge_csr)                9.398613e-05              1.253017e-08              1.918605e-05              1.131847e-04                6.3
+snax_forge_shell_wrapper              8.454311e-04              6.195254e-04              2.082523e-04              1.673209e-03              100.0
+  ctrl (snax_forge_ctrl)              9.385951e-05              2.814223e-06              2.587594e-05              1.225497e-04                7.3
+    ctrl (snax_forge_dot_ctrl)        9.385951e-05              2.814223e-06              2.587594e-05              1.225497e-04                7.3
+  dp (snax_forge_datapath)            6.590191e-04              6.146985e-04              1.624897e-04              1.436207e-03               85.8
+    blocks_0_4 (snax_forge_mul)       5.616494e-04              5.255336e-04              1.442201e-04              1.231403e-03               73.6
+      m (ElementwiseLanes_i64xi64_i64_i64_n1_mul) 5.616494e-04        5.255336e-04        1.442201e-04              1.231403e-03               73.6
+        alus_0 (ElementwiseAlu_w64_mul) 5.616494e-04            5.255336e-04              1.442201e-04              1.231403e-03               73.6
+    blocks_1_4 (snax_forge_sum)       9.736965e-05              8.916482e-05              1.826956e-05              2.048040e-04               12.2
+      m (TreeAccumulate_i64_i64_n1)   9.736965e-05              8.916482e-05              1.826956e-05              2.048040e-04               12.2
+  csr (snax_forge_csr)                9.255244e-05              2.011988e-06              1.984945e-05              1.144139e-04                6.8
 1

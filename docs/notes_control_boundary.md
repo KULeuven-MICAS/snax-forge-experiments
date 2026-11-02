@@ -1,5 +1,7 @@
 # Notes: control, datapath and the block boundary (SYN1, forge against HLS)
 
+**After CTRL1:** the post-CTRL1 numbers (csr as the interface, D152; ctrl without products, D153) are in `results/analysis/syn2/syn2_before_after.md` (SYN2, X27); this note stays as SYN1's review.
+
 Working notes from the review of SYN1's analysis, 1 Nov 2026, kept to ideate on. They are self-contained: enough context and numbers to read without the repos. The generated, reproducible version of every number here is in `results/analysis/syn1/syn1_analysis.md` (sections 9 and 10), with the run notes `results/forge/runs/2026-11-01_syn1_split.md` and `results/hls/runs/2026-11-01_hls_c10.md`. Where this note and the analysis differ, the analysis is right.
 
 ## 1. The setting
