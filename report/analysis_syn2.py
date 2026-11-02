@@ -48,11 +48,10 @@ PARKED = {("dot", "dace", 1)}                                       # needs a RA
 MODULES = [("csr", "csr_um2", "csr"), ("ctrl", "ctrl_um2", "ctrl"), ("datapath", "datapath_um2", "dp")]
 CYCLE_WARN = 10
 SUM_WARN = 0.01
-NOTE_DACE = "dace-not-built"
-NOTE_RAM = "dace-parked"
+NOTE_DACE = NOTE_RAM = "dace"   # one footnote for every HLS cell with no dace point
 FOOTNOTES = {
-    NOTE_DACE: "hls-exercises builds dace for vsum and dot at W = 1 only; at this W there is no dace point.",
-    NOTE_RAM: "HLS dot `dace_w1` is parked: it needs a RAM macro (RAM1), so it has no synthesis or power row.",
+    "dace": "HLS dace: vecadd and vecmul have dace at every W; vsum's dace exists only at W = 1; dot has no dace "
+            "(hls-exercises builds it at W = 1 only, and `dace_w1` is parked until RAM1: it needs a RAM macro).",
 }
 
 
@@ -275,7 +274,7 @@ def main() -> int:
     md.append("")
     md.append("For the record: " + " ".join(sum_extremes(t, B[t], A[t]) for t in TECHS) + "\n")
 
-    for key in (NOTE_DACE, NOTE_RAM):
+    for key in FOOTNOTES:
         if key in used:
             md.append(f"[^{key}]: {FOOTNOTES[key]}")
     md.append("")
