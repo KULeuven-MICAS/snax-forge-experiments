@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""report/char_table.py - CHAR1: snax-forge's blocks alone, the table and the draft JSON (docs/DECISIONS.md X28 to X36).
+"""report/char_table.py - CHAR1: snax-forge's blocks alone, the table (docs/DECISIONS.md X28 to X37).
 
-  pixi run char-table
+  pixi run char-table          (after pixi run char-export)
 
 Reads, per technology (nangate45, nangate15), results/char/<tech>/char_synth.csv (R0) and char_power.csv (R2),
-and char/points.json (the params as hw/chisel/blocks.json names them); writes results/char/char_table.md and
-results/char/<tech>/char_draft.json. Every number is computed from those files, or, for the known limits only,
-from the files they cite:
+and char/points.json (the params as hw/chisel/blocks.json names them); writes results/char/char_table.md. Every
+number is computed from those files, or, for the Model section and the known limits, from the files they cite:
 
+  the model            results/char/<tech>/char.json (report/char_export.py, checked equal to what it builds now
+                       from the same CSVs), and SYN2's results/forge/<tech>/power_pt.csv (cycles, config),
+                       power_pt_modules.csv (the units', ctrl's and the datapath's e_dyn per cycle) and
+                       synth_dc_modules.csv (ctrl's flops)
   the free first       SYN2's results/forge/<tech>/synth_dc_modules.csv (TreeAccumulate inside dot 4)
   the isolated fire    R1's char_power.csv at the pushed commit R1_COMMIT (`git show`, not a copy): duty50
                        against (busy + idle) / 2
@@ -17,7 +20,7 @@ from the files they cite:
                        e_dyn per cycle): (fires E_busy + (cycles - fires) E_idle) / cycles with fires = N / W
 
 Checks, each a failure: every point of char/points.json present on both technologies, every row ok, one
-snax-forge commit, the windows R2 has (busy and idle; LinkBuffer stream).
+snax-forge commit, the windows R2 has (busy and idle; LinkBuffer stream), char.json current.
 """
 from __future__ import annotations
 
@@ -269,25 +272,147 @@ def limit_mac(D: dict) -> list[str]:
                    "busy / inside", "model / inside"], rows)]
 
 
-# ---------------------------------------------------------------- the draft JSON
-def draft(t: str, d: dict, commits: dict) -> dict:
-    h = ehold(d)
-    pts = []
-    for p, v in d.items():
-        s = v["synth"]
-        windows = ["stream"] if v["datapath"] == "LinkBuffer" else ["busy", "idle"]
-        pts.append({"point": p, "datapath": v["datapath"], "params": v["params"],
-                    "area": {"total": float(s["area_um2"]), "comb": float(s["comb_area_um2"]), "seq": float(s["seq_area_um2"])},
-                    "flops": int(s["seq_cells"]), "fmax_mhz": float(s["fmax_mhz"]),
-                    "energy": {w: {"comb": e(d, p, w, "e_comb_pj"), "flop": e(d, p, w, "e_flop_pj")} for w in windows}})
-    return {"status": "draft", "tech": t, "clock_ns": float(CLOCK),
-            "units": {"area": "um2", "energy": "pJ per cycle of the window", "e_hold": "fJ per flop per cycle",
-                      "fmax": "MHz (a lower bound at a 10 ns clock, X2)"},
-            "source": {"snax_forge_commit": commits["snax_forge"], "snax_forge_experiments_commit": commits["sfe"],
-                       "stimulus": f"rand64, seed {SEED}, {CYCLES} cycles per window, inputs at the rising edge, the VCD "
-                                   "cut per window (docs/DECISIONS.md X31, X32)",
-                       "windows": "busy and idle; LinkBuffer stream, a link not loading costing flops x e_hold (X31, X33)"},
-            "e_hold_fj": round(h["mean"], 6), "points": pts}
+# ---------------------------------------------------------------- the model (char.json against SYN2)
+MODEL_DESIGNS = [("vecmul", "done/vecmul/forge_w{}"), ("vsum", "done/vsum/forge_w{}"), ("dot 4", "done/dot/forge4_w{}"),
+                 ("dot 5", "done/dot/forge5_w{}")]
+MODEL_WS = (8, 32)
+WRAP = "snax_forge_shell_wrapper"
+
+
+def model_json(D: dict, points: list[dict]) -> tuple[dict, dict]:
+    """{tech: char.json}, {tech: spreads}: built again from the CSVs and checked equal to the files."""
+    import char_export as ce
+    cat, J, S = ce.catalogue(), {}, {}
+    for t in TECHS:
+        J[t], S[t] = ce.build(t, D[t], points, cat)
+        p = ce.path(t)
+        if not p.is_file() or p.read_text() != ce.dumps(J[t]):
+            fail(f"{p.relative_to(ROOT)} is not current: pixi run char-export")
+    return J, S
+
+
+def model_constants(J: dict, S: dict) -> list[str]:
+    rows = []
+    for t in TECHS:
+        j, s = J[t], S[t]
+        for name, k, val in (("flop.e_load_fj", "load", j["flop"]["e_load_fj"]),
+                             ("flop.e_hold_fj", "hold", j["flop"]["e_hold_fj"])):
+            x = s[k]
+            rows.append([t, f"`{name}`", f(val), x["n"], f(x["min"]), f(x["max"]), f(x["sd"]), f"{x['range_pct']:.2f} %"])
+        c = s["ctrl"]
+        rows.append([t, "`ctrl.counter_factor`", f"{j['ctrl']['counter_factor']:.2f}", c["n"], f(c["min"]), f(c["max"]),
+                     f(c["sd"]), f"{c['range_pct']:.2f} %"])
+    area = "; ".join(f"{t} {J[t]['flop']['area_um2']} µm²" for t in TECHS)
+    return [f"`flop.area_um2` is `seq_area_um2 / seq_cells`, one value at all 21 registered points: {area}.", "",
+            table(["tech", "constant", "value", "points", "min", "max", "sd", "range"], rows), "",
+            "e_load is the mean busy e_bit of the points whose flops all load every cycle (Mac, TreeAccumulate and "
+            "SerialAccumulate busy, LinkBuffer depth 1 stream); e_hold the mean idle e_bit (as above); the counter "
+            "factor, per SYN2 point ctrl/ctrl's e_dyn per cycle (`power_pt_modules.csv`) over its flops x e_hold, the "
+            "mean over the 48 points rounded to two decimals. SYN2's `synth_dc_modules.csv` has no per-module "
+            "`seq_cells`: ctrl's flops are its `seq_um2` / `flop.area_um2`, an integer at every point (checked)."]
+
+
+def model_points(D: dict, J: dict) -> list[str]:
+    import char_export as ce
+    head = ["point", "n_bits"]
+    for t in TECHS:
+        tag = t.removeprefix("nangate")
+        head += [f"{tag} e_comb", f"{tag} e_fire", f"{tag} n_bits e_hold"]
+    rows = []
+    for dp, prefix in BLOCKS:
+        _, brows = block_rows(D, prefix)
+        for br in brows:
+            p = br[0].strip("`")
+            v = D[TECHS[0]][p]
+            row = [br[0], ce.n_bits(dp, v["params"])]
+            for t in TECHS:
+                j = J[t]
+                row += [f(ce.e_comb_at(j, dp, v["params"])), f(ce.e_fire(j, dp, v["params"])),
+                        f(ce.e_hold_pj(j, ce.n_bits(dp, v["params"])))]
+            rows.append(row)
+    return [table(head, rows)]
+
+
+def syn2_units(t: str, D: dict, point: str, w: int, mods: list[dict]) -> list[dict]:
+    """SYN2's units of `point` in block order: {name (the unit), design (the block module), char (the char point at
+    W whose top it is), datapath, params, e (pJ per cycle)}."""
+    out = []
+    for m in mods:
+        mm = re.fullmatch(rf"{WRAP}/dp/blocks_(\d+)_\d+", m["path"])
+        if m["point"] != point or not mm:
+            continue
+        unit = m["design"].removeprefix("snax_forge_")
+        blk = [x for x in mods if x["point"] == point and x["path"] == m["path"] + "/m"]
+        if len(blk) != 1:
+            fail(f"{t}: {point}: {m['path']}: {len(blk)} block cells")
+        chars = [p for p, v in D[t].items() if v["params"].get("lanes") == w
+                 and re.fullmatch(rf"{v['synth']['top']}(_\d+)?", blk[0]["design"])]
+        if len(chars) != 1:
+            fail(f"{t}: {point}: {blk[0]['design']}: {len(chars)} char points at W = {w}")
+        v = D[t][chars[0]]
+        out.append({"k": int(mm.group(1)), "name": unit, "design": blk[0]["design"], "char": chars[0],
+                    "datapath": v["datapath"], "params": v["params"], "e": float(blk[0]["e_dyn_pj"])})
+    return sorted(out, key=lambda u: u["k"])
+
+
+def fires(t: str, point: str, w: int, config: str, units: list[dict], cat: dict) -> list[int]:
+    """n_fire per unit along the chain: the sink gives JOBS results, a unit before s gives R_s T_s, and fires R T
+    span times (T its JOB_BEATS, else 1; span blocks.json's, `lanes` = W). The head must fire N / W."""
+    kv = dict(x.split("=") for x in config.split())
+    jobs = int(kv.pop("JOBS"))
+    T = {u["name"]: int(kv.pop(f"{u['name']}.JOB_BEATS", 1)) for u in units}
+    if kv:
+        fail(f"{t}: {point}: config {config}: {sorted(kv)} not a unit's")
+    out, r = [], jobs
+    for u in reversed(units):
+        span = cat[u["datapath"]]["span"]
+        span = w if span == "lanes" else int(span)
+        out.append(r * T[u["name"]] * span)
+        r *= T[u["name"]]
+    out.reverse()
+    if out[0] != N // w:
+        fail(f"{t}: {point}: the head fires {out[0]}, N / W = {N // w}")
+    return out
+
+
+def model_syn2(D: dict, J: dict) -> tuple[list[str], list[str]]:
+    import char_export as ce
+    cat = ce.catalogue()
+    drows, urows = [], []
+    for t in TECHS:
+        j = J[t]
+        pwr = {r["point"]: r for r in read_csv(RES / "forge" / t / "power_pt.csv") if r["size"] == f"n{N}"}
+        mods = read_csv(RES / "forge" / t / "power_pt_modules.csv")
+        bits = ce.ctrl_bits(t, j["flop"]["area_um2"])
+        for name, pat in MODEL_DESIGNS:
+            for w in MODEL_WS:
+                p = pat.format(w)
+                cyc = int(pwr[p]["cycles"])
+                units = syn2_units(t, D, p, w, mods)
+                nf = fires(t, p, w, pwr[p]["config"], units, cat)
+                per = {m["path"]: float(m["e_dyn_pj"]) for m in mods if m["point"] == p}
+                dp_s, ctrl_s = per[f"{WRAP}/dp"] * cyc, per[f"{WRAP}/ctrl/ctrl"] * cyc
+                dp_m = dp_r = 0.0
+                for u, n in zip(units, nf):
+                    nb = ce.n_bits(u["datapath"], u["params"])
+                    fire_part = n * ce.e_fire(j, u["datapath"], u["params"])
+                    hold_part = cyc * ce.e_hold_pj(j, nb)
+                    um, us = fire_part + hold_part, u["e"] * cyc
+                    dp_m += um
+                    dp_r += ce.e_unit(j, u["datapath"], u["params"], n, cyc, rule_only=True)
+                    urows.append([t, name, w, f"{u['name']}: {u['datapath']}", n, nb, cyc, f(fire_part / 1000, 3),
+                                  f(hold_part / 1000, 3), f(um / 1000, 3), f(us / 1000, 3), f"{um / us:.3f}"])
+                cm = ce.e_ctrl(j, bits[p], cyc)
+                km, ks, kr = dp_m + cm, dp_s + ctrl_s, dp_r + cm
+                drows.append([t, name, w, ", ".join(f"{u['datapath']} {n}" for u, n in zip(units, nf)), cyc, bits[p],
+                              f(dp_m / 1000, 3), f(dp_s / 1000, 3), f"{dp_m / dp_s:.3f}",
+                              f(cm / 1000, 3), f(ctrl_s / 1000, 3), f"{cm / ctrl_s:.3f}",
+                              f(km / 1000, 3), f(ks / 1000, 3), f"{km / ks:.3f}", f"{kr / ks:.3f}"])
+    dt = table(["tech", "design", "W", "units, n_fire", "C_acc", "ctrl bits", "datapath model", "datapath SYN2", "ratio",
+                "ctrl model", "ctrl SYN2", "ratio", "kernel model", "kernel SYN2", "ratio", "ratio, rules only"], drows)
+    ut = table(["tech", "design", "W", "unit", "n_fire", "n_bits", "C_acc", "n_fire e_fire", "C_acc n_bits e_hold",
+                "model", "SYN2", "ratio"], urows)
+    return [dt], [ut]
 
 
 def main() -> int:
@@ -322,6 +447,41 @@ def main() -> int:
     for dp, prefix in BLOCKS:
         head, rows = block_rows(D, prefix)
         L += [f"## {dp}", "", table(head, rows), "", "How it scales:", "", *scaling(D, prefix), ""]
+    J, S = model_json(D, points)
+    designs, units = model_syn2(D, J)
+    L += ["## Model", "",
+          "The table snax-forge reads is `results/char/<tech>/char.json` (`report/char_export.py`, `pixi run "
+          "char-export`; X37). Registers are bits: a flop that loads costs e_load per cycle, one that holds e_hold; a "
+          "block keeps its comb part per fire (its busy window's e_comb; LinkBuffer's stream, per load); ctrl is its "
+          "flops x e_hold x a counter factor. Per unit and task, with C_acc the task's cycles:", "",
+          "$$E_{\\mathit{unit}} = n_{\\mathit{fire}}\\thinspace\\big(e_{\\mathit{comb}} + n_{\\mathit{bits}}\\thinspace"
+          "(e_{\\mathit{load}} - e_{\\mathit{hold}})\\big) + C_{\\mathit{acc}}\\thinspace n_{\\mathit{bits}}\\thinspace "
+          "e_{\\mathit{hold}}, \\qquad E_{\\mathit{ctrl}} = f_{\\mathit{ctrl}}\\thinspace n_{\\mathit{bits}}^{\\mathit{ctrl}}"
+          "\\thinspace C_{\\mathit{acc}}\\thinspace e_{\\mathit{hold}}$$", "",
+          "### The constants", "", *model_constants(J, S), "",
+          "### Per block point", "",
+          "e_fire = e_comb + n_bits (e_load - e_hold), pJ per fire, and the hold term n_bits e_hold, pJ per cycle, "
+          "from char.json at each measured point. n_bits is the block's register bits from its params (lanes x depth "
+          "x the output's width; ElementwiseLanes none), equal to `seq_cells` at every point (checked). A lanes value "
+          "char.json does not hold takes the entry's `lanes_rule`: `copy`, W x the lanes-1 point (ElementwiseLanes, "
+          "Mac, LinkBuffer, whose W = 8 and 32 points are the copy's checks above); `interpolate`, linear in lanes "
+          "(TreeAccumulate, SerialAccumulate).", "",
+          *model_points(D, J), "",
+          "### Against SYN2", "",
+          f"vecmul, vsum, dot 4 and dot 5 at W = 8 and 32, n = {N}, energy per task in nJ. Per design its units in "
+          "block order, each firing along the chain from `power_pt.csv`'s config: the sink gives JOBS results, a unit "
+          "before it the sink's T per result, and a unit fires its results x its T x its span (blocks.json's; "
+          f"SerialAccumulate's is lanes): the streaming unit N / W, a T = 1 TreeAccumulate sum once, a SerialAccumulate "
+          "sum W times. C_acc is the run's cycles (`power_pt.csv`), ctrl's bits its flops (`synth_dc_modules.csv`, "
+          "seq_um2 / flop area). SYN2 is `power_pt_modules.csv`'s e_dyn per cycle x cycles: datapath `dp`, ctrl "
+          "`ctrl/ctrl`, kernel the two, each unit its block cell. Model uses char.json's point at the design's W; "
+          "the last column, \"ratio, rules only\", takes every e_comb from the lanes rule instead (W x the lanes-1 point for "
+          "ElementwiseLanes and Mac).", "",
+          *designs, "",
+          "Per unit:", "", *units, "",
+          "The model leaves out the csr, the memory and the streamers. dot 4's sum alone keeps the feedback adder its "
+          "tied `first` removes inside dot 4 (the free `first`, below): it costs area, which this check does not "
+          "compare.", ""]
     L += ["## Known limits", "",
           "**The free `first`.** A TreeAccumulate alone has its `first` driven; inside dot 4 it is tied and firtool "
           "folds it (R0, `results/char/runs/2026-11-03_char1_r0.md`), so the block alone is larger than dot 4's sum by:",
@@ -338,9 +498,7 @@ def main() -> int:
           "idle reproduce it: model = (fires E_busy + (cycles - fires) E_idle) / cycles, the cycles from SYN2's "
           "`power_pt.csv`, inside from its `power_pt_modules.csv`:", "", *limit_mac(D), ""]
     OUT.write_text("\n".join(L))
-    for t in TECHS:
-        (CHAR / t / "char_draft.json").write_text(json.dumps(draft(t, D[t], commits), indent=1) + "\n")
-    print(f"wrote {OUT.relative_to(ROOT)} and results/char/<tech>/char_draft.json for {', '.join(TECHS)}")
+    print(f"wrote {OUT.relative_to(ROOT)} for {', '.join(TECHS)}")
     return 0
 
 
