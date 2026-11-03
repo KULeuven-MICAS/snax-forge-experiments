@@ -92,6 +92,115 @@ How it scales:
 - nangate45: stream at W = 1 over D = 2, 4, 8, 16 (least squares): e_dyn = 0.3101 D + 1.2800 pJ, e_flop = 0.2760 D + 0.2634 pJ; D = 1 apart (no read mux): e_dyn 1.1698 pJ, e_flop 1.0577 pJ; d1 at W = 8: 1.014 of W x d1_w1; d1 at W = 32: 1.017 of W x d1_w1.
 - nangate15: stream at W = 1 over D = 2, 4, 8, 16 (least squares): e_dyn = 0.1299 D + 0.4730 pJ, e_flop = 0.1206 D + 0.0962 pJ; D = 1 apart (no read mux): e_dyn 0.3825 pJ, e_flop 0.3409 pJ; d1 at W = 8: 1.012 of W x d1_w1; d1 at W = 32: 1.015 of W x d1_w1.
 
+## Model
+
+The table snax-forge reads is `results/char/<tech>/char.json` (`report/char_export.py`, `pixi run char-export`; X37). Registers are bits: a flop that loads costs e_load per cycle, one that holds e_hold; a block keeps its comb part per fire (its busy window's e_comb; LinkBuffer's stream, per load); ctrl is its flops x e_hold x a counter factor. Per unit and task, with C_acc the task's cycles:
+
+$$E_{\mathit{unit}} = n_{\mathit{fire}}\thinspace\big(e_{\mathit{comb}} + n_{\mathit{bits}}\thinspace(e_{\mathit{load}} - e_{\mathit{hold}})\big) + C_{\mathit{acc}}\thinspace n_{\mathit{bits}}\thinspace e_{\mathit{hold}}, \qquad E_{\mathit{ctrl}} = f_{\mathit{ctrl}}\thinspace n_{\mathit{bits}}^{\mathit{ctrl}}\thinspace C_{\mathit{acc}}\thinspace e_{\mathit{hold}}$$
+
+### The constants
+
+`flop.area_um2` is `seq_area_um2 / seq_cells`, one value at all 21 registered points: nangate45 5.32 µm²; nangate15 1.277952 µm².
+
+| tech | constant | value | points | min | max | sd | range |
+|---|---|---|---|---|---|---|---|
+| nangate45 | `flop.e_load_fj` | 17.1692 | 17 | 16.5272 | 17.7036 | 0.3272 | 6.85 % |
+| nangate45 | `flop.e_hold_fj` | 7.1476 | 14 | 7.1395 | 7.1517 | 0.0032 | 0.17 % |
+| nangate45 | `ctrl.counter_factor` | 1.06 | 48 | 1.0279 | 1.1457 | 0.0311 | 11.09 % |
+| nangate15 | `flop.e_load_fj` | 5.5045 | 17 | 5.3258 | 5.6573 | 0.1042 | 6.02 % |
+| nangate15 | `flop.e_hold_fj` | 1.8911 | 14 | 1.8907 | 1.8919 | 0.0003 | 0.06 % |
+| nangate15 | `ctrl.counter_factor` | 1.12 | 48 | 1.0627 | 1.2235 | 0.0533 | 14.41 % |
+
+e_load is the mean busy e_bit of the points whose flops all load every cycle (Mac, TreeAccumulate and SerialAccumulate busy, LinkBuffer depth 1 stream); e_hold the mean idle e_bit (as above); the counter factor, per SYN2 point ctrl/ctrl's e_dyn per cycle (`power_pt_modules.csv`) over its flops x e_hold, the mean over the 48 points rounded to two decimals. SYN2's `synth_dc_modules.csv` has no per-module `seq_cells`: ctrl's flops are its `seq_um2` / `flop.area_um2`, an integer at every point (checked).
+
+### Per block point
+
+e_fire = e_comb + n_bits (e_load - e_hold), pJ per fire, and the hold term n_bits e_hold, pJ per cycle, from char.json at each measured point. n_bits is the block's register bits from its params (lanes x depth x the output's width; ElementwiseLanes none), equal to `seq_cells` at every point (checked). A lanes value char.json does not hold takes the entry's `lanes_rule`: `copy`, W x the lanes-1 point (ElementwiseLanes, Mac, LinkBuffer, whose W = 8 and 32 points are the copy's checks above); `interpolate`, linear in lanes (TreeAccumulate, SerialAccumulate).
+
+| point | n_bits | 45 e_comb | 45 e_fire | 45 n_bits e_hold | 15 e_comb | 15 e_fire | 15 n_bits e_hold |
+|---|---|---|---|---|---|---|---|
+| `lanes/add_w1` | 0 | 0.7552 | 0.7552 | 0.0000 | 0.1933 | 0.1933 | 0.0000 |
+| `lanes/add_w8` | 0 | 6.2061 | 6.2061 | 0.0000 | 1.5867 | 1.5867 | 0.0000 |
+| `lanes/add_w32` | 0 | 24.7695 | 24.7695 | 0.0000 | 6.3347 | 6.3347 | 0.0000 |
+| `lanes/mul_w1` | 0 | 11.2293 | 11.2293 | 0.0000 | 3.7396 | 3.7396 | 0.0000 |
+| `lanes/mul_w8` | 0 | 90.3774 | 90.3774 | 0.0000 | 30.2075 | 30.2075 | 0.0000 |
+| `lanes/mul_w32` | 0 | 362.2329 | 362.2329 | 0.0000 | 121.3171 | 121.3171 | 0.0000 |
+| `mac/acc_w1` | 64 | 11.4558 | 12.0972 | 0.4574 | 3.8191 | 4.0503 | 0.1210 |
+| `mac/acc_w8` | 512 | 92.1282 | 97.2592 | 3.6596 | 30.9412 | 32.7913 | 0.9682 |
+| `mac/acc_w32` | 2048 | 368.5640 | 389.0882 | 14.6383 | 124.3161 | 131.7163 | 3.8730 |
+| `tree/add_w1` | 64 | 0.7445 | 1.3858 | 0.4574 | 0.2781 | 0.5093 | 0.1210 |
+| `tree/add_w2` | 64 | 1.1544 | 1.7958 | 0.4574 | 0.3534 | 0.5846 | 0.1210 |
+| `tree/add_w4` | 64 | 1.8541 | 2.4955 | 0.4574 | 0.5089 | 0.7402 | 0.1210 |
+| `tree/add_w8` | 64 | 3.2513 | 3.8927 | 0.4574 | 0.8194 | 1.0507 | 0.1210 |
+| `tree/add_w16` | 64 | 6.1026 | 6.7440 | 0.4574 | 1.4470 | 1.6783 | 0.1210 |
+| `tree/add_w32` | 64 | 11.7468 | 12.3882 | 0.4574 | 2.7029 | 2.9341 | 0.1210 |
+| `serial/sum_w2` | 64 | 0.9066 | 1.5480 | 0.4574 | 0.3825 | 0.6137 | 0.1210 |
+| `serial/sum_w4` | 64 | 1.0493 | 1.6907 | 0.4574 | 0.4065 | 0.6378 | 0.1210 |
+| `serial/sum_w8` | 64 | 1.1216 | 1.7630 | 0.4574 | 0.4252 | 0.6565 | 0.1210 |
+| `serial/sum_w16` | 64 | 1.3133 | 1.9547 | 0.4574 | 0.4659 | 0.6971 | 0.1210 |
+| `serial/sum_w32` | 64 | 1.3773 | 2.0187 | 0.4574 | 0.4997 | 0.7309 | 0.1210 |
+| `link/d1_w1` | 64 | 0.1120 | 0.7534 | 0.4574 | 0.0416 | 0.2729 | 0.1210 |
+| `link/d2_w1` | 128 | 0.9609 | 2.2437 | 0.9149 | 0.3801 | 0.8426 | 0.2421 |
+| `link/d4_w1` | 256 | 1.2867 | 3.8522 | 1.8298 | 0.4343 | 1.3594 | 0.4841 |
+| `link/d8_w1` | 512 | 1.3058 | 6.4368 | 3.6596 | 0.4488 | 2.2988 | 0.9682 |
+| `link/d16_w1` | 1024 | 1.5363 | 11.7985 | 7.3191 | 0.5253 | 4.2254 | 1.9365 |
+| `link/d1_w8` | 512 | 0.9135 | 6.0446 | 3.6596 | 0.3403 | 2.1904 | 0.9682 |
+| `link/d1_w32` | 2048 | 3.6690 | 24.1932 | 14.6383 | 1.3661 | 8.7664 | 3.8730 |
+
+### Against SYN2
+
+vecmul, vsum, dot 4 and dot 5 at W = 8 and 32, n = 2048, energy per task in nJ. Per design its units in block order, each firing along the chain from `power_pt.csv`'s config: the sink gives JOBS results, a unit before it the sink's T per result, and a unit fires its results x its T x its span (blocks.json's; SerialAccumulate's is lanes): the streaming unit N / W, a T = 1 TreeAccumulate sum once, a SerialAccumulate sum W times. C_acc is the run's cycles (`power_pt.csv`), ctrl's bits its flops (`synth_dc_modules.csv`, seq_um2 / flop area). SYN2 is `power_pt_modules.csv`'s e_dyn per cycle x cycles: datapath `dp`, ctrl `ctrl/ctrl`, kernel the two, each unit its block cell. Model uses char.json's point at the design's W; the last column, "ratio, rules only", takes every e_comb from the lanes rule instead (W x the lanes-1 point for ElementwiseLanes and Mac).
+
+| tech | design | W | units, n_fire | C_acc | ctrl bits | datapath model | datapath SYN2 | ratio | ctrl model | ctrl SYN2 | ratio | kernel model | kernel SYN2 | ratio | ratio, rules only |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| nangate45 | vecmul | 8 | ElementwiseLanes 256 | 256 | 66 | 23.137 | 23.108 | 1.001 | 0.128 | 0.133 | 0.959 | 23.265 | 23.241 | 1.001 | 0.995 |
+| nangate45 | vecmul | 32 | ElementwiseLanes 64 | 64 | 66 | 23.183 | 23.104 | 1.003 | 0.032 | 0.035 | 0.925 | 23.215 | 23.139 | 1.003 | 0.995 |
+| nangate45 | vsum | 8 | TreeAccumulate 256 | 257 | 131 | 1.114 | 1.128 | 0.988 | 0.255 | 0.253 | 1.008 | 1.369 | 1.380 | 0.992 | 0.992 |
+| nangate45 | vsum | 32 | TreeAccumulate 64 | 65 | 131 | 0.823 | 0.821 | 1.001 | 0.065 | 0.065 | 0.986 | 0.887 | 0.887 | 1.000 | 1.000 |
+| nangate45 | dot 4 | 8 | Mac 256, TreeAccumulate 1 | 258 | 164 | 25.964 | 25.688 | 1.011 | 0.321 | 0.316 | 1.015 | 26.285 | 26.004 | 1.011 | 1.006 |
+| nangate45 | dot 4 | 32 | Mac 64, TreeAccumulate 1 | 66 | 164 | 25.910 | 25.808 | 1.004 | 0.082 | 0.083 | 0.987 | 25.992 | 25.891 | 1.004 | 0.999 |
+| nangate45 | dot 5 | 8 | Mac 256, SerialAccumulate 8 | 265 | 167 | 26.003 | 25.209 | 1.032 | 0.335 | 0.331 | 1.012 | 26.339 | 25.540 | 1.031 | 1.026 |
+| nangate45 | dot 5 | 32 | Mac 64, SerialAccumulate 32 | 97 | 169 | 26.431 | 25.490 | 1.037 | 0.124 | 0.123 | 1.010 | 26.555 | 25.613 | 1.037 | 1.032 |
+| nangate15 | vecmul | 8 | ElementwiseLanes 256 | 256 | 66 | 7.733 | 7.729 | 1.001 | 0.036 | 0.038 | 0.933 | 7.769 | 7.767 | 1.000 | 0.991 |
+| nangate15 | vecmul | 32 | ElementwiseLanes 64 | 64 | 66 | 7.764 | 7.729 | 1.005 | 0.009 | 0.010 | 0.915 | 7.773 | 7.739 | 1.004 | 0.991 |
+| nangate15 | vsum | 8 | TreeAccumulate 256 | 257 | 131 | 0.300 | 0.301 | 0.996 | 0.071 | 0.069 | 1.029 | 0.371 | 0.371 | 1.002 | 1.002 |
+| nangate15 | vsum | 32 | TreeAccumulate 64 | 65 | 131 | 0.196 | 0.195 | 1.003 | 0.018 | 0.018 | 1.005 | 0.214 | 0.213 | 1.004 | 1.004 |
+| nangate15 | dot 4 | 8 | Mac 256, TreeAccumulate 1 | 258 | 164 | 8.677 | 8.583 | 1.011 | 0.090 | 0.086 | 1.042 | 8.766 | 8.669 | 1.011 | 1.000 |
+| nangate15 | dot 4 | 32 | Mac 64, TreeAccumulate 1 | 66 | 164 | 8.696 | 8.624 | 1.008 | 0.023 | 0.023 | 1.016 | 8.719 | 8.647 | 1.008 | 0.993 |
+| nangate15 | dot 5 | 8 | Mac 256, SerialAccumulate 8 | 265 | 167 | 8.688 | 8.498 | 1.022 | 0.094 | 0.090 | 1.043 | 8.782 | 8.588 | 1.023 | 1.011 |
+| nangate15 | dot 5 | 32 | Mac 64, SerialAccumulate 32 | 97 | 169 | 8.841 | 8.623 | 1.025 | 0.035 | 0.034 | 1.031 | 8.875 | 8.657 | 1.025 | 1.010 |
+
+Per unit:
+
+| tech | design | W | unit | n_fire | n_bits | C_acc | n_fire e_fire | C_acc n_bits e_hold | model | SYN2 | ratio |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| nangate45 | vecmul | 8 | acc: ElementwiseLanes | 256 | 0 | 256 | 23.137 | 0.000 | 23.137 | 23.108 | 1.001 |
+| nangate45 | vecmul | 32 | acc: ElementwiseLanes | 64 | 0 | 64 | 23.183 | 0.000 | 23.183 | 23.104 | 1.003 |
+| nangate45 | vsum | 8 | acc: TreeAccumulate | 256 | 64 | 257 | 0.997 | 0.118 | 1.114 | 1.128 | 0.988 |
+| nangate45 | vsum | 32 | acc: TreeAccumulate | 64 | 64 | 65 | 0.793 | 0.030 | 0.823 | 0.821 | 1.001 |
+| nangate45 | dot 4 | 8 | mac: Mac | 256 | 512 | 258 | 24.898 | 0.944 | 25.843 | 24.953 | 1.036 |
+| nangate45 | dot 4 | 8 | sum: TreeAccumulate | 1 | 64 | 258 | 0.004 | 0.118 | 0.122 | 0.735 | 0.166 |
+| nangate45 | dot 4 | 32 | mac: Mac | 64 | 2048 | 66 | 24.902 | 0.966 | 25.868 | 25.086 | 1.031 |
+| nangate45 | dot 4 | 32 | sum: TreeAccumulate | 1 | 64 | 66 | 0.012 | 0.030 | 0.043 | 0.721 | 0.059 |
+| nangate45 | dot 5 | 8 | mac: Mac | 256 | 512 | 265 | 24.898 | 0.970 | 25.868 | 24.912 | 1.038 |
+| nangate45 | dot 5 | 8 | sum: SerialAccumulate | 8 | 64 | 265 | 0.014 | 0.121 | 0.135 | 0.297 | 0.456 |
+| nangate45 | dot 5 | 32 | mac: Mac | 64 | 2048 | 97 | 24.902 | 1.420 | 26.322 | 25.350 | 1.038 |
+| nangate45 | dot 5 | 32 | sum: SerialAccumulate | 32 | 64 | 97 | 0.065 | 0.044 | 0.109 | 0.140 | 0.776 |
+| nangate15 | vecmul | 8 | acc: ElementwiseLanes | 256 | 0 | 256 | 7.733 | 0.000 | 7.733 | 7.729 | 1.001 |
+| nangate15 | vecmul | 32 | acc: ElementwiseLanes | 64 | 0 | 64 | 7.764 | 0.000 | 7.764 | 7.729 | 1.005 |
+| nangate15 | vsum | 8 | acc: TreeAccumulate | 256 | 64 | 257 | 0.269 | 0.031 | 0.300 | 0.301 | 0.996 |
+| nangate15 | vsum | 32 | acc: TreeAccumulate | 64 | 64 | 65 | 0.188 | 0.008 | 0.196 | 0.195 | 1.003 |
+| nangate15 | dot 4 | 8 | mac: Mac | 256 | 512 | 258 | 8.395 | 0.250 | 8.644 | 8.404 | 1.029 |
+| nangate15 | dot 4 | 8 | sum: TreeAccumulate | 1 | 64 | 258 | 0.001 | 0.031 | 0.032 | 0.170 | 0.190 |
+| nangate15 | dot 4 | 32 | mac: Mac | 64 | 2048 | 66 | 8.430 | 0.256 | 8.685 | 8.454 | 1.027 |
+| nangate15 | dot 4 | 32 | sum: TreeAccumulate | 1 | 64 | 66 | 0.003 | 0.008 | 0.011 | 0.161 | 0.068 |
+| nangate15 | dot 5 | 8 | mac: Mac | 256 | 512 | 265 | 8.395 | 0.257 | 8.651 | 8.398 | 1.030 |
+| nangate15 | dot 5 | 8 | sum: SerialAccumulate | 8 | 64 | 265 | 0.005 | 0.032 | 0.037 | 0.091 | 0.412 |
+| nangate15 | dot 5 | 32 | mac: Mac | 64 | 2048 | 97 | 8.430 | 0.376 | 8.806 | 8.558 | 1.029 |
+| nangate15 | dot 5 | 32 | sum: SerialAccumulate | 32 | 64 | 97 | 0.023 | 0.012 | 0.035 | 0.055 | 0.636 |
+
+The model leaves out the csr, the memory and the streamers. dot 4's sum alone keeps the feedback adder its tied `first` removes inside dot 4 (the free `first`, below): it costs area, which this check does not compare.
+
 ## Known limits
 
 **The free `first`.** A TreeAccumulate alone has its `first` driven; inside dot 4 it is tied and firtool folds it (R0, `results/char/runs/2026-11-03_char1_r0.md`), so the block alone is larger than dot 4's sum by:
