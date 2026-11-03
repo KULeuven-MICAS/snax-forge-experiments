@@ -43,7 +43,8 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
 #   Mac (accumulate)  on fire: s_l <- first ? a_l b_l : s_l + a_l b_l; out_l = s_l
 #   TreeAccumulate    on fire: acc <- first ? sum_l in_l : acc + sum_l in_l; out = acc
 #   SerialAccumulate  on read: acc <- (first and lane = 0 ? 0 : acc) + in_lane (in_0 at lanes 1); out = acc
-#   LinkBuffer        on load: slot[wslot] <- in; out = slot[rslot] (combinational read; slot 0 at depth 1)
+#   LinkBuffer        on load: slot[wslot] <- in; out = slot[rslot] (combinational read; slot 0 at depth 1); in
+#                     R2's stream window rslot = wslot = t mod D, so out at slot t is the beat loaded at t - D
 # Every register starts at 0 (RegInit), as after the TB's reset.
 M64 = (1 << 64) - 1
 CHAR_OPS = {"add": lambda a, b: (a + b) & M64, "mul": lambda a, b: (a * b) & M64}

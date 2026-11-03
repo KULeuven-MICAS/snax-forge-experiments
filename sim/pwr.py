@@ -980,7 +980,8 @@ def char_seq_cells(tech: str, point: str) -> int | None:
 def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
     """rand64 (X19): per data input port in tb.json order, one stream of full-range int64, as many values as the
     slots take new beats; the expected outputs from sim/ref.py's char_ref. Every data input bit must take both
-    values in the busy window's beats (it toggles there)."""
+    values in the working window's beats (busy, or link's stream: it toggles there). For link's stream the
+    reference is checked against the FIFO it is: the output at stream slot t is the beat loaded D slots before."""
     n_new = sum(1 for s in slots if s["new"])
     rng = np.random.default_rng(seed)
     info = np.iinfo(np.int64)
@@ -989,7 +990,7 @@ def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
     busy, b = [], 0
     for s in slots:
         if s["new"]:
-            if s["window"] == "busy":
+            if s["window"] in ("busy", "stream"):
                 busy.append(b)
             b += 1
     untoggled = {}
@@ -1000,8 +1001,17 @@ def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
         if k:
             untoggled[port] = k
     if untoggled:
-        raise Fail(f"stimulus: data bits that never toggle in busy: {untoggled}")
+        raise Fail(f"stimulus: data bits that never toggle in the working window: {untoggled}")
     exps = char_ref(tb["datapath"], tb["params"], slots, beats)
+    if tb["kind"] == "link":
+        loaded = []
+        for k, s in enumerate(slots):
+            if s["new"]:
+                loaded.append(k)
+        bad = [k for k, s in enumerate(slots) if s["window"] == "stream"
+               and exps[k] != beats[loaded.index(k) - tb["depth"]]]
+        if bad:
+            raise Fail(f"reference: stream slots {bad[:5]} do not give the beat loaded D = {tb['depth']} before")
     return {"beats": beats, "exps": exps, "n_new": n_new, "busy_beats": len(busy)}
 
 
@@ -1134,8 +1144,10 @@ def do_point_char(point: str, tech: str, seed: int, threads: int) -> list[tuple[
         got = [{"name": w, "cycles": int(c), "fires": int(f)} for w, _, _, c, f in wins]
         if got != tb["windows"]:
             raise Fail(f"sim: windows {got}, tb.json has {tb['windows']}")
-        if int(changes.get("idle", -1)) != 0:
-            raise Fail(f"sim: the outputs change {changes.get('idle')} times in idle")
+        if "idle" in changes and int(changes["idle"]) != 0:
+            raise Fail(f"sim: the outputs change {changes['idle']} times in idle")
+        if any(w["name"] == "idle" for w in tb["windows"]) and "idle" not in changes:
+            raise Fail("sim: no idle line in vsim.log")
         head = vcd.open().read(4096)
         m = re.search(r"\$timescale\s+(\d+)\s*(\w+)\s+\$end", head)
         unit = int(m.group(1)) * syn.SECONDS[m.group(2).lower()]

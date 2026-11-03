@@ -3,11 +3,7 @@
 // The windows (sim/sources/char.py schedule(), CYCLES = 128 each) after 4 settle slots, each after one lead-in
 // slot of its own kind (outside every window, char_seq_core.svh):
 //   busy     fire every cycle, new data every cycle, first = 0; the lead-in is the restart (a fire with first)
-//   busy_t1  the same with first on every fire (T = 1); lead-in a fire with first
-//   idle     fire = 0, data and first held (first stays at busy_t1's 1: no pin but fire moves); lead-in the same
-//   duty50   fire every other cycle (even slots), new data only on fired cycles, first on the first; lead-in
-//            fire = 0, held (an odd slot)
-// Every firing window starts from a restart. The shared part is char_seq_core.svh.
+//   idle     fire = 0, data and first held (first stays at busy's 0: no pin but fire moves); lead-in the same The shared part is char_seq_core.svh.
 `timescale 1ns/1ps
 
 module char_fold_seq #(
@@ -37,12 +33,8 @@ module char_fold_seq #(
         reset_and_settle(4);
         slot("", 1'b1, 1'b1);
         for (int i = 0; i < CYCLES; i++) slot("busy", 1'b1, 1'b0);
-        slot("", 1'b1, 1'b1);
-        for (int i = 0; i < CYCLES; i++) slot("busy_t1", 1'b1, 1'b1);
-        slot("", 1'b0, 1'b1);
-        for (int i = 0; i < CYCLES; i++) slot("idle", 1'b0, 1'b1);     // first held at busy_t1's
-        slot("", 1'b0, 1'b1);
-        for (int i = 0; i < CYCLES; i++) slot("duty50", i % 2 == 0, i == 0);
+        slot("", 1'b0, 1'b0);
+        for (int i = 0; i < CYCLES; i++) slot("idle", 1'b0, 1'b0);     // first held at busy's
         finish_run();
     end
 endmodule

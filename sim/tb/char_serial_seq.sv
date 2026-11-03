@@ -5,10 +5,7 @@
 // one lead-in slot of its own kind (outside every window, char_seq_core.svh):
 //   busy     read every cycle, lane 0 .. W - 1, a new beat at lane 0, first at lane 0 of the first beat only;
 //            lead-in a read of the held beat's lane W - 1
-//   busy_t1  the same with first at lane 0 of every beat; lead-in the same
 //   idle     read = 0, first = 0, lane and data held, 128 cycles; lead-in the same
-//   duty50   read every other cycle (even slots), 128 beats of W reads, a new beat at each lane-0 read, first at
-//            the first; the odd slots hold lane and data; lead-in read = 0, held (an odd slot)
 // A read is a fire. The shared part is char_seq_core.svh.
 `timescale 1ns/1ps
 
@@ -44,17 +41,8 @@ module char_serial_seq #(
         slot("", 1'b0, 1'b1, W - 1, 1'b0);
         for (int b = 0; b < CYCLES; b++)
             for (int l = 0; l < W; l++) slot("busy", l == 0, 1'b1, l, b == 0 && l == 0);
-        slot("", 1'b0, 1'b1, W - 1, 1'b0);
-        for (int b = 0; b < CYCLES; b++)
-            for (int l = 0; l < W; l++) slot("busy_t1", l == 0, 1'b1, l, l == 0);
         slot("", 1'b0, 1'b0, W - 1, 1'b0);
         for (int i = 0; i < CYCLES; i++) slot("idle", 1'b0, 1'b0, W - 1, 1'b0);
-        slot("", 1'b0, 1'b0, W - 1, 1'b0);
-        for (int b = 0; b < CYCLES; b++)
-            for (int l = 0; l < W; l++) begin
-                slot("duty50", l == 0, 1'b1, l, b == 0 && l == 0);
-                slot("duty50", 1'b0, 1'b0, l, 1'b0);
-            end
         finish_run();
     end
 endmodule

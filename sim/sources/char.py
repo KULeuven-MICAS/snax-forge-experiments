@@ -24,8 +24,12 @@ and reset). The kinds, by datapath: lanes (ElementwiseLanes), fold (Mac in its a
 serial (SerialAccumulate), link (LinkBuffer).
 
 schedule(tb) is the sequence of slots the kind's sequencer drives after reset, slot by slot: 4 settle slots with
-every pin and data input low, then per window one lead-in slot of the window's own kind (outside every window)
-and the window's slots. A slot's inputs are applied at its rising edge (after the flops have taken the slot
+every pin and data input low, then per window a lead-in of the window's own kind (outside every window) and the
+window's slots. The windows (CHAR1 R2): lanes, fold and serial have busy (a fire every cycle; serial a read every
+cycle, 128 beats of W) and idle (the enable at 0, every other input held), each after one lead-in slot; link has
+stream only, a FIFO at full rate: a lead-in of D loads round the ring (the fill), then 128 cycles with a load of
+new data every cycle into slot t mod D and rslot the oldest slot, the same slot (read before the edge that
+overwrites it), so out at cycle t is the beat loaded at t - D. A slot's inputs are applied at its rising edge (after the flops have taken the slot
 before, as SYN1 and SYN2's TBs and a block's neighbours inside an accelerator change them), the outputs are sampled
 at its falling edge, and the next rising edge takes it. A window's rising edges are its own slots' input changes
 and the captures of its lead-in and its own slots but the last, which falls on the next lead-in's edge: every
@@ -51,8 +55,7 @@ KINDS = {"ElementwiseLanes": "lanes", "Mac": "fold", "TreeAccumulate": "fold", "
 INS = {"ElementwiseLanes": ["a", "b"], "Mac": ["a", "b"], "TreeAccumulate": ["in"], "SerialAccumulate": ["in"],
        "LinkBuffer": ["in"]}
 PINS = {"lanes": [], "fold": ["fire", "first"], "serial": ["read", "lane", "first"], "link": ["load", "wslot", "rslot"]}
-WINDOWS = {"lanes": ["busy", "idle", "duty50"], "fold": ["busy", "busy_t1", "idle", "duty50"],
-           "serial": ["busy", "busy_t1", "idle", "duty50"], "link": ["busy", "idle", "duty50"]}
+WINDOWS = {"lanes": ["busy", "idle"], "fold": ["busy", "idle"], "serial": ["busy", "idle"], "link": ["stream"]}
 SEQ_FILES = {k: [f"char_{k}_seq.sv"] for k in PINS}
 CORE = "char_seq_core.svh"
 
@@ -159,51 +162,26 @@ def schedule(tb: dict) -> list[dict]:
         slot(None, 0, 0)
         for i in range(CYCLES):
             slot("idle", 0, 0)
-        slot(None, 0, 0)                                  # an odd slot of duty50: held
-        for i in range(CYCLES):
-            slot("duty50", i % 2 == 0, i % 2 == 0)
     elif kind == "fold":
         slot(None, 1, 1, fire=1, first=1)                 # the restart
         for i in range(CYCLES):
             slot("busy", 1, 1, fire=1, first=0)
-        slot(None, 1, 1, fire=1, first=1)
+        slot(None, 0, 0, fire=0, first=0)
         for i in range(CYCLES):
-            slot("busy_t1", 1, 1, fire=1, first=1)
-        slot(None, 0, 0, fire=0, first=1)
-        for i in range(CYCLES):
-            slot("idle", 0, 0, fire=0, first=1)       # first held at busy_t1's (inputs held)
-        slot(None, 0, 0, fire=0, first=1)
-        for i in range(CYCLES):
-            slot("duty50", i % 2 == 0, i % 2 == 0, fire=int(i % 2 == 0), first=int(i == 0))
+            slot("idle", 0, 0, fire=0, first=0)           # every input held, first included (busy's 0)
     elif kind == "serial":
         slot(None, 0, 1, read=1, lane=w - 1, first=0)     # a read of the held beat's last lane
         for b in range(CYCLES):
             for lane in range(w):
                 slot("busy", lane == 0, 1, read=1, lane=lane, first=int(b == 0 and lane == 0))
-        slot(None, 0, 1, read=1, lane=w - 1, first=0)
-        for b in range(CYCLES):
-            for lane in range(w):
-                slot("busy_t1", lane == 0, 1, read=1, lane=lane, first=int(lane == 0))
         slot(None, 0, 0, read=0, lane=w - 1, first=0)
         for i in range(CYCLES):
             slot("idle", 0, 0, read=0, lane=w - 1, first=0)        # lane held at the last read's
-        slot(None, 0, 0, read=0, lane=w - 1, first=0)
-        for b in range(CYCLES):
-            for lane in range(w):
-                slot("duty50", lane == 0, 1, read=1, lane=lane, first=int(b == 0 and lane == 0))
-                slot("duty50", 0, 0, read=0, lane=lane, first=0)
     elif kind == "link":
-        slot(None, 1, 1, load=1, wslot=(depth - 1) % depth, rslot=(depth - 2) % depth)   # the ring's step before 0
-        for i in range(CYCLES):
-            slot("busy", 1, 1, load=1, wslot=i % depth, rslot=(i - 1) % depth)
-        held = {"wslot": (CYCLES - 1) % depth, "rslot": (CYCLES - 2) % depth}
-        slot(None, 0, 0, load=0, **held)
-        for i in range(CYCLES):
-            slot("idle", 0, 0, load=0, **held)
-        slot(None, 0, 0, load=0, **held)
-        for j in range(CYCLES // 2):
-            slot("duty50", 1, 1, load=1, wslot=j % depth, rslot=(j - 1) % depth)
-            slot("duty50", 0, 0, load=0, wslot=j % depth, rslot=(j - 1) % depth)
+        for t in range(depth):                            # the lead-in: the fill, D loads round the ring
+            slot(None, 1, 1, load=1, wslot=t, rslot=t)
+        for t in range(CYCLES):                           # full rate at full occupancy: read the oldest, which is
+            slot("stream", 1, 1, load=1, wslot=t % depth, rslot=t % depth)   # the slot this edge overwrites
     else:
         raise ValueError(f"kind {kind}")
     return out
