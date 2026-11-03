@@ -1,0 +1,38 @@
+ 
+****************************************
+Report : reference
+Design : SerialAccumulate_i64_i64_n8
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:03:20 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NangateOpenCellLibrary     1.064000      62    65.968001
+AOI22_X1           NangateOpenCellLibrary     1.330000     256   340.480011
+CLKBUF_X1          NangateOpenCellLibrary     0.798000      20    15.960000
+DFFR_X1            NangateOpenCellLibrary     5.320000      64   340.480011 n
+FA_X1              NangateOpenCellLibrary     4.256000      62   263.872003 r
+INV_X1             NangateOpenCellLibrary     0.532000       5     2.660000
+MUX2_X1            NangateOpenCellLibrary     1.862000      62   115.443999
+NAND2_X1           NangateOpenCellLibrary     0.798000       4     3.192000
+NAND3_X1           NangateOpenCellLibrary     1.064000       2     2.128000
+NAND4_X1           NangateOpenCellLibrary     1.330000      64    85.120003
+NOR2_X1            NangateOpenCellLibrary     0.798000       3     2.394000
+NOR3_X1            NangateOpenCellLibrary     1.064000       6     6.384000
+OAI221_X1          NangateOpenCellLibrary     1.596000       2     3.192000
+XOR2_X1            NangateOpenCellLibrary     1.596000       1     1.596000
+-----------------------------------------------------------------------------
+Total 14 references                                  1248.870027
+1

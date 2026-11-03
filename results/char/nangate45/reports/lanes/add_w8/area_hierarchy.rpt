@@ -1,0 +1,51 @@
+ 
+****************************************
+Report : area
+Design : ElementwiseLanes_i64xi64_i64_i64_n8_add
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:01:14 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         3074
+Number of nets:                          3584
+Number of cells:                          536
+Number of combinational cells:            528
+Number of sequential cells:                 0
+Number of macros/black boxes:               0
+Number of buf/inv:                          0
+Number of references:                       8
+
+Combinational area:               2157.792020
+Buf/Inv area:                        0.000000
+Noncombinational area:               0.000000
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  2157.792020
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  ------------------------
+ElementwiseLanes_i64xi64_i64_i64_n8_add 2157.7920   100.0    0.0000    0.0000 0.0000 ElementwiseLanes_i64xi64_i64_i64_n8_add
+alus_0                             269.7240     12.5   269.7240     0.0000  0.0000  ElementwiseAlu_w64_add_7
+alus_1                             269.7240     12.5   269.7240     0.0000  0.0000  ElementwiseAlu_w64_add_6
+alus_2                             269.7240     12.5   269.7240     0.0000  0.0000  ElementwiseAlu_w64_add_5
+alus_3                             269.7240     12.5   269.7240     0.0000  0.0000  ElementwiseAlu_w64_add_4
+alus_4                             269.7240     12.5   269.7240     0.0000  0.0000  ElementwiseAlu_w64_add_3
+alus_5                             269.7240     12.5   269.7240     0.0000  0.0000  ElementwiseAlu_w64_add_2
+alus_6                             269.7240     12.5   269.7240     0.0000  0.0000  ElementwiseAlu_w64_add_1
+alus_7                             269.7240     12.5   269.7240     0.0000  0.0000  ElementwiseAlu_w64_add_0
+--------------------------------  ---------  -------  ---------  ---------  ------  ------------------------
+Total                                                 2157.7920     0.0000  0.0000
+
+1

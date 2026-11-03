@@ -1,0 +1,75 @@
+ 
+****************************************
+Report : area
+Design : ElementwiseLanes_i64xi64_i64_i64_n32_add
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:17:23 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                        12290
+Number of nets:                         14368
+Number of cells:                         2176
+Number of combinational cells:           2144
+Number of sequential cells:                 0
+Number of macros/black boxes:               0
+Number of buf/inv:                          0
+Number of references:                      32
+
+Combinational area:               2390.753364
+Buf/Inv area:                        0.000000
+Noncombinational area:               0.000000
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  2390.753364
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  -------------------------
+ElementwiseLanes_i64xi64_i64_i64_n32_add 2390.7534   100.0    0.0000    0.0000 0.0000 ElementwiseLanes_i64xi64_i64_i64_n32_add
+alus_0                              74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_31
+alus_1                              74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_30
+alus_10                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_21
+alus_11                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_20
+alus_12                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_19
+alus_13                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_18
+alus_14                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_17
+alus_15                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_16
+alus_16                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_15
+alus_17                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_14
+alus_18                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_13
+alus_19                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_12
+alus_2                              74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_29
+alus_20                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_11
+alus_21                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_10
+alus_22                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_9
+alus_23                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_8
+alus_24                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_7
+alus_25                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_6
+alus_26                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_5
+alus_27                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_4
+alus_28                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_3
+alus_29                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_2
+alus_3                              74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_28
+alus_30                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_1
+alus_31                             74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_0
+alus_4                              74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_27
+alus_5                              74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_26
+alus_6                              74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_25
+alus_7                              74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_24
+alus_8                              74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_23
+alus_9                              74.7110      3.1    74.7110     0.0000  0.0000  ElementwiseAlu_w64_add_22
+--------------------------------  ---------  -------  ---------  ---------  ------  -------------------------
+Total                                                 2390.7534     0.0000  0.0000
+
+1

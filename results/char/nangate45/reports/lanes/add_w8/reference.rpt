@@ -1,0 +1,32 @@
+ 
+****************************************
+Report : reference
+Design : ElementwiseLanes_i64xi64_i64_i64_n8_add
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:01:14 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+ElementwiseAlu_w64_add_0        269.724002       1    269.724002  h
+ElementwiseAlu_w64_add_1        269.724002       1    269.724002  h
+ElementwiseAlu_w64_add_2        269.724002       1    269.724002  h
+ElementwiseAlu_w64_add_3        269.724002       1    269.724002  h
+ElementwiseAlu_w64_add_4        269.724002       1    269.724002  h
+ElementwiseAlu_w64_add_5        269.724002       1    269.724002  h
+ElementwiseAlu_w64_add_6        269.724002       1    269.724002  h
+ElementwiseAlu_w64_add_7        269.724002       1    269.724002  h
+-----------------------------------------------------------------------------
+Total 8 references                                   2157.792020
+1

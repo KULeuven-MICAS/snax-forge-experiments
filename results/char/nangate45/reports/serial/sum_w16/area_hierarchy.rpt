@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : area
+Design : SerialAccumulate_i64_i64_n16
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:02:34 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         1096
+Number of nets:                          2125
+Number of cells:                         1029
+Number of combinational cells:            965
+Number of sequential cells:                64
+Number of macros/black boxes:               0
+Number of buf/inv:                         42
+Number of references:                      14
+
+Combinational area:               1425.228029
+Buf/Inv area:                       31.919999
+Noncombinational area:             340.480011
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  1765.708040
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  ---------
+SerialAccumulate_i64_i64_n16      1765.7080    100.0  1425.2280   340.4800  0.0000  SerialAccumulate_i64_i64_n16
+--------------------------------  ---------  -------  ---------  ---------  ------  ---------
+Total                                                 1425.2280   340.4800  0.0000
+
+1

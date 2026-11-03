@@ -1,0 +1,37 @@
+ 
+****************************************
+Report : reference
+Design : TreeAccumulate_i64_i64_n2
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:19:33 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912      30     8.847360
+AOI22_X1           NanGate_15nm_OCL     0.344064      65    22.364160
+BUF_X1             NanGate_15nm_OCL     0.245760       2     0.491520
+DFFRNQ_X1          NanGate_15nm_OCL     1.277952      64    81.788925 n
+FA_X1              NanGate_15nm_OCL     1.179648      63    74.317827 r
+INV_X1             NanGate_15nm_OCL     0.147456      72    10.616832
+NAND2_X1           NanGate_15nm_OCL     0.196608      33     6.488064
+NOR2_X1            NanGate_15nm_OCL     0.196608      93    18.284545
+OAI21_X1           NanGate_15nm_OCL     0.294912      32     9.437184
+OAI22_X1           NanGate_15nm_OCL     0.344064      30    10.321920
+OR2_X1             NanGate_15nm_OCL     0.294912       1     0.294912
+XNOR2_X1           NanGate_15nm_OCL     0.442368      31    13.713408
+XOR2_X1            NanGate_15nm_OCL     0.442368      94    41.582592
+-----------------------------------------------------------------------------
+Total 13 references                                   298.549250
+1

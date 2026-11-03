@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : area
+Design : SerialAccumulate_i64_i64_n8
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:19:17 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                          583
+Number of nets:                          1476
+Number of cells:                          956
+Number of combinational cells:            892
+Number of sequential cells:                64
+Number of macros/black boxes:               0
+Number of buf/inv:                        153
+Number of references:                      17
+
+Combinational area:                258.195458
+Buf/Inv area:                       24.330241
+Noncombinational area:              81.788925
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                   339.984383
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  ---------
+SerialAccumulate_i64_i64_n8        339.9844    100.0  258.1955    81.7889  0.0000  SerialAccumulate_i64_i64_n8
+--------------------------------  ---------  -------  --------  ---------  ------  ---------
+Total                                                 258.1955    81.7889  0.0000
+
+1

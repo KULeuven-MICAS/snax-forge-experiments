@@ -1,0 +1,85 @@
+Information: Updating design information... (UID-85)
+ 
+****************************************
+Report : qor
+Design : SerialAccumulate_i64_i64_n16
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:18:31 2026
+****************************************
+
+
+  Timing Path Group 'clk'
+  -----------------------------------
+  Levels of Logic:           75.00000
+  Critical Path Length:     546.41620
+  Critical Path Slack:     9334.86035
+  Critical Path Clk Period:
+                          10000.00000
+  Total Negative Slack:       0.00000
+  No. of Violating Paths:     0.00000
+  Worst Hold Violation:       0.00000
+  Total Hold Violation:       0.00000
+  No. of Hold Violations:     0.00000
+  -----------------------------------
+
+
+  Cell Count
+  -----------------------------------
+  Hierarchical Cell Count:          0
+  Hierarchical Port Count:          0
+  Leaf Cell Count:               1372
+  Buf/Inv Cell Count:             172
+  Buf Cell Count:                  35
+  Inv Cell Count:                 137
+  CT Buf/Inv Cell Count:            0
+  Combinational Cell Count:      1308
+  Sequential Cell Count:           64
+  Macro Count:                      0
+  -----------------------------------
+
+
+  Area
+  -----------------------------------
+  Combinational Area:       387.51437
+  Noncombinational Area:     81.78893
+  Buf/Inv Area:              28.80307
+  Total Buffer Area:          8.60160
+  Total Inverter Area:       20.20147
+  Macro/Black Box Area:       0.00000
+  Net Area:                   0.00000
+  -----------------------------------
+  Cell Area:                469.30329
+  Design Area:              469.30329
+
+
+  Design Rules
+  -----------------------------------
+  Total Number of Nets:          2405
+  Nets With Violations:             0
+  Max Trans Violations:             0
+  Max Cap Violations:               0
+  -----------------------------------
+
+
+  Hostname: micas-lapserv1.esat.kuleuven.be
+
+  Compile CPU Statistics
+  -----------------------------------------
+  Resource Sharing:                 0.29462
+  Logic Optimization:               0.45644
+  Mapping Optimization:             1.78625
+  -----------------------------------------
+  Overall Compile Time:             9.40380
+  Overall Compile Wall Clock Time:  8.51981
+
+  --------------------------------------------------------------------
+
+  Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
+
+
+  Design (Hold)  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
+
+  --------------------------------------------------------------------
+
+
+1

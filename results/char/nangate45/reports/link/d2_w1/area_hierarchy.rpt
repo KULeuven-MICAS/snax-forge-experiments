@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : area
+Design : LinkBuffer_i64_n1_d2
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:02:10 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                          133
+Number of nets:                           399
+Number of cells:                          330
+Number of combinational cells:            202
+Number of sequential cells:               128
+Number of macros/black boxes:               0
+Number of buf/inv:                          8
+Number of references:                       6
+
+Combinational area:                364.951998
+Buf/Inv area:                        5.852000
+Noncombinational area:             680.960022
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  1045.912020
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  ---------
+LinkBuffer_i64_n1_d2              1045.9120    100.0  364.9520   680.9600  0.0000  LinkBuffer_i64_n1_d2
+--------------------------------  ---------  -------  --------  ---------  ------  ---------
+Total                                                 364.9520   680.9600  0.0000
+
+1
