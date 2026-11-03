@@ -139,6 +139,15 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** count beats only once reset is released (`rst_n === 1`), as `sim/tb/axis_sink.sv` does.
 - **Found in:** `2026-10-29_pwr_tasks.md`.
 
+## vcd2saif
+
+### VS1. `vcd2saif -time t0 t1` on a shared VCD adds a phantom toggle before the window
+
+- **Symptom:** a window with no activity has toggles: on CHAR1's ElementwiseLanes `lanes/add_w8` (nangate45), 519 of the idle window's 3586 nets have TC 1 although the VCD has no change at all between t0 and t1, so idle cost 0.028 pJ per cycle instead of 0. The SAIF passes X9's checks (DURATION, the clock's TC, T0 + T1 + TX).
+- **Cause:** the zero-delay simulation makes zero-width pulses: in one time step a net changes two or more times and ends where it began (a 64-bit adder when its inputs change). vcd2saif (Y-2026.03-SP2, the one on PATH) counts one toggle in the window for every net whose last change before t0 was such a pulse, however long before t0 it was: moving t0 later or t1 earlier does not remove it. Every one of the 519 nets, and no other, is such a pulse (checked net by net against the VCD). Inside a window vcd2saif counts net toggles correctly (pulses dropped); only the pulse before t0 leaks in, at most one toggle per net per window.
+- **Fix or check:** cut the VCD into one file per window and run vcd2saif on the cut (`sim/pwr.py`'s `vcd_windows`, `--source char`): the header, every variable's value at the last time step before t0 as plain value changes (a `$dumpvars` block there makes vcd2saif start the window at the next event), the window's events, and a bare time step at t1 (vcd2saif ends a file's window at its last time step); both details cost 2.5 ns of DURATION when missing. On the cuts TC equals the VCD's net toggles on every net and T0, T1, TX equal the shared VCD's SAIF. SYN1 and SYN2's single-window runs (`--source hls` and `--source forge`) still run `vcd2saif -time` on the shared VCD after reset and the setup writes, so they may carry up to one phantom toggle per net over a window of 64 cycles or more; they are not rechecked here.
+- **Found in:** `results/char/runs/2026-11-03_char1_r1.md`.
+
 ## PrimeTime
 
 ### PT1. PT applies the library's default wire-load model, hidden
