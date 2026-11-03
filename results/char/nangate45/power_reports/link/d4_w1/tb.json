@@ -49,19 +49,9 @@
  ],
  "windows": [
   {
-   "name": "busy",
+   "name": "stream",
    "cycles": 128,
    "fires": 128
-  },
-  {
-   "name": "idle",
-   "cycles": 128,
-   "fires": 0
-  },
-  {
-   "name": "duty50",
-   "cycles": 128,
-   "fires": 64
   }
  ]
 }

@@ -71,11 +71,6 @@
    "name": "idle",
    "cycles": 128,
    "fires": 0
-  },
-  {
-   "name": "duty50",
-   "cycles": 128,
-   "fires": 64
   }
  ]
 }

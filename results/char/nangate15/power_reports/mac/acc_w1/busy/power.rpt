@@ -1,0 +1,34 @@
+****************************************
+Report : Averaged Power
+	-significant_digits
+	-nosplit
+Design : Mac_i64xi64_i64_i64_n1_acc
+Version: W-2024.09-SP5
+Date   : Tue Nov  3 12:19:59 2026
+****************************************
+
+
+
+  Attributes
+  ----------
+      i  -  Including register clock pin internal power
+      u  -  User defined power group
+
+                        Internal             Switching            Leakage              Total
+Power Group             Power                Power                Power                Power               (     %)   Attrs
+----------------------------------------------------------------------------------------------------------------------------
+clock_network           1.203349e-05         0.000000e+00         0.000000e+00         1.203349e-05        ( 2.41%)   i
+register                7.982748e-06         1.526973e-05         3.027073e-06         2.627955e-05        ( 5.27%)   
+combinational           1.635188e-04         2.183867e-04         7.859140e-05         4.604969e-04        (92.32%)   
+sequential              0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+memory                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+io_pad                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+black_box               0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+
+  Net Switching Power  = 2.336564e-04          (46.84%)
+  Cell Internal Power  = 1.835351e-04          (36.79%)
+  Cell Leakage Power   = 8.161848e-05          (16.36%)
+                         -------------------------
+Total Power            = 4.988100e-04         (100.00%)
+
+1
