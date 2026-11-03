@@ -11,7 +11,7 @@ globs over those names.
   pixi run syn run     PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run] [--source S]
   pixi run syn summary [PATTERN ...] [--tech T] [--source S]
 
---source picks where the points come from: hls (the default, as above) or
+--source picks where the points come from: hls (the default, as above),
 forge, snax-forge's accelerator bundles that forge/bundles.py (pixi run
 forge-rtl) writes into rtl/forge/ in this repo. A forge point is a folder
 there holding a bundle.json, named as an HLS point (e.g. done/dot/forge3_w4);
@@ -25,6 +25,19 @@ bundle.json), and csr_um2, ctrl_um2, datapath_um2 (the area of the wrapper's
 three modules, bundle.json's "modules", from synth_dc_modules.csv's rows) and
 glue_um2 = area_um2 minus the three (the cells DC leaves at the top's own
 level); run reports a glue that is negative or above 1 % of the total.
+
+Or char (CHAR1): snax-forge's catalogue blocks alone, which char/blocks.py
+(pixi run char-rtl) writes into rtl/char/ in this repo. A char point is a
+folder there holding an emitted.json, named <block>/<case>_w<W> (e.g.
+tree/add_w8); its top is emitted.json's "top", and run writes the point's
+filelist.f into the run folder: '# top: <top>', then emitted.json's "files"
+made absolute. Char RTL is SystemVerilog with clock clock and an asynchronous
+active-high reset reset, kept ideal as the others. Runs go to
+syn/runs/char/<tech>/, results to results/char/<tech>/ under other names,
+char_synth.csv and char_synth_modules.csv (columns as synth_dc.csv and
+synth_dc_modules.csv), and a char row has more columns, from point.json:
+datapath, lanes, depth, op, form (a Mac's acc, plain or reg) and
+snax_forge_commit.
 
 A DC run that fails on a licence (LICENCE_ERROR in logs/dc_shell.log or
 logs/dc_stdout.log) is rerun once (docs X17); the retry is printed and
@@ -61,14 +74,15 @@ Environment, all optional:
   DC_SHELL            dc_shell                 (Design Compiler)
   SYN_RTL             ../hls-exercises/rtl     (the hls points)
   SYN_RTL_FORGE       rtl/forge                (the forge points)
+  SYN_RTL_CHAR        rtl/char                 (the char points)
   SYN_LIB_NANGATE45   the nangate45 .db, instead of the tech file's lib_default
   SYN_LIB_NANGATE15   the nangate15 .db, instead of the tech file's lib_default
                       (in general: the tech file's lib_env)
 syn.py passes DC: SYN_FILELIST, SYN_LIB_DB, SYN_LIB_NAME, SYN_TIME_UNIT,
 SYN_CAP_UNIT, SYN_T_SCALE, SYN_C_SCALE, SYN_DRIVE_CELL, SYN_OUT_LOAD_FF,
 SYN_MAX_TRANS_NS, SYN_WIRE_LOAD, SYN_CLOCK_NS, SYN_CORES, and from the
-source SYN_FORMAT (verilog; forge sverilog), SYN_CLK_PORT (ap_clk; forge clk_i)
-and SYN_RST_PORT (ap_rst_n; forge rst_ni).
+source SYN_FORMAT (verilog; forge and char sverilog), SYN_CLK_PORT (ap_clk;
+forge clk_i; char clock) and SYN_RST_PORT (ap_rst_n; forge rst_ni; char reset).
 Standard library only.
 """
 
@@ -99,7 +113,11 @@ SOURCES = {
             "format": "verilog", "clk": "ap_clk", "rst": "ap_rst_n"},
     "forge": {"rtl": Path(os.environ.get("SYN_RTL_FORGE", ROOT / "rtl" / "forge")),
               "format": "sverilog", "clk": "clk_i", "rst": "rst_ni"},
+    "char": {"rtl": Path(os.environ.get("SYN_RTL_CHAR", ROOT / "rtl" / "char")),
+             "format": "sverilog", "clk": "clock", "rst": "reset"},
 }
+# The results/<source>/<tech>/ CSVs: synth_dc.csv and synth_dc_modules.csv, but for char
+RESULT_CSVS = {"char": ("char_synth.csv", "char_synth_modules.csv")}
 SOURCE = "hls"
 RTL = SOURCES["hls"]["rtl"].resolve()
 RUNS = SYN / "runs" / "hls"
@@ -127,6 +145,7 @@ COLUMNS = ["point", "top", "tech", "clock_ns", "status", "errors", "area_um2", "
            "date", "run"]
 FORGE_COLUMNS = ["recipe", "W", "snax_forge_commit",   # after COLUMNS, forge rows only
                  "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2"]
+CHAR_COLUMNS = ["datapath", "lanes", "depth", "op", "form", "snax_forge_commit"]  # after COLUMNS, char rows only
 GLUE_MAX = 0.01   # a glue share above this (or below 0) is reported, not failed
 # A licence failure, as DC prints it (PITFALLS L1): 'Error: Design-Compiler Internal licensing error
 # number -92 ...', 'Unable to obtain feature ...', 'Fatal: Design Compiler is not enabled. (DCSH-1)'.
@@ -204,11 +223,13 @@ def techs_with_summary(only: str | None) -> list[str]:
 def all_points() -> list[str]:
     if SOURCE == "forge":
         return sorted(str(f.parent.relative_to(RTL)) for f in RTL.rglob("bundle.json"))
+    if SOURCE == "char":
+        return sorted(str(f.parent.relative_to(RTL)) for f in RTL.rglob("emitted.json"))
     return sorted(str(f.parent.relative_to(RTL)) for f in RTL.glob("*/*/*/filelist.f"))
 
 
 def columns() -> list[str]:
-    return COLUMNS + FORGE_COLUMNS if SOURCE == "forge" else COLUMNS
+    return COLUMNS + {"forge": FORGE_COLUMNS, "char": CHAR_COLUMNS}.get(SOURCE, [])
 
 
 def forge_json(point: str, name: str) -> dict:
@@ -223,6 +244,27 @@ def forge_filelist(point: str) -> list[str]:
             if ln.strip() and not ln.strip().startswith("#")]
 
 
+def char_filelist(point: str) -> list[str]:
+    """emitted.json's files, each path made absolute."""
+    return [str((RTL / point / f).resolve()) for f in forge_json(point, "emitted.json")["files"]]
+
+
+def point_filelist(point: str) -> list[str]:
+    """A forge or char point's files, for the filelist.f that run writes into the run folder."""
+    return forge_filelist(point) if SOURCE == "forge" else char_filelist(point)
+
+
+def char_extra(point: str) -> dict:
+    """A char row's CHAR_COLUMNS from point.json: the datapath, the params that apply, a Mac's form."""
+    pj = forge_json(point, "point.json")
+    params = pj.get("params", {})
+    form = ""
+    if pj.get("datapath") == "Mac":
+        form = "acc" if params.get("accumulate") else "reg" if params.get("regOut") else "plain"
+    return {"datapath": pj.get("datapath", ""), "lanes": params.get("lanes", ""), "depth": params.get("depth", ""),
+            "op": params.get("op", ""), "form": form, "snax_forge_commit": pj.get("snax_forge_commit", "")}
+
+
 def select(patterns: list[str]) -> list[str]:
     pts = all_points()
     if not patterns:
@@ -233,12 +275,14 @@ def select(patterns: list[str]) -> list[str]:
 def top_of(point: str) -> str:
     if SOURCE == "forge":
         return forge_json(point, "bundle.json").get("top", "")
+    if SOURCE == "char":
+        return forge_json(point, "emitted.json").get("top", "")
     m = re.search(r"^#\s*top:\s*(\S+)", (RTL / point / "filelist.f").read_text(), re.M)
     return m.group(1) if m else ""
 
 
 def rams_of(point: str) -> list[str]:
-    if SOURCE == "forge":
+    if SOURCE in ("forge", "char"):
         return []
     return re.findall(r"^#\s*ram:\s*(\S+)", (RTL / point / "filelist.f").read_text(), re.M)
 
@@ -335,6 +379,8 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row.update({"recipe": pj.get("recipe", ""), "W": pj.get("W", ""),
                     "snax_forge_commit": forge_json(point, "bundle.json").get("snax_forge_commit", "")})
         row.update(module_shares(tech, point, clock, row["area_um2"]))
+    if SOURCE == "char":
+        row.update(char_extra(point))
     crit = _first(qor, r"Critical Path Length:\s*([0-9.eE+-]+)")
     slack = _first(qor, r"Critical Path Slack:\s*([0-9.eE+-]+)")
     if crit:
@@ -496,7 +542,8 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
     _merge(summary_of(name), columns(), key, rows, done)
     out = RESULTS / name
     out.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(summary_of(name), out / "synth_dc.csv")
+    synth_csv, modules_csv = RESULT_CSVS.get(SOURCE, ("synth_dc.csv", "synth_dc_modules.csv"))
+    shutil.copy2(summary_of(name), out / synth_csv)
     modules = []
     for r in rows:
         if r["run"]:
@@ -508,7 +555,7 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
             stale = out / "reports" / point_tag(r["point"], r["clock_ns"])
             if stale.exists():
                 shutil.rmtree(stale)
-    _merge(out / "synth_dc_modules.csv", MODULE_COLUMNS, key, modules, done)
+    _merge(out / modules_csv, MODULE_COLUMNS, key, modules, done)
 
 
 def print_rows(rows: list[dict]) -> None:
@@ -544,7 +591,7 @@ def cmd_list(args) -> int:
 
 def dc_env(tech: dict, res: dict, point: str, args) -> dict:
     src = SOURCES[SOURCE]
-    filelist = (run_dir(tech["name"], point, args.clock) / "filelist.f" if SOURCE == "forge"
+    filelist = (run_dir(tech["name"], point, args.clock) / "filelist.f" if SOURCE in ("forge", "char")
                 else RTL / point / "filelist.f")
     return {
         "SYN_FILELIST": str(filelist),
@@ -584,6 +631,9 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
         if SOURCE == "forge":
             print(f"# run writes {syn_env['SYN_FILELIST']}: '# top: {top_of(point)}', "
                   f"then {len(forge_filelist(point))} files from {RTL / point / 'rtl' / 'files.f'}")
+        if SOURCE == "char":
+            print(f"# run writes {syn_env['SYN_FILELIST']}: '# top: {top_of(point)}', "
+                  f"then {len(char_filelist(point))} files from {RTL / point / 'emitted.json'}")
         for k, v in syn_env.items():
             print(f"export {k}='{v}'")
         print(f"mkdir -p {rdir}/logs && cd {rdir} && {' '.join(cmd)}")
@@ -592,9 +642,9 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
         if rdir.exists():
             shutil.rmtree(rdir)
         (rdir / "logs").mkdir(parents=True)
-        if SOURCE == "forge":
+        if SOURCE in ("forge", "char"):
             Path(syn_env["SYN_FILELIST"]).write_text(
-                f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in forge_filelist(point)))
+                f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in point_filelist(point)))
         print(f"run  {point} on {name} at {args.clock} ns in {rdir.relative_to(ROOT)}"
               + (" (licence retry)" if attempt == 2 else ""), flush=True)
         with (rdir / "logs" / "dc_stdout.log").open("w") as fh:
@@ -668,7 +718,8 @@ def main() -> int:
         p = sub.add_parser(name)
         p.add_argument("patterns", nargs="*", help="globs over <tier>/<kernel>/<point>, e.g. done/vecadd/unopt_*")
         p.add_argument("--source", choices=sorted(SOURCES), default="hls",
-                       help="hls (hls-exercises' rtl/, the default) or forge (rtl/forge/, pixi run forge-rtl)")
+                       help="hls (hls-exercises' rtl/, the default), forge (rtl/forge/, pixi run forge-rtl) "
+                            "or char (rtl/char/, pixi run char-rtl)")
         if name == "run":
             p.add_argument("--tech", required=True, choices=techs, help="technology: one of syn/tech/*.json")
             p.add_argument("--clock", default=DEFAULT_CLOCK, help=f"clock period in ns (default {DEFAULT_CLOCK})")

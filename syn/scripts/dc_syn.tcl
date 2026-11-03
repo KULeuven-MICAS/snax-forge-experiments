@@ -21,10 +21,11 @@
 #   SYN_WIRE_LOAD      off (the library has wire-load models; keep them out) or none (it has none)
 #   SYN_CLOCK_NS       clock period in ns
 #   SYN_CORES          cores for DC
-#   SYN_FORMAT         analyze's format: verilog (default, Vitis) or sverilog (snax-forge)
-#   SYN_CLK_PORT       the clock port: ap_clk (default, Vitis) or clk_i (snax-forge)
-#   SYN_RST_PORT       the reset port, kept ideal: ap_rst_n (default, Vitis, synchronous) or
-#                      rst_ni (snax-forge, asynchronous); both active low
+#   SYN_FORMAT         analyze's format: verilog (default, Vitis) or sverilog (snax-forge, its blocks)
+#   SYN_CLK_PORT       the clock port: ap_clk (default, Vitis), clk_i (snax-forge) or clock (a block)
+#   SYN_RST_PORT       the reset port, kept ideal: ap_rst_n (default, Vitis, synchronous, active low),
+#                      rst_ni (snax-forge, asynchronous, active low) or reset (a snax-forge block
+#                      alone, CHAR1: asynchronous, active high)
 #
 # The constraints are physical (ns, fF) and scaled to the library's units here; the
 # library's own name and units are checked against the tech file before any RTL is read.
