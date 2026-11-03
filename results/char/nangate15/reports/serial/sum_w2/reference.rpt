@@ -1,0 +1,36 @@
+ 
+****************************************
+Report : reference
+Design : SerialAccumulate_i64_i64_n2
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:18:27 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AOI21_X1           NanGate_15nm_OCL     0.294912       1     0.294912
+AOI22_X1           NanGate_15nm_OCL     0.344064     127    43.696128
+BUF_X1             NanGate_15nm_OCL     0.245760       6     1.474560
+DFFRNQ_X1          NanGate_15nm_OCL     1.277952      64    81.788925 n
+FA_X1              NanGate_15nm_OCL     1.179648       1     1.179648 r
+INV_X1             NanGate_15nm_OCL     0.147456     197    29.048833
+NAND2_X1           NanGate_15nm_OCL     0.196608     187    36.765697
+NAND3_X1           NanGate_15nm_OCL     0.294912       1     0.294912
+NOR2_X1            NanGate_15nm_OCL     0.196608      61    11.993088
+OAI21_X1           NanGate_15nm_OCL     0.294912      61    17.989633
+OAI22_X1           NanGate_15nm_OCL     0.344064       2     0.688128
+XOR2_X1            NanGate_15nm_OCL     0.442368      62    27.426816
+-----------------------------------------------------------------------------
+Total 12 references                                   252.641280
+1

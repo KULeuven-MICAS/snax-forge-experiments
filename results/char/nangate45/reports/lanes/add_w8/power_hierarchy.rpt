@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : ElementwiseLanes_i64xi64_i64_i64_n8_add
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:01:14 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+ElementwiseLanes_i64xi64_i64_i64_n8_add  270.267   96.096 3.86e+04  404.981 100.0
+  alus_7 (ElementwiseAlu_w64_add_0)      33.896   12.055 4.83e+03   50.778  12.5
+  alus_6 (ElementwiseAlu_w64_add_1)      33.788   12.018 4.83e+03   50.635  12.5
+  alus_5 (ElementwiseAlu_w64_add_2)      33.825   12.031 4.83e+03   50.683  12.5
+  alus_4 (ElementwiseAlu_w64_add_3)      33.687   11.975 4.83e+03   50.490  12.5
+  alus_3 (ElementwiseAlu_w64_add_4)      33.766   12.003 4.83e+03   50.596  12.5
+  alus_2 (ElementwiseAlu_w64_add_5)      33.718   11.984 4.83e+03   50.529  12.5
+  alus_1 (ElementwiseAlu_w64_add_6)      33.713   11.980 4.83e+03   50.521  12.5
+  alus_0 (ElementwiseAlu_w64_add_7)      33.874   12.049 4.83e+03   50.750  12.5
+1

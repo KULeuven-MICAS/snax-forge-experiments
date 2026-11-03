@@ -1,0 +1,56 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : TreeAccumulate_i64_i64_n8
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:04:25 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 227.248535 uW   (63%)
+  Net Switching Power  = 132.654785 uW   (37%)
+                         ---------
+Total Dynamic Power    = 359.903320 uW  (100%)
+
+Cell Leakage Power     =  49.8822 uW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network   41.720467          0.000000          0.000000         41.720467  (  10.18%)  i
+register        12.391251         15.181956        5.378056e+03         32.951260
+                                                                                 (   8.04%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational  173.136719        117.472778        4.450413e+04        335.113861
+                                                                                 (  81.78%)
+--------------------------------------------------------------------------------------------------
+Total          227.248444 uW     132.654739 uW     4.988218e+04 nW     409.785583 uW
+1

@@ -7,7 +7,8 @@
 # and $clk_port and $rst_port from SYN_CLK_PORT and SYN_RST_PORT.
 # Vitis's tops have one clock, ap_clk, and a synchronous active-low reset,
 # ap_rst_n; snax-forge's have clk_i and an asynchronous active-low reset,
-# rst_ni. Either reset is an ordinary input here, kept ideal.
+# rst_ni; a snax-forge block alone (CHAR1) has clock and an asynchronous
+# active-high reset, reset. Each reset is an ordinary input here, kept ideal.
 ################################
 
 #-----------------------------
@@ -53,7 +54,7 @@ set_output_delay -max [expr {0.01 * $t_scale}] -clock clk [all_outputs]
 #-----------------------------
 # Reset
 #-----------------------------
-# The reset ($rst_port: ap_rst_n, synchronous; rst_ni, asynchronous) reaches
+# The reset ($rst_port: ap_rst_n, synchronous; rst_ni or reset, asynchronous) reaches
 # nearly every flop. Keep it ideal here, so DC builds no buffer tree for it and
 # does not report its fanout as max-cap violations; the reset tree belongs to
 # place and route.

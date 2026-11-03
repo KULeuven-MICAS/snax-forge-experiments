@@ -1,0 +1,85 @@
+Information: Updating design information... (UID-85)
+Warning: Design 'LinkBuffer_i64_n32_d1' contains 2 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+ 
+****************************************
+Report : qor
+Design : LinkBuffer_i64_n32_d1
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:01:23 2026
+****************************************
+
+
+  Timing Path Group 'clk'
+  -----------------------------------
+  Levels of Logic:            4.00000
+  Critical Path Length:       0.68330
+  Critical Path Slack:        9.16419
+  Critical Path Clk Period:  10.00000
+  Total Negative Slack:       0.00000
+  No. of Violating Paths:     0.00000
+  Worst Hold Violation:       0.00000
+  Total Hold Violation:       0.00000
+  No. of Hold Violations:     0.00000
+  -----------------------------------
+
+
+  Cell Count
+  -----------------------------------
+  Hierarchical Cell Count:          0
+  Hierarchical Port Count:          0
+  Leaf Cell Count:               4164
+  Buf/Inv Cell Count:              68
+  Buf Cell Count:                  67
+  Inv Cell Count:                   1
+  CT Buf/Inv Cell Count:            0
+  Combinational Cell Count:      2116
+  Sequential Cell Count:         2048
+  Macro Count:                      0
+  -----------------------------------
+
+
+  Area
+  -----------------------------------
+  Combinational Area:      3867.63998
+  Noncombinational Area:  10895.36035
+  Buf/Inv Area:              54.26400
+  Total Buffer Area:         53.73200
+  Total Inverter Area:        0.53200
+  Macro/Black Box Area:       0.00000
+  Net Area:                   0.00000
+  -----------------------------------
+  Cell Area:              14763.00033
+  Design Area:            14763.00033
+
+
+  Design Rules
+  -----------------------------------
+  Total Number of Nets:          6215
+  Nets With Violations:             0
+  Max Trans Violations:             0
+  Max Cap Violations:               0
+  -----------------------------------
+
+
+  Hostname: micas-lapserv1.esat.kuleuven.be
+
+  Compile CPU Statistics
+  -----------------------------------------
+  Resource Sharing:                 0.02570
+  Logic Optimization:               1.30452
+  Mapping Optimization:             6.71802
+  -----------------------------------------
+  Overall Compile Time:            20.12328
+  Overall Compile Wall Clock Time: 16.61765
+
+  --------------------------------------------------------------------
+
+  Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
+
+
+  Design (Hold)  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
+
+  --------------------------------------------------------------------
+
+
+1

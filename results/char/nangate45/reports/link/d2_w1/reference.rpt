@@ -1,0 +1,30 @@
+ 
+****************************************
+Report : reference
+Design : LinkBuffer_i64_n1_d2
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:02:10 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+CLKBUF_X1          NangateOpenCellLibrary     0.798000       6     4.788000
+DFFR_X1            NangateOpenCellLibrary     5.320000     128   680.960022 n
+INV_X1             NangateOpenCellLibrary     0.532000       2     1.064000
+MUX2_X1            NangateOpenCellLibrary     1.862000     192   357.503998
+NAND2_X1           NangateOpenCellLibrary     0.798000       1     0.798000
+NOR2_X1            NangateOpenCellLibrary     0.798000       1     0.798000
+-----------------------------------------------------------------------------
+Total 6 references                                   1045.912020
+1

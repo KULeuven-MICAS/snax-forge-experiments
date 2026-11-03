@@ -1,0 +1,56 @@
+ 
+****************************************
+Report : reference
+Design : ElementwiseLanes_i64xi64_i64_i64_n32_mul
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:07:51 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+ElementwiseAlu_w64_mul_0       6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_1       6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_2       6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_3       6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_4       6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_5       6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_6       6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_7       6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_8       6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_9       6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_10      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_11      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_12      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_13      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_14      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_15      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_16      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_17      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_18      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_19      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_20      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_21      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_22      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_23      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_24      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_25      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_26      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_27      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_28      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_29      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_30      6912.542033       1   6912.542033  h
+ElementwiseAlu_w64_mul_31      6912.542033       1   6912.542033  h
+-----------------------------------------------------------------------------
+Total 32 references                                 221201.345064
+1

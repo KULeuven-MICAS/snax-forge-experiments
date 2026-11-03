@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : area
+Design : LinkBuffer_i64_n1_d2
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:18:05 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                          133
+Number of nets:                           599
+Number of cells:                          530
+Number of combinational cells:            402
+Number of sequential cells:               128
+Number of macros/black boxes:               0
+Number of buf/inv:                        208
+Number of references:                       5
+
+Combinational area:                 97.714177
+Buf/Inv area:                       31.260673
+Noncombinational area:             163.577850
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                   261.292027
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  ---------
+LinkBuffer_i64_n1_d2               261.2920    100.0   97.7142   163.5779  0.0000  LinkBuffer_i64_n1_d2
+--------------------------------  ---------  -------  --------  ---------  ------  ---------
+Total                                                  97.7142   163.5779  0.0000
+
+1

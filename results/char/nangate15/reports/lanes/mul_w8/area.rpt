@@ -1,0 +1,30 @@
+ 
+****************************************
+Report : area
+Design : ElementwiseLanes_i64xi64_i64_i64_n8_mul
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:19:08 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                         3074
+Number of nets:                         48663
+Number of cells:                        38431
+Number of combinational cells:          38423
+Number of sequential cells:                 0
+Number of macros/black boxes:               0
+Number of buf/inv:                       3751
+Number of references:                       8
+
+Combinational area:              17700.372847
+Buf/Inv area:                      639.811593
+Noncombinational area:               0.000000
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 17700.372847
+Total area:                 undefined
+1

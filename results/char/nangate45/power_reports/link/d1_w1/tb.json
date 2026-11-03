@@ -1,0 +1,49 @@
+{
+ "tb_version": 1,
+ "source": "char",
+ "point": "link/d1_w1",
+ "datapath": "LinkBuffer",
+ "params": {
+  "depth": 1,
+  "lanes": 1,
+  "dtype": "int64"
+ },
+ "kind": "link",
+ "top": "LinkBuffer_i64_n1_d1",
+ "W": 1,
+ "depth": 1,
+ "snax_forge_commit": "e8611d51d5653e4c6e246184831136ec363727f5",
+ "clock": {
+  "port": "clock"
+ },
+ "reset": {
+  "port": "reset",
+  "active": "high",
+  "sync": false
+ },
+ "control": {
+  "kind": "char_link"
+ },
+ "data_in": [
+  "io_in_0"
+ ],
+ "outs": [
+  "io_out_0"
+ ],
+ "pins": {
+  "load": {
+   "port": "io_load",
+   "bits": 1
+  }
+ },
+ "tb_files": [
+  "char_link_seq.sv"
+ ],
+ "windows": [
+  {
+   "name": "stream",
+   "cycles": 128,
+   "fires": 128
+  }
+ ]
+}

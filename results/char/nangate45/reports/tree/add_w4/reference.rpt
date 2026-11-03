@@ -1,0 +1,38 @@
+ 
+****************************************
+Report : reference
+Design : TreeAccumulate_i64_i64_n4
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:04:17 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NangateOpenCellLibrary     1.064000       2     2.128000
+AOI21_X1           NangateOpenCellLibrary     1.064000       2     2.128000
+AOI22_X1           NangateOpenCellLibrary     1.330000      92   122.360004
+AOI222_X1          NangateOpenCellLibrary     2.128000      60   127.680001
+CLKBUF_X1          NangateOpenCellLibrary     0.798000       1     0.798000
+DFFR_X1            NangateOpenCellLibrary     5.320000      64   340.480011 n
+FA_X1              NangateOpenCellLibrary     4.256000     187   795.872008 r
+INV_X1             NangateOpenCellLibrary     0.532000      70    37.240000
+MUX2_X1            NangateOpenCellLibrary     1.862000       1     1.862000
+NAND2_X1           NangateOpenCellLibrary     0.798000       1     0.798000
+NAND3_X1           NangateOpenCellLibrary     1.064000       1     1.064000
+NOR2_X1            NangateOpenCellLibrary     0.798000      62    49.475999
+XNOR2_X1           NangateOpenCellLibrary     1.596000      65   103.739997
+XOR2_X1            NangateOpenCellLibrary     1.596000      36    57.455998
+-----------------------------------------------------------------------------
+Total 14 references                                  1643.082019
+1

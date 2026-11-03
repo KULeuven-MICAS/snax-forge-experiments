@@ -1,0 +1,28 @@
+ 
+****************************************
+Report : reference
+Design : LinkBuffer_i64_n8_d1
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:17:08 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AOI22_X1           NanGate_15nm_OCL     0.344064     512   176.160767
+BUF_X1             NanGate_15nm_OCL     0.245760      17     4.177920
+DFFRNQ_X1          NanGate_15nm_OCL     1.277952     512   654.311401 n
+INV_X1             NanGate_15nm_OCL     0.147456     529    78.004227
+-----------------------------------------------------------------------------
+Total 4 references                                    912.654315
+1

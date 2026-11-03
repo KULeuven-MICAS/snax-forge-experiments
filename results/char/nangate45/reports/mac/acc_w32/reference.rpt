@@ -1,0 +1,47 @@
+ 
+****************************************
+Report : reference
+Design : Mac_i64xi64_i64_i64_n32_acc
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:15:22 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NangateOpenCellLibrary     1.064000    1280  1361.920013
+AOI21_X1           NangateOpenCellLibrary     1.064000     480   510.720005
+AOI22_X1           NangateOpenCellLibrary     1.330000   46112 61328.961979
+AOI22_X2           NangateOpenCellLibrary     2.394000      32    76.608002
+AOI222_X1          NangateOpenCellLibrary     2.128000    2592  5515.776054
+CLKBUF_X1          NangateOpenCellLibrary     0.798000    3098  2472.203932
+DFFR_X1            NangateOpenCellLibrary     5.320000    2048 10895.360352 n
+FA_X1              NangateOpenCellLibrary     4.256000   21376 90976.256897 r
+INV_X1             NangateOpenCellLibrary     0.532000    4931  2623.292026
+INV_X2             NangateOpenCellLibrary     0.798000      32    25.535999
+NAND2_X1           NangateOpenCellLibrary     0.798000   23200 18513.599491
+NAND3_X1           NangateOpenCellLibrary     1.064000     512   544.768005
+NAND4_X1           NangateOpenCellLibrary     1.330000      32    42.560001
+NOR2_X1            NangateOpenCellLibrary     0.798000    2048  1634.303955
+NOR2_X2            NangateOpenCellLibrary     1.330000      32    42.560001
+NOR3_X1            NangateOpenCellLibrary     1.064000     672   715.008007
+NOR3_X2            NangateOpenCellLibrary     1.862000      96   178.751999
+OAI21_X1           NangateOpenCellLibrary     1.064000    1216  1293.824013
+OAI211_X1          NangateOpenCellLibrary     1.330000      32    42.560001
+OAI221_X1          NangateOpenCellLibrary     1.596000     128   204.287994
+OR2_X1             NangateOpenCellLibrary     1.064000     128   136.192001
+XNOR2_X1           NangateOpenCellLibrary     1.596000   25536 40755.454880
+XOR2_X1            NangateOpenCellLibrary     1.596000    2720  4341.119881
+-----------------------------------------------------------------------------
+Total 23 references                                 244231.625490
+1

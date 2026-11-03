@@ -1,0 +1,75 @@
+ 
+****************************************
+Report : area
+Design : ElementwiseLanes_i64xi64_i64_i64_n32_mul
+Version: Y-2026.03-SP2
+Date   : Tue Nov  3 10:07:49 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                        12290
+Number of nets:                        160256
+Number of cells:                       128640
+Number of combinational cells:         128608
+Number of sequential cells:                 0
+Number of macros/black boxes:               0
+Number of buf/inv:                       8192
+Number of references:                      32
+
+Combinational area:             221201.345064
+Buf/Inv area:                     5081.663969
+Noncombinational area:               0.000000
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                221201.345064
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area             Local cell area
+                                  --------------------  ------------------------------ 
+Hierarchical cell                 Absolute     Percent  Combi-       Noncombi-  Black-
+                                  Total        Total    national     national   boxes   Design
+--------------------------------  -----------  -------  -----------  ---------  ------  -------------------------
+ElementwiseLanes_i64xi64_i64_i64_n32_mul 221201.3451   100.0      0.0000    0.0000 0.0000 ElementwiseLanes_i64xi64_i64_i64_n32_mul
+alus_0                              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_31
+alus_1                              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_30
+alus_10                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_21
+alus_11                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_20
+alus_12                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_19
+alus_13                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_18
+alus_14                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_17
+alus_15                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_16
+alus_16                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_15
+alus_17                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_14
+alus_18                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_13
+alus_19                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_12
+alus_2                              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_29
+alus_20                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_11
+alus_21                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_10
+alus_22                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_9
+alus_23                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_8
+alus_24                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_7
+alus_25                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_6
+alus_26                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_5
+alus_27                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_4
+alus_28                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_3
+alus_29                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_2
+alus_3                              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_28
+alus_30                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_1
+alus_31                             6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_0
+alus_4                              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_27
+alus_5                              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_26
+alus_6                              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_25
+alus_7                              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_24
+alus_8                              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_23
+alus_9                              6912.5420      3.1    6912.5420     0.0000  0.0000  ElementwiseAlu_w64_mul_22
+--------------------------------  -----------  -------  -----------  ---------  ------  -------------------------
+Total                                                   221201.3451     0.0000  0.0000
+
+1
