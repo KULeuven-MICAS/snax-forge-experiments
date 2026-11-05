@@ -1,0 +1,44 @@
+ 
+****************************************
+Report : area
+Design : vecmul
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 15:44:24 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                          429
+Number of nets:                          5563
+Number of cells:                         4502
+Number of combinational cells:           4366
+Number of sequential cells:               134
+Number of macros/black boxes:               0
+Number of buf/inv:                        327
+Number of references:                      26
+
+Combinational area:               7350.112035
+Buf/Inv area:                      201.361999
+Noncombinational area:             605.947978
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  7956.060013
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  -------------------------------------------------------------------------------
+vecmul                            7956.0600    100.0   425.0680   605.9480  0.0000  vecmul
+mul_64s_64s_64_1_1_U1             6925.0440     87.0  6925.0440     0.0000  0.0000  vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64
+--------------------------------  ---------  -------  ---------  ---------  ------  -------------------------------------------------------------------------------
+Total                                                 7350.1120   605.9480  0.0000
+
+1
