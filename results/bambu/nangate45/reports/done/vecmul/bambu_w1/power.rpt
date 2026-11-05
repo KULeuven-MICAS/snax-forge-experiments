@@ -1,0 +1,56 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : p_Z6vecmulPKxS0_Pxj
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 15:56:32 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 180.700653 uW   (75%)
+  Net Switching Power  = 61.161869 uW   (25%)
+                         ---------
+Total Dynamic Power    = 241.862518 uW  (100%)
+
+Cell Leakage Power     = 183.1427 uW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network  116.402718          0.000000          0.000000        116.402718  (  27.39%)  i
+register         5.598366          5.977905        2.126378e+04         32.840107
+                                                                                 (   7.73%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational   58.699451         55.183987        1.618789e+05        275.762451
+                                                                                 (  64.88%)
+--------------------------------------------------------------------------------------------------
+Total          180.700531 uW      61.161892 uW     1.831427e+05 nW     425.005280 uW
+1

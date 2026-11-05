@@ -1,0 +1,78 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : p_Z3dotPK6ac_intILi128ELb0EES2_Pxjj
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 15:51:31 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+p_Z3dotPK6ac_intILi128ELb0EES2_Pxjj     143.233  374.840 3.71e+05  889.036 100.0
+  PBI_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_i0 (PBI_Z3dotPK6ac_intILi128ELb0EES2_Pxjj)  143.234  374.840 3.71e+05  889.037 100.0
+    done_delayed_REG (register_AR_BITSIZE_in11_BITSIZE_out11)    0.000    0.717   79.368    0.796   0.1
+    Datapath_i (datapath_Z3dotPK6ac_intILi128ELb0EES2_Pxjj)  139.384  371.880 3.69e+05  880.726  99.1
+      reg_9 (register_SE_BITSIZE_in11_BITSIZE_out11_0) 3.14e-04    0.348  108.565    0.457   0.1
+      reg_8 (register_SE_BITSIZE_in11_BITSIZE_out11_1)    0.000    0.696  107.044    0.803   0.1
+      reg_7 (register_SE_BITSIZE_in1128_BITSIZE_out1128_0)    5.746   51.962 1.46e+04   72.291   8.1
+      reg_5 (register_SE_BITSIZE_in1128_BITSIZE_out1128_1)    9.694   52.216 1.46e+04   76.490   8.6
+      reg_3 (register_SE_BITSIZE_in132_BITSIZE_out132_2)    0.154   21.606 3.46e+03   25.223   2.8
+      reg_2 (register_SE_BITSIZE_in132_BITSIZE_out132_3)    0.120   16.853 3.41e+03   20.386   2.3
+      reg_11 (register_SE_BITSIZE_in164_BITSIZE_out164_0)    1.293   28.291 7.26e+03   36.847   4.1
+      reg_10 (register_SE_BITSIZE_in164_BITSIZE_out164_1)    0.773   27.230 7.27e+03   35.272   4.0
+      reg_1 (register_SE_BITSIZE_in132_BITSIZE_out132_4) 8.68e-02   22.019 3.38e+03   25.487   2.9
+      mu_S_4 (SIMPLEJOIN_FU_BITSIZE_ops1_PORTSIZE_ops3)    0.134    2.639  533.254    3.306   0.4
+      mu_S_0 (SIMPLEJOIN_FU_BITSIZE_ops1_PORTSIZE_ops2)    0.120    1.956  423.898    2.500   0.3
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429217 (ui_select_node_FU_BITSIZE_in11_BITSIZE_in21_BITSIZE_in364_BITSIZE_out164)    0.282    1.152 1.93e+03    3.364   0.4
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429213 (ui_select_node_FU_BITSIZE_in11_BITSIZE_in21_BITSIZE_in332_BITSIZE_out132) 1.74e-02 7.23e-02  994.283    1.084   0.1
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429209 (out_bambu_artificial_ParmMgr_Write_axis_modgen_BITSIZE_in11_BITSIZE_in27_BITSIZE_in364_BITSIZE_in432) 5.84e-03    0.705  163.213    0.874   0.1
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429144 (multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_0)    0.000    0.000    0.000    0.000   0.0
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429141 (multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_1)    0.000    0.000    0.000    0.000   0.0
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429140 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out11) 3.58e-02 8.28e-02  298.901    0.418   0.0
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429050 (ui_select_node_FU_BITSIZE_in11_BITSIZE_in21_BITSIZE_in31_BITSIZE_out11)    0.000    0.000   28.579 2.86e-02   0.0
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429049 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11_0)    0.368    0.965 1.52e+03    2.856   0.3
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429048 (ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132_1)    0.115 4.87e-02 1.68e+03    1.845   0.2
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429047 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11_1)    0.377    0.996 1.52e+03    2.897   0.3
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429046 (ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132_2)    0.126 6.05e-02 1.68e+03    1.867   0.2
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429045 (ui_ternary_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_in364_BITSIZE_out164)    3.669    6.847 9.40e+03   19.913   2.2
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429043 (ui_mul_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_PIPE_PARAMETER0_0)   53.868   65.241 1.44e+05  263.096  29.6
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429042 (ui_mul_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_PIPE_PARAMETER0_1)   53.777   65.229 1.44e+05  263.054  29.6
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429041 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_0)    0.000    0.000    0.000    0.000   0.0
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429040 (ui_shr_node_FU_BITSIZE_in1128_BITSIZE_in27_BITSIZE_out164_PRECISION128_0)    0.000    0.000    0.000    0.000   0.0
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429039 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_1)    0.000    0.000    0.000    0.000   0.0
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429038 (ui_shr_node_FU_BITSIZE_in1128_BITSIZE_in27_BITSIZE_out164_PRECISION128_1)    0.000    0.000    0.000    0.000   0.0
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429037 (UUdata_converter_FU_BITSIZE_in1128_BITSIZE_out164_0)    0.000    0.000    0.000    0.000   0.0
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429036 (UUdata_converter_FU_BITSIZE_in1128_BITSIZE_out164_1)    0.000    0.000    0.000    0.000   0.0
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429035 (B_bambu_artificial_ParmMgr_Read_axis_modgen_BITSIZE_in11_BITSIZE_in28_BITSIZE_in3128_BITSIZE_in432_BITSIZE_out1128)    0.187    0.657  171.757    1.015   0.1
+      fu_Z3dotPK6ac_intILi128ELb0EES2_Pxjj_429003_429033 (A_bambu_artificial_ParmMgr_Read_axis_modgen_BITSIZE_in11_BITSIZE_in28_BITSIZE_in3128_BITSIZE_in432_BITSIZE_out1128)    0.185    0.660  171.773    1.017   0.1
+      MUX_26_reg_2_0_0_0 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_2)    0.247    0.101  911.471    1.259   0.1
+      MUX_24_reg_11_0_0_0 (MUX2_GATE_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_0)    0.488    1.362 1.92e+03    3.770   0.4
+      MUX_22_reg_1_0_0_1 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_3) 1.92e-02    0.112  911.325    1.042   0.1
+      MUX_22_reg_1_0_0_0 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_4) 3.13e-03 1.47e-02  664.639    0.682   0.1
+      MUX_18_out_bambu_artificial_ParmMgr_Write_axis_modgen_26_i0_2_0_0 (MUX2_GATE_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_1)    7.250    1.734 2.20e+03   11.183   1.3
+      MUX_14_multi_read_cond_FU_10_i0_0_0_0 (MUX2_GATE_BITSIZE_in11_BITSIZE_in21_BITSIZE_out11_1)    0.000    0.000   28.343 2.83e-02   0.0
+    Controller_i (controller_Z3dotPK6ac_intILi128ELb0EES2_Pxjj)    3.850    2.243 1.42e+03    7.514   0.8
+1

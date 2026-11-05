@@ -5,7 +5,7 @@ Warning: Design 'p_Z3dotPK6ac_intILi512ELb0EES2_Pxjj' contains 1 high-fanout net
 Report : qor
 Design : p_Z3dotPK6ac_intILi512ELb0EES2_Pxjj
 Version: Y-2026.03-SP2
-Date   : Thu Nov  5 14:26:51 2026
+Date   : Thu Nov  5 16:36:12 2026
 ****************************************
 
 
@@ -66,12 +66,12 @@ Date   : Thu Nov  5 14:26:51 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 2.61865
-  Logic Optimization:              200.45306
-  Mapping Optimization:            449.34668
+  Resource Sharing:                 2.53186
+  Logic Optimization:              21.54839
+  Mapping Optimization:            71.79456
   -----------------------------------------
-  Overall Compile Time:            1151.28662
-  Overall Compile Wall Clock Time: 190.13823
+  Overall Compile Time:            273.16022
+  Overall Compile Wall Clock Time: 140.51517
 
   --------------------------------------------------------------------
 

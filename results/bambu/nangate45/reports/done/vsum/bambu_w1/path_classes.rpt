@@ -1,0 +1,7 @@
+# Worst setup slack per path class of p_Z4vsumPKxPxjj at 10 ns, in library time units (1ns)
+# inputs 131 (all but clock and reset), outputs 68, register clock pins 299, register data pins 299
+# class slack startpoint endpoint
+in2reg 9.1273 loop_count[30] PBI_Z4vsumPKxPxjj_i0/Datapath_i/reg_1/reg_out1_reg[29]/D
+reg2reg 5.15167 PBI_Z4vsumPKxPxjj_i0/Datapath_i/reg_9/reg_out1_reg[0]/CK PBI_Z4vsumPKxPxjj_i0/Datapath_i/reg_9/reg_out1_reg[63]/D
+reg2out 5.19283 PBI_Z4vsumPKxPxjj_i0/Datapath_i/reg_9/reg_out1_reg[0]/CK out_TDATA[63]
+in2out 9.74971 start_port idle_port

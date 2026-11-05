@@ -1,0 +1,25 @@
+ 
+****************************************
+Report : reference
+Design : p_Z6vecmulPK6ac_intILi512ELb0EES2_PS0_j
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 15:59:45 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+PBI_Z6vecmulPK6ac_intILi512ELb0EES2_PS0_j 66947.677974       1 66947.677974 h, n
+-----------------------------------------------------------------------------
+Total 1 references                                  66947.677974
+1
