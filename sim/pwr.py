@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """sim/pwr.py - dynamic energy of mapped netlists from simulated activity (docs/power.md).
 
-  pixi run pwr tbjson      POINT [--source hls|forge|char] [--tech T]
-  pixi run pwr run         PATTERN ... --tech T [--source hls|forge|char] [--stim rand64|forge] [--size TAG|all]
-                                       [--seed N] [-j N]
-  pixi run pwr setup-check --tech T [--source hls|forge] [--point P]
-  pixi run pwr summary     [PATTERN ...] [--source hls|forge] [--tech T]
+  pixi run pwr tbjson      POINT [--source hls|forge|char|bambu|xls] [--tech T]
+  pixi run pwr run         PATTERN ... --tech T [--source hls|forge|char|bambu|xls] [--stim rand64|forge]
+                                       [--size TAG|all] [--seed N] [-j N]
+  pixi run pwr setup-check --tech T [--source hls|forge|bambu|xls] [--point P]
+  pixi run pwr summary     [PATTERN ...] [--source ...] [--tech T]
 
 --source hls (the default) takes hls-exercises' points, as below; --source forge takes snax-forge's bundles in
 rtl/forge/ (forge/bundles.py) and their netlists in syn/runs/forge/<tech>/: tb.json from sim/sources/forge.py
@@ -21,6 +21,15 @@ by the kind's sequencer sim/tb/char_<kind>_seq.sv through fixed windows, every o
 edge against sim/ref.py's char_ref), the stimulus rand64 (one stream per data input port), one vcd2saif and one
 PT run per window, the windows' energies per cycle in results/char/<tech>/char_power.csv, one row per point and
 window (docs/power.md, Char). --size does not apply.
+
+--source bambu and --source xls (HSYN1, docs X44) take Bambu's points (hls-exercises' rtl/, <case>_w<W> with
+case bambu) and Google XLS's (dslx-exercises' rtl/, case xls), as syn/syn.py lists them (its case filters and
+MAX_W), and their netlists in syn/runs/<source>/<tech>/: tb.json from sim/sources/bambu.py (control bambu_ctl:
+start_port pulsed by sim/tb/bambu_seq.sv, the run-time pins plain inputs held from time 0) or sim/sources/xls.py
+(control xls_cfg: one cfg beat on _cfg_TDATA by sim/tb/xls_seq.sv); the streams through axis_src and axis_sink as
+for hls; sizes b64, the point's sizes.txt (--size all) and n2048 for tier done; the expected cycles from the
+line through results/<source>/<source>_cycles.csv (bambu: cycles_done; xls: cycles, plus 1 for the window); runs
+in sim/runs/<source>/<tech>/, results in results/<source>/<tech>/ with X20's columns (docs/power.md, Bambu, XLS).
 
 A point is an hls-exercises rtl/ folder, <tier>/<kernel>/<point>, whose mapped netlist is already in
 syn/runs/hls/<tech>/<point>/out/ (syn/syn.py). Per point, one worker runs, start to end:
@@ -54,6 +63,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import importlib
 import json
 import os
 import re
@@ -83,15 +93,19 @@ SYN_RUNS = ROOT / "syn" / "runs" / "hls"
 RESULTS = ROOT / "results" / "hls"
 TB_DIR = SIM / "tb"
 TB_FILES = {"hls": ["ap_ctrl_hs_seq.sv", "axis_src.sv", "axis_sink.sv"],
-            "forge": ["csr_seq.sv", "axis_src.sv", "axis_sink.sv"]}
-SOURCES = {"hls": hls, "forge": forge_src, "char": char_src}
+            "forge": ["csr_seq.sv", "axis_src.sv", "axis_sink.sv"],
+            "bambu": ["bambu_seq.sv", "axis_src.sv", "axis_sink.sv"],
+            "xls": ["xls_seq.sv", "axis_src.sv", "axis_sink.sv"]}
+# The sources: each a tb.json adapter sim/sources/<name>.py, imported when used
+SOURCES = ("hls", "forge", "char", "bambu", "xls")
+HLS_TOOLS = ("hls", "bambu", "xls")     # an HLS tool's points: rtl/ folders with filelist.f and sizes.txt
 PT_SCRIPT = SIM / "scripts" / "pt_power.tcl"
 RUN_DO = SIM / "scripts" / "run.do"
 DC_READBACK = SIM / "probe" / "dc_readback.tcl"
 TB_TOP, DUT = "tb", "dut"
 CLOCK_NS = 10.0
-SETUP_POINT = "done/vecadd/opt_w8"
-SETUP_POINT_FORGE = "done/vecadd/forge_w4"
+SETUP_POINTS = {"hls": "done/vecadd/opt_w8", "forge": "done/vecadd/forge_w4", "bambu": "done/dot/bambu_w8",
+                "xls": "done/dot/xls_w16"}     # setup-check's default point per source (X25)
 MIN_ANNOTATED = 99.0        # percent of nets annotated from the SAIF
 TOGGLE_BEATS = 64           # the input-toggle check fails a run from this many beats up
 # Questa cell models, next to each technology's .db, with the vlog options they need
@@ -113,7 +127,7 @@ class Fail(Exception):
 
 
 def use_source(name: str) -> None:
-    """hls (hls-exercises) or forge (snax-forge's bundles): where points, netlists and results are."""
+    """hls, forge, char, bambu or xls: where points, netlists and results are."""
     global SOURCE, SYN_RUNS, RESULTS
     SOURCE = name
     syn.use_source(name)
@@ -121,7 +135,8 @@ def use_source(name: str) -> None:
 
 
 def src():
-    return SOURCES[SOURCE]
+    """The current source's tb.json adapter (sim/sources/<source>.py)."""
+    return importlib.import_module(f"sources.{SOURCE}")
 
 
 def columns() -> list[str]:
@@ -628,7 +643,7 @@ def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -
     (pdir / "tb.sv").write_text(tb_top(tb, netlist))
     work = pdir / "work"
     subprocess.run([tool("vlib"), str(work)], check=True, capture_output=True)
-    if tb["control"]["kind"] == "forge_csr" or tb.get("source") == "char":   # every module gets a dump scope (DC6)
+    if tb.get("source", "hls") != "hls":   # every module gets a dump scope (DC6)
         reached = set()
         scopes(netlist, tb["top"], reached)
         missing = sorted(forge_src.netlist_modules(netlist) - reached - {tb["top"]})
@@ -683,8 +698,12 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         plus.append(f"+PIN_{p['port']}={st['pins'][p['port']] & ((1 << p['bits']) - 1):x}")
     (rdir / "stim" / "pins.json").write_text(json.dumps(st["pins"], indent=1) + "\n")
     info["untoggled_bits"] = st["untoggled"]
-    exp, how = (cfg["expected_cycles"], f"snax-forge's group_counter: {cfg['expected_from']}") if forge \
-        else expected_cycles(tb, size)
+    if forge:
+        exp, how = cfg["expected_cycles"], f"snax-forge's group_counter: {cfg['expected_from']}"
+    elif SOURCE == "hls":
+        exp, how = expected_cycles(tb, size)
+    else:       # bambu, xls: the line through the tool's own cycle CSV (X44)
+        exp, how = src().expected_cycles(tb, size, RESULTS)
     info["expected_cycles"], info["expected_from"] = exp, how
     times["stim"] = time.time() - t
 
@@ -790,8 +809,8 @@ def build_tb(point: str, tech: str) -> dict:
     """The point's tb.json from its source's adapter (forge: from the bundle and the netlist's ports)."""
     if SOURCE == "forge":
         tb = forge_src.build(point, netlist_of(tech, point))
-    elif SOURCE == "char":
-        tb = char_src.build(point, netlist_of(tech, point))
+    elif SOURCE in ("char", "bambu", "xls"):
+        tb = src().build(point, netlist_of(tech, point))
     else:
         tb = hls.build(point)
     src().check(tb)
@@ -803,11 +822,11 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
     pdir = tech_runs(tech) / point
     out = []
     try:
-        fl = hls.filelist(point) if SOURCE == "hls" else {"rams": []}
-        if fl["rams"]:
+        rams = syn.rams_of(point) if SOURCE in HLS_TOOLS else []
+        if rams:
             row = {c: "" for c in COLUMNS}
-            row.update({"point": point, "top": fl["top"], "tech": tech, "clock_ns": _num(CLOCK_NS), "size": "",
-                        "seed": "", "status": f"skipped: needs a RAM macro ({', '.join(fl['rams'])}); "
+            row.update({"point": point, "top": syn.top_of(point), "tech": tech, "clock_ns": _num(CLOCK_NS), "size": "",
+                        "seed": "", "status": f"skipped: needs a RAM macro ({', '.join(rams)}); "
                                               f"{tech} has no RAM cells, RAM1 builds one (OpenRAM)"})
             return [(row, {})]
         tb = build_tb(point, tech)
@@ -833,10 +852,10 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
         compile_times["compile"] = time.time() - t
         expanded = []
         for size, stim, seed in runs:     # --size all: every size in the point's sizes.txt
-            if size == "all" and SOURCE != "hls":
+            if size == "all" and SOURCE not in HLS_TOOLS:
                 sizes = list(tb["sizes"])
             else:
-                sizes = hls.sizes_txt(point) if size == "all" else [size or src().default_size(tb)]
+                sizes = src().sizes_txt(point) if size == "all" else [size or src().default_size(tb)]
             expanded += [(z, stim, seed) for z in sizes]
         for size, stim, seed in expanded:
             times = dict(compile_times) if not out else {}
@@ -1302,7 +1321,7 @@ def cmd_tbjson(args) -> int:
 
 def cmd_run(args) -> int:
     use_source(args.source)
-    if args.source in ("forge", "char") and args.stim != "rand64":
+    if args.source != "hls" and args.stim != "rand64":
         sys.exit(f"--source {args.source} runs rand64 only (--stim forge is hls-exercises' data.h)")
     points = syn.select(args.patterns)
     if not points:
@@ -1372,7 +1391,9 @@ def cmd_setup_check(args) -> int:
     """X25: PT and DC on the same netlist with the same forced activity, per power group: a diagnostic. It prints
     the differences (for the run note) and fails only on the wire-load check (PITFALLS PT1)."""
     use_source(args.source)
-    point = args.point or (SETUP_POINT if args.source == "hls" else SETUP_POINT_FORGE)
+    point = args.point or SETUP_POINTS.get(args.source)
+    if not point:
+        sys.exit(f"setup-check: no default point for --source {args.source}; give --point")
     tech = args.tech
     base = tech_runs(tech) / "setup_check" / point
     shutil.rmtree(base, ignore_errors=True)
@@ -1462,7 +1483,7 @@ def main() -> int:
     p = sub.add_parser("setup-check", help="diagnostic: PT against DC with forced activity, per power group (X25)")
     p.add_argument("--tech", required=True, choices=syn.tech_names())
     p.add_argument("--source", choices=list(SOURCES), default="hls")
-    p.add_argument("--point", default=None, help=f"default {SETUP_POINT} (hls), {SETUP_POINT_FORGE} (forge)")
+    p.add_argument("--point", default=None, help=f"default per source: {SETUP_POINTS}")
     p.set_defaults(fn=cmd_setup_check)
     p = sub.add_parser("summary", help="print power_pt.csv")
     p.add_argument("patterns", nargs="*")
