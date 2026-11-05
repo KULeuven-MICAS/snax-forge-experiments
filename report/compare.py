@@ -1,0 +1,290 @@
+#!/usr/bin/env python3
+"""report/compare.py - the raw comparison tables: forge and the four HLS cases, one CSV per tier (X38 to X44).
+
+  pixi run compare            # writes results/compare_done.csv and results/compare_untiered.csv
+  pixi run compare --check    # checks only, writes nothing
+
+Reads only committed CSVs in this repo (no tool, no licence, no checkout next to the repo):
+
+  results/<source>/<tech>/synth_dc.csv          area, timing, path-class slacks, the forge and bambu splits
+  results/<source>/<tech>/power_pt.csv          one row per point, size and seed: window cycles and energy
+  results/<source>/<tech>/power_pt_modules.csv  energy per hierarchical cell, the point's default run
+  results/hls/hls_cycles.csv, results/bambu/bambu_cycles.csv, results/xls/xls_cycles.csv   provenance
+
+for the sources forge, hls (Vitis opt and dace), bambu and xls, on nangate45 and nangate15, W <= MAX_W (X38).
+Forge has tier done only; its W = 32 rows are left out like every other W > MAX_W.
+
+One row per tech, tier, kernel, W, tool, case and size. The data is laid out, not compared: no ratios, no
+ranking (the comparison is brainstormed on top of these tables). Parked points (a RAM macro, X15) are rows
+with their status and no numbers.
+
+Columns:
+  key        tech, tier, kernel, W, tool (forge, vitis, bambu, xls), case (forge, forge2..6, opt, dace,
+             bambu, xls), point, size, status (ok, or the synthesis or power status that is not)
+  task       beats (per input stream), elements (beats * W), cycles (the power window), window (how the
+             window is defined for the tool: X12, X44)
+  area       area_um2, comb_area_um2, seq_area_um2, buf_inv_area_um2, cells, seq_cells, and the split where
+             the RTL declares it as hierarchy (X41): csr_um2 (forge), ctrl_um2, datapath_um2, glue_um2
+             (forge, bambu); empty for vitis and xls
+  timing     crit_path_ns, slack_ns, fmax_mhz, slack_in2reg_ns, slack_reg2reg_ns, slack_reg2out_ns,
+             slack_in2out_ns (X40; empty on forge rows, synthesized before X40)
+  energy     e_clk_pj, e_reg_pj, e_seq_pj, e_comb_pj, e_flop_pj, e_dyn_pj (per cycle of the window),
+             p_dyn_uw, e_run_pj (the task), pj_per_elem (e_run_pj / elements), flop_bits, e_bit_pj,
+             leak_dc_uw (DC's leakage estimate, X7)
+  parts      e_dyn_csr_pj, e_dyn_ctrl_pj, e_dyn_datapath_pj, e_dyn_glue_pj (per cycle, forge and bambu
+             only), parts_size (the run they come from: the point's default run)
+  provenance rtl_commit (the tool repo commit the RTL was measured at; forge: snax_forge_commit),
+             tool_version, dc_version, syn_date
+
+Checks (any failure: exit 1, nothing written): every listed point has a synthesis row on both technologies;
+every ok point has the same sizes as the other points of its kernel (tier done: n2048 too), each with an ok
+power row; no duplicate key; the split columns sum to the area where they exist; a point with parts has an ok
+run at its default size. A glue energy within 1e-5 of the total (PT's rounding) is written as 0.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import re
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "syn"))
+import syn  # noqa: E402  (MAX_W and the case filters live in one place)
+
+TECHS = ("nangate45", "nangate15")
+SOURCES = ("forge", "hls", "bambu", "xls")
+TOOL = {"forge": "forge", "hls": "vitis", "bambu": "bambu", "xls": "xls"}
+TOOL_ORDER = {"forge": 0, "vitis": 1, "bambu": 2, "xls": 3}
+WINDOW = {
+    "forge": "START to done (X13)",
+    "vitis": "ap_start to ap_done (X12)",
+    "bambu": "start_port to done_port (X44)",
+    "xls": "cfg transfer to last output, last edge included (X44)",
+}
+CYCLES_CSV = {"hls": "hls/hls_cycles.csv", "bambu": "bambu/bambu_cycles.csv", "xls": "xls/xls_cycles.csv"}
+VERSION_COL = {"hls": "vitis", "bambu": "bambu_version", "xls": "xls_version"}
+# Parts by the design name of the hierarchical cell (synth_dc_modules.csv, power_pt_modules.csv)
+PARTS = {
+    "forge": {"csr": "snax_forge_csr", "ctrl": "snax_forge_ctrl", "datapath": "snax_forge_datapath"},
+    "bambu": {"ctrl": "controller_", "datapath": "datapath_"},
+}
+# The size of a point's default run, where power_pt_modules.csv comes from: b64 (X19), but rowsum's
+# default is its m8_n64 task, and forge runs n2048 only
+DEFAULT_SIZE = {"rowsum": "m8_n64"}
+POINT = re.compile(r"^(?P<tier>[^/]+)/(?P<kernel>[^/]+)/(?P<case>[a-z]+[0-9]*)_w(?P<w>\d+)$")
+
+KEY = ["tech", "tier", "kernel", "W", "tool", "case", "point", "size", "status"]
+TASK = ["beats", "elements", "cycles", "window"]
+AREA = ["area_um2", "comb_area_um2", "seq_area_um2", "buf_inv_area_um2", "cells", "seq_cells",
+        "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2"]
+TIMING = ["crit_path_ns", "slack_ns", "fmax_mhz", "slack_in2reg_ns", "slack_reg2reg_ns", "slack_reg2out_ns",
+          "slack_in2out_ns"]
+ENERGY = ["e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw", "e_run_pj",
+          "pj_per_elem", "flop_bits", "e_bit_pj", "leak_dc_uw"]
+PART_E = ["e_dyn_csr_pj", "e_dyn_ctrl_pj", "e_dyn_datapath_pj", "e_dyn_glue_pj", "parts_size"]
+PROV = ["rtl_commit", "tool_version", "dc_version", "syn_date"]
+COLUMNS = KEY + TASK + AREA + TIMING + ENERGY + PART_E + PROV
+
+
+def read(path: Path) -> list[dict]:
+    if not path.is_file():
+        return []
+    with path.open(newline="") as fh:
+        return list(csv.DictReader(fh))
+
+
+def parse(point: str) -> dict | None:
+    m = POINT.match(point)
+    return m.groupdict() if m else None
+
+
+def listed(source: str, point: str) -> bool:
+    """The points HSYN1 compares: W <= MAX_W, and for the HLS sources the case filter of syn.py."""
+    p = parse(point)
+    if not p or int(p["w"]) > syn.MAX_W:
+        return False
+    cases = syn.SOURCES[source].get("cases")
+    return p["case"] in cases if cases else p["case"].startswith("forge")
+
+
+def provenance(source: str) -> dict:
+    """(tier, kernel, case, W) -> (rtl commit, tool version), from the cycle CSVs (the last 10 ns row)."""
+    out = {}
+    if source not in CYCLES_CSV:
+        return out
+    for r in read(ROOT / "results" / CYCLES_CSV[source]):
+        if r.get("clock_ns") not in ("10", "10.0") or not r.get("W"):
+            continue
+        out[(r["tier"], r["kernel"], r["case"], r["W"])] = (r.get("git", ""), r.get(VERSION_COL[source], ""))
+    return out
+
+
+def part_energy(source: str, mods: list[dict]) -> dict:
+    """e_dyn per cycle of each declared part, from the point's power_pt_modules rows (X41)."""
+    if source not in PARTS or not mods:
+        return {}
+    top = min(mods, key=lambda r: r["path"].count("/"))
+    total = float(top["e_dyn_pj"])
+    depth = {}
+    out = {}
+    for part, design in PARTS[source].items():
+        hits = [r for r in mods if r["design"] == design or (design.endswith("_") and
+                                                             r["design"].lower().startswith(design))]
+        if not hits:
+            raise ValueError(f"{top['point']}: no {design} cell in power_pt_modules.csv")
+        hit = min(hits, key=lambda r: r["path"].count("/"))
+        depth[part] = hit["path"].count("/")
+        out[f"e_dyn_{part}_pj"] = float(hit["e_dyn_pj"])
+    glue = total - sum(out.values())
+    # PT prints about 7 significant digits, so a wrapper with nothing but its parts leaves a glue of
+    # +-1e-6 of the total: that is rounding, written as 0
+    out["e_dyn_glue_pj"] = 0.0 if abs(glue) <= 1e-5 * abs(total) else glue
+    return {k: f"{v:.6g}" for k, v in out.items()}
+
+
+def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
+    base = ROOT / "results" / source / tech
+    synth = {r["point"]: r for r in read(base / "synth_dc.csv")}
+    power = defaultdict(list)
+    for r in read(base / "power_pt.csv"):
+        power[r["point"]].append(r)
+    mods = defaultdict(list)
+    for r in read(base / "power_pt_modules.csv"):
+        mods[r["point"]].append(r)
+    prov = provenance(source)
+    out = []
+    for point in sorted(p for p in synth if listed(source, p)):
+        s = synth[point]
+        p = parse(point)
+        tool = TOOL[source]
+        common = {"tech": tech, "tier": p["tier"], "kernel": p["kernel"], "W": p["w"], "tool": tool,
+                  "case": p["case"], "point": point, "window": WINDOW[tool]}
+        common.update({c: s.get(c, "") for c in AREA + TIMING})
+        common["leak_dc_uw"] = s.get("leak_power_uw", "")
+        if source == "forge":
+            common["rtl_commit"] = s.get("snax_forge_commit", "")
+        else:
+            commit, version = prov.get((p["tier"], p["kernel"], p["case"], p["w"]), ("", ""))
+            common["rtl_commit"], common["tool_version"] = commit, version
+        common["dc_version"], common["syn_date"] = s.get("dc_version", ""), s.get("date", "")
+        if s["status"] != "ok":
+            row = dict(common, status=f"syn: {s['status']}")
+            for c in AREA + TIMING + ["leak_dc_uw"]:
+                row[c] = ""
+            out.append(row)
+            continue
+        split = [c for c in ("csr_um2", "ctrl_um2", "datapath_um2", "glue_um2") if s.get(c)]
+        if split and abs(sum(float(s[c]) for c in split) - float(s["area_um2"])) > 0.01:
+            problems.append(f"{tech} {point}: the split columns do not sum to area_um2")
+        try:
+            parts = part_energy(source, mods.get(point, []))
+        except ValueError as e:
+            problems.append(f"{tech} {e}")
+            parts = {}
+        if parts:
+            parts["parts_size"] = "n2048" if source == "forge" else DEFAULT_SIZE.get(p["kernel"], "b64")
+            if not any(r["size"] == parts["parts_size"] and r.get("status") == "ok" for r in power[point]):
+                problems.append(f"{tech} {point}: no ok run at its default size {parts['parts_size']}")
+        runs = power.get(point, [])
+        if not runs:
+            problems.append(f"{tech} {point}: synthesized but no power row")
+        for r in runs:
+            row = dict(common)
+            row.update({c: r.get(c, "") for c in ("size", "beats", "cycles", "e_clk_pj", "e_reg_pj", "e_seq_pj",
+                                                    "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw", "e_run_pj",
+                                                    "flop_bits", "e_bit_pj")})
+            row["status"] = "ok" if r["status"] == "ok" else f"pwr: {r['status']}"
+            if r.get("beats"):
+                row["elements"] = str(int(r["beats"]) * int(p["w"]))
+            if r.get("e_run_pj") and row.get("elements"):
+                row["pj_per_elem"] = f"{float(r['e_run_pj']) / int(row['elements']):.6g}"
+            if row["status"] == "ok":
+                row.update(parts)
+            else:
+                problems.append(f"{tech} {point} {r['size']}: {row['status']}")
+            out.append(row)
+    return out
+
+
+def check_sizes(rows: list[dict], problems: list[str]) -> None:
+    """Every ok point of a kernel has the same sizes; tier done has n2048 (X24)."""
+    sizes = defaultdict(set)
+    want = defaultdict(set)
+    for r in rows:
+        if r["status"].startswith("syn: "):
+            continue
+        sizes[(r["tech"], r["point"])].add(r["size"])
+        if r["tool"] != "forge":
+            want[(r["tech"], r["tier"], r["kernel"])].add(r["size"])
+    for r in rows:
+        if r["tier"] == "done":
+            want[(r["tech"], r["tier"], r["kernel"])].add("n2048")
+    for (tech, point), have in sorted(sizes.items()):
+        tier, kernel = point.split("/")[:2]
+        need = {"n2048"} if point.split("/")[-1].startswith("forge") else want[(tech, tier, kernel)]
+        if have != need:
+            problems.append(f"{tech} {point}: sizes {sorted(have)}, expected {sorted(need)}")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--check", action="store_true", help="check only, write nothing")
+    args = ap.parse_args()
+    problems: list[str] = []
+    rows = []
+    for tech in TECHS:
+        for source in SOURCES:
+            got = rows_for(source, tech, problems)
+            if not got:
+                problems.append(f"{tech} {source}: no rows")
+            rows += got
+    # the same points on both technologies
+    pts = defaultdict(set)
+    for r in rows:
+        pts[r["tech"]].add(r["point"])
+    for a, b in ((TECHS[0], TECHS[1]), (TECHS[1], TECHS[0])):
+        for point in sorted(pts[a] - pts[b]):
+            problems.append(f"{point}: on {a} but not on {b}")
+    check_sizes(rows, problems)
+    keys = defaultdict(int)
+    for r in rows:
+        keys[(r["tech"], r["point"], r.get("size", ""))] += 1
+    problems += [f"duplicate row: {' '.join(k)}" for k, n in keys.items() if n > 1]
+    if problems:
+        print("compare: not written, " + f"{len(problems)} problem(s):", file=sys.stderr)
+        for p in problems:
+            print(f"  {p}", file=sys.stderr)
+        return 1
+
+    def order(r):
+        size = r.get("size", "")
+        num = [int(x) for x in re.findall(r"\d+", size)] if size not in ("b64",) else [0]
+        return (TECHS.index(r["tech"]), r["kernel"], int(r["W"]), TOOL_ORDER[r["tool"]], r["case"],
+                size != "b64", num)
+
+    rows.sort(key=order)
+    counts = {}
+    for tier in ("done", "untiered"):
+        tier_rows = [r for r in rows if r["tier"] == tier]
+        counts[tier] = len(tier_rows)
+        if not args.check:
+            out = ROOT / "results" / f"compare_{tier}.csv"
+            with out.open("w", newline="") as fh:
+                w = csv.DictWriter(fh, fieldnames=COLUMNS, extrasaction="ignore")
+                w.writeheader()
+                w.writerows(tier_rows)
+    by = defaultdict(int)
+    for r in rows:
+        by[(r["tier"], r["tool"])] += 1
+    print("compare: " + ("checked" if args.check else "written") + ", " +
+          ", ".join(f"{t} {n} rows" for t, n in counts.items()))
+    for (tier, tool), n in sorted(by.items(), key=lambda x: (x[0][0], TOOL_ORDER[x[0][1]])):
+        print(f"  {tier:9} {tool:6} {n}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

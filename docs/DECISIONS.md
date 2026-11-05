@@ -48,6 +48,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X42](#x42-the-cycle-csvs-imported-with-provenance) | The Bambu and XLS cycle CSVs imported byte for byte with a `SOURCE` file (`report/import_cycles.py`) |
 | [X43](#x43-syn1-and-syn2-analyses-retired) | Retired: X24's joined table, X26's copied control RTL, X27's SYN1 read from git, the SYN1 and SYN2 analysis scripts and notes |
 | [X44](#x44-power-of-the-bambu-and-xls-points) | Power of the bambu and xls points: their windows, expected-cycle lines, XLS's cfg packing, Bambu's held pins, one port table (changes X12 for these two sources) |
+| [X45](#x45-the-tier-comparison-csvs) | `results/compare_done.csv` and `compare_untiered.csv` (`report/compare.py`): one row per tech, tier, kernel, W, tool, case and size, data laid out with no ratios |
 
 ## Synthesis
 
@@ -406,3 +407,10 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
   - **Results:** `results/<source>/<tech>/power_pt.csv`, `power_pt_modules.csv` and `power_reports/`, with X20's columns; runs in `sim/runs/<source>/<tech>/<point>/`.
 - **Why:** each tool's own handshake decides where its task starts and ends: Bambu's window is the counterpart of Vitis's `ap_start` to `ap_done` (and of Bambu's own co-simulation count); XLS has no start or done, its task starts at the cfg transfer and ends at the last output, and its datapath is combinational, so the cycle that ends at the last transfer computes the last beat and must be in the window. One port table, because the hls source once listed Bambu's folders with Vitis's ports (X39) and a second copy in `sim/` could drift the same way.
 - **Source:** `results/runs/2026-11-05_hsyn1_r5.md`.
+
+### X45. The tier comparison CSVs
+
+- **Date:** 2026-11-05 (HSYN1 R8)
+- **Decision:** `report/compare.py` (`pixi run compare`) writes `results/compare_done.csv` and `results/compare_untiered.csv` from the committed CSVs only (synthesis, power, per-cell energy and the cycle CSVs of forge, hls, bambu and xls, on both technologies). One row per tech, tier, kernel, W, tool (forge, vitis, bambu, xls), case and size, for every point with W <= MAX_W (X38); forge has tier done only, at n2048. Columns: the key and status; beats, elements (beats x W), the window's cycles and how the tool's window is defined (X12, X13, X44); area with the split where the RTL declares it (X41: forge's csr, ctrl, datapath, glue; Bambu's ctrl, datapath, glue); timing with the path-class slacks (X40; empty on forge rows, synthesized before X40); the energy groups per cycle, e_run per task, pJ per element and DC's leakage; energy per cycle of each declared part, from the point's default run (`parts_size`: b64 for the HLS sources, n2048 for forge); provenance (the RTL's repo commit, tool version, DC version, synthesis date). Parked points are rows with their status and no numbers. It writes nothing if a point is missing on a technology, a point lacks a size the other points of its kernel have (tier done: n2048), a run is not ok, a key repeats, or a split does not sum to the area. The tables hold no ratios or rankings; how they are compared is decided on top of them.
+- **Why:** one table per tier, raw, so that every comparison reads the same rows and the readings can be brainstormed after the data is laid out (SYN1's rule); per-tier files because forge has no untiered points and untiered has no n2048.
+- **Source:** `results/runs/2026-11-05_hsyn1_r8.md`.
