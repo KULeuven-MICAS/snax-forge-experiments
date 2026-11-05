@@ -152,6 +152,21 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** `logic clk = 1'b0` is an X -> 0 change at time 0, so `@(negedge clk)` fires at time 0; axpy opt's netlist drives `y_out_TVALID` = 1 while in reset (with `+initreg+0`). A sink that samples whenever TVALID = 1 takes that as a beat, and every later beat is off by one.
 - **Fix or check:** count beats only once reset is released (`rst_n === 1`), as `sim/tb/axis_sink.sv` does.
 - **Found in:** `2026-10-29_pwr_tasks.md`.
+- **Also:** Bambu's `done/dot/bambu_w8` on nangate15 with a random register start (Q9) has `out_TVALID` = 1 before the first clock edge (a flop's random value); neither Bambu nor XLS raises TVALID in reset with `+initreg+0` (HSYN1 R5, `results/runs/2026-11-05_hsyn1_r5.md`). The same sinks handle it.
+
+### Q8. nangate45's flops start with Q and QN both 0 under `+initreg+0`
+
+- **Symptom:** before the first clock edge, XLS's `done/dot/xls_w16` on nangate45 drives `_res_TDATA` = `0000200000000000` with every register at 0; after the first edge it is 0.
+- **Cause** (most likely; not traced net by net): nangate45's model file writes a flop as a behavioral module with two regs, `Q` and `QN` (`output reg Q, QN`, DFFR_X1). `+initreg+0` sets both to 0, so QN is not ~Q until the first edge loads them; logic that uses a flop's QN sees the wrong value for that half cycle. A random start (Q9) sets them independently too. nangate15's flops are UDPs with one state, `QN` a `not` of it.
+- **Fix or check:** none needed: every TB holds reset for 5 cycles, so every flop has been clocked long before dumping starts. A TB that samples outputs before the first clock edge must not trust them on nangate45.
+- **Found in:** `results/runs/2026-11-05_hsyn1_r5.md`.
+
+### Q9. A random register start in Questa 2022.4: `vopt +initreg=ru` and `vsim +initreg+<seed>`
+
+- **Symptom:** none by itself; the option is easy to get wrong. `vopt +initreg+0` (the default here) sets every variable and sequential UDP to 0. `vopt +initreg` with no value and no spec prepares 4-state (`r`), 2-state (`b`), enum (`e`) and UDP (`u`) variables for randomization, the TB's own `bit` and `int` flags and counters included.
+- **Cause:** the spec selects the variable kinds (vopt -help: `+initreg[=<spec>][+0|1|X|Z]`); the seed is a vsim option (`+initreg+<seed>`), not vopt's.
+- **Fix or check:** `sim/pwr.py run --initreg-seed N` uses `vopt +initreg=ru` (4-state regs: nangate45's behavioral flops; UDPs: nangate15's) and `vsim +initreg+N`; the sequencers give every flag an initial value. Check that it took: the outputs fed by unreset registers differ from 0 before the first edge (Bambu's `out_TDATA` = `10c0e48981e32dca` on nangate45 at seed 1). It is a check, never the default, and writes nothing to `results/`.
+- **Found in:** `results/runs/2026-11-05_hsyn1_r5.md`.
 
 ## vcd2saif
 
@@ -199,6 +214,8 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** the setup is the same in both tools (netlist, loads, constraints, leakage equal). PT is the reference tool for energy and the setup check is a diagnostic that never fails a point (X25, which replaces X10's tolerances: 2.5 % on nangate15's combinational group, 0.1 % elsewhere); its differences go into the run note.
 - **Found in:** `2026-10-29_pwr_r1.md` (setup-check).
 - **On snax-forge's wrapper** (`pwr setup-check --source forge`, `done/vecadd/forge_w4`, SYN1 R2): nangate45 agrees within 0.02 % in every group; nangate15's register group is -0.55 % (switching -1.49 %, 1.92299 against 1.95198 µW; internal -0.15 %), over its 0.1 %, and combinational +1.17 %, within 2.5 %. The activity is the same in both tools; holding `rst_ni` static changes nothing (the flops' asynchronous reset is not it); a few register-driven nets have up to 1.5 % less load in PT (`_ctrl_io_groups_0_status[0]` 35.34 against 35.88 fF). Only nangate15 has `rise/fall_capacitance_range` (338 entries, none on nangate45), the same switching difference this entry found on NAND2/NOR2, here on the flops' output nets. Why the register group differs, checked on `dot/forge5_w4` (2026-11-01): the two tools add up a net's pin load differently on nangate15's `rise/fall_capacitance_range`. PT takes the larger of the sum of the load pins' rise-range upper bounds and the sum of their fall-range upper bounds; DC sums, pin by pin, the larger of the two upper bounds (it matches DC's net load on 227 of the 227 flop nets DC's flat report names), so PT's load is at most DC's and lower where the pins of a net disagree (`io_status[0]`: 6.091 against 6.600 fF). nangate45 has no ranges. Settled in X25 (no tolerance; PT is the reference, the register group is 1.3 % to 14 % of e_dyn on these points). Found in `results/forge/runs/2026-10-31_syn1_r2.md`. SYN1 R3 on nangate15: `done/dot/forge5_w4` register -1.08 %, combinational +2.21 %; `done/vsum/forge_w8` register -0.25 %, combinational +1.79 %; the HLS point `done/vecadd/opt_w8` again register -0.08 %, combinational +1.95 % (as in `2026-10-29_pwr_r1.md`), so the register gap is the forge netlists' (`results/forge/runs/2026-11-01_syn1_r3.md`).
+
+- **On Bambu and XLS** (`pwr setup-check --source bambu|xls`, HSYN1 R5): nangate45 within 0.03 % (Bambu register -0.026 %) and 0.005 % in every group; nangate15 `done/dot/bambu_w8` register -0.91 %, combinational +2.22 %; `done/dot/xls_w16` register -0.45 %, combinational +2.00 %; clock and leakage equal. The same pattern as Vitis and forge (`results/runs/2026-11-05_hsyn1_r5.md`).
 
 ### PT6. PT counts floating port nets of a constant output as not annotated
 
