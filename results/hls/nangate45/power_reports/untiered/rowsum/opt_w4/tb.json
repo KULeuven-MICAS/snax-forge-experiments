@@ -1,0 +1,69 @@
+{
+ "tb_version": 1,
+ "point": "untiered/rowsum/opt_w4",
+ "kernel": "rowsum",
+ "top": "rowsum",
+ "case": "opt",
+ "W": 4,
+ "clock": {
+  "port": "ap_clk"
+ },
+ "reset": {
+  "port": "ap_rst_n",
+  "active": "low",
+  "sync": true
+ },
+ "control": {
+  "kind": "ap_ctrl_hs",
+  "start": "ap_start",
+  "done": "ap_done",
+  "ready": "ap_ready",
+  "idle": "ap_idle"
+ },
+ "streams": [
+  {
+   "arg": "A",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 4,
+   "dtype": "int64",
+   "data": "A_TDATA",
+   "valid": "A_TVALID",
+   "ready": "A_TREADY"
+  },
+  {
+   "arg": "y",
+   "dir": "out",
+   "kind": "axis",
+   "lanes": 1,
+   "dtype": "int64",
+   "data": "y_TDATA",
+   "valid": "y_TVALID",
+   "ready": "y_TREADY"
+  }
+ ],
+ "pins": [
+  {
+   "port": "loop_count",
+   "bits": 32,
+   "vld": "loop_count_ap_vld",
+   "from": "config"
+  },
+  {
+   "port": "len",
+   "bits": 32,
+   "vld": "len_ap_vld",
+   "from": "config"
+  }
+ ],
+ "sizes": {
+  "m4_n16": {
+   "loop_count": 16,
+   "len": 4
+  },
+  "m8_n64": {
+   "loop_count": 128,
+   "len": 16
+  }
+ }
+}

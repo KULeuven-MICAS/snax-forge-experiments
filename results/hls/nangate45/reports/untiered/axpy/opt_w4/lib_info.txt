@@ -1,0 +1,12 @@
+library: NangateOpenCellLibrary
+db: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db
+time_unit: 1ns
+cap_unit: 1ff
+operating_condition: typical
+process: 1.00
+voltage_v: 1.10
+temperature_c: 25.00
+default_wire_load: 5K_hvratio_1_1
+dc_version: Y-2026.03-SP2
+power_default_toggle_rate: 0.1
+power_default_static_probability: 0.5

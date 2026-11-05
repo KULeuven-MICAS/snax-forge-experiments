@@ -1,0 +1,7 @@
+# Worst setup slack per path class of rowsum at 10 ns, in library time units (1ps)
+# inputs 325 (all but ap_clk and ap_rst_n), outputs 69, register clock pins 264, register data pins 264
+# class slack startpoint endpoint
+in2reg 9282.16 A_TDATA[0] sum_reg_274_reg[63]/D
+reg2reg 9286.49 acc_fu_60_reg[2]/CLK sum_reg_274_reg[63]/D
+reg2out 9787.15 loop_count_preg_reg[21]/CLK A_TREADY
+in2out 9771.54 loop_count_ap_vld A_TREADY
