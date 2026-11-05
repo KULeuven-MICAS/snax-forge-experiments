@@ -120,6 +120,12 @@ KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
 LICENCE_ERR = re.compile(r"(?i)(licen[sc]\w*\s+(error|fail\w*|not available|denied|checkout)|unable to check\s*out"
                          r"|could not check\s*out|cannot check\s*out|feature removed|license server)")
 MASK64 = (1 << 64) - 1
+# The register start: +initreg+0 (vopt: every register and sequential UDP starts at 0, PITFALLS Q1), the default.
+# --initreg-seed N replaces it with Questa 2022.4's random start, for checking only (docs/power.md): vopt
+# +initreg=ru marks 4-state variables (r: nangate45's flops are behavioral regs) and sequential UDPs (u:
+# nangate15's) for randomization, and vsim +initreg+<N> seeds it. Such runs get the run tag suffix _r<N> and are
+# not written to results/ (their result.json stays in sim/runs/).
+INITREG_SEED: int | None = None
 
 
 class Fail(Exception):
@@ -697,7 +703,8 @@ def cells_lib(tech: str) -> Path:
 
 
 def run_tag(size: str, stim: str, seed: int) -> str:
-    return f"{size}_forge" if stim == "forge" else f"{size}_s{seed}"
+    tag = f"{size}_forge" if stim == "forge" else f"{size}_s{seed}"
+    return tag if INITREG_SEED is None else f"{tag}_r{INITREG_SEED}"
 
 
 def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -> None:
@@ -718,8 +725,8 @@ def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -
                           *(str(TB_DIR / f) for f in tb_files),
                           str(pdir / "tb.sv")]),
              ("vlog_netlist", [tool("vlog"), "-timescale", "1ns/1ps", "-work", str(work), str(netlist)]),
-             ("vopt", [tool("vopt"), "-work", str(work), "-L", str(cells), TB_TOP, "+initreg+0", "+acc=n",
-                       "-o", "tb_opt"])]
+             ("vopt", [tool("vopt"), "-work", str(work), "-L", str(cells), TB_TOP,
+                       "+initreg+0" if INITREG_SEED is None else "+initreg=ru", "+acc=n", "-o", "tb_opt"])]
     for name, cmd in steps:
         log = logs / f"{name}.log"
         rc = run_tool(cmd, log, pdir)
@@ -778,6 +785,9 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         timeout = max(10000, 4 * (exp or 0) + 1000)
         cmd = [tool("vsim"), "-c", "-work", str(pdir / "work"), "tb_opt", "+nospecify", "+notimingchecks",
                "-wlf", str(rdir / "vsim.wlf"), f"+VCD={vcd}", f"+TIMEOUT={timeout}", *plus, "-do", str(RUN_DO)]
+        if INITREG_SEED is not None:
+            cmd.insert(-2, f"+initreg+{INITREG_SEED}")
+            info["initreg"] = f"random, seed {INITREG_SEED} (vopt +initreg=ru, vsim +initreg+{INITREG_SEED})"
         run_tool(cmd, rdir / "vsim.log", rdir)
         times["vsim"] = time.time() - t
         log = (rdir / "vsim.log").read_text(errors="replace")
@@ -930,7 +940,7 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
             if SOURCE == "forge":
                 base.update({"recipe": tb["recipe"], "snax_forge_commit": tb["snax_forge_commit"]})
             info = {"run": str((pdir / run_tag(size, stim, seed)).relative_to(ROOT)), "times": times,
-                    "default": (stim, seed, size) == ("rand64", 0, src().default_size(tb))}
+                    "default": (stim, seed, size) == ("rand64", 0, src().default_size(tb)) and INITREG_SEED is None}
             try:
                 if size not in tb["sizes"]:
                     raise Fail(f"size {size} not in tb.json ({', '.join(tb['sizes'])})")
@@ -1385,6 +1395,10 @@ def cmd_tbjson(args) -> int:
 
 
 def cmd_run(args) -> int:
+    global INITREG_SEED
+    INITREG_SEED = args.initreg_seed
+    if INITREG_SEED is not None and args.source == "char":
+        sys.exit("--initreg-seed: not built for --source char (its windows run one simulation per point)")
     use_source(args.source)
     if args.source != "hls" and args.stim != "rand64":
         sys.exit(f"--source {args.source} runs rand64 only (--stim forge is hls-exercises' data.h)")
@@ -1409,7 +1423,7 @@ def cmd_run(args) -> int:
     tech_runs(args.tech).mkdir(parents=True, exist_ok=True)
     with (tech_runs(args.tech) / "batches.jsonl").open("a") as fh:
         fh.write(json.dumps({"date": stamp, "source": args.source, "patterns": args.patterns, "stim": args.stim, "size": args.size,
-                             "seed": args.seed, "licences": lic, "nproc": nproc, "J": j, "threads": threads}) + "\n")
+                             "seed": args.seed, "initreg_seed": INITREG_SEED, "licences": lic, "nproc": nproc, "J": j, "threads": threads}) + "\n")
     t = time.time()
     cells_lib(args.tech)
     print(f"pwr: cell models compiled in {time.time() - t:.1f} s", flush=True)
@@ -1432,8 +1446,12 @@ def cmd_run(args) -> int:
         for res in ex.map(work, points):
             results += res
     print(f"pwr: batch {time.time() - t:.1f} s", flush=True)
-    write_results(args.tech, results)
     bad = [r for r, _ in results if r["status"] != "ok"]
+    if INITREG_SEED is not None:      # a check: nothing goes to results/
+        print(f"pwr: {len(results) - len(bad)} ok, {len(bad)} not ok; random register start (seed {INITREG_SEED}), "
+              f"a check: results/ not written, result.json in the runs' _r{INITREG_SEED} folders")
+        return 1 if bad else 0
+    write_results(args.tech, results)
     print(f"pwr: {len(results) - len(bad)} ok, {len(bad)} not ok -> {(RESULTS / args.tech / 'power_pt.csv').relative_to(ROOT)}")
     return 1 if any(r["status"].startswith("failed") for r in bad) else 0
 
@@ -1544,6 +1562,9 @@ def main() -> int:
                         "the point's sizes.txt (forge: every size in tb.json)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("-j", type=int, default=0, help="at most this many workers (default: from the licences)")
+    p.add_argument("--initreg-seed", type=int, default=None,
+                   help="a check, never the default: random register start (vopt +initreg=ru, vsim +initreg+N) "
+                        "in place of +initreg+0; results/ is not written")
     p.set_defaults(fn=cmd_run)
     p = sub.add_parser("setup-check", help="diagnostic: PT against DC with forced activity, per power group (X25)")
     p.add_argument("--tech", required=True, choices=syn.tech_names())
