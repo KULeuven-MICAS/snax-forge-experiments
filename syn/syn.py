@@ -532,10 +532,12 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         if dyn is not None:
             e_dyn = dyn * clock_ns / 1000.0
             energy_ok = abs(e_total - e_dyn) <= 1e-3 * max(abs(e_dyn), 1e-9) + 1e-6
-    if not row["area_um2"]:
+    lic = licence_error(rdir)
+    if not row["area_um2"] or float(row["area_um2"]) == 0 or lic:
+        # A licence failure in compile_ultra (DC-Expert, SEC-50) still writes the reports, of an empty
+        # design: area 0. It fails the row whatever the reports say (HSYN1 R6).
         # at a line's start: dc_shell.log also echoes the script, whose puts line is indented
         mismatch = re.search(r"^dc_syn\.tcl: library mismatch", log_text, re.M) is not None
-        lic = licence_error(rdir)
         row["status"] = ("failed: library mismatch (logs/dc_shell.log)" if mismatch
                          else f"failed: licence ({lic})" if lic else "failed: no area report")
     elif "No wire load specified" not in area:
