@@ -94,6 +94,26 @@ def size_tag(size: dict) -> str:
     return "_".join(f"{k}{v}" for k, v in size.items())
 
 
+def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | None = None) -> dict:
+    """{tag: {pin: value}}: the tool's sizes valid at this W, then 'b64' (64 beats) when every config pin equals
+    loop_count at those sizes (rowsum's len does not), then EXTRA_SIZES for the tier; values from the config
+    expressions. Shared by the HLS tools' adapters (hls, bambu, xls)."""
+    out = {}
+    for size in sizes:
+        if valid and not _eval(valid, size, w):
+            continue
+        out[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in config.items()}
+    if all(all(v == cfg["loop_count"] for v in cfg.values()) for cfg in out.values()):
+        out["b64"] = {k: BEATS for k in config}
+    for size in EXTRA_SIZES.get(point.split("/")[0], []):
+        if valid and not _eval(valid, size, w):
+            continue
+        if any(v % w for v in size.values()):
+            raise ValueError(f"{point}: size {size_tag(size)} is not a multiple of W {w}")
+        out[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in config.items()}
+    return out
+
+
 def build(point: str) -> dict:
     fl = filelist(point)
     top = fl["top"]
@@ -134,19 +154,7 @@ def build(point: str) -> dict:
     if extra:
         raise ValueError(f"{point}: ports tb.json does not cover: {extra}")
 
-    sizes = {}
-    for size in prm["sizes"]:
-        if "valid" in prm and not _eval(prm["valid"], size, w):
-            continue
-        sizes[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in prm["config"].items()}
-    if all(all(v == cfg["loop_count"] for v in cfg.values()) for cfg in sizes.values()):
-        sizes["b64"] = {k: BEATS for k in prm["config"]}
-    for size in EXTRA_SIZES.get(point.split("/")[0], []):
-        if "valid" in prm and not _eval(prm["valid"], size, w):
-            continue
-        if any(v % w for v in size.values()):
-            raise ValueError(f"{point}: size {size_tag(size)} is not a multiple of W {w}")
-        sizes[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in prm["config"].items()}
+    sizes = sizes_for(point, prm["sizes"], prm["config"], w, prm.get("valid"))
 
     return {"tb_version": TB_VERSION, "point": point, "kernel": prm["kernel"], "top": top, "case": case, "W": w,
             "clock": {"port": CLK},

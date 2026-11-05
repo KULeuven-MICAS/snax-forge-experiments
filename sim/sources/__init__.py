@@ -28,3 +28,20 @@ def ports(source: str) -> tuple[str, str]:
     """(clock port, reset port) of a source, from syn/syn.py's SOURCES."""
     s = syn().SOURCES[source]
     return s["clk"], s["rst"]
+
+
+def cycle_line(points: dict) -> tuple[int, int]:
+    """(a, b) of cycles = a x loop_count + b through {size: (loop_count, cycles)}: integers, exact at every size
+    (a ValueError otherwise). The expected cycles of the bambu and xls sources (docs X44)."""
+    pts = sorted(set(points.values()))
+    if len(pts) < 2:
+        raise ValueError(f"no cycle line: {len(pts)} size(s) {points}")
+    (l1, c1), (l2, c2) = pts[0], pts[-1]
+    if (c2 - c1) % (l2 - l1):
+        raise ValueError(f"no integer cycle line through {points}")
+    a = (c2 - c1) // (l2 - l1)
+    b = c1 - a * l1
+    bad = {z: v for z, v in points.items() if a * v[0] + b != v[1]}
+    if bad:
+        raise ValueError(f"cycle line {a} x loop_count + {b} misses {bad}")
+    return a, b
