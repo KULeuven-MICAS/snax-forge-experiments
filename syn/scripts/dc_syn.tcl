@@ -235,6 +235,41 @@ report_power -hierarchy -nosplit -significant_digits 6 > reports/power_hierarchy
 report_power -verbose -hierarchy -nosplit -significant_digits 6 > reports/power_verbose_hierarchy.rpt
 
 #-----------------------------
+# Path classes (docs X40): the worst setup slack from inputs or registers to registers or
+# outputs, measured after compile with get_timing_paths -from/-to only; nothing here
+# changes the compile (no group_path). Inputs: every input but the clock and the reset;
+# outputs: every output; registers: clock pins as start points, data pins as endpoints.
+# One line per class, slack in library time units; 'none' where the class has no path.
+#-----------------------------
+set pc_in   [remove_from_collection [all_inputs] [get_ports -quiet [list $clk_port $rst_port]]]
+set pc_out  [all_outputs]
+set pc_rclk [all_registers -clock_pins]
+set pc_rdat [all_registers -data_pins]
+set fh [open reports/path_classes.rpt w]
+puts $fh "# Worst setup slack per path class of $target_design at $clock_ns ns, in library time units ($read_time)"
+puts $fh "# inputs [sizeof_collection $pc_in] (all but $clk_port and $rst_port), outputs [sizeof_collection $pc_out],\
+ register clock pins [sizeof_collection $pc_rclk], register data pins [sizeof_collection $pc_rdat]"
+puts $fh "# class slack startpoint endpoint"
+foreach {cls from to} [list in2reg $pc_in $pc_rdat reg2reg $pc_rclk $pc_rdat \
+                            reg2out $pc_rclk $pc_out in2out $pc_in $pc_out] {
+    set slack none; set sp -; set ep -
+    if {[sizeof_collection $from] > 0 && [sizeof_collection $to] > 0} {
+        set path [get_timing_paths -delay_type max -max_paths 1 -from $from -to $to]
+        if {[sizeof_collection $path] > 0} {
+            set s [get_attribute -quiet $path slack]
+            # an unconstrained path reports INFINITY: no path in the class
+            if {[string is double -strict $s] && ![string match -nocase *inf* $s]} {
+                set slack $s
+                set sp [get_object_name [get_attribute $path startpoint]]
+                set ep [get_object_name [get_attribute $path endpoint]]
+            }
+        }
+    }
+    puts $fh "$cls $slack $sp $ep"
+}
+close $fh
+
+#-----------------------------
 # Outputs
 #-----------------------------
 write_file -format verilog -hierarchy -output out/${target_design}_mapped.v

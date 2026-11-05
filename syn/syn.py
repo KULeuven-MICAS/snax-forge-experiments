@@ -169,14 +169,17 @@ def use_source(name: str) -> None:
 SCRIPT = SYN / "scripts" / "dc_syn.tcl"
 DEFAULT_CLOCK = "10"
 MAX_REPORT_BYTES = 1 << 20  # reports copied to results/ above this size are skipped
-# What results/hls/<tech>/reports/ keeps of a run: what the area and energy model reads (area and
-# power, per level of hierarchy and per cell type), the QoR, and what the run ran on. The rest
+# What results/<source>/<tech>/reports/ keeps of a run: what the area and energy model reads (area and
+# power, per level of hierarchy and per cell type), the QoR, the path classes, and what the run ran on. The rest
 # (timing, constraints, ports, clocks, verbose power) stays in syn/runs/.
 KEPT_REPORTS = ("area.rpt", "area_hierarchy.rpt", "reference.rpt", "power.rpt", "power_hierarchy.rpt",
-                "qor.rpt", "tech.json", "lib_info.txt")
+                "qor.rpt", "path_classes.rpt", "tech.json", "lib_info.txt")
+# dc_syn.tcl's path classes (X40), in reports/path_classes.rpt and the slack_<class>_ns columns
+PATH_CLASSES = ("in2reg", "reg2reg", "reg2out", "in2out")
 
 COLUMNS = ["point", "top", "tech", "clock_ns", "status", "errors", "area_um2", "comb_area_um2", "seq_area_um2",
-           "buf_inv_area_um2", "cells", "seq_cells", "crit_path_ns", "slack_ns", "fmax_mhz", "maxcap_nets",
+           "buf_inv_area_um2", "cells", "seq_cells", "crit_path_ns", "slack_ns", "fmax_mhz",
+           *(f"slack_{c}_ns" for c in PATH_CLASSES), "maxcap_nets",
            "maxtrans_nets", "dyn_power_uw", "leak_power_uw", "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj",
            "e_total_pj", "leak_clk_uw", "leak_reg_uw", "leak_seq_uw", "leak_comb_uw", "lib_md5", "dc_version",
            "date", "run"]
@@ -467,7 +470,7 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         f = rep / name
         return f.read_text(errors="replace") if f.is_file() else ""
 
-    area, qor, power = text("area.rpt"), text("qor.rpt"), text("power.rpt")
+    area, qor, power, classes = text("area.rpt"), text("qor.rpt"), text("power.rpt"), text("path_classes.rpt")
     log = rdir / "logs" / "dc_shell.log"
     log_text = log.read_text(errors="replace") if log.is_file() else ""
     info = lib_info(rdir)
@@ -508,6 +511,10 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         s = float(slack) / t_scale
         row["slack_ns"] = _num(s)
         row["fmax_mhz"] = _num(1000.0 / (clock_ns - s))
+    for c in PATH_CLASSES:   # 'none' (no path in the class) stays empty
+        v = _first(classes, rf"^{c}\s+(\S+)")
+        if re.fullmatch(r"[0-9.eE+-]+", v):
+            row[f"slack_{c}_ns"] = _num(float(v) / t_scale)
     dyn, leak = _power_uw(power, "Total Dynamic Power"), _power_uw(power, "Cell Leakage Power")
     row["dyn_power_uw"] = "" if dyn is None else _num(dyn)
     row["leak_power_uw"] = "" if leak is None else _num(leak)
