@@ -1,0 +1,5 @@
+point,top,tech,clock_ns,W,size,config,beats,seed,cycles,e_clk_pj,e_reg_pj,e_seq_pj,e_comb_pj,e_flop_pj,e_dyn_pj,p_dyn_uw,e_comb_fire_pj,e_flop_fire_pj,e_run_pj,flop_bits,e_bit_pj,status
+done/dot/bambu_w8,p_Z3dotPK6ac_intILi512ELb0EES2_Pxjj,nangate45,10,8,b64,loop_count=64 len=64,64,0,130,4.953441,6.537321,0,48.61764,11.49076,60.1084,6010.84,98.75458,23.34061,7814.092,1264,0.009090793,ok
+done/dot/bambu_w8,p_Z3dotPK6ac_intILi512ELb0EES2_Pxjj,nangate45,10,8,n2048,loop_count=256 len=256,256,0,514,4.887654,6.617984,0,49.44376,11.50564,60.9494,6094.94,99.2738,23.10116,31327.99,1264,0.009102562,ok
+done/dot/bambu_w8,p_Z3dotPK6ac_intILi512ELb0EES2_Pxjj,nangate45,10,8,n512,loop_count=64 len=64,64,0,130,4.953441,6.537321,0,48.61764,11.49076,60.1084,6010.84,98.75458,23.34061,7814.092,1264,0.009090793,ok
+done/dot/bambu_w8,p_Z3dotPK6ac_intILi512ELb0EES2_Pxjj,nangate45,10,8,n64,loop_count=8 len=8,8,0,18,5.373936,5.853609,0,43.26434,11.22754,54.49188,5449.189,97.34476,25.26198,980.8539,1264,0.008882551,ok

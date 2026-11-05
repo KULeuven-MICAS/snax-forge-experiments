@@ -1,0 +1,5 @@
+point,top,tech,clock_ns,W,size,config,beats,seed,cycles,e_clk_pj,e_reg_pj,e_seq_pj,e_comb_pj,e_flop_pj,e_dyn_pj,p_dyn_uw,e_comb_fire_pj,e_flop_fire_pj,e_run_pj,flop_bits,e_bit_pj,status
+done/dot/opt_w8,dot,nangate15,10,8,b64,loop_count=64 len=64,64,0,66,0.6163502,0.2888236,0,28.75897,0.9051738,29.66414,2966.414,29.65769,0.9334605,1957.833,328,0.002759676,ok
+done/dot/opt_w8,dot,nangate15,10,8,n2048,loop_count=256 len=256,256,0,258,0.616496,0.2996831,0,29.99183,0.9161791,30.90801,3090.801,30.22614,0.9233368,7974.266,328,0.002793229,ok
+done/dot/opt_w8,dot,nangate15,10,8,n512,loop_count=64 len=64,64,0,66,0.6163502,0.2888236,0,28.75897,0.9051738,29.66414,2966.414,29.65769,0.9334605,1957.833,328,0.002759676,ok
+done/dot/opt_w8,dot,nangate15,10,8,n64,loop_count=8 len=8,8,0,10,0.6155611,0.2388737,0,21.27878,0.8544348,22.13322,2213.322,26.59848,1.068043,221.3322,328,0.002604984,ok
