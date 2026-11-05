@@ -1,0 +1,12 @@
+library: NanGate_15nm_OCL
+db: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db
+time_unit: 1ps
+cap_unit: 1ff
+operating_condition: typical
+process: 1.00
+voltage_v: 0.80
+temperature_c: 25.00
+default_wire_load: 
+dc_version: Y-2026.03-SP2
+power_default_toggle_rate: 0.1
+power_default_static_probability: 0.5
