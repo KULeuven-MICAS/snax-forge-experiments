@@ -67,6 +67,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** compare a Bambu point's `seq_cells` with the RTL's register bits minus the bits in `logs/dc_shell.log`'s OPT-1207 lines (each line is printed twice there: count the unique ones). A flop count from the RTL alone overstates Bambu's registers.
 - **Found in:** `results/runs/2026-11-05_hsyn1_r4.md`.
 
+### DC10. Vitis's flops: the elaborator trims bits and compile removes constants, with no OPT-1207
+
+- **Symptom:** Vitis's dace points have 1 to 19 fewer `seq_cells` than the flop bits of their Verilog (every `<=` target's declared width): vecadd `dace_w16` 1163 against 1144, `dace_w1` 164 against 163. No OPT-1207 line.
+- **Cause:** two steps. The elaborator (Presto) infers some registers narrower than declared, with no message: the `Inferred memory devices` tables in `dc_shell.log` give `loop_count_preg_reg` 31 bits for a 32-bit reg (1 to 5 bits per point). Then compile removes constant registers, `Information: The register '...' is a constant and will be removed. (OPT-1206)` (2 to 14 per point; Bambu's removals are unloaded registers, OPT-1207, DC9). Verilog bits - trimmed bits - OPT-1206 - OPT-1207 = `seq_cells` on all 31 Vitis points of tier done; the opt points lose none.
+- **Fix or check:** to compare `seq_cells` with an HLS tool's RTL, sum the `Inferred memory devices` widths and subtract the unique OPT-1206 and OPT-1207 lines. For Bambu this table does not work: it lists each library design once (`register_SE_BITSIZE_in132_...`), not once per instance; use the instance parameters (DC9).
+- **Found in:** `results/runs/2026-11-05_hsyn1_r6.md`.
+
 ## Libraries
 
 ### LIB1. nangate15's flops all have async reset or set
@@ -246,6 +253,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** it is put on PATH from `~/.bashrc`, which a non-interactive shell may not read; earlier runs used Vivado's `lmutil`.
 - **Fix or check:** set `LMUTIL` to the binary (Questa's: `/esat/micas-data/software/Mentor/questasim_2022.4/linux_x86_64/lmutil`).
 - **Found in:** `2026-10-28_step0_libs.md`, `2026-10-29_pwr_step0.md` (Tools).
+
+### L4. `compile_ultra` needs a DC-Expert licence as well as Design-Compiler
+
+- **Symptom:** with J DC runs sized from the free Design-Compiler licences alone (9), some runs end with `Error: All 'DC-Expert' licenses are in use. (SEC-50)` at `compile_ultra`; DC still writes its reports, of an empty design: `area.rpt` with a total cell area of 0. Before commit `c44ac94` syn.py took such a row as ok (area 0, slack 9.88 ns, errors 1) after its licence retry also failed.
+- **Cause:** `compile_ultra` checks out DC-Expert besides Design-Compiler; both have 10 licences on 1709@licserv, used by other people independently. LICENCE_ERROR matched the line and the run was retried once (X17), but read_run failed a row only when the area report was missing.
+- **Fix or check:** J = min(free Design-Compiler, free DC-Expert) at each batch's start (`lmutil lmstat -f Design-Compiler`, `-f DC-Expert`); since `c44ac94` syn.py fails a row with a licence error or an area of 0 whatever its reports say.
+- **Found in:** `results/runs/2026-11-05_hsyn1_r6.md`.
 
 ## Environment
 
