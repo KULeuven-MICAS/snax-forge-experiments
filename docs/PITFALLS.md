@@ -261,6 +261,15 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** J = min(free Design-Compiler, free DC-Expert) at each batch's start (`lmutil lmstat -f Design-Compiler`, `-f DC-Expert`); since `c44ac94` syn.py fails a row with a licence error or an area of 0 whatever its reports say.
 - **Found in:** `results/runs/2026-11-05_hsyn1_r6.md`.
 
+## CACTI
+
+### C1. CACTI reads `tech_params/` relative to its working directory
+
+- **Symptom:** CACTI 7 (`1ffd8df`) run from any folder but its own echoes its input parameters and dies with a segmentation fault (rc 139, core dumped), with no message about a missing file.
+- **Cause:** `parameter.cc` opens `"tech_params/<node>.dat"` (here `tech_params/45nm.dat`) by a relative path and does not check the `fopen`.
+- **Fix or check:** run CACTI from `ram/cacti/`, or link `tech_params` into the run folder; `ram/ram.py` runs each point in `ram/runs/cacti/<point>/` with `tech_params` (and `contention.dat`) linked in. A run with rc 139 and no `Cache Parameters:` block in its output is this.
+- **Found in:** `results/ram/runs/2026-11-05_ram1_r1.md`.
+
 ## Environment
 
 ### E1. `pixi run python -c "..."` loses the inner quotes

@@ -18,3 +18,6 @@ char-table = "python report/char_table.py"
 import-cycles = "python report/import_cycles.py"
 compare = "python report/compare.py"
 compare-hls = "python report/compare_hls.py"
+# RAM1: clone CACTI 7 at a fixed commit into ram/cacti/ (git-ignored) and build it with the host g++
+ram-build = "test -d ram/cacti/.git || git clone https://github.com/HewlettPackard/cacti ram/cacti && git -C ram/cacti checkout -q 1ffd8df && make -C ram/cacti"
+ram = "python ram/ram.py"

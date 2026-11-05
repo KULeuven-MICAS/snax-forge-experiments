@@ -3,7 +3,7 @@
 The settled choices of this repo and the tool nuances that give wrong numbers without an error. Check a new prompt, script or result against both before trusting it.
 
 - [`DECISIONS.md`](DECISIONS.md): what was decided, numbered X1, X2, ..., each with its date, reason and source.
-- [`PITFALLS.md`](PITFALLS.md): per tool (DC, libraries, Questa, PrimeTime, licences, environment), each symptom with its cause, its fix or check, and the run note that found it.
+- [`PITFALLS.md`](PITFALLS.md): per tool (DC, libraries, Questa, PrimeTime, licences, CACTI, environment), each symptom with its cause, its fix or check, and the run note that found it.
 - [`power.md`](power.md): how to run `pwr`, its stages, the run folder and what is committed.
 - [`notes_control_boundary.md`](notes_control_boundary.md): working notes from SYN1's review: forge's control against HLS's, register by register, the block boundary, the HLS register stage, and the options to pick from.
 
