@@ -15,7 +15,21 @@ Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and t
 Main view: nangate45, int64, every point synthesized at a 10 ns clock and scheduled at a 10 ns HLS clock, W = 1 to 16 lanes per stream. Sizes: tier done at n2048 (2048 elements per input stream, X24); untiered at each kernel's larger task size: matadd m16_n32, relu n512, axpy n512, rowsum m8_n64. Energy is the dynamic energy of one task (PrimePower on simulated activity, X7); power is E_run / (cycles x 10 ns). The latency windows differ by a cycle or two by definition.
 <!-- /gen -->
 
-## 2. Tier done
+## 2. Across all kernels
+
+All numbers below are nangate45, int64, at the sizes of the tables (tier done n2048; untiered the larger task size). Flops are DC's `seq_cells`, traced to each tool's RTL in R6 and R7.
+
+- **Registers per lane decide the gaps wherever the arithmetic is cheap.** Flops added per lane (the slope of the flop count over W): XLS 0; Vitis opt 64 per output stream, since it registers the output beat, and 0 for the reductions; Bambu 64 per stream, inputs and outputs alike (vecadd, vecmul and axpy 192; relu 128; dot about 141; vsum about 68).
+- **Bambu's registered beats are its most costly trait.** In vecadd they are 53 % of its area and 60 % of its energy, and they are why its area grows 1622 µm² per lane against Vitis's 679 and XLS's 406.
+- **XLS's flops are its proc state only, and they do not grow with W:** 32 (the loop count: vecadd, vecmul, matadd, relu), 96 (axpy: loop count and alpha), 160 (vsum, dot, rowsum). That makes XLS the smallest case in every kernel, with flops at most 3 % of its energy from W = 8.
+- **64-bit multipliers set the area wherever they are in the datapath** (vecmul, dot, axpy): about 7.0k to 8.6k µm² per lane for every tool. At W = 16, Vitis opt is within 1 to 10 % of XLS and Bambu 12 to 22 % above it, the difference being registers.
+- **Run-time pins:** Vitis registers its pins (`ap_vld`), XLS keeps them in its proc state, and Bambu reads them as plain wires held for the task, so Bambu pays no pin registers. In axpy, Vitis's 65 extra fixed flops against vecadd are alpha's pin register.
+- **Energy per task falls with W and then levels off:** the fixed part (control, handshakes, reset logic) is paid per cycle, and wider beats need fewer cycles for the same task.
+- **Latency is about one cycle per beat for all four cases.** The differences of 1 or 2 cycles are their windows and pipeline depths (Vitis opt 2 stages at 10 ns, Bambu an iteration latency of 2 or 3, XLS one stage). The one real exception is Bambu's dot at W = 4 and 8, which runs at II = 2.
+- **Control is only visible where the RTL keeps it apart.** Bambu's controller is a module of its own and small (81 µm² in dot at W = 8, 0.1 % of the area). Vitis and XLS mix control and datapath in one flat module, so their control cost cannot be split out after synthesis (X41); their totals hold it.
+- **Timing:** every point meets 10 ns. XLS, with one combinational stage from its ports, has the least slack (dot at W = 16: 2.38 ns on nangate45, against 3.87 ns for Bambu at W = 8 and 4.17 ns for Vitis at W = 8, R4).
+
+## 3. Tier done
 
 ### vecadd
 
@@ -50,7 +64,9 @@ n2048, nangate45, int64, 10 ns.
 
 **Insights.**
 
-- (to write)
+- At W = 16: XLS 6.8k µm², Vitis opt 11.5k, Vitis dace 11.9k, Bambu 26.7k. Per lane: XLS 406, Vitis 679, Bambu 1622 µm². The gap is registers: Vitis adds 64 flops per lane (the output beat), Bambu 192 (both input beats and the output beat), XLS none.
+- Energy per task barely moves from W = 4 on: XLS 2.2 to 2.7 nJ, Vitis opt 3.1 to 4.0, Bambu 6.4 to 7.4. Flops are 72 to 78 % of Vitis's energy, 60 to 64 % of Bambu's and 1 to 16 % of XLS's.
+- Vitis dace is opt with 30 to 50 more flops and, from W = 4, one more cycle.
 
 ### vecmul
 
@@ -85,7 +101,8 @@ n2048, nangate45, int64, 10 ns.
 
 **Insights.**
 
-- (to write)
+- The 64-bit multiplier is about 7k µm² per lane for every tool, so the areas stay within 18 % (W = 16: XLS 112.9k, Vitis opt 118.0k, Bambu 133.1k).
+- Bambu spends about 20 % more energy per task (30 against 25 nJ); its flops are 18 to 20 % of its energy, against 9 to 12 % for Vitis and 0 to 2 % for XLS. The registered beats are the same as in vecadd.
 
 ### vsum
 
@@ -116,7 +133,10 @@ n2048, nangate45, int64, 10 ns.
 
 **Insights.**
 
-- (to write)
+- No per-lane registers in Vitis opt (264 flops at every W) or XLS (160); Bambu registers the input beat, 64 flops per lane, so its area grows 711 µm² per lane against 267 (Vitis) and 336 (XLS).
+- The fixed part dominates at small W: about 2.1k µm² for Vitis and 2.2k for Bambu against 1.2k for XLS, which has 104 fewer flops than Vitis.
+- Energy per task drops from W = 1 to 16 by 6x for Vitis, 4x for XLS and 3x for Bambu: the fixed per-cycle cost is spread over fewer cycles, but Bambu's input registers grow with W.
+- Vitis dace exists only at W = 1 (1.5k µm², 166 flops), smaller than opt there (2.4k µm², 264 flops).
 
 ### dot
 
@@ -147,9 +167,12 @@ n2048, nangate45, int64, 10 ns.
 
 **Insights.**
 
-- (to write)
+- Bambu runs at II = 2 at W = 4 and 8: 1026 and 514 cycles, twice the others, with the same lanes. Its energy per task rises at W = 4 (32.8 nJ against 31.3 at W = 2), and its power is lower than the others' there.
+- Vitis opt at 10 ns cuts its adder tree with 64-bit partial-sum registers at W = 8 (two) and W = 16 (four), `add_ln21_*_reg` in its Verilog; that is where its flops grow from 264 to 328 and 456.
+- XLS's combinational energy is 5 to 9 % above Vitis opt's at every W, while its flops are fewer (160). XLS gates every input bit with its idle state before the multipliers; how much of the gap that explains is not measured.
+- The areas stay within 12 % (W = 16: XLS 117.4k µm², Vitis opt 118.4k, Bambu 131.7k). Vitis dace_w1 is parked (RAM).
 
-## 3. Tier untiered
+## 4. Tier untiered
 
 ### matadd
 
@@ -184,7 +207,7 @@ m16_n32, nangate45, int64, 10 ns.
 
 **Insights.**
 
-- (to write)
+- Every tool builds the same hardware as for vecadd (identical area and flops at every W): the 2-D loops become one flat run of M x N / W beats, so only the task size (512 elements) separates this table from vecadd's.
 
 ### relu
 
@@ -215,7 +238,9 @@ n512, nangate45, int64, 10 ns.
 
 **Insights.**
 
-- (to write)
+- The cheapest operation, so registers decide everything: XLS needs 69 µm² per lane (a sign select), Vitis opt is 59 to 68 % registers (the output beat, 64 flops per lane), and Bambu registers both the input and the output beat (128 per lane, 1002 µm² per lane).
+- Energy per task at W = 8: XLS 0.25 nJ, Vitis 0.58, Bambu 1.00. Flops are 85 to 88 % of Vitis's energy.
+- Each lane's sign bit is constant 0 after relu; Vitis's synthesis warns about it (LINT-52, LINT-31). Vitis dace exists only at W = 1.
 
 ### axpy
 
@@ -246,7 +271,9 @@ n512, nangate45, int64, 10 ns.
 
 **Insights.**
 
-- (to write)
+- Multiplier-bound, like vecmul: at W = 16, XLS 112.7k µm², Vitis opt 123.5k, Bambu 138.0k.
+- XLS's 96 flops are its loop count and alpha; Vitis registers alpha as a pin and the output beat (199 fixed flops plus 64 per lane); Bambu reads alpha as a held wire but registers x, y and the output beat (192 flops per lane).
+- Energy per task: XLS 5.3 to 5.5 nJ, Vitis 5.7 to 6.1, Bambu 6.5 to 6.7, so Bambu is about 20 % above XLS at every W. Vitis dace_w1 is parked (RAM).
 
 ### rowsum
 
@@ -277,9 +304,10 @@ m8_n64, nangate45, int64, 10 ns.
 
 **Insights.**
 
-- (to write)
+- Every tool builds the same hardware as for vsum (identical area and flops): restarting the sum every `len` beats costs nothing synthesis can see, so only the task size and Bambu's one extra cycle at W = 16 (35 against 34) differ from vsum.
+- Vitis dace_w1 is parked (RAM).
 
-## 4. nangate15 check
+## 5. nangate15 check
 
 <!-- gen:tech -->
 Values at W = 8 (nangate45 / nangate15); latency is the same on both:
@@ -317,7 +345,7 @@ Values at W = 8 (nangate45 / nangate15); latency is the same on both:
 The order of the cases (smallest to largest) is the same on both technologies in 109 of 120 comparisons (kernel, W and metric with at least two cases).
 <!-- /gen -->
 
-## 5. Notes
+## 6. Notes
 
 - Parked points (a RAM macro, X15): Vitis dace_w1 of dot, axpy and rowsum.
 - The rows behind every number are in `results/compare_done.csv` and `results/compare_untiered.csv`.

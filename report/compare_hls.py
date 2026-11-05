@@ -167,8 +167,9 @@ def template() -> str:
     parts = ["# The HLS cases side by side: Vitis opt and dace, Bambu, XLS", "",
              "Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs "
              "(X45, X46); the text outside the `gen` markers is written by hand. Forge is left out until its "
-             "accelerator parts are in.", "", "## 1. Setup", "", "<!-- gen:setup -->", "<!-- /gen -->", ""]
-    n = 2
+             "accelerator parts are in.", "", "## 1. Setup", "", "<!-- gen:setup -->", "<!-- /gen -->", "",
+             "## 2. Across all kernels", "", "- (to write)", ""]
+    n = 3
     for tier in ("done", "untiered"):
         parts += [f"## {n}. Tier {tier}", ""]
         for kernel in KERNELS[tier]:
