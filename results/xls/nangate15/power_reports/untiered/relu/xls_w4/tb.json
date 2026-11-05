@@ -1,0 +1,67 @@
+{
+ "tb_version": 1,
+ "source": "xls",
+ "point": "untiered/relu/xls_w4",
+ "kernel": "relu",
+ "top": "relu",
+ "case": "xls",
+ "W": 4,
+ "clock": {
+  "port": "clk"
+ },
+ "reset": {
+  "port": "rst",
+  "active": "high",
+  "sync": true
+ },
+ "control": {
+  "kind": "xls_cfg",
+  "data": "_cfg_TDATA",
+  "valid": "_cfg_TVALID",
+  "ready": "_cfg_TREADY",
+  "bits": 32,
+  "fields": [
+   {
+    "name": "loop_count",
+    "bits": 32,
+    "from": "config"
+   }
+  ]
+ },
+ "streams": [
+  {
+   "arg": "A",
+   "xls_arg": "a",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 4,
+   "dtype": "int64",
+   "data": "_a_TDATA",
+   "valid": "_a_TVALID",
+   "ready": "_a_TREADY"
+  },
+  {
+   "arg": "B",
+   "xls_arg": "b",
+   "dir": "out",
+   "kind": "axis",
+   "lanes": 4,
+   "dtype": "int64",
+   "data": "_b_TDATA",
+   "valid": "_b_TVALID",
+   "ready": "_b_TREADY"
+  }
+ ],
+ "pins": [],
+ "sizes": {
+  "n64": {
+   "loop_count": 16
+  },
+  "n512": {
+   "loop_count": 128
+  },
+  "b64": {
+   "loop_count": 64
+  }
+ }
+}

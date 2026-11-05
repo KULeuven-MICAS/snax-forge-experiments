@@ -1,0 +1,83 @@
+{
+ "tb_version": 1,
+ "source": "xls",
+ "point": "untiered/axpy/xls_w8",
+ "kernel": "axpy",
+ "top": "axpy",
+ "case": "xls",
+ "W": 8,
+ "clock": {
+  "port": "clk"
+ },
+ "reset": {
+  "port": "rst",
+  "active": "high",
+  "sync": true
+ },
+ "control": {
+  "kind": "xls_cfg",
+  "data": "_cfg_TDATA",
+  "valid": "_cfg_TVALID",
+  "ready": "_cfg_TREADY",
+  "bits": 96,
+  "fields": [
+   {
+    "name": "loop_count",
+    "bits": 32,
+    "from": "config"
+   },
+   {
+    "name": "alpha",
+    "bits": 64,
+    "from": "data:alpha"
+   }
+  ]
+ },
+ "streams": [
+  {
+   "arg": "x",
+   "xls_arg": "x",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 8,
+   "dtype": "int64",
+   "data": "_x_TDATA",
+   "valid": "_x_TVALID",
+   "ready": "_x_TREADY"
+  },
+  {
+   "arg": "y",
+   "xls_arg": "y",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 8,
+   "dtype": "int64",
+   "data": "_y_TDATA",
+   "valid": "_y_TVALID",
+   "ready": "_y_TREADY"
+  },
+  {
+   "arg": "y_out",
+   "xls_arg": "y_out",
+   "dir": "out",
+   "kind": "axis",
+   "lanes": 8,
+   "dtype": "int64",
+   "data": "_y_out_TDATA",
+   "valid": "_y_out_TVALID",
+   "ready": "_y_out_TREADY"
+  }
+ ],
+ "pins": [],
+ "sizes": {
+  "n64": {
+   "loop_count": 8
+  },
+  "n512": {
+   "loop_count": 64
+  },
+  "b64": {
+   "loop_count": 64
+  }
+ }
+}

@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : area
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 18:09:14 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                          874
+Number of nets:                         19921
+Number of cells:                        16305
+Number of combinational cells:          16209
+Number of sequential cells:                96
+Number of macros/black boxes:               0
+Number of buf/inv:                       1041
+Number of references:                      27
+
+Combinational area:              28469.980164
+Buf/Inv area:                      697.451991
+Noncombinational area:             434.111984
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                 28904.092148
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area            Local cell area
+                                  -------------------  ----------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
+                                  Total       Total    national    national   boxes   Design
+--------------------------------  ----------  -------  ----------  ---------  ------  ---------
+axpy                              28904.0921    100.0  28469.9802   434.1120  0.0000  axpy
+--------------------------------  ----------  -------  ----------  ---------  ------  ---------
+Total                                                  28469.9802   434.1120  0.0000
+
+1

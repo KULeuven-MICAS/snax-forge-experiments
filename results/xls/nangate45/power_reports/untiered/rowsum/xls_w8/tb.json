@@ -1,0 +1,71 @@
+{
+ "tb_version": 1,
+ "source": "xls",
+ "point": "untiered/rowsum/xls_w8",
+ "kernel": "rowsum",
+ "top": "rowsum",
+ "case": "xls",
+ "W": 8,
+ "clock": {
+  "port": "clk"
+ },
+ "reset": {
+  "port": "rst",
+  "active": "high",
+  "sync": true
+ },
+ "control": {
+  "kind": "xls_cfg",
+  "data": "_cfg_TDATA",
+  "valid": "_cfg_TVALID",
+  "ready": "_cfg_TREADY",
+  "bits": 64,
+  "fields": [
+   {
+    "name": "loop_count",
+    "bits": 32,
+    "from": "config"
+   },
+   {
+    "name": "len",
+    "bits": 32,
+    "from": "config"
+   }
+  ]
+ },
+ "streams": [
+  {
+   "arg": "A",
+   "xls_arg": "a",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 8,
+   "dtype": "int64",
+   "data": "_a_TDATA",
+   "valid": "_a_TVALID",
+   "ready": "_a_TREADY"
+  },
+  {
+   "arg": "y",
+   "xls_arg": "y",
+   "dir": "out",
+   "kind": "axis",
+   "lanes": 1,
+   "dtype": "int64",
+   "data": "_y_TDATA",
+   "valid": "_y_TVALID",
+   "ready": "_y_TREADY"
+  }
+ ],
+ "pins": [],
+ "sizes": {
+  "m4_n16": {
+   "loop_count": 8,
+   "len": 2
+  },
+  "m8_n64": {
+   "loop_count": 64,
+   "len": 8
+  }
+ }
+}
