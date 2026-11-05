@@ -1,18 +1,34 @@
 #!/usr/bin/env python3
 """syn/syn.py - ASIC synthesis of bench points with Design Compiler, on one technology per run.
 
-A point is a folder in hls-exercises' rtl/ (a checkout next to this repo,
-../hls-exercises), named <tier>/<kernel>/<point> (e.g. done/vecadd/opt_w8, one
-hardware point: case and W, every size runs on it), holding Vitis's Verilog and
-a filelist.f that hls-exercises' bench/bench.py writes. Patterns are shell
-globs over those names.
+A point is a folder named <tier>/<kernel>/<case>_w<W> (e.g. done/vecadd/opt_w8, one
+hardware point: case and W, every size runs on it) holding an HLS tool's Verilog and a
+filelist.f ('# top: <module>', then the files). Patterns are shell globs over those names.
 
-  pixi run syn list    [PATTERN ...] [--tech T] [--source S]
-  pixi run syn run     PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run] [--source S]
-  pixi run syn summary [PATTERN ...] [--tech T] [--source S]
+  pixi run syn list         [PATTERN ...] [--tech T] [--source S]
+  pixi run syn run          PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run] [--source S]
+  pixi run syn summary      [PATTERN ...] [--tech T] [--source S]
+  pixi run syn check-ports  [PATTERN ...] [--source S]
 
---source picks where the points come from: hls (the default, as above),
-forge, snax-forge's accelerator bundles that forge/bundles.py (pixi run
+--source picks where the points come from (docs X39):
+
+  hls    Vitis (the default): hls-exercises' rtl/ (a checkout next to this repo,
+         ../hls-exercises), the filelist.f that bench/bench.py writes; cases opt and
+         dace; clock ap_clk, reset ap_rst_n
+  bambu  Bambu: the same rtl/ root, the filelist.f that bench/bambu.py writes; case
+         bambu; clock clock, reset reset. A bambu row has more columns: ctrl_um2 (the
+         controller_* instance with its children), datapath_um2 (the datapath_*
+         instance with its children) and glue_um2 = area_um2 minus the two (docs X41),
+         from synth_dc_modules.csv's rows; a point without exactly one controller_* and
+         one datapath_* fails
+  xls    Google XLS: dslx-exercises' rtl/ (../dslx-exercises); case xls; clock clk,
+         reset rst
+
+For these three, list shows only the folders named <case>_w<W> with <case> in the
+source's cases and W <= MAX_W (16, docs X38): Vitis's unopt_w*, any *_w32, a per-size
+folder (opt_n512_w8) or a clock variant (opt_w8_c10) is not listed.
+
+Or forge, snax-forge's accelerator bundles that forge/bundles.py (pixi run
 forge-rtl) writes into rtl/forge/ in this repo. A forge point is a folder
 there holding a bundle.json, named as an HLS point (e.g. done/dot/forge3_w4);
 its top is bundle.json's "top", and run writes the point's filelist.f into
@@ -39,6 +55,18 @@ synth_dc_modules.csv), and a char row has more columns, from point.json:
 datapath, lanes, depth, op, form (a Mac's acc, plain or reg) and
 snax_forge_commit.
 
+Before DC starts, the port guard reads the top's port list from the point's Verilog
+files and checks that the source's clock and reset ports are on it; if not, the row is
+"failed: no clock port <name> on <top>" (or reset) and DC is not run. check-ports runs
+the guard alone on every listed point, one line per point.
+
+After compile, dc_syn.tcl measures the worst setup slack of four path classes (docs X40)
+with get_timing_paths -from/-to only, into reports/path_classes.rpt: in2reg, reg2reg,
+reg2out and in2out, inputs being every input but the clock and the reset, registers
+their clock pins as start points and their data pins as endpoints. Every row has them
+as slack_in2reg_ns, slack_reg2reg_ns, slack_reg2out_ns and slack_in2out_ns; a class
+with no path is empty.
+
 A DC run that fails on a licence (LICENCE_ERROR in logs/dc_shell.log or
 logs/dc_stdout.log) is rerun once (docs X17); the retry is printed and
 counted. After a second licence failure the row's status is
@@ -55,14 +83,15 @@ any RTL if the library's own name or units differ from the tech file.
   syn/tech/nangate45.json  ../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db
   syn/tech/nangate15.json  ../RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db
 
-Each run works in syn/runs/hls/<tech>/<tier>/<kernel>/<point>[_c<clock>]/ (the
+Each run works in syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/ (the
 clock tag only for a clock other than the default): WORK/, logs/, reports/,
 out/ (the mapped netlist and sdf) and tech.json (the tech file, the resolved
 values, the .db's md5 and what DC read from the library). Every run also writes
-one row into syn/runs/hls/<tech>/summary.csv. git ignores syn/runs/ entirely;
-results/hls/<tech>/ keeps what is committed: synth_dc.csv (a copy of the
+one row into syn/runs/<source>/<tech>/summary.csv. git ignores syn/runs/ entirely;
+results/<source>/<tech>/ keeps what is committed: synth_dc.csv (a copy of the
 summary), synth_dc_modules.csv (one row per hierarchical cell) and reports/
-(KEPT_REPORTS of every run: area, power, reference, qor, tech.json, lib_info.txt).
+(KEPT_REPORTS of every run: area, power, reference, qor, path classes, tech.json,
+lib_info.txt).
 
 A point whose filelist.f has '# ram:' lines holds a memory Vitis built (e.g.
 DaCe's dot buffer). Neither library has RAM cells, and DC would build it from
@@ -72,7 +101,8 @@ runs it anyway (for when a macro or a black-box stub is in place).
 
 Environment, all optional:
   DC_SHELL            dc_shell                 (Design Compiler)
-  SYN_RTL             ../hls-exercises/rtl     (the hls points)
+  SYN_RTL             ../hls-exercises/rtl     (the hls and bambu points)
+  SYN_RTL_XLS         ../dslx-exercises/rtl    (the xls points)
   SYN_RTL_FORGE       rtl/forge                (the forge points)
   SYN_RTL_CHAR        rtl/char                 (the char points)
   SYN_LIB_NANGATE45   the nangate45 .db, instead of the tech file's lib_default
@@ -82,7 +112,8 @@ syn.py passes DC: SYN_FILELIST, SYN_LIB_DB, SYN_LIB_NAME, SYN_TIME_UNIT,
 SYN_CAP_UNIT, SYN_T_SCALE, SYN_C_SCALE, SYN_DRIVE_CELL, SYN_OUT_LOAD_FF,
 SYN_MAX_TRANS_NS, SYN_WIRE_LOAD, SYN_CLOCK_NS, SYN_CORES, and from the
 source SYN_FORMAT (verilog; forge and char sverilog), SYN_CLK_PORT (ap_clk;
-forge clk_i; char clock) and SYN_RST_PORT (ap_rst_n; forge rst_ni; char reset).
+bambu clock; xls clk; forge clk_i; char clock) and SYN_RST_PORT (ap_rst_n; bambu
+reset; xls rst; forge rst_ni; char reset).
 Standard library only.
 """
 
@@ -107,10 +138,14 @@ SYN = Path(__file__).resolve().parent
 ROOT = SYN.parent
 TECH_DIR = SYN / "tech"
 # Per source: the points' folder, the HDL format, the clock and reset ports (dc_syn.tcl's defaults
-# are the hls values). use_source() sets SOURCE, RTL, RUNS and RESULTS.
+# are the hls values) and, for the HLS tools, the cases listed (folders <case>_w<W>).
+# use_source() sets SOURCE, RTL, RUNS and RESULTS.
+HLS_RTL = Path(os.environ.get("SYN_RTL", ROOT.parent / "hls-exercises" / "rtl"))
 SOURCES = {
-    "hls": {"rtl": Path(os.environ.get("SYN_RTL", ROOT.parent / "hls-exercises" / "rtl")),
-            "format": "verilog", "clk": "ap_clk", "rst": "ap_rst_n"},
+    "hls": {"rtl": HLS_RTL, "format": "verilog", "clk": "ap_clk", "rst": "ap_rst_n", "cases": ("opt", "dace")},
+    "bambu": {"rtl": HLS_RTL, "format": "verilog", "clk": "clock", "rst": "reset", "cases": ("bambu",)},
+    "xls": {"rtl": Path(os.environ.get("SYN_RTL_XLS", ROOT.parent / "dslx-exercises" / "rtl")),
+            "format": "verilog", "clk": "clk", "rst": "rst", "cases": ("xls",)},
     "forge": {"rtl": Path(os.environ.get("SYN_RTL_FORGE", ROOT / "rtl" / "forge")),
               "format": "sverilog", "clk": "clk_i", "rst": "rst_ni"},
     "char": {"rtl": Path(os.environ.get("SYN_RTL_CHAR", ROOT / "rtl" / "char")),
@@ -118,6 +153,8 @@ SOURCES = {
 }
 # The results/<source>/<tech>/ CSVs: synth_dc.csv and synth_dc_modules.csv, but for char
 RESULT_CSVS = {"char": ("char_synth.csv", "char_synth_modules.csv")}
+# X38: at most 16 64-bit channels per stream, so W <= 16 for every HLS case; W = 32 is retired
+MAX_W = 16
 SOURCE = "hls"
 RTL = SOURCES["hls"]["rtl"].resolve()
 RUNS = SYN / "runs" / "hls"
@@ -146,6 +183,7 @@ COLUMNS = ["point", "top", "tech", "clock_ns", "status", "errors", "area_um2", "
 FORGE_COLUMNS = ["recipe", "W", "snax_forge_commit",   # after COLUMNS, forge rows only
                  "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2"]
 CHAR_COLUMNS = ["datapath", "lanes", "depth", "op", "form", "snax_forge_commit"]  # after COLUMNS, char rows only
+BAMBU_COLUMNS = ["ctrl_um2", "datapath_um2", "glue_um2"]  # after COLUMNS, bambu rows only (X41)
 GLUE_MAX = 0.01   # a glue share above this (or below 0) is reported, not failed
 # A licence failure, as DC prints it (PITFALLS L1): 'Error: Design-Compiler Internal licensing error
 # number -92 ...', 'Unable to obtain feature ...', 'Fatal: Design Compiler is not enabled. (DCSH-1)'.
@@ -225,11 +263,13 @@ def all_points() -> list[str]:
         return sorted(str(f.parent.relative_to(RTL)) for f in RTL.rglob("bundle.json"))
     if SOURCE == "char":
         return sorted(str(f.parent.relative_to(RTL)) for f in RTL.rglob("emitted.json"))
-    return sorted(str(f.parent.relative_to(RTL)) for f in RTL.glob("*/*/*/filelist.f"))
+    name = re.compile(rf"({'|'.join(SOURCES[SOURCE]['cases'])})_w([0-9]+)")
+    return sorted(str(f.parent.relative_to(RTL)) for f in RTL.glob("*/*/*/filelist.f")
+                  if (m := name.fullmatch(f.parent.name)) and int(m.group(2)) <= MAX_W)
 
 
 def columns() -> list[str]:
-    return COLUMNS + {"forge": FORGE_COLUMNS, "char": CHAR_COLUMNS}.get(SOURCE, [])
+    return COLUMNS + {"forge": FORGE_COLUMNS, "char": CHAR_COLUMNS, "bambu": BAMBU_COLUMNS}.get(SOURCE, [])
 
 
 def forge_json(point: str, name: str) -> dict:
@@ -252,6 +292,77 @@ def char_filelist(point: str) -> list[str]:
 def point_filelist(point: str) -> list[str]:
     """A forge or char point's files, for the filelist.f that run writes into the run folder."""
     return forge_filelist(point) if SOURCE == "forge" else char_filelist(point)
+
+
+def hdl_files(point: str) -> list[Path]:
+    """The point's HDL files: filelist.f's for the HLS tools, as run writes them for forge and char."""
+    if SOURCE in ("forge", "char"):
+        return [Path(f) for f in point_filelist(point)]
+    return [RTL / point / ln.strip() for ln in (RTL / point / "filelist.f").read_text().splitlines()
+            if ln.strip() and not ln.strip().startswith("#")]
+
+
+def _balanced(text: str, i: int) -> int:
+    """The index just after the parenthesis that closes the one at text[i]."""
+    depth = 0
+    for j in range(i, len(text)):
+        depth += {"(": 1, ")": -1}.get(text[j], 0)
+        if depth == 0:
+            return j + 1
+    return -1
+
+
+def module_ports(files: list[Path], top: str) -> list[str] | None:
+    """The port names of module `top` in these files (ANSI or not), None if no file declares it.
+    Each item of the header's port list, split at top-level commas, names its port last."""
+    for f in files:
+        if not f.is_file():
+            continue
+        text = re.sub(r"//[^\n]*|/\*.*?\*/", " ", f.read_text(errors="replace"), flags=re.S)
+        m = re.search(rf"\bmodule\s+{re.escape(top)}\b", text)
+        if not m:
+            continue
+        i = m.end()
+        imp = re.match(r"(\s*import\s[^;]*;)*\s*", text[i:])   # SystemVerilog package imports
+        i += imp.end()
+        if text.startswith("#", i):                                # the parameter list
+            i = _balanced(text, text.index("(", i))
+            i += len(text[i:]) - len(text[i:].lstrip())
+        if not text.startswith("(", i):
+            return []                                              # a module without ports
+        body = text[i + 1:_balanced(text, i) - 1]
+        items, depth, cur = [], 0, ""
+        for ch in body:
+            depth += {"(": 1, "[": 1, "{": 1, ")": -1, "]": -1, "}": -1}.get(ch, 0)
+            if ch == "," and depth == 0:
+                items.append(cur)
+                cur = ""
+            else:
+                cur += ch
+        items.append(cur)
+        names = []
+        for it in items:
+            it = re.sub(r"\[[^\]]*\]|=.*$", " ", it, flags=re.S)  # ranges and default values
+            ids = re.findall(r"[A-Za-z_][A-Za-z0-9_$]*", it)
+            if ids:
+                names.append(ids[-1])
+        return names
+    return None
+
+
+def port_guard(point: str) -> str:
+    """'' if the top has the source's clock and reset ports, else the row's failed status."""
+    top, src = top_of(point), SOURCES[SOURCE]
+    try:
+        ports = module_ports(hdl_files(point), top)
+    except (OSError, KeyError) as e:
+        return f"failed: port guard could not read the point's files ({e})"
+    if ports is None:
+        return f"failed: no module {top or '(no # top:)'} in the point's files"
+    for kind, name in (("clock", src["clk"]), ("reset", src["rst"])):
+        if name not in ports:
+            return f"failed: no {kind} port {name} on {top}"
+    return ""
 
 
 def char_extra(point: str) -> dict:
@@ -288,10 +399,14 @@ def rams_of(point: str) -> list[str]:
 
 
 def parked_row(tech: str, point: str, clock: str, rams: list[str]) -> dict:
+    return no_run_row(tech, point, clock, f"skipped: needs a RAM macro ({', '.join(rams)}); {tech} has no RAM "
+                                          "cells, RAM1 builds one (OpenRAM)")
+
+
+def no_run_row(tech: str, point: str, clock: str, status: str) -> dict:
+    """A summary row for a point DC does not run (parked, or failed by the port guard)."""
     row = {c: "" for c in columns()}
-    row.update({"point": point, "top": top_of(point), "tech": tech, "clock_ns": clock,
-                "status": f"skipped: needs a RAM macro ({', '.join(rams)}); {tech} has no RAM cells, "
-                          "RAM1 builds one (OpenRAM)",
+    row.update({"point": point, "top": top_of(point), "tech": tech, "clock_ns": clock, "status": status,
                 "date": dt.datetime.now().isoformat(timespec="seconds")})
     return row
 
@@ -381,6 +496,10 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row.update(module_shares(tech, point, clock, row["area_um2"]))
     if SOURCE == "char":
         row.update(char_extra(point))
+    split_error = ""
+    if SOURCE == "bambu":
+        split, split_error = bambu_split(tech, point, clock, row["area_um2"])
+        row.update(split)
     crit = _first(qor, r"Critical Path Length:\s*([0-9.eE+-]+)")
     slack = _first(qor, r"Critical Path Slack:\s*([0-9.eE+-]+)")
     if crit:
@@ -416,6 +535,8 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row["status"] = "failed: a wire-load model applied"
     elif not energy_ok:
         row["status"] = "failed: power groups do not sum to the total dynamic power"
+    elif split_error:
+        row["status"] = f"failed: Bambu split ({split_error})"
     elif row["slack_ns"] and float(row["slack_ns"]) < 0:
         row["status"] = "ok, timing violated"
     else:
@@ -450,6 +571,22 @@ def module_shares(tech: dict, point: str, clock: str, total: str) -> dict:
     if all(out[k] for k in keys):
         out["glue_um2"] = f"{float(total) - sum(float(out[k]) for k in keys):.4f}"
     return out
+
+
+def bambu_split(tech: dict, point: str, clock: str, total: str) -> tuple[dict, str]:
+    """bambu: ctrl_um2 and datapath_um2 (the area, children included, of the one controller_* and the one
+    datapath_* instance in synth_dc_modules.csv's rows) and glue_um2 = total - the two; and '' or why not."""
+    out = {k: "" for k in BAMBU_COLUMNS}
+    if not total:
+        return out, ""
+    mods = read_modules(tech, point, clock)
+    for key, prefix in (("ctrl_um2", "controller_"), ("datapath_um2", "datapath_")):
+        hits = [m for m in mods if m["design"].startswith(prefix)]
+        if len(hits) != 1:
+            return {k: "" for k in BAMBU_COLUMNS}, f"{len(hits)} {prefix}* instances, not 1"
+        out[key] = f"{float(hits[0]['area_um2']):.4f}"
+    out["glue_um2"] = f"{float(total) - float(out['ctrl_um2']) - float(out['datapath_um2']):.4f}"
+    return out, ""
 
 
 def _floats(xs: list[str]) -> bool:
@@ -619,6 +756,10 @@ RETRIES_LOCK = threading.Lock()
 
 def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
     name = tech["name"]
+    guard = port_guard(point)
+    if guard:
+        print(f"fail {point}: {guard.removeprefix('failed: ')}; DC not run", flush=True)
+        return None if args.dry_run else no_run_row(name, point, args.clock, guard)
     rams = rams_of(point)
     if rams and not args.with_ram:
         print(f"park {point}: it holds a RAM ({', '.join(rams)}); --with-ram runs it anyway", flush=True)
@@ -628,6 +769,7 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
     cmd = [dc, "-f", str(SCRIPT), "-output_log_file", "logs/dc_shell.log"]
     if args.dry_run:
         print(f"\n# {point} on {name}")
+        print(f"# port guard: ok, clock {syn_env['SYN_CLK_PORT']} and reset {syn_env['SYN_RST_PORT']} on {top_of(point)}")
         if SOURCE == "forge":
             print(f"# run writes {syn_env['SYN_FILELIST']}: '# top: {top_of(point)}', "
                   f"then {len(forge_filelist(point))} files from {RTL / point / 'rtl' / 'files.f'}")
@@ -703,6 +845,19 @@ def cmd_run(args) -> int:
     return 0 if rows and all(r["status"].startswith(("ok", "skipped")) for r in rows) or args.dry_run else 1
 
 
+def cmd_check_ports(args) -> int:
+    points = select(args.patterns)
+    if not points:
+        sys.exit("no rtl point matches (syn.py list shows them)")
+    src, bad = SOURCES[SOURCE], 0
+    for p in points:
+        guard = port_guard(p)
+        bad += bool(guard)
+        print(f"{p}  (top {top_of(p)})  " + (guard or f"ok: clock {src['clk']}, reset {src['rst']}"))
+    print(f"{len(points) - bad} of {len(points)} points pass, {bad} fail")
+    return 1 if bad else 0
+
+
 def cmd_summary(args) -> int:
     if not techs_with_summary(args.tech):
         sys.exit(f"no syn/runs/{SOURCE}/{args.tech or '<tech>'}/summary.csv yet")
@@ -714,12 +869,15 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     techs = tech_names()
-    for name in ("list", "run", "summary"):
+    for name in ("list", "run", "summary", "check-ports"):
         p = sub.add_parser(name)
-        p.add_argument("patterns", nargs="*", help="globs over <tier>/<kernel>/<point>, e.g. done/vecadd/unopt_*")
+        p.add_argument("patterns", nargs="*", help="globs over <tier>/<kernel>/<point>, e.g. done/vecadd/opt_*")
         p.add_argument("--source", choices=sorted(SOURCES), default="hls",
-                       help="hls (hls-exercises' rtl/, the default), forge (rtl/forge/, pixi run forge-rtl) "
+                       help="hls (Vitis, hls-exercises' rtl/, the default), bambu (the same rtl/), xls "
+                            "(dslx-exercises' rtl/), forge (rtl/forge/, pixi run forge-rtl) "
                             "or char (rtl/char/, pixi run char-rtl)")
+        if name == "check-ports":
+            continue
         if name == "run":
             p.add_argument("--tech", required=True, choices=techs, help="technology: one of syn/tech/*.json")
             p.add_argument("--clock", default=DEFAULT_CLOCK, help=f"clock period in ns (default {DEFAULT_CLOCK})")
@@ -733,8 +891,8 @@ def main() -> int:
     args = ap.parse_args()
     use_source(args.source)
     if args.cmd == "run" and not args.patterns:
-        ap.error("run needs at least one pattern, e.g. done/vecadd/unopt_n512_w8")
-    return {"list": cmd_list, "run": cmd_run, "summary": cmd_summary}[args.cmd](args)
+        ap.error("run needs at least one pattern, e.g. done/vecadd/opt_w8")
+    return {"list": cmd_list, "run": cmd_run, "summary": cmd_summary, "check-ports": cmd_check_ports}[args.cmd](args)
 
 
 if __name__ == "__main__":

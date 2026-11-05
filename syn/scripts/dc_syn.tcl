@@ -2,7 +2,7 @@
 # syn/scripts/dc_syn.tcl
 # Design Compiler synthesis of one bench point on one technology (syn/tech/<tech>.json).
 #
-# syn/syn.py runs it from the point's run folder, syn/runs/hls/<tech>/<tier>/<kernel>/<point>/:
+# syn/syn.py runs it from the point's run folder, syn/runs/<source>/<tech>/<tier>/<kernel>/<point>/:
 #   dc_shell -f <repo>/syn/scripts/dc_syn.tcl -output_log_file logs/dc_shell.log
 # Everything this run writes stays in that folder (git ignores syn/runs/).
 #
@@ -21,11 +21,15 @@
 #   SYN_WIRE_LOAD      off (the library has wire-load models; keep them out) or none (it has none)
 #   SYN_CLOCK_NS       clock period in ns
 #   SYN_CORES          cores for DC
-#   SYN_FORMAT         analyze's format: verilog (default, Vitis) or sverilog (snax-forge, its blocks)
-#   SYN_CLK_PORT       the clock port: ap_clk (default, Vitis), clk_i (snax-forge) or clock (a block)
+#   SYN_FORMAT         analyze's format: verilog (default; Vitis, Bambu, XLS) or sverilog (snax-forge,
+#                      its blocks)
+#   SYN_CLK_PORT       the clock port: ap_clk (default, Vitis), clock (Bambu; a snax-forge block),
+#                      clk (XLS) or clk_i (snax-forge)
 #   SYN_RST_PORT       the reset port, kept ideal: ap_rst_n (default, Vitis, synchronous, active low),
-#                      rst_ni (snax-forge, asynchronous, active low) or reset (a snax-forge block
-#                      alone, CHAR1: asynchronous, active high)
+#                      reset (Bambu, mostly synchronous, active low), rst (XLS, synchronous, active
+#                      high), rst_ni (snax-forge, asynchronous, active low) or reset (a snax-forge
+#                      block alone, CHAR1: asynchronous, active high)
+#                      syn.py checks both ports are on the top before it starts DC (port guard)
 #
 # The constraints are physical (ns, fF) and scaled to the library's units here; the
 # library's own name and units are checked against the tech file before any RTL is read.
