@@ -1,0 +1,7 @@
+# xls_cycles.csv: copied byte for byte by report/import_cycles.py (pixi run import-cycles)
+repo: https://github.com/rgantonio/dslx-exercises
+commit: c048dc825051ff1f467ebe7a6418e8f29c9a35f6
+file_commit: 35c44ca5d232612937fceab7041d72cfd8aa9f04
+path: results/xls_cycles.csv
+sha256: 3d657d98c5be5e7420b5e1ec81b6e866786e0271489fd728052f54b3c02b3d96
+date: 2026-11-05T13:34:12

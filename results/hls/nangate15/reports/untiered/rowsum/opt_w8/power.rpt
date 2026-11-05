@@ -4,7 +4,7 @@ Report : power
         -analysis_effort low
 Design : rowsum
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:55:38 2026
+Date   : Thu Nov  5 18:26:56 2026
 ****************************************
 
 
@@ -31,12 +31,12 @@ Attributes
 i - Including register clock pin internal power
 
 
-  Cell Internal Power  = 122.521561 uW   (92%)
-  Net Switching Power  = 10.152452 uW    (8%)
+  Cell Internal Power  = 84.780754 uW   (75%)
+  Net Switching Power  = 28.158550 uW   (25%)
                          ---------
-Total Dynamic Power    = 132.674011 uW  (100%)
+Total Dynamic Power    = 112.939308 uW  (100%)
 
-Cell Leakage Power     =  58.8846 uW
+Cell Leakage Power     =  37.3702 uW
 
 
                  Internal         Switching           Leakage            Total
@@ -45,12 +45,13 @@ Power Group      Power            Power               Power              Power  
 io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
 memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
 black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
-clock_network    0.109901          0.000000          0.000000          0.109901  (  57.37%)  i
-register       2.791941e-03        9.964437e-04        2.640088e+07        3.018924e-02
-                                                                                 (  15.76%)
+clock_network  4.957534e-02          0.000000          0.000000        4.957534e-02
+                                                                                 (  32.98%)  i
+register       2.434112e-03        1.851618e-03        1.186906e+07        1.615481e-02
+                                                                                 (  10.75%)
 sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
-combinational  9.828876e-03        9.155997e-03        3.248376e+07        5.146863e-02
-                                                                                 (  26.87%)
+combinational  3.277129e-02        2.630693e-02        2.550118e+07        8.457943e-02
+                                                                                 (  56.27%)
 --------------------------------------------------------------------------------------------------
-Total            0.122521 mW     1.015244e-02 mW     5.888464e+07 pW       0.191558 mW
+Total          8.478074e-02 mW     2.815855e-02 mW     3.737023e+07 pW       0.150310 mW
 1

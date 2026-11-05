@@ -5,7 +5,7 @@ Warning: Design 'matadd' contains 1 high-fanout nets. A fanout number of 1000 wi
 Report : qor
 Design : matadd
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 20:34:46 2026
+Date   : Thu Nov  5 17:52:19 2026
 ****************************************
 
 
@@ -65,12 +65,12 @@ Date   : Wed Oct 28 20:34:46 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 0.67218
-  Logic Optimization:               8.37605
-  Mapping Optimization:            24.99124
+  Resource Sharing:                 0.69125
+  Logic Optimization:               1.85925
+  Mapping Optimization:             5.87323
   -----------------------------------------
-  Overall Compile Time:            66.09692
-  Overall Compile Wall Clock Time: 20.74494
+  Overall Compile Time:            24.41091
+  Overall Compile Wall Clock Time: 19.21947
 
   --------------------------------------------------------------------
 

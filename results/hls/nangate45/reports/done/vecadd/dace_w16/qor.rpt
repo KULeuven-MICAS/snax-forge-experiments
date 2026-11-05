@@ -5,7 +5,7 @@ Warning: Design 'vecadd_dace' contains 1 high-fanout nets. A fanout number of 10
 Report : qor
 Design : vecadd_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:26:24 2026
+Date   : Thu Nov  5 15:37:59 2026
 ****************************************
 
 
@@ -65,12 +65,12 @@ Date   : Wed Oct 28 19:26:24 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 0.93304
-  Logic Optimization:              10.04390
-  Mapping Optimization:            28.95837
+  Resource Sharing:                 0.85147
+  Logic Optimization:               2.20196
+  Mapping Optimization:             6.07541
   -----------------------------------------
-  Overall Compile Time:            86.81674
-  Overall Compile Wall Clock Time: 28.22341
+  Overall Compile Time:            29.53367
+  Overall Compile Wall Clock Time: 24.56750
 
   --------------------------------------------------------------------
 

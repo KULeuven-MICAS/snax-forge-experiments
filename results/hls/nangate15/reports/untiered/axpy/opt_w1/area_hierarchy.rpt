@@ -3,7 +3,7 @@
 Report : area
 Design : axpy
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:10:04 2026
+Date   : Thu Nov  5 18:17:57 2026
 ****************************************
 
 Library(s) Used:
@@ -11,21 +11,21 @@ Library(s) Used:
     NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
 
 Number of ports:                          494
-Number of nets:                          7813
-Number of cells:                         6368
-Number of combinational cells:           5974
-Number of sequential cells:               392
+Number of nets:                          7223
+Number of cells:                         5779
+Number of combinational cells:           5578
+Number of sequential cells:               199
 Number of macros/black boxes:               0
-Number of buf/inv:                        933
-Number of references:                      19
+Number of buf/inv:                        728
+Number of references:                      18
 
-Combinational area:               2568.044595
-Buf/Inv area:                      145.637380
-Noncombinational area:             500.957167
+Combinational area:               2470.379571
+Buf/Inv area:                      114.917379
+Noncombinational area:             254.312439
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                  3069.001762
+Total cell area:                  2724.692010
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,9 +36,9 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
                                   Total      Total    national   national   boxes   Design
 --------------------------------  ---------  -------  ---------  ---------  ------  -----------------------------------------------------------------------------
-axpy                              3069.0018    100.0   365.4451   500.9572  0.0000  axpy
-mul_64s_64s_64_1_1_U1             2202.5995     71.8  2202.5995     0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64
+axpy                              2724.6920    100.0   268.3699   254.3124  0.0000  axpy
+mul_64s_64s_64_1_1_U1             2202.0096     80.8  2202.0096     0.0000  0.0000  axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64
 --------------------------------  ---------  -------  ---------  ---------  ------  -----------------------------------------------------------------------------
-Total                                                 2568.0446   500.9572  0.0000
+Total                                                 2470.3796   254.3124  0.0000
 
 1

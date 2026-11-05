@@ -1,0 +1,43 @@
+ 
+****************************************
+Report : reference
+Design : axpy
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 18:40:36 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NanGate_15nm_OCL     0.294912     103    30.375937
+AND3_X2            NanGate_15nm_OCL     0.393216       8     3.145728
+AOI21_X1           NanGate_15nm_OCL     0.294912     506   149.225477
+AOI22_X1           NanGate_15nm_OCL     0.344064    7646  2630.713323
+BUF_X1             NanGate_15nm_OCL     0.245760       5     1.228800
+BUF_X2             NanGate_15nm_OCL     0.245760     347    85.278718
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952      96   122.683388 n
+FA_X1              NanGate_15nm_OCL     1.179648    4084  4817.682602 r
+INV_X1             NanGate_15nm_OCL     0.147456    1402   206.733319
+NAND2_X1           NanGate_15nm_OCL     0.196608     769   151.191557
+NAND3_X1           NanGate_15nm_OCL     0.294912     107    31.555585
+NOR2_X1            NanGate_15nm_OCL     0.196608    3658   719.192089
+NOR3_X1            NanGate_15nm_OCL     0.294912      25     7.372800
+OAI21_X1           NanGate_15nm_OCL     0.294912     355   104.693764
+OAI22_X1           NanGate_15nm_OCL     0.344064     241    82.919423
+OR2_X1             NanGate_15nm_OCL     0.294912       9     2.654208
+OR3_X2             NanGate_15nm_OCL     0.393216       1     0.393216
+XNOR2_X1           NanGate_15nm_OCL     0.442368     100    44.236800
+XOR2_X1            NanGate_15nm_OCL     0.442368     200    88.473600
+-----------------------------------------------------------------------------
+Total 19 references                                  9279.750336
+1

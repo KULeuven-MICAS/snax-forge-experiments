@@ -4,7 +4,7 @@ Report : power
         -analysis_effort low
 Design : vecadd_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:27:57 2026
+Date   : Thu Nov  5 15:39:11 2026
 ****************************************
 
 
@@ -31,12 +31,12 @@ Attributes
 i - Including register clock pin internal power
 
 
-  Cell Internal Power  = 291.077606 uW   (71%)
-  Net Switching Power  = 117.454056 uW   (29%)
+  Cell Internal Power  = 287.020172 uW   (71%)
+  Net Switching Power  = 116.656654 uW   (29%)
                          ---------
-Total Dynamic Power    = 408.531677 uW  (100%)
+Total Dynamic Power    = 403.676819 uW  (100%)
 
-Cell Leakage Power     =  70.2901 uW
+Cell Leakage Power     =  70.5052 uW
 
 
                  Internal         Switching           Leakage            Total
@@ -45,12 +45,12 @@ Power Group      Power            Power               Power              Power  
 io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
 memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
 black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
-clock_network  157.604202          0.000000          0.000000        157.604202  (  32.92%)  i
-register        62.315582         93.912704        3.025172e+04        186.479919
-                                                                                 (  38.95%)
+clock_network  155.933014          0.000000          0.000000        155.933014  (  32.88%)  i
+register        60.593857         93.416046        3.026296e+04        184.272766
+                                                                                 (  38.86%)
 sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
-combinational   71.157860         23.541340        4.003838e+04        134.737488
-                                                                                 (  28.14%)
+combinational   70.493317         23.240620        4.024219e+04        133.976013
+                                                                                 (  28.25%)
 --------------------------------------------------------------------------------------------------
-Total          291.077637 uW     117.454041 uW     7.029009e+04 nW     478.821594 uW
+Total          287.020203 uW     116.656662 uW     7.050516e+04 nW     474.181793 uW
 1

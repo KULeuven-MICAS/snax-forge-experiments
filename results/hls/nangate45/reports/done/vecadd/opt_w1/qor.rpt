@@ -4,7 +4,7 @@ Information: Updating design information... (UID-85)
 Report : qor
 Design : vecadd
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:29:19 2026
+Date   : Thu Nov  5 15:40:18 2026
 ****************************************
 
 
@@ -64,12 +64,12 @@ Date   : Wed Oct 28 19:29:19 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 0.11871
-  Logic Optimization:               1.30510
-  Mapping Optimization:             4.96381
+  Resource Sharing:                 0.19009
+  Logic Optimization:               0.38263
+  Mapping Optimization:             1.22037
   -----------------------------------------
-  Overall Compile Time:            14.78033
-  Overall Compile Wall Clock Time:  5.34982
+  Overall Compile Time:             6.09555
+  Overall Compile Wall Clock Time:  5.44059
 
   --------------------------------------------------------------------
 

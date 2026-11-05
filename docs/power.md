@@ -4,7 +4,7 @@ Dynamic energy per cycle and per firing of a mapped netlist, from simulated acti
 
 ## Before a run
 
-- The point's synthesis run exists: `syn/runs/hls/<tech>/<tier>/<kernel>/<point>/out/<top>_mapped.v` and `tech.json` (`pixi run syn run ...`).
+- The point's synthesis run exists: `syn/runs/<source>/<tech>/<tier>/<kernel>/<point>/out/<top>_mapped.v` and `tech.json` (`pixi run syn run ... --source <source>`).
 - `pixi install` once (docs X15).
 - Tools: `vlib`, `vlog`, `vopt`, `vsim` from PATH; `pt_shell` from PATH or `PT_SHELL`; `lmutil` from PATH or `LMUTIL` (a non-interactive shell may not have it on PATH, PITFALLS L3); `vcd2saif` from PATH, else next to `pt_shell`; `dc_shell` (setup-check only) from `DC_SHELL` or PATH. Licence servers from `MGLS_LICENSE_FILE` and `SNPSLMD_LICENSE_FILE`.
 
@@ -19,14 +19,17 @@ pixi run pwr run 'done/vecadd/*_w8' --tech nangate45 --size n512         # at a 
 pixi run pwr run 'done/*/*_w*' --tech nangate45 --size n2048             # SYN1: one task of N = 2048 (tier done)
 pixi run pwr run done/vecadd/opt_w8 --tech nangate45 --stim forge --size n512   # data.h, validation only
 pixi run pwr run 'done/*/*' 'untiered/*/*' --tech nangate45 --size all   # whole tasks: every size in sizes.txt
-pixi run python sim/report_energy.py                                     # results/hls/report_energy.md from power_pt.csv
 pixi run pwr summary 'done/vecadd/*' --tech nangate45                    # print power_pt.csv
 pixi run pwr tbjson done/dot/forge5_w4 --source forge                    # a forge point's tb.json
 pixi run pwr run 'done/*/forge*' --source forge --tech nangate45 --size n2048
 pixi run pwr setup-check --source forge --tech nangate45                 # on done/vecadd/forge_w4
+pixi run pwr run done/dot/bambu_w8 --source bambu --tech nangate45       # Bambu (b64; --size all, --size n2048)
+pixi run pwr run done/dot/xls_w16 --source xls --tech nangate45          # XLS
+pixi run pwr setup-check --source bambu --tech nangate45                 # on done/dot/bambu_w8 (xls: done/dot/xls_w16)
+pixi run pwr run done/dot/bambu_w8 --source bambu --tech nangate45 --initreg-seed 1   # check: random register start
 ```
 
-`--size all` runs every size in the point's `rtl/<point>/sizes.txt` (the task sizes), one compile per point; `--seed N` changes the rand64 seed; `-j N` caps the workers below what the licences allow. Patterns are shell globs over hls-exercises' `rtl/` folders, as in `syn.py`.
+`--size all` runs every size in the point's `rtl/<point>/sizes.txt` (the task sizes), one compile per point; `--seed N` changes the rand64 seed; `-j N` caps the workers below what the licences allow. Patterns are shell globs over the source's `rtl/` folders, as in `syn.py` (its case filters and `MAX_W`). `--initreg-seed N` is a check, never the default: it replaces vopt's `+initreg+0` with Questa's random register start (`vopt +initreg=ru`: 4-state variables, nangate45's behavioral flops, and sequential UDPs, nangate15's; `vsim +initreg+N`), tags the runs `<size>_s<seed>_r<N>` and writes nothing to `results/` (PITFALLS Q9).
 
 ## Stages
 
@@ -78,7 +81,35 @@ pixi run pwr run 'tree/*' 'mac/*' --source char --tech nangate45 -j 6           
 pixi run python char/checks.py --power --tech nangate45
 ```
 
+## Bambu (`--source bambu`)
+
+Bambu's points (HSYN1, X44): `rtl/<tier>/<kernel>/bambu_w<W>/` in hls-exercises (`bench/bambu.py`), the netlists in `syn/runs/bambu/<tech>/` (`syn.py --source bambu`). hls-exercises is not changed.
+
+- **tb.json** (`sim/sources/bambu.py`): the top from `filelist.f`, the streams `<arg>_TDATA/_TVALID/_TREADY` in `bench/tier_<tier>/<kernel>/params.json`'s `axis` order (the Vitis kernel's params.json; the top has no `p_` prefix), lanes = TDATA bits / 64, int64; the pins `loop_count`, `len` (where the kernel has it) and `alpha` (axpy, `scalars`); clock `clock` and reset `reset` from `syn.py`'s `SOURCES` (`sim/sources/__init__.py` `ports`); every port of the netlist covered or the point fails. Sizes as for Vitis: the params.json sizes, `b64` when every config pin equals `loop_count`, `n2048` for tier done; `--size all` runs `rtl/<point>/sizes.txt`.
+- **Control `bambu_ctl`:** `start_port`, `done_port`, and `idle_port`, an output that is connected and never read or checked.
+- **The TB** (`sim/tb/bambu_seq.sv`, with `axis_src` and `axis_sink`): the pins are plain inputs, driven by the generated top from time 0 (before reset is released) and held for the whole run, since Bambu reads them on every iteration; `reset` (synchronous, active low) low for 5 cycles, 2 idle cycles, the sources valid one cycle before the start, then a one-cycle `start_port` pulse; the sinks always ready.
+- **The window:** opens at the falling edge before the first rising edge that samples `start_port` = 1 and closes at the falling edge before the first rising edge that samples `done_port` = 1; its rising edges are Bambu's `cycles_done`. Dumping from the edge raising `start_port` to the done edge (PITFALLS Q6).
+- **Checks:** every output beat against `sim/ref.py`; the window's cycles against the line a x loop_count + b through `cycles_done` at the point's sizes in `results/bambu/bambu_cycles.csv` (status ok rows; integer, exact at those sizes; dot at W = 4 and 8: a = 2); X9's SAIF check with `clock`; at least 99 % of PT's nets annotated, no wire load (PITFALLS PT1), every module a dump scope (DC6). The SAIF holds about 17 600 nets at Z for the whole window on `done/dot/bambu_w8`: undriven bits of DC's declared vector wires (DC5), not PT nets.
+- **Stimulus:** rand64 (X19), the streams in tb.json order, then `alpha`.
+- **Runs and results:** `sim/runs/bambu/<tech>/<point>/<size>_s0/`; `results/bambu/<tech>/power_pt.csv`, `power_pt_modules.csv`, `power_reports/`, X20's columns.
+- **Setup check** (`--source bambu`, default `done/dot/bambu_w8`): nangate45 within 0.03 % in every group; nangate15 register -0.91 %, combinational +2.22 % (PITFALLS PT5).
+
+## XLS (`--source xls`)
+
+Google XLS's points (HSYN1, X44): `rtl/<tier>/<kernel>/xls_w<W>/` in dslx-exercises (`SIM_XLS`, default `../dslx-exercises`), the netlists in `syn/runs/xls/<tech>/`. dslx-exercises is not changed.
+
+- **tb.json** (`sim/sources/xls.py`): the top from `filelist.f`; from `kernels/<tier>/<kernel>/params.json`, the channels `_<arg>_TDATA/_TVALID/_TREADY` (`inputs`, then `outputs`), each matched by position to hls-exercises' `axis` for `sim/ref.py`'s names (dot's `a`, `b`, `res` are `A`, `B`, `out`), and the cfg fields (`cfg`); clock `clk`, reset `rst` from `syn.py`'s `SOURCES`; every port covered. Sizes as for Bambu, `--size all` from dslx-exercises' `rtl/<point>/sizes.txt`.
+- **Control `xls_cfg`:** one cfg beat on `_cfg_TDATA/_TVALID/_TREADY`. The fields in params.json's `cfg` order, the first in the high bits, widths from `CFG_BITS` (`loop_count` 32, `len` 32, `alpha` 64); their sum must equal `_cfg_TDATA`'s width (32, 64 or 96) or the point fails. Config fields from the cfg expressions at the size (`loop_count` = n // W, ...); `alpha` drawn as a rand64 data pin after the streams. `sim/pwr.py` packs the word and passes it as `+CFG=<hex>`.
+- **The TB** (`sim/tb/xls_seq.sv`): the same reset and idle cycles (`rst`, active high, is the TB's `~rst_n`); the sources valid one cycle before the cfg beat; the cfg beat held until a rising edge samples `_cfg_TREADY` = 1 (the cfg transfer edge). XLS holds every `_TREADY` low in reset and `_cfg_TREADY` low until cfg is valid.
+- **The window:** opens at the falling edge before the cfg transfer edge and closes at the falling edge after the rising edge that transfers the last output beat (every sink complete): its rising edges are XLS's `cycles` + 1, since the datapath is combinational and the cycle ending at the last transfer edge computes the last beat. Dumping from the edge raising `_cfg_TVALID` to the edge after the window.
+- **Checks:** as for Bambu, with the line through `cycles` in `results/xls/xls_cycles.csv` (a = 1, b = 0) plus 1, and X9 on `clk`.
+- **Runs and results:** `sim/runs/xls/<tech>/<point>/<size>_s0/`; `results/xls/<tech>/power_pt.csv`, `power_pt_modules.csv`, `power_reports/`, X20's columns.
+- **Setup check** (`--source xls`, default `done/dot/xls_w16`): nangate45 within 0.005 %; nangate15 register -0.45 %, combinational +2.00 % (PITFALLS PT5).
+- **Random register start:** XLS resets all proc state (`--reset_data_path=true`), so a random start gives the same energy to the last digit.
+
 ## Run folder
+
+Vitis's runs are in `sim/runs/<tech>/`, the other sources' in `sim/runs/<source>/<tech>/`; the cell models stay in `sim/runs/<tech>/_cells/`.
 
 ```
 sim/runs/<tech>/_cells/                         cell models, compiled once per technology
@@ -101,7 +132,7 @@ Rerunning a point replaces only the run folders it reruns; other runs of the poi
 
 ## What is committed
 
-In `results/hls/<tech>/` (X20):
+In `results/<source>/<tech>/` (X20; Vitis in `results/hls/`):
 
 - `power_pt.csv`: one row per point, size and seed, merged on those three, in the columns of X20;
 - `power_pt_modules.csv`: `point, tech, path, design, e_dyn_pj`, one row per hierarchical cell of the point's default run;

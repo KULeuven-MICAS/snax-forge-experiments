@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : vecmul
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:49:46 2026
+Date   : Thu Nov  5 15:46:04 2026
 ****************************************
 
 
@@ -31,7 +31,7 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-vecmul                                   37.086  173.866 3.27e+05  537.633 100.0
-  mul_64s_64s_64_1_1_U2 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0)   15.141   15.787 1.42e+05  172.921  32.2
-  mul_64s_64s_64_1_1_U1 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1)   15.110   15.752 1.42e+05  172.791  32.1
+vecmul                                  717.504 1.10e+03 3.14e+05 2.13e+03 100.0
+  mul_64s_64s_64_1_1_U2 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0)  354.891  500.791 1.43e+05  998.676  46.9
+  mul_64s_64s_64_1_1_U1 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1)  355.411  501.596 1.43e+05 1.00e+03  47.0
 1

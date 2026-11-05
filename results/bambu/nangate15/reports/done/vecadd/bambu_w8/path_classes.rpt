@@ -1,0 +1,7 @@
+# Worst setup slack per path class of p_Z6vecaddPK6ac_intILi512ELb0EES2_PS0_j at 10 ns, in library time units (1ps)
+# inputs 1060 (all but clock and reset), outputs 517, register clock pins 1615, register data pins 1615
+# class slack startpoint endpoint
+in2reg 9737.06 B_TVALID PBI_Z6vecaddPK6ac_intILi512ELb0EES2_PS0_j_i0/Datapath_i/reg_5/reg_out1_reg[510]/D
+reg2reg 9303.82 PBI_Z6vecaddPK6ac_intILi512ELb0EES2_PS0_j_i0/Datapath_i/reg_3/reg_out1_reg[448]/CLK PBI_Z6vecaddPK6ac_intILi512ELb0EES2_PS0_j_i0/Datapath_i/reg_7/reg_out1_reg[511]/D
+reg2out 9289.14 PBI_Z6vecaddPK6ac_intILi512ELb0EES2_PS0_j_i0/Datapath_i/reg_3/reg_out1_reg[384]/CLK C_TDATA[447]
+in2out 9854.65 B_TVALID B_TREADY

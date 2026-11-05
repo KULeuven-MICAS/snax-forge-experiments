@@ -3,7 +3,7 @@
 Report : reference
 Design : axpy
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:22:14 2026
+Date   : Thu Nov  5 18:21:26 2026
 ****************************************
 
 Attributes:
@@ -20,30 +20,30 @@ Attributes:
 Reference          Library       Unit Area   Count    Total Area   Attributes
 -----------------------------------------------------------------------------
 AND4_X1            NanGate_15nm_OCL     0.442368       6     2.654208
-AOI21_X1           NanGate_15nm_OCL     0.294912      28     8.257536
-AOI22_X1           NanGate_15nm_OCL     0.344064    2117   728.383482
-BUF_X1             NanGate_15nm_OCL     0.245760      77    18.923520
-DFFSNQ_X1          NanGate_15nm_OCL     1.277952    2184  2791.047071 n
-FA_X1              NanGate_15nm_OCL     1.179648     496   585.105429 r
-INV_X1             NanGate_15nm_OCL     0.147456    2352   346.816524
-NAND2_X1           NanGate_15nm_OCL     0.196608      27     5.308416
+AOI21_X1           NanGate_15nm_OCL     0.294912      21     6.193152
+AOI22_X1           NanGate_15nm_OCL     0.344064     590   202.997758
+BUF_X1             NanGate_15nm_OCL     0.245760      25     6.144000
+BUF_X2             NanGate_15nm_OCL     0.245760       2     0.491520
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952     647   826.834915 n
+FA_X1              NanGate_15nm_OCL     1.179648     488   575.668244 r
+INV_X1             NanGate_15nm_OCL     0.147456     767   113.098756
+NAND2_X1           NanGate_15nm_OCL     0.196608      34     6.684672
 NAND4_X1           NanGate_15nm_OCL     0.344064      12     4.128768
-NOR2_X1            NanGate_15nm_OCL     0.196608      50     9.830400
-NOR3_X1            NanGate_15nm_OCL     0.294912       1     0.294912
+NOR2_X1            NanGate_15nm_OCL     0.196608      42     8.257536
 NOR4_X1            NanGate_15nm_OCL     0.344064       9     3.096576
-OAI21_X1           NanGate_15nm_OCL     0.294912      22     6.488064
-OAI22_X1           NanGate_15nm_OCL     0.344064     106    36.470784
+OAI21_X1           NanGate_15nm_OCL     0.294912      45    13.271040
+OAI22_X1           NanGate_15nm_OCL     0.344064      97    33.374208
 OR2_X1             NanGate_15nm_OCL     0.294912       8     2.359296
-XNOR2_X1           NanGate_15nm_OCL     0.442368      37    16.367616
-XOR2_X1            NanGate_15nm_OCL     0.442368      42    18.579456
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0  2213.216302       1  2213.216302 h
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1  2214.199342       1  2214.199342 h
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2  2214.887470       1  2214.887470 h
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3  2214.690862       1  2214.690862 h
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4  2214.985774       1  2214.985774 h
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5  2214.494254       1  2214.494254 h
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6  2214.740014       1  2214.740014 h
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7  2210.414638       1  2210.414638 h
+XNOR2_X1           NanGate_15nm_OCL     0.442368      61    26.984448
+XOR2_X1            NanGate_15nm_OCL     0.442368      34    15.040512
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0  2212.577326       1  2212.577326 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1  2213.609518       1  2213.609518 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2  2213.904430       1  2213.904430 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3  2213.806126       1  2213.806126 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4  2213.609518       1  2213.609518 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5  2213.560366       1  2213.560366 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6  2213.806126       1  2213.806126 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7  2209.087534       1  2209.087534 h
 -----------------------------------------------------------------------------
-Total 25 references                                 22295.740716
+Total 25 references                                 19551.240556
 1

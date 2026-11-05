@@ -1,0 +1,115 @@
+ 
+****************************************
+Report : area
+Design : p_Z4reluPK6ac_intILi256ELb0EEPS0_j
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 18:35:27 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                        15986
+Number of nets:                         14144
+Number of cells:                         2924
+Number of combinational cells:           2259
+Number of sequential cells:               582
+Number of macros/black boxes:               0
+Number of buf/inv:                        956
+Number of references:                       1
+
+Combinational area:                572.866566
+Buf/Inv area:                      143.720453
+Noncombinational area:             743.768038
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  1316.634604
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  ------------------------------------------------------------------------------------------------------------------
+p_Z4reluPK6ac_intILi256ELb0EEPS0_j 1316.6346   100.0    0.0000     0.0000  0.0000  p_Z4reluPK6ac_intILi256ELb0EEPS0_j
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0 1316.6346   100.0   0.0000    0.0000 0.0000 PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Controller_i   13.3693     1.0   9.5355    3.8339 0.0000 controller_Z4reluPK6ac_intILi256ELb0EEPS0_j
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i 1301.9873    98.9   0.0000    0.0000 0.0000 datapath_Z4reluPK6ac_intILi256ELb0EEPS0_j
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/MUX_40_multi_read_cond_FU_25_i0_0_0_0    0.6390     0.0   0.6390    0.0000 0.0000 MUX2_GATE_BITSIZE_in11_BITSIZE_in21_BITSIZE_out11
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/MUX_42_reg_0_0_0_0    9.4372     0.7   9.4372    0.0000 0.0000 MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/MUX_42_reg_0_0_0_1   16.1219     1.2  16.1219    0.0000 0.0000 MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/MUX_6_B_bambu_artificial_ParmMgr_Write_axis_modgen_55_i0_2_0_0  127.0088     9.6 127.0088    0.0000 0.0000 MUX2_GATE_BITSIZE_in1256_BITSIZE_in2256_BITSIZE_out1256
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/conv_out_reg_5_reg_5_255_256    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in1255_BITSIZE_out1256_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/conv_out_ui_xor_node_FU_64_64_64_53_i0_fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429061_255_256    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in1255_BITSIZE_out1256_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429025    2.3593     0.2   1.0813    1.2780 0.0000 A_bambu_artificial_ParmMgr_Read_axis_modgen_BITSIZE_in11_BITSIZE_in29_BITSIZE_in3256_BITSIZE_in432_BITSIZE_out1256
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429026    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in1256_BITSIZE_out164
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429027   18.9727     1.4  18.9727    0.0000 0.0000 max_node_FU_BITSIZE_in164_BITSIZE_in21_BITSIZE_out164_3
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429028    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in163_BITSIZE_out163
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429029    0.0000     0.0   0.0000    0.0000 0.0000 ui_shr_node_FU_BITSIZE_in1256_BITSIZE_in27_BITSIZE_out164_PRECISION256
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429030    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429031   18.9727     1.4  18.9727    0.0000 0.0000 max_node_FU_BITSIZE_in164_BITSIZE_in21_BITSIZE_out164_2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429032    0.0000     0.0   0.0000    0.0000 0.0000 ui_and_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429033    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429034    0.0000     0.0   0.0000    0.0000 0.0000 ui_shl_node_FU_BITSIZE_in132_BITSIZE_in27_BITSIZE_out196_PRECISION256
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429035    0.0000     0.0   0.0000    0.0000 0.0000 ui_or_node_FU_BITSIZE_in196_BITSIZE_in263_BITSIZE_out196
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429036    0.0000     0.0   0.0000    0.0000 0.0000 ui_shr_node_FU_BITSIZE_in163_BITSIZE_in26_BITSIZE_out131_PRECISION64_2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429037    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in131_BITSIZE_out131_2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429038    0.0000     0.0   0.0000    0.0000 0.0000 ui_shl_node_FU_BITSIZE_in131_BITSIZE_in27_BITSIZE_out1127_PRECISION256
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429039    0.0000     0.0   0.0000    0.0000 0.0000 ui_or_node_FU_BITSIZE_in196_BITSIZE_in2127_BITSIZE_out1127
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429040    0.0000     0.0   0.0000    0.0000 0.0000 ui_shr_node_FU_BITSIZE_in1256_BITSIZE_in28_BITSIZE_out164_PRECISION256_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429041    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429042   18.9727     1.4  18.9727    0.0000 0.0000 max_node_FU_BITSIZE_in164_BITSIZE_in21_BITSIZE_out164_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429043    0.0000     0.0   0.0000    0.0000 0.0000 ui_and_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429044    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429045    0.0000     0.0   0.0000    0.0000 0.0000 ui_shl_node_FU_BITSIZE_in132_BITSIZE_in28_BITSIZE_out1160_PRECISION256
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429046    0.0000     0.0   0.0000    0.0000 0.0000 ui_or_node_FU_BITSIZE_in1127_BITSIZE_in2160_BITSIZE_out1160
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429047    0.0000     0.0   0.0000    0.0000 0.0000 ui_shr_node_FU_BITSIZE_in163_BITSIZE_in26_BITSIZE_out131_PRECISION64_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429048    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in131_BITSIZE_out131_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429049    0.0000     0.0   0.0000    0.0000 0.0000 ui_shl_node_FU_BITSIZE_in131_BITSIZE_in28_BITSIZE_out1191_PRECISION256
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429050    0.0000     0.0   0.0000    0.0000 0.0000 ui_or_node_FU_BITSIZE_in1160_BITSIZE_in2191_BITSIZE_out1191
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429051    0.0000     0.0   0.0000    0.0000 0.0000 ui_shr_node_FU_BITSIZE_in1256_BITSIZE_in28_BITSIZE_out164_PRECISION256_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429052    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429053   18.9727     1.4  18.9727    0.0000 0.0000 max_node_FU_BITSIZE_in164_BITSIZE_in21_BITSIZE_out164_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429054    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429055    0.0000     0.0   0.0000    0.0000 0.0000 ui_shl_node_FU_BITSIZE_in132_BITSIZE_in28_BITSIZE_out1224_PRECISION256_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429056    0.0000     0.0   0.0000    0.0000 0.0000 ui_and_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429057    0.0000     0.0   0.0000    0.0000 0.0000 ui_shr_node_FU_BITSIZE_in163_BITSIZE_in26_BITSIZE_out131_PRECISION64_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429058    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in131_BITSIZE_out131_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429059    0.0000     0.0   0.0000    0.0000 0.0000 ui_shl_node_FU_BITSIZE_in131_BITSIZE_in28_BITSIZE_out1255_PRECISION256
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429060    0.0000     0.0   0.0000    0.0000 0.0000 ui_or_node_FU_BITSIZE_in1255_BITSIZE_in2224_BITSIZE_out1255
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429061    0.0000     0.0   0.0000    0.0000 0.0000 ui_xor_node_FU_BITSIZE_in1255_BITSIZE_in2191_BITSIZE_out1255
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429064   19.7591     1.5  19.7591    0.0000 0.0000 ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429065   17.7930     1.4  17.7930    0.0000 0.0000 ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429066    0.0000     0.0   0.0000    0.0000 0.0000 multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429214    3.6372     0.3   3.6372    0.0000 0.0000 ui_eq_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out11
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429215    0.0000     0.0   0.0000    0.0000 0.0000 multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429234    0.0000     0.0   0.0000    0.0000 0.0000 UIdata_converter_FU_BITSIZE_in164_BITSIZE_out164_3
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429239    0.0000     0.0   0.0000    0.0000 0.0000 IUdata_converter_FU_BITSIZE_in164_BITSIZE_out163_3
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429242    0.0000     0.0   0.0000    0.0000 0.0000 UIdata_converter_FU_BITSIZE_in164_BITSIZE_out164_2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429245    0.0000     0.0   0.0000    0.0000 0.0000 IUdata_converter_FU_BITSIZE_in164_BITSIZE_out132_2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429248    0.0000     0.0   0.0000    0.0000 0.0000 IUdata_converter_FU_BITSIZE_in164_BITSIZE_out163_2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429251    0.0000     0.0   0.0000    0.0000 0.0000 UIdata_converter_FU_BITSIZE_in164_BITSIZE_out164_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429254    0.0000     0.0   0.0000    0.0000 0.0000 IUdata_converter_FU_BITSIZE_in164_BITSIZE_out132_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429257    0.0000     0.0   0.0000    0.0000 0.0000 IUdata_converter_FU_BITSIZE_in164_BITSIZE_out163_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429260    0.0000     0.0   0.0000    0.0000 0.0000 UIdata_converter_FU_BITSIZE_in164_BITSIZE_out164_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429263    0.0000     0.0   0.0000    0.0000 0.0000 IUdata_converter_FU_BITSIZE_in164_BITSIZE_out132_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429266    0.0000     0.0   0.0000    0.0000 0.0000 IUdata_converter_FU_BITSIZE_in164_BITSIZE_out163_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429301    2.2610     0.2   0.9830    1.2780 0.0000 B_bambu_artificial_ParmMgr_Write_axis_modgen_BITSIZE_in11_BITSIZE_in29_BITSIZE_in3256_BITSIZE_in432
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429306    0.0000     0.0   0.0000    0.0000 0.0000 ui_shr_node_FU_BITSIZE_in1224_BITSIZE_in28_BITSIZE_out132_PRECISION256
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/fu_Z4reluPK6ac_intILi256ELb0EEPS0_j_429003_429313    0.0000     0.0   0.0000    0.0000 0.0000 ui_shl_node_FU_BITSIZE_in132_BITSIZE_in28_BITSIZE_out1224_PRECISION256_0
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/mu_S_4    6.0948     0.5   2.2610    3.8339 0.0000 SIMPLEJOIN_FU_BITSIZE_ops1_PORTSIZE_ops2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/reg_0   57.0163     4.3  16.1219   40.8945 0.0000 register_SE_BITSIZE_in132_BITSIZE_out132_2
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/reg_1   57.0163     4.3  16.1219   40.8945 0.0000 register_SE_BITSIZE_in132_BITSIZE_out132_1
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/reg_3  455.9831    34.6 128.8274  327.1557 0.0000 register_SE_BITSIZE_in1256_BITSIZE_out1256
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/reg_4    1.9169     0.1   0.6390    1.2780 0.0000 register_SE_BITSIZE_in11_BITSIZE_out11
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/Datapath_i/reg_5  449.0527    34.1 127.0088  322.0439 0.0000 register_SE_BITSIZE_in1255_BITSIZE_out1255
+PBI_Z4reluPK6ac_intILi256ELb0EEPS0_j_i0/done_delayed_REG    1.2780     0.1   0.0000    1.2780 0.0000 register_AR_BITSIZE_in11_BITSIZE_out11
+--------------------------------  ---------  -------  --------  ---------  ------  ------------------------------------------------------------------------------------------------------------------
+Total                                                 572.8666   743.7680  0.0000
+
+1

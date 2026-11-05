@@ -4,7 +4,7 @@ Information: Updating design information... (UID-85)
 Report : qor
 Design : matadd_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:34:22 2026
+Date   : Thu Nov  5 18:21:39 2026
 ****************************************
 
 
@@ -12,13 +12,13 @@ Date   : Wed Oct 28 22:34:22 2026
   -----------------------------------
   Levels of Logic:           68.00000
   Critical Path Length:     576.26990
-  Critical Path Slack:     9305.03125
+  Critical Path Slack:     9305.03516
   Critical Path Clk Period:
                           10000.00000
   Total Negative Slack:       0.00000
   No. of Violating Paths:     0.00000
   Worst Hold Violation:      -9.24144
-  Total Hold Violation:    -836.63385
+  Total Hold Violation:    -835.34290
   No. of Hold Violations:   124.00000
   -----------------------------------
 
@@ -27,12 +27,12 @@ Date   : Wed Oct 28 22:34:22 2026
   -----------------------------------
   Hierarchical Cell Count:          3
   Hierarchical Port Count:       3170
-  Leaf Cell Count:               2823
-  Buf/Inv Cell Count:             743
+  Leaf Cell Count:               2824
+  Buf/Inv Cell Count:             744
   Buf Cell Count:                  15
-  Inv Cell Count:                 728
+  Inv Cell Count:                 729
   CT Buf/Inv Cell Count:            0
-  Combinational Cell Count:      2187
+  Combinational Cell Count:      2188
   Sequential Cell Count:          636
   Macro Count:                      0
   -----------------------------------
@@ -40,21 +40,21 @@ Date   : Wed Oct 28 22:34:22 2026
 
   Area
   -----------------------------------
-  Combinational Area:       994.24668
+  Combinational Area:       994.39414
   Noncombinational Area:    812.77744
-  Buf/Inv Area:             111.03437
+  Buf/Inv Area:             111.18183
   Total Buffer Area:          3.68640
-  Total Inverter Area:      107.34797
+  Total Inverter Area:      107.49543
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:               1807.02412
-  Design Area:             1807.02412
+  Cell Area:               1807.17158
+  Design Area:             1807.17158
 
 
   Design Rules
   -----------------------------------
-  Total Number of Nets:          4381
+  Total Number of Nets:          4382
   Nets With Violations:             0
   Max Trans Violations:             0
   Max Cap Violations:               0
@@ -65,19 +65,19 @@ Date   : Wed Oct 28 22:34:22 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 0.77536
-  Logic Optimization:               5.84387
-  Mapping Optimization:            16.54028
+  Resource Sharing:                 0.65723
+  Logic Optimization:               1.40710
+  Mapping Optimization:             4.60516
   -----------------------------------------
-  Overall Compile Time:            46.46514
-  Overall Compile Wall Clock Time: 15.42111
+  Overall Compile Time:            18.83705
+  Overall Compile Wall Clock Time: 15.01213
 
   --------------------------------------------------------------------
 
   Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
 
 
-  Design (Hold)  WNS: 9.24144  TNS: 836.63385  Number of Violating Paths: 124
+  Design (Hold)  WNS: 9.24144  TNS: 835.34290  Number of Violating Paths: 124
 
   --------------------------------------------------------------------
 

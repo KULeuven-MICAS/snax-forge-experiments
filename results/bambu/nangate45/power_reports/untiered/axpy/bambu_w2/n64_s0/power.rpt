@@ -1,0 +1,34 @@
+****************************************
+Report : Averaged Power
+	-significant_digits
+	-nosplit
+Design : p_Z4axpyPK6ac_intILi128ELb0EES2_PS0_xj
+Version: W-2024.09-SP5
+Date   : Thu Nov  5 18:51:00 2026
+****************************************
+
+
+
+  Attributes
+  ----------
+      i  -  Including register clock pin internal power
+      u  -  User defined power group
+
+                        Internal             Switching            Leakage              Total
+Power Group             Power                Power                Power                Power               (     %)   Attrs
+----------------------------------------------------------------------------------------------------------------------------
+clock_network           1.948142e-04         0.000000e+00         0.000000e+00         1.948142e-04        ( 7.37%)   i
+register                1.702140e-04         8.429794e-05         3.645876e-05         2.909707e-04        (11.01%)   
+combinational           9.746500e-04         8.563560e-04         3.256362e-04         2.156642e-03        (81.62%)   
+sequential              0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+memory                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+io_pad                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+black_box               0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+
+  Net Switching Power  = 9.406540e-04          (35.60%)
+  Cell Internal Power  = 1.339678e-03          (50.70%)
+  Cell Leakage Power   = 3.620950e-04          (13.70%)
+                         -------------------------
+Total Power            = 2.642427e-03         (100.00%)
+
+1

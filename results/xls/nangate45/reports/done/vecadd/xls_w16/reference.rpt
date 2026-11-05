@@ -1,0 +1,41 @@
+ 
+****************************************
+Report : reference
+Design : vecadd
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 16:06:01 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NangateOpenCellLibrary     1.064000    1985  2112.040021
+AND3_X1            NangateOpenCellLibrary     1.330000      17    22.610001
+AOI21_X1           NangateOpenCellLibrary     1.064000      18    19.152000
+AOI22_X1           NangateOpenCellLibrary     1.330000      32    42.560001
+BUF_X1             NangateOpenCellLibrary     0.798000      53    42.293999
+CLKBUF_X1          NangateOpenCellLibrary     0.798000      13    10.374000
+DFF_X1             NangateOpenCellLibrary     4.522000      32   144.703995 n
+FA_X1              NangateOpenCellLibrary     4.256000     992  4221.952042 r
+INV_X1             NangateOpenCellLibrary     0.532000       6     3.192000
+NAND2_X1           NangateOpenCellLibrary     0.798000      20    15.960000
+NOR2_X1            NangateOpenCellLibrary     0.798000      16    12.768000
+NOR3_X1            NangateOpenCellLibrary     1.064000       2     2.128000
+OAI21_X1           NangateOpenCellLibrary     1.064000      75    79.800001
+OAI211_X1          NangateOpenCellLibrary     1.330000      16    21.280001
+OR3_X1             NangateOpenCellLibrary     1.330000      13    17.290001
+OR4_X1             NangateOpenCellLibrary     1.596000       1     1.596000
+XNOR2_X1           NangateOpenCellLibrary     1.596000      16    25.535999
+-----------------------------------------------------------------------------
+Total 17 references                                  6795.236059
+1

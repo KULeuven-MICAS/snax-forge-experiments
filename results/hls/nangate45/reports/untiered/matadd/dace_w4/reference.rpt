@@ -3,7 +3,7 @@
 Report : reference
 Design : matadd_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 20:32:15 2026
+Date   : Thu Nov  5 17:50:58 2026
 ****************************************
 
 Attributes:
@@ -33,7 +33,7 @@ NOR2_X2            NangateOpenCellLibrary     1.330000       1     1.330000
 NOR3_X1            NangateOpenCellLibrary     1.064000       1     1.064000
 OAI21_X1           NangateOpenCellLibrary     1.064000      29    30.856000
 OAI211_X1          NangateOpenCellLibrary     1.330000       2     2.660000
-matadd_dace_module_matadd_0_0  3356.121956       1   3356.121956  h, n
+matadd_dace_module_matadd_0_0  3356.919956       1   3356.919956  h, n
 -----------------------------------------------------------------------------
-Total 15 references                                  3778.795949
+Total 15 references                                  3779.593948
 1

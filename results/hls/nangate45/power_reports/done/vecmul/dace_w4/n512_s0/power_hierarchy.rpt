@@ -5,7 +5,7 @@ Report : Averaged Power
 	-nosplit
 Design : vecmul_dace
 Version: W-2024.09-SP5
-Date   : Thu Oct 29 10:28:34 2026
+Date   : Thu Nov  5 17:02:10 2026
 ****************************************
 
 
@@ -13,12 +13,12 @@ Date   : Thu Oct 29 10:28:34 2026
                                       Int                       Switch                    Leak                      Total
 Hierarchy                             Power                     Power                     Power                     Power                     %
 ------------------------------------------------------------------------------------------------------------------------------------------------------
-vecmul_dace                           2.846530e-03              2.653154e-03              6.515495e-04              6.151234e-03              100.0
-  grp_module_vecmul_0_0_fu_40 (vecmul_dace_module_vecmul_0_0) 2.803347e-03        2.652854e-03        6.432889e-04        6.099490e-03         99.2
-    grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 (vecmul_dace_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1) 2.780503e-03        2.652672e-03        6.377368e-04        6.070912e-03         98.7
-      flow_control_loop_pipe_sequential_init_U (vecmul_dace_flow_control_loop_pipe_sequential_init) 1.379482e-06        3.237563e-08        3.045086e-07        1.716366e-06          0.0
-      mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 5.654053e-04        5.797290e-04        1.428372e-04        1.287972e-03         20.9
-      mul_64s_64s_64_1_1_U2 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 5.623741e-04        5.750352e-04        1.423808e-04        1.279790e-03         20.8
-      mul_64s_64s_64_1_1_U3 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 5.667598e-04        5.811596e-04        1.430281e-04        1.290948e-03         21.0
-      mul_64s_64s_64_1_1_U4 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 5.680496e-04        5.824643e-04        1.429993e-04        1.293513e-03         21.0
+vecmul_dace                           2.565458e-03              2.317126e-03              6.223883e-04              5.504972e-03              100.0
+  grp_module_vecmul_0_0_fu_40 (vecmul_dace_module_vecmul_0_0) 2.522275e-03        2.316826e-03        6.141276e-04        5.453228e-03         99.1
+    grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 (vecmul_dace_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1) 2.499644e-03        2.316606e-03        6.085614e-04        5.424812e-03         98.5
+      flow_control_loop_pipe_sequential_init_U (vecmul_dace_flow_control_loop_pipe_sequential_init) 1.379482e-06        3.237562e-08        3.045086e-07        1.716367e-06          0.0
+      mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 5.570612e-04        5.277059e-04        1.427944e-04        1.227561e-03         22.3
+      mul_64s_64s_64_1_1_U2 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 5.541733e-04        5.230677e-04        1.423717e-04        1.219613e-03         22.2
+      mul_64s_64s_64_1_1_U3 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 5.582318e-04        5.295751e-04        1.429714e-04        1.230778e-03         22.4
+      mul_64s_64s_64_1_1_U4 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 5.597860e-04        5.309397e-04        1.430022e-04        1.233728e-03         22.4
 1

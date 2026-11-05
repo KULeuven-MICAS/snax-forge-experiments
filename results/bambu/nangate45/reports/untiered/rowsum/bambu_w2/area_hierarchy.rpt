@@ -1,0 +1,78 @@
+ 
+****************************************
+Report : area
+Design : p_Z6rowsumPK6ac_intILi128ELb0EEPxjj
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 18:05:47 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         4283
+Number of nets:                          5228
+Number of cells:                         1548
+Number of combinational cells:           1150
+Number of sequential cells:               363
+Number of macros/black boxes:               0
+Number of buf/inv:                         75
+Number of references:                       1
+
+Combinational area:               1986.221998
+Buf/Inv area:                       45.752000
+Noncombinational area:            1642.283941
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  3628.505939
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  ------------------------------------------------------------------------------------------------------------------
+p_Z6rowsumPK6ac_intILi128ELb0EEPxjj 3628.5059   100.0    0.0000     0.0000  0.0000  p_Z6rowsumPK6ac_intILi128ELb0EEPxjj
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0 3628.5059   100.0    0.0000    0.0000 0.0000 PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Controller_i   55.0620     1.5   41.4960   13.5660 0.0000 controller_Z6rowsumPK6ac_intILi128ELb0EEPxjj
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i 3568.1239    98.3    3.1920    0.0000 0.0000 datapath_Z6rowsumPK6ac_intILi128ELb0EEPxjj
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/MUX_12_reg_1_0_0_0   34.0480     0.9   34.0480    0.0000 0.0000 MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_3
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/MUX_12_reg_1_0_0_1   60.3820     1.7   60.3820    0.0000 0.0000 MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_2
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/MUX_14_reg_2_0_0_0   34.5800     1.0   34.5800    0.0000 0.0000 MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_1
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/MUX_21_reg_9_0_0_0   70.2240     1.9   70.2240    0.0000 0.0000 MUX2_GATE_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_1
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/MUX_57_y_bambu_artificial_ParmMgr_Write_axis_modgen_22_i0_2_0_0  120.7640     3.3  120.7640    0.0000 0.0000 MUX2_GATE_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_0
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/MUX_9_multi_read_cond_FU_8_i0_0_0_0    1.8620     0.1    1.8620    0.0000 0.0000 MUX2_GATE_BITSIZE_in11_BITSIZE_in21_BITSIZE_out11_0
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429030    8.2460     0.2    3.7240    4.5220 0.0000 A_bambu_artificial_ParmMgr_Read_axis_modgen_BITSIZE_in11_BITSIZE_in28_BITSIZE_in3128_BITSIZE_in432_BITSIZE_out1128
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429031    0.0000     0.0    0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in1128_BITSIZE_out164
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429032    0.0000     0.0    0.0000    0.0000 0.0000 ui_shr_node_FU_BITSIZE_in1128_BITSIZE_in27_BITSIZE_out164_PRECISION128
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429033    0.0000     0.0    0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429035  536.7880    14.8  536.7880    0.0000 0.0000 ui_ternary_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_in364_BITSIZE_out164
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429036   74.2140     2.0   74.2140    0.0000 0.0000 ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132_2
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429037   65.1700     1.8   65.1700    0.0000 0.0000 ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11_1
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429038   74.2140     2.0   74.2140    0.0000 0.0000 ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132_1
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429039   65.1700     1.8   65.1700    0.0000 0.0000 ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11_0
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429040    1.0640     0.0    1.0640    0.0000 0.0000 ui_select_node_FU_BITSIZE_in11_BITSIZE_in21_BITSIZE_in31_BITSIZE_out11
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429113   14.0980     0.4   14.0980    0.0000 0.0000 ui_eq_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out11
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429114    0.0000     0.0    0.0000    0.0000 0.0000 multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_1
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429117    0.0000     0.0    0.0000    0.0000 0.0000 multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_0
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429168    8.5120     0.2    3.9900    4.5220 0.0000 y_bambu_artificial_ParmMgr_Write_axis_modgen_BITSIZE_in11_BITSIZE_in27_BITSIZE_in364_BITSIZE_in432
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429172   34.5800     1.0   34.5800    0.0000 0.0000 ui_select_node_FU_BITSIZE_in11_BITSIZE_in21_BITSIZE_in332_BITSIZE_out132
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429176   70.2240     1.9   70.2240    0.0000 0.0000 ui_select_node_FU_BITSIZE_in11_BITSIZE_in21_BITSIZE_in364_BITSIZE_out164
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/mu_S_4   22.0780     0.6    8.5120   13.5660 0.0000 SIMPLEJOIN_FU_BITSIZE_ops1_PORTSIZE_ops2
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/reg_1  205.0860     5.7   60.3820  144.7040 0.0000 register_SE_BITSIZE_in132_BITSIZE_out132_3
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/reg_2  205.0860     5.7   60.3820  144.7040 0.0000 register_SE_BITSIZE_in132_BITSIZE_out132_2
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/reg_3  205.0860     5.7   60.3820  144.7040 0.0000 register_SE_BITSIZE_in132_BITSIZE_out132_1
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/reg_5  820.3440    22.6  241.5280  578.8160 0.0000 register_SE_BITSIZE_in1128_BITSIZE_out1128
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/reg_6    6.3840     0.2    1.8620    4.5220 0.0000 register_SE_BITSIZE_in11_BITSIZE_out11_1
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/reg_7    6.3840     0.2    1.8620    4.5220 0.0000 register_SE_BITSIZE_in11_BITSIZE_out11_0
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/reg_8  410.1720    11.3  120.7640  289.4080 0.0000 register_SE_BITSIZE_in164_BITSIZE_out164_1
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/Datapath_i/reg_9  410.1720    11.3  120.7640  289.4080 0.0000 register_SE_BITSIZE_in164_BITSIZE_out164_0
+PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0/done_delayed_REG    5.3200     0.1    0.0000    5.3200 0.0000 register_AR_BITSIZE_in11_BITSIZE_out11
+--------------------------------  ---------  -------  ---------  ---------  ------  ------------------------------------------------------------------------------------------------------------------
+Total                                                 1986.2220  1642.2839  0.0000
+
+1

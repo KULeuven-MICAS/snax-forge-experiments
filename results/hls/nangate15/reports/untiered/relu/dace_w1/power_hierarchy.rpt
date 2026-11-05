@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : relu_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:43:42 2026
+Date   : Thu Nov  5 18:23:42 2026
 ****************************************
 
 
@@ -31,5 +31,5 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-relu_dace                              2.40e-03 3.32e-02 1.36e+07 4.92e-02 100.0
+relu_dace                              2.19e-03 3.28e-02 1.24e+07 4.74e-02 100.0
 1

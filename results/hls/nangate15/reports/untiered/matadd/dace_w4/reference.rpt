@@ -3,7 +3,7 @@
 Report : reference
 Design : matadd_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:33:08 2026
+Date   : Thu Nov  5 18:21:21 2026
 ****************************************
 
 Attributes:
@@ -29,7 +29,7 @@ NAND2_X1           NanGate_15nm_OCL     0.196608       4     0.786432
 NAND3_X1           NanGate_15nm_OCL     0.294912       1     0.294912
 NOR2_X1            NanGate_15nm_OCL     0.196608       5     0.983040
 OAI21_X1           NanGate_15nm_OCL     0.294912      30     8.847360
-matadd_dace_module_matadd_0_0   938.999807       1    938.999807  h, n
+matadd_dace_module_matadd_0_0   939.147263       1    939.147263  h, n
 -----------------------------------------------------------------------------
-Total 11 references                                  1060.503549
+Total 11 references                                  1060.651005
 1

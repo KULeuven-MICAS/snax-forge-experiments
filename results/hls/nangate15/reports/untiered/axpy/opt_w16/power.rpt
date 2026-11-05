@@ -4,7 +4,7 @@ Report : power
         -analysis_effort low
 Design : axpy
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:16:11 2026
+Date   : Thu Nov  5 18:22:26 2026
 ****************************************
 
 
@@ -31,12 +31,12 @@ Attributes
 i - Including register clock pin internal power
 
 
-  Cell Internal Power  = 1.450295 mW   (68%)
-  Net Switching Power  = 686.179626 uW   (32%)
+  Cell Internal Power  = 2.018205 mW   (54%)
+  Net Switching Power  = 1.751015 mW   (46%)
                          ---------
-Total Dynamic Power    = 2.136474 mW  (100%)
+Total Dynamic Power    = 3.769219 mW  (100%)
 
-Cell Leakage Power     =   1.4976 mW
+Cell Leakage Power     =   1.2879 mW
 
 
                  Internal         Switching           Leakage            Total
@@ -45,12 +45,12 @@ Power Group      Power            Power               Power              Power  
 io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
 memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
 black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
-clock_network    0.797808          0.000000          0.000000          0.797808  (  21.95%)  i
-register       9.920895e-03        4.536768e-03        1.929808e+08          0.207438
-                                                                                 (   5.71%)
+clock_network    0.218411          0.000000          0.000000          0.218411  (   4.32%)  i
+register       4.749671e-03        6.602917e-03        5.269819e+07        6.405056e-02
+                                                                                 (   1.27%)
 sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
-combinational    0.642562          0.681646        1.304605e+09          2.628810
-                                                                                 (  72.34%)
+combinational    1.795039          1.744421        1.235156e+09          4.774612
+                                                                                 (  94.41%)
 --------------------------------------------------------------------------------------------------
-Total            1.450291 mW       0.686183 mW     1.497586e+09 pW       3.634056 mW
+Total            2.018200 mW       1.751024 mW     1.287855e+09 pW       5.057073 mW
 1

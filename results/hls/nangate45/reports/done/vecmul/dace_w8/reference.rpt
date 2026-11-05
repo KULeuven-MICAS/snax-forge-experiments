@@ -3,7 +3,7 @@
 Report : reference
 Design : vecmul_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:46:18 2026
+Date   : Thu Nov  5 15:44:52 2026
 ****************************************
 
 Attributes:
@@ -33,7 +33,7 @@ NOR2_X2            NangateOpenCellLibrary     1.330000       1     1.330000
 NOR3_X1            NangateOpenCellLibrary     1.064000       1     1.064000
 OAI21_X1           NangateOpenCellLibrary     1.064000      28    29.792000
 OAI211_X1          NangateOpenCellLibrary     1.330000       2     2.660000
-vecmul_dace_module_vecmul_0_0 62594.588074       1  62594.588074  h, n
+vecmul_dace_module_vecmul_0_0 59300.178164       1  59300.178164  h, n
 -----------------------------------------------------------------------------
-Total 15 references                                 63003.962067
+Total 15 references                                 59709.552157
 1

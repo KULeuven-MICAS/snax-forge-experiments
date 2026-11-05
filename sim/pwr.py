@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """sim/pwr.py - dynamic energy of mapped netlists from simulated activity (docs/power.md).
 
-  pixi run pwr tbjson      POINT [--source hls|forge|char] [--tech T]
-  pixi run pwr run         PATTERN ... --tech T [--source hls|forge|char] [--stim rand64|forge] [--size TAG|all]
-                                       [--seed N] [-j N]
-  pixi run pwr setup-check --tech T [--source hls|forge] [--point P]
-  pixi run pwr summary     [PATTERN ...] [--source hls|forge] [--tech T]
+  pixi run pwr tbjson      POINT [--source hls|forge|char|bambu|xls] [--tech T]
+  pixi run pwr run         PATTERN ... --tech T [--source hls|forge|char|bambu|xls] [--stim rand64|forge]
+                                       [--size TAG|all] [--seed N] [-j N]
+  pixi run pwr setup-check --tech T [--source hls|forge|bambu|xls] [--point P]
+  pixi run pwr summary     [PATTERN ...] [--source ...] [--tech T]
 
 --source hls (the default) takes hls-exercises' points, as below; --source forge takes snax-forge's bundles in
 rtl/forge/ (forge/bundles.py) and their netlists in syn/runs/forge/<tech>/: tb.json from sim/sources/forge.py
@@ -21,6 +21,15 @@ by the kind's sequencer sim/tb/char_<kind>_seq.sv through fixed windows, every o
 edge against sim/ref.py's char_ref), the stimulus rand64 (one stream per data input port), one vcd2saif and one
 PT run per window, the windows' energies per cycle in results/char/<tech>/char_power.csv, one row per point and
 window (docs/power.md, Char). --size does not apply.
+
+--source bambu and --source xls (HSYN1, docs X44) take Bambu's points (hls-exercises' rtl/, <case>_w<W> with
+case bambu) and Google XLS's (dslx-exercises' rtl/, case xls), as syn/syn.py lists them (its case filters and
+MAX_W), and their netlists in syn/runs/<source>/<tech>/: tb.json from sim/sources/bambu.py (control bambu_ctl:
+start_port pulsed by sim/tb/bambu_seq.sv, the run-time pins plain inputs held from time 0) or sim/sources/xls.py
+(control xls_cfg: one cfg beat on _cfg_TDATA by sim/tb/xls_seq.sv); the streams through axis_src and axis_sink as
+for hls; sizes b64, the point's sizes.txt (--size all) and n2048 for tier done; the expected cycles from the
+line through results/<source>/<source>_cycles.csv (bambu: cycles_done; xls: cycles, plus 1 for the window); runs
+in sim/runs/<source>/<tech>/, results in results/<source>/<tech>/ with X20's columns (docs/power.md, Bambu, XLS).
 
 A point is an hls-exercises rtl/ folder, <tier>/<kernel>/<point>, whose mapped netlist is already in
 syn/runs/hls/<tech>/<point>/out/ (syn/syn.py). Per point, one worker runs, start to end:
@@ -54,7 +63,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
-import importlib.util
+import importlib
 import json
 import os
 import re
@@ -71,14 +80,12 @@ import numpy as np
 SIM = Path(__file__).resolve().parent
 ROOT = SIM.parent
 sys.path.insert(0, str(SIM))
-from sources import hls  # noqa: E402
+from sources import hls, syn as _syn  # noqa: E402
 from sources import forge as forge_src  # noqa: E402
 from sources import char as char_src  # noqa: E402
 from ref import char_ref, ref  # noqa: E402
 
-_spec = importlib.util.spec_from_file_location("syn_driver", ROOT / "syn" / "syn.py")
-syn = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(syn)
+syn = _syn()      # syn/syn.py, loaded once (sim/sources/__init__.py): its SOURCES is the one port table (X44)
 
 RUNS = SIM / "runs"
 SOURCE = "hls"
@@ -86,15 +93,19 @@ SYN_RUNS = ROOT / "syn" / "runs" / "hls"
 RESULTS = ROOT / "results" / "hls"
 TB_DIR = SIM / "tb"
 TB_FILES = {"hls": ["ap_ctrl_hs_seq.sv", "axis_src.sv", "axis_sink.sv"],
-            "forge": ["csr_seq.sv", "axis_src.sv", "axis_sink.sv"]}
-SOURCES = {"hls": hls, "forge": forge_src, "char": char_src}
+            "forge": ["csr_seq.sv", "axis_src.sv", "axis_sink.sv"],
+            "bambu": ["bambu_seq.sv", "axis_src.sv", "axis_sink.sv"],
+            "xls": ["xls_seq.sv", "axis_src.sv", "axis_sink.sv"]}
+# The sources: each a tb.json adapter sim/sources/<name>.py, imported when used
+SOURCES = ("hls", "forge", "char", "bambu", "xls")
+HLS_TOOLS = ("hls", "bambu", "xls")     # an HLS tool's points: rtl/ folders with filelist.f and sizes.txt
 PT_SCRIPT = SIM / "scripts" / "pt_power.tcl"
 RUN_DO = SIM / "scripts" / "run.do"
 DC_READBACK = SIM / "probe" / "dc_readback.tcl"
 TB_TOP, DUT = "tb", "dut"
 CLOCK_NS = 10.0
-SETUP_POINT = "done/vecadd/opt_w8"
-SETUP_POINT_FORGE = "done/vecadd/forge_w4"
+SETUP_POINTS = {"hls": "done/vecadd/opt_w8", "forge": "done/vecadd/forge_w4", "bambu": "done/dot/bambu_w8",
+                "xls": "done/dot/xls_w16"}     # setup-check's default point per source (X25)
 MIN_ANNOTATED = 99.0        # percent of nets annotated from the SAIF
 TOGGLE_BEATS = 64           # the input-toggle check fails a run from this many beats up
 # Questa cell models, next to each technology's .db, with the vlog options they need
@@ -109,6 +120,12 @@ KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
 LICENCE_ERR = re.compile(r"(?i)(licen[sc]\w*\s+(error|fail\w*|not available|denied|checkout)|unable to check\s*out"
                          r"|could not check\s*out|cannot check\s*out|feature removed|license server)")
 MASK64 = (1 << 64) - 1
+# The register start: +initreg+0 (vopt: every register and sequential UDP starts at 0, PITFALLS Q1), the default.
+# --initreg-seed N replaces it with Questa 2022.4's random start, for checking only (docs/power.md): vopt
+# +initreg=ru marks 4-state variables (r: nangate45's flops are behavioral regs) and sequential UDPs (u:
+# nangate15's) for randomization, and vsim +initreg+<N> seeds it. Such runs get the run tag suffix _r<N> and are
+# not written to results/ (their result.json stays in sim/runs/).
+INITREG_SEED: int | None = None
 
 
 class Fail(Exception):
@@ -116,7 +133,7 @@ class Fail(Exception):
 
 
 def use_source(name: str) -> None:
-    """hls (hls-exercises) or forge (snax-forge's bundles): where points, netlists and results are."""
+    """hls, forge, char, bambu or xls: where points, netlists and results are."""
     global SOURCE, SYN_RUNS, RESULTS
     SOURCE = name
     syn.use_source(name)
@@ -124,7 +141,8 @@ def use_source(name: str) -> None:
 
 
 def src():
-    return SOURCES[SOURCE]
+    """The current source's tb.json adapter (sim/sources/<source>.py)."""
+    return importlib.import_module(f"sources.{SOURCE}")
 
 
 def columns() -> list[str]:
@@ -268,10 +286,72 @@ def tb_top_forge(tb: dict, netlist: Path) -> str:
     return "\n".join(L)
 
 
+def _dut(tb: dict, ports: list[str]) -> list[str]:
+    return [f"    {tb['top']} {DUT} ("] + [f"        .{p}({p}){',' if i < len(ports) - 1 else ''}"
+                                         for i, p in enumerate(ports)] + ["    );", ""]
+
+
+def tb_top_bambu(tb: dict, netlist: Path) -> str:
+    """The Bambu top (X44): bambu_seq pulses start_port; the run-time pins are plain inputs, driven from time 0
+    (before reset is released) and held; the streams as for HLS. idle_port is connected and not read."""
+    c, clk, rst, L = tb["control"], tb["clock"]["port"], tb["reset"]["port"], []
+    L += ["// Generated by sim/pwr.py from tb.json (source bambu): do not edit.", "`timescale 1ns/1ps", "",
+          f"module {TB_TOP};",
+          f"    wire {clk}, {rst}, {c['start']}, go, sinks_complete;",
+          f"    wire {c['done']}, {c['idle']};", "",
+          f"    bambu_seq #(.T_NS({CLOCK_NS})) seq (.clk({clk}), .rst_n({rst}), .go(go), .start({c['start']}), "
+          f".done({c['done']}), .sinks_complete(sinks_complete));", ""]
+    done = []
+    for s in tb["streams"]:
+        lines, comp = stream_block(tb, s, clk, rst)       # reset is active low: the sinks' rst_n
+        L += lines + [""]
+        if comp:
+            done.append(comp)
+    L += [f"    assign sinks_complete = {' & '.join(done)};", ""]
+    for p in tb["pins"]:
+        L += [f"    logic [{p['bits'] - 1}:0] {p['port']};",
+              f"    initial if (!$value$plusargs(\"PIN_{p['port']}=%h\", {p['port']})) "
+              f"$fatal(1, \"tb: +PIN_{p['port']}=<hex> missing\");", ""]
+    ports = [clk, rst, c["start"], c["done"], c["idle"]]
+    ports += [s[k] for s in tb["streams"] for k in ("data", "valid", "ready")]
+    ports += [p["port"] for p in tb["pins"]]
+    L += _dut(tb, ports) + dump_block(tb, netlist) + ["endmodule", ""]
+    return "\n".join(L)
+
+
+def tb_top_xls(tb: dict, netlist: Path) -> str:
+    """The XLS top (X44): xls_seq presents the cfg beat; XLS's active-high reset is the TB's ~rst_n; the streams
+    as for HLS, the sinks on the TB's rst_n."""
+    c, clk, rst, L = tb["control"], tb["clock"]["port"], tb["reset"]["port"], []
+    L += ["// Generated by sim/pwr.py from tb.json (source xls): do not edit.", "`timescale 1ns/1ps", "",
+          f"module {TB_TOP};",
+          f"    wire {clk}, rst_n, {rst}, go, sinks_complete;",
+          f"    wire [{c['bits'] - 1}:0] {c['data']};", f"    wire {c['valid']}, {c['ready']};",
+          f"    assign {rst} = ~rst_n;", "",
+          f"    xls_seq #(.T_NS({CLOCK_NS}), .CW({c['bits']})) seq (.clk({clk}), .rst_n(rst_n), .go(go), "
+          f".cfg_data({c['data']}), .cfg_valid({c['valid']}), .cfg_ready({c['ready']}), "
+          f".sinks_complete(sinks_complete));", ""]
+    done = []
+    for s in tb["streams"]:
+        lines, comp = stream_block(tb, s, clk, "rst_n")
+        L += lines + [""]
+        if comp:
+            done.append(comp)
+    L += [f"    assign sinks_complete = {' & '.join(done)};", ""]
+    ports = [clk, rst, c["data"], c["valid"], c["ready"]]
+    ports += [s[k] for s in tb["streams"] for k in ("data", "valid", "ready")]
+    L += _dut(tb, ports) + dump_block(tb, netlist) + ["endmodule", ""]
+    return "\n".join(L)
+
+
 def tb_top(tb: dict, netlist: Path) -> str:
     """The thin per-point top: tb.json's ports wired to the fixed modules of sim/tb/."""
     if tb["control"]["kind"] == "forge_csr":
         return tb_top_forge(tb, netlist)
+    if tb["control"]["kind"] == "bambu_ctl":
+        return tb_top_bambu(tb, netlist)
+    if tb["control"]["kind"] == "xls_cfg":
+        return tb_top_xls(tb, netlist)
     if tb["control"]["kind"].startswith("char_"):
         return tb_top_char(tb, netlist)
     c, L = tb["control"], []
@@ -387,6 +467,7 @@ def stimulus(tb: dict, size: str, stim: str, seed: int) -> dict:
     beats = cfg["loop_count"]
     ins_s = [s for s in tb["streams"] if s["dir"] == "in"]
     data_pins = [p["port"] for p in tb["pins"] if p["from"].startswith("data:")]
+    data_pins += [f["name"] for f in tb["control"].get("fields", []) if f["from"].startswith("data:")]   # xls cfg
     pins = dict(cfg)
     if stim == "rand64":
         rng = np.random.default_rng(seed)
@@ -463,7 +544,7 @@ def expected_cycles(tb: dict, size: str) -> tuple[int | None, str]:
 
 
 # ---------------------------------------------------------------- activity and power
-def saif_check(saif: Path, cycles: int, clock: str = "ap_clk") -> dict:
+def saif_check(saif: Path, cycles: int, clock: str) -> dict:
     """X9: T0 + T1 + TX = DURATION on every net, DURATION = cycles x clock, the clock toggles 2 x cycles.
 
     vcd2saif adds (TZ t) for time at Z. DC leaves undriven bits in declared vector wires (b_fu_76[1] when
@@ -622,7 +703,8 @@ def cells_lib(tech: str) -> Path:
 
 
 def run_tag(size: str, stim: str, seed: int) -> str:
-    return f"{size}_forge" if stim == "forge" else f"{size}_s{seed}"
+    tag = f"{size}_forge" if stim == "forge" else f"{size}_s{seed}"
+    return tag if INITREG_SEED is None else f"{tag}_r{INITREG_SEED}"
 
 
 def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -> None:
@@ -631,7 +713,7 @@ def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -
     (pdir / "tb.sv").write_text(tb_top(tb, netlist))
     work = pdir / "work"
     subprocess.run([tool("vlib"), str(work)], check=True, capture_output=True)
-    if tb["control"]["kind"] == "forge_csr" or tb.get("source") == "char":   # every module gets a dump scope (DC6)
+    if tb.get("source", "hls") != "hls":   # every module gets a dump scope (DC6)
         reached = set()
         scopes(netlist, tb["top"], reached)
         missing = sorted(forge_src.netlist_modules(netlist) - reached - {tb["top"]})
@@ -643,8 +725,8 @@ def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -
                           *(str(TB_DIR / f) for f in tb_files),
                           str(pdir / "tb.sv")]),
              ("vlog_netlist", [tool("vlog"), "-timescale", "1ns/1ps", "-work", str(work), str(netlist)]),
-             ("vopt", [tool("vopt"), "-work", str(work), "-L", str(cells), TB_TOP, "+initreg+0", "+acc=n",
-                       "-o", "tb_opt"])]
+             ("vopt", [tool("vopt"), "-work", str(work), "-L", str(cells), TB_TOP,
+                       "+initreg+0" if INITREG_SEED is None else "+initreg=ru", "+acc=n", "-o", "tb_opt"])]
     for name, cmd in steps:
         log = logs / f"{name}.log"
         rc = run_tool(cmd, log, pdir)
@@ -684,10 +766,16 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         plus += [f"+{s['arg']}_HEX={f}", f"+{s['arg']}_BEATS={len(x) // s['lanes']}"]
     for p in tb["pins"]:
         plus.append(f"+PIN_{p['port']}={st['pins'][p['port']] & ((1 << p['bits']) - 1):x}")
+    if tb["control"]["kind"] == "xls_cfg":      # the one cfg beat, fields packed first-high (X44)
+        plus.append(f"+CFG={src().cfg_word(tb, st['pins']):x}")
     (rdir / "stim" / "pins.json").write_text(json.dumps(st["pins"], indent=1) + "\n")
     info["untoggled_bits"] = st["untoggled"]
-    exp, how = (cfg["expected_cycles"], f"snax-forge's group_counter: {cfg['expected_from']}") if forge \
-        else expected_cycles(tb, size)
+    if forge:
+        exp, how = cfg["expected_cycles"], f"snax-forge's group_counter: {cfg['expected_from']}"
+    elif SOURCE == "hls":
+        exp, how = expected_cycles(tb, size)
+    else:       # bambu, xls: the line through the tool's own cycle CSV (X44)
+        exp, how = src().expected_cycles(tb, size, RESULTS)
     info["expected_cycles"], info["expected_from"] = exp, how
     times["stim"] = time.time() - t
 
@@ -697,6 +785,9 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         timeout = max(10000, 4 * (exp or 0) + 1000)
         cmd = [tool("vsim"), "-c", "-work", str(pdir / "work"), "tb_opt", "+nospecify", "+notimingchecks",
                "-wlf", str(rdir / "vsim.wlf"), f"+VCD={vcd}", f"+TIMEOUT={timeout}", *plus, "-do", str(RUN_DO)]
+        if INITREG_SEED is not None:
+            cmd.insert(-2, f"+initreg+{INITREG_SEED}")
+            info["initreg"] = f"random, seed {INITREG_SEED} (vopt +initreg=ru, vsim +initreg+{INITREG_SEED})"
         run_tool(cmd, rdir / "vsim.log", rdir)
         times["vsim"] = time.time() - t
         log = (rdir / "vsim.log").read_text(errors="replace")
@@ -793,8 +884,8 @@ def build_tb(point: str, tech: str) -> dict:
     """The point's tb.json from its source's adapter (forge: from the bundle and the netlist's ports)."""
     if SOURCE == "forge":
         tb = forge_src.build(point, netlist_of(tech, point))
-    elif SOURCE == "char":
-        tb = char_src.build(point, netlist_of(tech, point))
+    elif SOURCE in ("char", "bambu", "xls"):
+        tb = src().build(point, netlist_of(tech, point))
     else:
         tb = hls.build(point)
     src().check(tb)
@@ -806,11 +897,11 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
     pdir = tech_runs(tech) / point
     out = []
     try:
-        fl = hls.filelist(point) if SOURCE == "hls" else {"rams": []}
-        if fl["rams"]:
+        rams = syn.rams_of(point) if SOURCE in HLS_TOOLS else []
+        if rams:
             row = {c: "" for c in COLUMNS}
-            row.update({"point": point, "top": fl["top"], "tech": tech, "clock_ns": _num(CLOCK_NS), "size": "",
-                        "seed": "", "status": f"skipped: needs a RAM macro ({', '.join(fl['rams'])}); "
+            row.update({"point": point, "top": syn.top_of(point), "tech": tech, "clock_ns": _num(CLOCK_NS), "size": "",
+                        "seed": "", "status": f"skipped: needs a RAM macro ({', '.join(rams)}); "
                                               f"{tech} has no RAM cells, RAM1 builds one (OpenRAM)"})
             return [(row, {})]
         tb = build_tb(point, tech)
@@ -836,10 +927,10 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
         compile_times["compile"] = time.time() - t
         expanded = []
         for size, stim, seed in runs:     # --size all: every size in the point's sizes.txt
-            if size == "all" and SOURCE != "hls":
+            if size == "all" and SOURCE not in HLS_TOOLS:
                 sizes = list(tb["sizes"])
             else:
-                sizes = hls.sizes_txt(point) if size == "all" else [size or src().default_size(tb)]
+                sizes = src().sizes_txt(point) if size == "all" else [size or src().default_size(tb)]
             expanded += [(z, stim, seed) for z in sizes]
         for size, stim, seed in expanded:
             times = dict(compile_times) if not out else {}
@@ -849,7 +940,7 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
             if SOURCE == "forge":
                 base.update({"recipe": tb["recipe"], "snax_forge_commit": tb["snax_forge_commit"]})
             info = {"run": str((pdir / run_tag(size, stim, seed)).relative_to(ROOT)), "times": times,
-                    "default": (stim, seed, size) == ("rand64", 0, src().default_size(tb))}
+                    "default": (stim, seed, size) == ("rand64", 0, src().default_size(tb)) and INITREG_SEED is None}
             try:
                 if size not in tb["sizes"]:
                     raise Fail(f"size {size} not in tb.json ({', '.join(tb['sizes'])})")
@@ -952,11 +1043,12 @@ def tb_top_char(tb: dict, netlist: Path) -> str:
         params.update({"D": tb["depth"], "SW": sw})
         wires = [("load", 1), ("wslot", sw), ("rslot", sw)]
     L = ["// Generated by sim/pwr.py from tb.json (source char): do not edit.", "`timescale 1ns/1ps", "",
-         f"module {TB_TOP};", "    wire clock, reset;", f"    wire [{64 * ni - 1}:0] data;", f"    wire [{64 * no - 1}:0] out;"]
+         f"module {TB_TOP};", f"    wire {tb['clock']['port']}, {tb['reset']['port']};", f"    wire [{64 * ni - 1}:0] data;",
+         f"    wire [{64 * no - 1}:0] out;"]
     L += [f"    wire {'' if b == 1 else '[%d:0] ' % (b - 1)}p_{n};" for n, b in wires]
-    conn = [".clk(clock)", ".rst(reset)", ".data(data)", ".out(out)"] + [f".{n}(p_{n})" for n, _ in wires]
+    conn = [f".clk({tb['clock']['port']})", f".rst({tb['reset']['port']})", ".data(data)", ".out(out)"] + [f".{n}(p_{n})" for n, _ in wires]
     L += ["", f"    char_{kind}_seq #({', '.join(f'.{k}({v})' for k, v in params.items())}) seq ({', '.join(conn)});", ""]
-    ports = ["clock", "reset"]
+    ports = [tb["clock"]["port"], tb["reset"]["port"]]
     ports += [f"{p}(data[{64 * i + 63}:{64 * i}])" for i, p in enumerate(tb["data_in"])]
     ports += [f"{p}(out[{64 * i + 63}:{64 * i}])" for i, p in enumerate(tb["outs"])]
     for n, p in pins.items():
@@ -1303,8 +1395,12 @@ def cmd_tbjson(args) -> int:
 
 
 def cmd_run(args) -> int:
+    global INITREG_SEED
+    INITREG_SEED = args.initreg_seed
+    if INITREG_SEED is not None and args.source == "char":
+        sys.exit("--initreg-seed: not built for --source char (its windows run one simulation per point)")
     use_source(args.source)
-    if args.source in ("forge", "char") and args.stim != "rand64":
+    if args.source != "hls" and args.stim != "rand64":
         sys.exit(f"--source {args.source} runs rand64 only (--stim forge is hls-exercises' data.h)")
     points = syn.select(args.patterns)
     if not points:
@@ -1327,7 +1423,7 @@ def cmd_run(args) -> int:
     tech_runs(args.tech).mkdir(parents=True, exist_ok=True)
     with (tech_runs(args.tech) / "batches.jsonl").open("a") as fh:
         fh.write(json.dumps({"date": stamp, "source": args.source, "patterns": args.patterns, "stim": args.stim, "size": args.size,
-                             "seed": args.seed, "licences": lic, "nproc": nproc, "J": j, "threads": threads}) + "\n")
+                             "seed": args.seed, "initreg_seed": INITREG_SEED, "licences": lic, "nproc": nproc, "J": j, "threads": threads}) + "\n")
     t = time.time()
     cells_lib(args.tech)
     print(f"pwr: cell models compiled in {time.time() - t:.1f} s", flush=True)
@@ -1350,8 +1446,12 @@ def cmd_run(args) -> int:
         for res in ex.map(work, points):
             results += res
     print(f"pwr: batch {time.time() - t:.1f} s", flush=True)
-    write_results(args.tech, results)
     bad = [r for r, _ in results if r["status"] != "ok"]
+    if INITREG_SEED is not None:      # a check: nothing goes to results/
+        print(f"pwr: {len(results) - len(bad)} ok, {len(bad)} not ok; random register start (seed {INITREG_SEED}), "
+              f"a check: results/ not written, result.json in the runs' _r{INITREG_SEED} folders")
+        return 1 if bad else 0
+    write_results(args.tech, results)
     print(f"pwr: {len(results) - len(bad)} ok, {len(bad)} not ok -> {(RESULTS / args.tech / 'power_pt.csv').relative_to(ROOT)}")
     return 1 if any(r["status"].startswith("failed") for r in bad) else 0
 
@@ -1374,7 +1474,9 @@ def cmd_setup_check(args) -> int:
     """X25: PT and DC on the same netlist with the same forced activity, per power group: a diagnostic. It prints
     the differences (for the run note) and fails only on the wire-load check (PITFALLS PT1)."""
     use_source(args.source)
-    point = args.point or (SETUP_POINT if args.source == "hls" else SETUP_POINT_FORGE)
+    point = args.point or SETUP_POINTS.get(args.source)
+    if not point:
+        sys.exit(f"setup-check: no default point for --source {args.source}; give --point")
     tech = args.tech
     base = tech_runs(tech) / "setup_check" / point
     shutil.rmtree(base, ignore_errors=True)
@@ -1460,11 +1562,14 @@ def main() -> int:
                         "the point's sizes.txt (forge: every size in tb.json)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("-j", type=int, default=0, help="at most this many workers (default: from the licences)")
+    p.add_argument("--initreg-seed", type=int, default=None,
+                   help="a check, never the default: random register start (vopt +initreg=ru, vsim +initreg+N) "
+                        "in place of +initreg+0; results/ is not written")
     p.set_defaults(fn=cmd_run)
     p = sub.add_parser("setup-check", help="diagnostic: PT against DC with forced activity, per power group (X25)")
     p.add_argument("--tech", required=True, choices=syn.tech_names())
     p.add_argument("--source", choices=list(SOURCES), default="hls")
-    p.add_argument("--point", default=None, help=f"default {SETUP_POINT} (hls), {SETUP_POINT_FORGE} (forge)")
+    p.add_argument("--point", default=None, help=f"default per source: {SETUP_POINTS}")
     p.set_defaults(fn=cmd_setup_check)
     p = sub.add_parser("summary", help="print power_pt.csv")
     p.add_argument("patterns", nargs="*")

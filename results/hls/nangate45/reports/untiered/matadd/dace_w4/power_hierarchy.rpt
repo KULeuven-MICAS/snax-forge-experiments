@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : matadd_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 20:32:15 2026
+Date   : Thu Nov  5 17:50:58 2026
 ****************************************
 
 
@@ -31,8 +31,8 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-matadd_dace                             117.454  291.078 7.03e+04  478.822 100.0
-  grp_module_matadd_0_0_fu_40 (matadd_dace_module_matadd_0_0)  114.416  256.181 6.22e+04  432.768  90.4
-    grp_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2_fu_32 (matadd_dace_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2)  112.386  238.228 5.70e+04  407.610  85.1
+matadd_dace                             116.657  287.020 7.05e+04  474.182 100.0
+  grp_module_matadd_0_0_fu_40 (matadd_dace_module_matadd_0_0)  113.619  252.123 6.24e+04  428.129  90.3
+    grp_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2_fu_32 (matadd_dace_module_matadd_0_0_Pipeline_VITIS_LOOP_20_2)  112.199  237.999 5.69e+04  407.122  85.9
       flow_control_loop_pipe_sequential_init_U (matadd_dace_flow_control_loop_pipe_sequential_init) 8.53e-02    1.322  290.045    1.697   0.4
 1

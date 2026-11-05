@@ -1,0 +1,43 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : p_Z4reluPKxPxj
+Version: W-2024.09-SP5
+Date   : Thu Nov  5 18:57:30 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+p_Z4reluPKxPxj                        6.117878e-05              2.230458e-05              1.879771e-05              1.022811e-04              100.0
+  PBI_Z4reluPKxPxj_i0 (PBI_Z4reluPKxPxj) 6.117878e-05           2.230458e-05              1.879771e-05              1.022811e-04              100.0
+    done_delayed_REG (register_AR_BITSIZE_in11_BITSIZE_out11) 1.894660e-07        8.217900e-10        3.975768e-08        2.300455e-07          0.2
+    Datapath_i (datapath_Z4reluPKxPxj) 6.041911e-05             2.227401e-05              1.821773e-05              1.009109e-04               98.7
+      reg_0 (register_SE_BITSIZE_in132_BITSIZE_out132_2) 6.585837e-06        2.559870e-07        2.001945e-06        8.843769e-06               8.6
+      conv_out_reg_5_reg_5_63_64 (UUdata_converter_FU_BITSIZE_in163_BITSIZE_out164_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      reg_1 (register_SE_BITSIZE_in132_BITSIZE_out132_1) 6.586201e-06        2.345309e-07        2.002118e-06        8.822850e-06               8.6
+      mu_S_4 (SIMPLEJOIN_FU_BITSIZE_ops1_PORTSIZE_ops2) 5.613067e-07        1.249369e-09        2.133452e-07        7.759013e-07                0.8
+      conv_out_IUdata_converter_FU_4_i0_fu_Z4reluPKxPxj_428999_429085_63_64 (UUdata_converter_FU_BITSIZE_in163_BITSIZE_out164_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      reg_3 (register_SE_BITSIZE_in164_BITSIZE_out164) 2.149257e-05        3.794913e-06        4.289896e-06         2.957738e-05               28.9
+      MUX_14_multi_read_cond_FU_5_i0_0_0_0 (MUX2_GATE_BITSIZE_in11_BITSIZE_in21_BITSIZE_out11) 1.577894e-10        2.842528e-10        2.558146e-08        2.602351e-08          0.0
+      reg_4 (register_SE_BITSIZE_in11_BITSIZE_out11) 1.875865e-07        3.682791e-10        6.826424e-08           2.562190e-07                0.3
+      fu_Z4reluPKxPxj_428999_429018 (A_bambu_artificial_ParmMgr_Read_axis_modgen_BITSIZE_in11_BITSIZE_in27_BITSIZE_in364_BITSIZE_in432_BITSIZE_out164) 1.871992e-07        2.565284e-09        8.772790e-08        2.774924e-07          0.3
+      reg_5 (register_SE_BITSIZE_in163_BITSIZE_out163) 1.926829e-05        3.032687e-06        4.136972e-06         2.643795e-05               25.8
+      fu_Z4reluPKxPxj_428999_429019 (max_node_FU_BITSIZE_in164_BITSIZE_in21_BITSIZE_out164) 2.694777e-06        2.735293e-06        1.018254e-06        6.448325e-06          6.3
+      fu_Z4reluPKxPxj_428999_429077 (UIdata_converter_FU_BITSIZE_in164_BITSIZE_out164) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4reluPKxPxj_428999_429022 (ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132) 1.371809e-07        4.578220e-07        7.975224e-07        1.392525e-06          1.4
+      fu_Z4reluPKxPxj_428999_429023 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11) 3.106521e-07        7.171669e-08        1.020090e-06        1.402458e-06          1.4
+      MUX_16_reg_0_0_0_0 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_2) 9.844686e-09        0.000000e+00        3.118643e-07        3.217090e-07          0.3
+      MUX_6_B_bambu_artificial_ParmMgr_Write_axis_modgen_15_i0_2_0_0 (MUX2_GATE_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164) 2.065576e-06        1.153798e-05        1.284017e-06        1.488757e-05         14.6
+      fu_Z4reluPKxPxj_428999_429024 (multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      MUX_16_reg_0_0_0_1 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_1) 1.442137e-07        1.461055e-07        5.752686e-07        8.655878e-07          0.8
+      fu_Z4reluPKxPxj_428999_429085 (IUdata_converter_FU_BITSIZE_in164_BITSIZE_out163) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4reluPKxPxj_428999_429061 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out11) 0.000000e+00        0.000000e+00        2.826544e-07        2.826544e-07          0.3
+      fu_Z4reluPKxPxj_428999_429062 (multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4reluPKxPxj_428999_429113 (B_bambu_artificial_ParmMgr_Write_axis_modgen_BITSIZE_in11_BITSIZE_in27_BITSIZE_in364_BITSIZE_in432) 1.877120e-07        2.511297e-09        1.022117e-07        2.924350e-07          0.3
+    Controller_i (controller_Z4reluPKxPxj) 5.702080e-07         2.973984e-08              5.402186e-07              1.140166e-06                1.1
+1

@@ -3,7 +3,7 @@
 Report : area
 Design : vsum
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:03:25 2026
+Date   : Thu Nov  5 16:29:51 2026
 ****************************************
 
 Library(s) Used:
@@ -11,21 +11,21 @@ Library(s) Used:
     NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
 
 Number of ports:                         1164
-Number of nets:                          6653
-Number of cells:                         4576
-Number of combinational cells:           3605
-Number of sequential cells:               970
+Number of nets:                          4368
+Number of cells:                         2281
+Number of combinational cells:           2016
+Number of sequential cells:               264
 Number of macros/black boxes:               0
-Number of buf/inv:                       1205
-Number of references:                      19
+Number of buf/inv:                        378
+Number of references:                      17
 
-Combinational area:               1823.932462
-Buf/Inv area:                      180.830214
-Noncombinational area:            1239.613397
+Combinational area:               1448.853548
+Buf/Inv area:                       57.016322
+Noncombinational area:             337.379316
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                  3063.545859
+Total cell area:                  1786.232864
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,8 +36,8 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
                                   Total      Total    national   national   boxes   Design
 --------------------------------  ---------  -------  ---------  ---------  ------  ---------
-vsum                              3063.5459    100.0  1823.9325  1239.6134  0.0000  vsum
+vsum                              1786.2329    100.0  1448.8535   337.3793  0.0000  vsum
 --------------------------------  ---------  -------  ---------  ---------  ------  ---------
-Total                                                 1823.9325  1239.6134  0.0000
+Total                                                 1448.8535   337.3793  0.0000
 
 1

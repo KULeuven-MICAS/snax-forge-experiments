@@ -1,0 +1,7 @@
+# Worst setup slack per path class of vecmul_dace at 10 ns, in library time units (1ns)
+# inputs 1061 (all but ap_clk and ap_rst_n), outputs 518, register clock pins 636, register data pins 636
+# class slack startpoint endpoint
+in2reg 4.41184 B_TDATA[2] grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/mul_ln415_reg_343_reg[63]/D
+reg2reg 8.15189 grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32_ap_start_reg_reg/CK grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/p_i0_fu_66_reg[3]/D
+reg2out 8.1836 grp_module_vecmul_0_0_fu_40/grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32_ap_start_reg_reg/CK A_TREADY
+in2out 9.32534 C_TREADY A_TREADY

@@ -3,7 +3,7 @@
 Report : area
 Design : dot
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 21:07:16 2026
+Date   : Thu Nov  5 16:17:45 2026
 ****************************************
 
 Library(s) Used:
@@ -11,37 +11,37 @@ Library(s) Used:
     NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
 
 Number of ports:                         1422
-Number of nets:                         28244
-Number of cells:                        22808
-Number of combinational cells:          21833
-Number of sequential cells:               970
+Number of nets:                         26163
+Number of cells:                        20727
+Number of combinational cells:          20458
+Number of sequential cells:               264
 Number of macros/black boxes:               0
-Number of buf/inv:                       2912
-Number of references:                      21
+Number of buf/inv:                       2250
+Number of references:                      22
 
-Combinational area:               9740.648648
-Buf/Inv area:                      459.669516
-Noncombinational area:            1239.613397
+Combinational area:               9411.035332
+Buf/Inv area:                      377.290758
+Noncombinational area:             337.379316
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                 10980.262045
+Total cell area:                  9748.414648
 Total area:                 undefined
 
 Hierarchical area distribution
 ------------------------------
 
-                                  Global cell area           Local cell area
-                                  -------------------  ---------------------------- 
-Hierarchical cell                 Absolute    Percent  Combi-     Noncombi-  Black-
-                                  Total       Total    national   national   boxes   Design
---------------------------------  ----------  -------  ---------  ---------  ------  ------------------------------------------------------------------------------
-dot                               10980.2620    100.0   927.3016  1239.6134  0.0000  dot
-mul_64s_64s_64_1_1_U1              2203.3368     20.1  2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
-mul_64s_64s_64_1_1_U2              2203.3368     20.1  2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
-mul_64s_64s_64_1_1_U3              2203.3368     20.1  2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
-mul_64s_64s_64_1_1_U4              2203.3368     20.1  2203.3368     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
---------------------------------  ----------  -------  ---------  ---------  ------  ------------------------------------------------------------------------------
-Total                                                  9740.6486  1239.6134  0.0000
+                                  Global cell area          Local cell area
+                                  ------------------  ---------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-     Noncombi-  Black-
+                                  Total      Total    national   national   boxes   Design
+--------------------------------  ---------  -------  ---------  ---------  ------  ------------------------------------------------------------------------------
+dot                               9748.4146    100.0   560.9226   337.3793  0.0000  dot
+mul_64s_64s_64_1_1_U1             2212.4790     22.7  2212.4790     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3
+mul_64s_64s_64_1_1_U2             2212.4790     22.7  2212.4790     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2
+mul_64s_64s_64_1_1_U3             2212.5773     22.7  2212.5773     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U4             2212.5773     22.7  2212.5773     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+--------------------------------  ---------  -------  ---------  ---------  ------  ------------------------------------------------------------------------------
+Total                                                 9411.0353   337.3793  0.0000
 
 1

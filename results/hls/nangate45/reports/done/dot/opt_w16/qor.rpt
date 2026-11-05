@@ -1,19 +1,18 @@
 Information: Updating design information... (UID-85)
-Warning: Design 'dot' contains 1 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
  
 ****************************************
 Report : qor
 Design : dot
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:12:58 2026
+Date   : Thu Nov  5 15:40:54 2026
 ****************************************
 
 
   Timing Path Group 'clk'
   -----------------------------------
-  Levels of Logic:           73.00000
-  Critical Path Length:       5.52357
-  Critical Path Slack:        4.33411
+  Levels of Logic:           78.00000
+  Critical Path Length:       5.88214
+  Critical Path Slack:        3.96921
   Critical Path Clk Period:  10.00000
   Total Negative Slack:       0.00000
   No. of Violating Paths:     0.00000
@@ -27,34 +26,34 @@ Date   : Wed Oct 28 19:12:58 2026
   -----------------------------------
   Hierarchical Cell Count:         16
   Hierarchical Port Count:       3072
-  Leaf Cell Count:              73454
-  Buf/Inv Cell Count:            4525
-  Buf Cell Count:                1726
-  Inv Cell Count:                2799
+  Leaf Cell Count:              66948
+  Buf/Inv Cell Count:            4429
+  Buf Cell Count:                1602
+  Inv Cell Count:                2827
   CT Buf/Inv Cell Count:            0
-  Combinational Cell Count:     69794
-  Sequential Cell Count:         3660
+  Combinational Cell Count:     66492
+  Sequential Cell Count:          456
   Macro Count:                      0
   -----------------------------------
 
 
   Area
   -----------------------------------
-  Combinational Area:    122436.87454
-  Noncombinational Area:  16550.51940
-  Buf/Inv Area:            2866.68198
-  Total Buffer Area:       1377.61396
-  Total Inverter Area:     1489.06801
+  Combinational Area:    116381.91657
+  Noncombinational Area:   2062.03193
+  Buf/Inv Area:            2782.35998
+  Total Buffer Area:       1278.39596
+  Total Inverter Area:     1503.96401
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:             138987.39393
-  Design Area:           138987.39393
+  Cell Area:             118443.94850
+  Design Area:           118443.94850
 
 
   Design Rules
   -----------------------------------
-  Total Number of Nets:         87345
+  Total Number of Nets:         80815
   Nets With Violations:             0
   Max Trans Violations:             0
   Max Cap Violations:               0
@@ -65,12 +64,12 @@ Date   : Wed Oct 28 19:12:58 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 3.03638
-  Logic Optimization:              115.60455
-  Mapping Optimization:            364.92944
+  Resource Sharing:                 2.63452
+  Logic Optimization:              24.37065
+  Mapping Optimization:            76.94141
   -----------------------------------------
-  Overall Compile Time:            1010.87512
-  Overall Compile Wall Clock Time: 216.83701
+  Overall Compile Time:            345.37527
+  Overall Compile Wall Clock Time: 349.60641
 
   --------------------------------------------------------------------
 

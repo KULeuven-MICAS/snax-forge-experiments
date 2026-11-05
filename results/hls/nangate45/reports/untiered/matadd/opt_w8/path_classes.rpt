@@ -1,0 +1,7 @@
+# Worst setup slack per path class of matadd at 10 ns, in library time units (1ns)
+# inputs 1061 (all but ap_clk and ap_rst_n), outputs 518, register clock pins 582, register data pins 582
+# class slack startpoint endpoint
+in2reg 5.31191 A_TDATA[320] add_ln13_5_reg_378_reg[63]/D
+reg2reg 8.83398 loop_count_preg_reg[31]/CK b_fu_76_reg[31]/D
+reg2out 9.13317 loop_count_preg_reg[31]/CK C_TVALID
+in2out 9.26965 loop_count[30] C_TVALID

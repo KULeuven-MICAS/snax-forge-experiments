@@ -1,6 +1,8 @@
 # Notes: control, datapath and the block boundary (SYN1, forge against HLS)
 
-**After CTRL1:** the post-CTRL1 numbers (csr as the interface, D152; ctrl without products, D153) are in `results/analysis/syn2/syn2_before_after.md` (SYN2, X27); this note stays as SYN1's review.
+**After CTRL1:** the post-CTRL1 numbers (csr as the interface, D152; ctrl without products, D153) were in `results/analysis/syn2/syn2_before_after.md` (SYN2, X27); this note stays as SYN1's review.
+
+**Retired in HSYN1 R3 (X43):** the SYN1 and SYN2 analysis scripts and results named in this note are no longer in the tree; read them from git at `e8c4e91` (`git show e8c4e91:<path>`).
 
 Working notes from the review of SYN1's analysis, 1 Nov 2026, kept to ideate on. They are self-contained: enough context and numbers to read without the repos. The generated, reproducible version of every number here is in `results/analysis/syn1/syn1_analysis.md` (sections 9 and 10), with the run notes `results/forge/runs/2026-11-01_syn1_split.md` and `results/hls/runs/2026-11-01_hls_c10.md`. Where this note and the analysis differ, the analysis is right.
 
@@ -133,6 +135,8 @@ Items 1 to 3 take dot 3's control from 357 flops to about 164, near HLS's 140, w
 - What does Vitis's own CSR block (`s_axilite`) cost against forge's csr?
 
 ## Where the data is
+
+The first three items are retired (X43): read them from git at `e8c4e91`.
 
 - `results/analysis/syn1/syn1_analysis.md`: sections 9 (the split) and 10 (control by role, the register stage), figures `fig8_control_split.png` (control's share of e_run) and `fig9_energy_split.png` (e_run as stacked bars: control, datapath flops, datapath logic).
 - `results/analysis/syn1/split_<tech>.csv`, `split_regs_<tech>.csv`, `split_checks_<tech>.csv`: the split per point, per register, and its checks (`report/flop_split.py`, `pixi run split pt` then `pixi run split collect`).

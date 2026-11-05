@@ -3,7 +3,7 @@
 Report : reference
 Design : vecmul_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:38:37 2026
+Date   : Thu Nov  5 15:42:08 2026
 ****************************************
 
 Attributes:
@@ -23,11 +23,11 @@ AOI21_X1           NangateOpenCellLibrary     1.064000       4     4.256000
 AOI22_X1           NangateOpenCellLibrary     1.330000      77   102.410003
 AOI211_X1          NangateOpenCellLibrary     1.330000      17    22.610001
 AOI221_X1          NangateOpenCellLibrary     1.596000       2     3.192000
-BUF_X1             NangateOpenCellLibrary     0.798000       2     1.596000
-CLKBUF_X1          NangateOpenCellLibrary     0.798000       6     4.788000
-DFF_X1             NangateOpenCellLibrary     4.522000     227  1026.493963 n
+BUF_X2             NangateOpenCellLibrary     1.064000       1     1.064000
+CLKBUF_X1          NangateOpenCellLibrary     0.798000       4     3.192000
+DFF_X1             NangateOpenCellLibrary     4.522000     163   737.085973 n
 INV_X1             NangateOpenCellLibrary     0.532000      52    27.664000
-MUX2_X1            NangateOpenCellLibrary     1.862000     128   238.335999
+MUX2_X1            NangateOpenCellLibrary     1.862000      64   119.167999
 NAND2_X1           NangateOpenCellLibrary     0.798000      19    15.162000
 NAND4_X1           NangateOpenCellLibrary     1.330000       1     1.330000
 NOR2_X1            NangateOpenCellLibrary     0.798000      22    17.556000
@@ -39,7 +39,7 @@ OAI211_X1          NangateOpenCellLibrary     1.330000      16    21.280001
 OAI211_X2          NangateOpenCellLibrary     2.394000       1     2.394000
 OAI221_X1          NangateOpenCellLibrary     1.596000      15    23.939999
 XOR2_X1            NangateOpenCellLibrary     1.596000       1     1.596000
-vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64  6925.842033       1  6925.842033 h
+vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64  6925.044033       1  6925.044033 h
 -----------------------------------------------------------------------------
-Total 21 references                                  8487.261998
+Total 21 references                                  8075.760010
 1

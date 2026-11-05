@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : vecmul_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 21:34:08 2026
+Date   : Thu Nov  5 16:24:05 2026
 ****************************************
 
 
@@ -31,9 +31,9 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-vecmul_dace                               0.172    0.214 1.72e+08    0.558 100.0
-  grp_vecmul_dace_Pipeline_VITIS_LOOP_19_1_fu_44 (vecmul_dace_vecmul_dace_Pipeline_VITIS_LOOP_19_1)    0.170    0.200 1.67e+08    0.536  96.2
+vecmul_dace                               0.262    0.313 1.66e+08    0.741 100.0
+  grp_vecmul_dace_Pipeline_VITIS_LOOP_19_1_fu_44 (vecmul_dace_vecmul_dace_Pipeline_VITIS_LOOP_19_1)    0.261    0.293 1.59e+08    0.713  96.2
     flow_control_loop_pipe_sequential_init_U (vecmul_dace_flow_control_loop_pipe_sequential_init) 2.73e-05 3.89e-04 1.56e+05 5.72e-04   0.1
-    mul_64s_64s_64_1_1_U2 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 7.86e-02 6.88e-02 7.29e+07    0.220  39.5
-    mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 7.88e-02 6.89e-02 7.28e+07    0.221  39.6
+    mul_64s_64s_64_1_1_U2 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0)    0.117    0.121 7.33e+07    0.311  42.0
+    mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1)    0.117    0.121 7.33e+07    0.311  42.0
 1

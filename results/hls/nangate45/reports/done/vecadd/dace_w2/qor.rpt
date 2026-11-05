@@ -4,7 +4,7 @@ Information: Updating design information... (UID-85)
 Report : qor
 Design : vecadd_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:26:47 2026
+Date   : Thu Nov  5 15:38:03 2026
 ****************************************
 
 
@@ -26,34 +26,34 @@ Date   : Wed Oct 28 19:26:47 2026
   -----------------------------------
   Hierarchical Cell Count:          2
   Hierarchical Port Count:        439
-  Leaf Cell Count:                928
+  Leaf Cell Count:                990
   Buf/Inv Cell Count:              89
-  Buf Cell Count:                   6
-  Inv Cell Count:                  83
+  Buf Cell Count:                   7
+  Inv Cell Count:                  82
   CT Buf/Inv Cell Count:            0
-  Combinational Cell Count:       701
-  Sequential Cell Count:          227
+  Combinational Cell Count:       733
+  Sequential Cell Count:          257
   Macro Count:                      0
   -----------------------------------
 
 
   Area
   -----------------------------------
-  Combinational Area:      1246.21001
-  Noncombinational Area:   1026.49396
-  Buf/Inv Area:              48.94400
-  Total Buffer Area:          4.78800
-  Total Inverter Area:       44.15600
+  Combinational Area:      1261.63801
+  Noncombinational Area:   1162.15396
+  Buf/Inv Area:              49.21000
+  Total Buffer Area:          5.58600
+  Total Inverter Area:       43.62400
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:               2272.70397
-  Design Area:             2272.70397
+  Cell Area:               2423.79197
+  Design Area:             2423.79197
 
 
   Design Rules
   -----------------------------------
-  Total Number of Nets:          1378
+  Total Number of Nets:          1461
   Nets With Violations:             0
   Max Trans Violations:             0
   Max Cap Violations:               0
@@ -64,12 +64,12 @@ Date   : Wed Oct 28 19:26:47 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 0.28000
-  Logic Optimization:               2.32051
-  Mapping Optimization:             8.81696
+  Resource Sharing:                 0.29590
+  Logic Optimization:               0.62386
+  Mapping Optimization:             1.82889
   -----------------------------------------
-  Overall Compile Time:            22.79859
-  Overall Compile Wall Clock Time:  7.94277
+  Overall Compile Time:             8.07453
+  Overall Compile Wall Clock Time:  6.88391
 
   --------------------------------------------------------------------
 

@@ -1,0 +1,52 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : p_Z6rowsumPK6ac_intILi128ELb0EEPxjj
+Version: W-2024.09-SP5
+Date   : Thu Nov  5 18:51:55 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+p_Z6rowsumPK6ac_intILi128ELb0EEPxjj   3.960761e-04              1.178419e-04              6.893952e-05              5.828575e-04              100.0
+  PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj_i0 (PBI_Z6rowsumPK6ac_intILi128ELb0EEPxjj) 3.960761e-04        1.178419e-04        6.893952e-05        5.828575e-04        100.0
+    done_delayed_REG (register_AR_BITSIZE_in11_BITSIZE_out11) 7.191834e-07        5.862403e-09        8.627862e-08        8.113244e-07          0.1
+    Datapath_i (datapath_Z6rowsumPK6ac_intILi128ELb0EEPxjj) 3.932165e-04        1.175716e-04        6.765834e-05        5.784464e-04           99.2
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429030 (A_bambu_artificial_ParmMgr_Read_axis_modgen_BITSIZE_in11_BITSIZE_in28_BITSIZE_in3128_BITSIZE_in432_BITSIZE_out1128) 6.999271e-07        1.562719e-08        1.684297e-07        8.839840e-07          0.2
+      MUX_21_reg_9_0_0_0 (MUX2_GATE_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_1) 7.285618e-06        1.838245e-06        1.929382e-06        1.105324e-05          1.9
+      reg_1 (register_SE_BITSIZE_in132_BITSIZE_out132_3) 2.197212e-05        6.223730e-07        3.527897e-06        2.612239e-05               4.5
+      mu_S_4 (SIMPLEJOIN_FU_BITSIZE_ops1_PORTSIZE_ops2) 2.093106e-06        6.342857e-09        3.819304e-07        2.481379e-06                0.4
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429031 (UUdata_converter_FU_BITSIZE_in1128_BITSIZE_out164) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      reg_2 (register_SE_BITSIZE_in132_BITSIZE_out132_2) 2.294341e-05        6.179637e-07        3.499438e-06        2.706081e-05               4.6
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429032 (ui_shr_node_FU_BITSIZE_in1128_BITSIZE_in27_BITSIZE_out164_PRECISION128) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      reg_3 (register_SE_BITSIZE_in132_BITSIZE_out132_1) 2.201021e-05        3.738392e-07        3.398970e-06        2.578302e-05               4.4
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429033 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429168 (y_bambu_artificial_ParmMgr_Write_axis_modgen_BITSIZE_in11_BITSIZE_in27_BITSIZE_in364_BITSIZE_in432) 7.303629e-07        1.070372e-07        1.630757e-07        1.000476e-06          0.2
+      reg_5 (register_SE_BITSIZE_in1128_BITSIZE_out1128) 1.243739e-04        2.184363e-05        1.501955e-05        1.612371e-04              27.7
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429113 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out11) 0.000000e+00        0.000000e+00        4.440470e-07        4.440470e-07          0.1
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429035 (ui_ternary_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_in364_BITSIZE_out164) 4.486222e-05        2.404971e-05        9.516370e-06        7.842830e-05         13.5
+      reg_6 (register_SE_BITSIZE_in11_BITSIZE_out11_1) 6.932166e-07        7.108715e-10        1.036954e-07         7.976229e-07                0.1
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429172 (ui_select_node_FU_BITSIZE_in11_BITSIZE_in21_BITSIZE_in332_BITSIZE_out132) 4.536248e-07        2.162768e-07        9.794757e-07        1.649377e-06          0.3
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429114 (multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429036 (ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132_2) 4.934106e-07        9.633850e-07        1.690756e-06        3.147552e-06          0.5
+      reg_7 (register_SE_BITSIZE_in11_BITSIZE_out11_0) 7.293738e-07        2.272322e-08        1.045686e-07         8.566657e-07                0.1
+      MUX_12_reg_1_0_0_0 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_3) 0.000000e+00        0.000000e+00        6.922199e-07        6.922199e-07          0.1
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429037 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11_1) 6.545755e-07        3.348981e-07        1.584525e-06        2.573999e-06          0.4
+      reg_8 (register_SE_BITSIZE_in164_BITSIZE_out164_1) 6.160032e-05        5.808057e-06        7.505679e-06        7.491406e-05              12.9
+      MUX_12_reg_1_0_0_1 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_2) 5.731713e-07        1.138889e-07        1.037215e-06        1.724275e-06          0.3
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429040 (ui_select_node_FU_BITSIZE_in11_BITSIZE_in21_BITSIZE_in31_BITSIZE_out11) 1.386180e-08        9.309438e-09        2.819549e-08        5.136673e-08          0.0
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429038 (ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132_1) 5.041691e-07        1.090757e-06        1.685094e-06        3.280020e-06          0.6
+      reg_9 (register_SE_BITSIZE_in164_BITSIZE_out164_0) 6.180195e-05        9.317982e-06        7.498650e-06        7.861858e-05              13.5
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429117 (multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429039 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11_0) 5.874747e-07        3.016644e-07        1.506255e-06        2.395395e-06          0.4
+      fu_Z6rowsumPK6ac_intILi128ELb0EEPxjj_429003_429176 (ui_select_node_FU_BITSIZE_in11_BITSIZE_in21_BITSIZE_in364_BITSIZE_out164) 7.353665e-06        1.982182e-06        1.910289e-06        1.124614e-05          1.9
+      MUX_9_multi_read_cond_FU_8_i0_0_0_0 (MUX2_GATE_BITSIZE_in11_BITSIZE_in21_BITSIZE_out11_0) 1.167745e-09        7.882527e-10        3.163292e-08        3.358892e-08          0.0
+      MUX_14_reg_2_0_0_0 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_1) 4.443778e-07        1.247354e-07        9.907814e-07        1.559894e-06          0.3
+      MUX_57_y_bambu_artificial_ParmMgr_Write_axis_modgen_22_i0_2_0_0 (MUX2_GATE_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_0) 1.031857e-05        4.779618e-05        2.182063e-06        6.029681e-05         10.3
+    Controller_i (controller_Z6rowsumPK6ac_intILi128ELb0EEPxjj) 2.140366e-06        2.644530e-07        1.194906e-06        3.599725e-06          0.6
+1

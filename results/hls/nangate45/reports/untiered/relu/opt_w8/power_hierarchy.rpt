@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : relu
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 20:46:14 2026
+Date   : Thu Nov  5 17:54:53 2026
 ****************************************
 
 
@@ -31,5 +31,5 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-relu                                     18.631  246.559 8.85e+04  353.730 100.0
+relu                                     19.637  283.587 7.66e+04  379.809 100.0
 1

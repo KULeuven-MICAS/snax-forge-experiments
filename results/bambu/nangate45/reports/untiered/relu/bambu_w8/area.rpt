@@ -1,0 +1,30 @@
+ 
+****************************************
+Report : area
+Design : p_Z4reluPK6ac_intILi512ELb0EEPS0_j
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 18:05:14 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                        45468
+Number of nets:                         28225
+Number of cells:                         3642
+Number of combinational cells:           2414
+Number of sequential cells:              1090
+Number of macros/black boxes:               0
+Number of buf/inv:                        105
+Number of references:                       1
+
+Combinational area:               3845.827985
+Buf/Inv area:                       75.277999
+Noncombinational area:            4929.777822
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                  8775.605806
+Total area:                 undefined
+1

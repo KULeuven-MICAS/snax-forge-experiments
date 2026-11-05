@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : dot
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 21:07:17 2026
+Date   : Thu Nov  5 16:17:47 2026
 ****************************************
 
 
@@ -31,9 +31,9 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-dot                                    2.69e-02    0.207 3.69e+08    0.602 100.0
-  mul_64s_64s_64_1_1_U4 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 4.66e-03 4.24e-03 7.29e+07 8.18e-02  13.6
-  mul_64s_64s_64_1_1_U3 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 4.64e-03 4.22e-03 7.28e+07 8.17e-02  13.6
-  mul_64s_64s_64_1_1_U2 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 4.65e-03 4.22e-03 7.29e+07 8.18e-02  13.6
-  mul_64s_64s_64_1_1_U1 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 4.64e-03 4.22e-03 7.28e+07 8.17e-02  13.6
+dot                                       0.501    0.573 3.23e+08    1.397 100.0
+  mul_64s_64s_64_1_1_U4 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0)    0.118    0.121 7.33e+07    0.312  22.3
+  mul_64s_64s_64_1_1_U3 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1)    0.118    0.121 7.33e+07    0.313  22.4
+  mul_64s_64s_64_1_1_U2 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2)    0.118    0.121 7.33e+07    0.312  22.3
+  mul_64s_64s_64_1_1_U1 (dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3)    0.118    0.121 7.33e+07    0.312  22.4
 1

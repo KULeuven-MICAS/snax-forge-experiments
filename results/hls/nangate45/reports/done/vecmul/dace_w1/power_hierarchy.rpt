@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : vecmul_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:38:37 2026
+Date   : Thu Nov  5 15:42:08 2026
 ****************************************
 
 
@@ -31,6 +31,6 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-vecmul_dace                              22.757  125.532 1.72e+05  320.532 100.0
-  mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64)   16.313   16.977 1.42e+05  175.591  54.8
+vecmul_dace                             361.853  587.007 1.65e+05 1.11e+03 100.0
+  mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64)  355.351  501.499 1.43e+05  999.866  89.7
 1

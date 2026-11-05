@@ -5,7 +5,7 @@ Report : Averaged Power
 	-nosplit
 Design : vecmul
 Version: W-2024.09-SP5
-Date   : Thu Oct 29 10:18:58 2026
+Date   : Thu Nov  5 17:11:37 2026
 ****************************************
 
 
@@ -13,7 +13,7 @@ Date   : Thu Oct 29 10:18:58 2026
                                       Int                       Switch                    Leak                      Total
 Hierarchy                             Power                     Power                     Power                     Power                     %
 ------------------------------------------------------------------------------------------------------------------------------------------------------
-vecmul                                4.003353e-04              4.672081e-04              1.703702e-04              1.037914e-03              100.0
-  mul_64s_64s_64_1_1_U1 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 1.490716e-04        1.991756e-04        7.296674e-05        4.212140e-04         40.6
-  mul_64s_64s_64_1_1_U2 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 1.502629e-04        2.009387e-04        7.287426e-05        4.240758e-04         40.9
+vecmul                                3.543770e-04              4.362469e-04              1.626703e-04              9.532941e-04              100.0
+  mul_64s_64s_64_1_1_U1 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 1.478591e-04        2.010340e-04        7.339298e-05        4.222862e-04         44.3
+  mul_64s_64s_64_1_1_U2 (vecmul_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 1.490360e-04        2.028590e-04        7.331554e-05        4.252105e-04         44.6
 1

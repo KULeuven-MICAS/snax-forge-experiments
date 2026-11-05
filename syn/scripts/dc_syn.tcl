@@ -2,7 +2,7 @@
 # syn/scripts/dc_syn.tcl
 # Design Compiler synthesis of one bench point on one technology (syn/tech/<tech>.json).
 #
-# syn/syn.py runs it from the point's run folder, syn/runs/hls/<tech>/<tier>/<kernel>/<point>/:
+# syn/syn.py runs it from the point's run folder, syn/runs/<source>/<tech>/<tier>/<kernel>/<point>/:
 #   dc_shell -f <repo>/syn/scripts/dc_syn.tcl -output_log_file logs/dc_shell.log
 # Everything this run writes stays in that folder (git ignores syn/runs/).
 #
@@ -21,11 +21,15 @@
 #   SYN_WIRE_LOAD      off (the library has wire-load models; keep them out) or none (it has none)
 #   SYN_CLOCK_NS       clock period in ns
 #   SYN_CORES          cores for DC
-#   SYN_FORMAT         analyze's format: verilog (default, Vitis) or sverilog (snax-forge, its blocks)
-#   SYN_CLK_PORT       the clock port: ap_clk (default, Vitis), clk_i (snax-forge) or clock (a block)
+#   SYN_FORMAT         analyze's format: verilog (default; Vitis, Bambu, XLS) or sverilog (snax-forge,
+#                      its blocks)
+#   SYN_CLK_PORT       the clock port: ap_clk (default, Vitis), clock (Bambu; a snax-forge block),
+#                      clk (XLS) or clk_i (snax-forge)
 #   SYN_RST_PORT       the reset port, kept ideal: ap_rst_n (default, Vitis, synchronous, active low),
-#                      rst_ni (snax-forge, asynchronous, active low) or reset (a snax-forge block
-#                      alone, CHAR1: asynchronous, active high)
+#                      reset (Bambu, mostly synchronous, active low), rst (XLS, synchronous, active
+#                      high), rst_ni (snax-forge, asynchronous, active low) or reset (a snax-forge
+#                      block alone, CHAR1: asynchronous, active high)
+#                      syn.py checks both ports are on the top before it starts DC (port guard)
 #
 # The constraints are physical (ns, fF) and scaled to the library's units here; the
 # library's own name and units are checked against the tech file before any RTL is read.
@@ -229,6 +233,41 @@ close $fh
 report_power -significant_digits 6 > reports/power.rpt
 report_power -hierarchy -nosplit -significant_digits 6 > reports/power_hierarchy.rpt
 report_power -verbose -hierarchy -nosplit -significant_digits 6 > reports/power_verbose_hierarchy.rpt
+
+#-----------------------------
+# Path classes (docs X40): the worst setup slack from inputs or registers to registers or
+# outputs, measured after compile with get_timing_paths -from/-to only; nothing here
+# changes the compile (no group_path). Inputs: every input but the clock and the reset;
+# outputs: every output; registers: clock pins as start points, data pins as endpoints.
+# One line per class, slack in library time units; 'none' where the class has no path.
+#-----------------------------
+set pc_in   [remove_from_collection [all_inputs] [get_ports -quiet [list $clk_port $rst_port]]]
+set pc_out  [all_outputs]
+set pc_rclk [all_registers -clock_pins]
+set pc_rdat [all_registers -data_pins]
+set fh [open reports/path_classes.rpt w]
+puts $fh "# Worst setup slack per path class of $target_design at $clock_ns ns, in library time units ($read_time)"
+puts $fh "# inputs [sizeof_collection $pc_in] (all but $clk_port and $rst_port), outputs [sizeof_collection $pc_out],\
+ register clock pins [sizeof_collection $pc_rclk], register data pins [sizeof_collection $pc_rdat]"
+puts $fh "# class slack startpoint endpoint"
+foreach {cls from to} [list in2reg $pc_in $pc_rdat reg2reg $pc_rclk $pc_rdat \
+                            reg2out $pc_rclk $pc_out in2out $pc_in $pc_out] {
+    set slack none; set sp -; set ep -
+    if {[sizeof_collection $from] > 0 && [sizeof_collection $to] > 0} {
+        set path [get_timing_paths -delay_type max -max_paths 1 -from $from -to $to]
+        if {[sizeof_collection $path] > 0} {
+            set s [get_attribute -quiet $path slack]
+            # an unconstrained path reports INFINITY: no path in the class
+            if {[string is double -strict $s] && ![string match -nocase *inf* $s]} {
+                set slack $s
+                set sp [get_object_name [get_attribute $path startpoint]]
+                set ep [get_object_name [get_attribute $path endpoint]]
+            }
+        }
+    }
+    puts $fh "$cls $slack $sp $ep"
+}
+close $fh
 
 #-----------------------------
 # Outputs

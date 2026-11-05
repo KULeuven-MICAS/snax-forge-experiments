@@ -1,0 +1,41 @@
+ 
+****************************************
+Report : reference
+Design : vecadd
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 16:07:09 2026
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+AND2_X1            NangateOpenCellLibrary     1.064000     497   528.808005
+AND3_X1            NangateOpenCellLibrary     1.330000       5     6.650000
+AOI21_X1           NangateOpenCellLibrary     1.064000       6     6.384000
+AOI22_X1           NangateOpenCellLibrary     1.330000      32    42.560001
+BUF_X1             NangateOpenCellLibrary     0.798000      14    11.172000
+CLKBUF_X1          NangateOpenCellLibrary     0.798000       3     2.394000
+DFF_X1             NangateOpenCellLibrary     4.522000      32   144.703995 n
+FA_X1              NangateOpenCellLibrary     4.256000     248  1055.488010 r
+INV_X1             NangateOpenCellLibrary     0.532000       6     3.192000
+NAND2_X1           NangateOpenCellLibrary     0.798000       8     6.384000
+NOR2_X1            NangateOpenCellLibrary     0.798000      16    12.768000
+NOR3_X1            NangateOpenCellLibrary     1.064000       2     2.128000
+OAI21_X1           NangateOpenCellLibrary     1.064000      63    67.032001
+OAI211_X1          NangateOpenCellLibrary     1.330000       4     5.320000
+OR3_X1             NangateOpenCellLibrary     1.330000      13    17.290001
+OR4_X1             NangateOpenCellLibrary     1.596000       1     1.596000
+XNOR2_X1           NangateOpenCellLibrary     1.596000       4     6.384000
+-----------------------------------------------------------------------------
+Total 17 references                                  1920.254012
+1

@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : rowsum
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:55:38 2026
+Date   : Thu Nov  5 18:26:57 2026
 ****************************************
 
 
@@ -31,5 +31,5 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-rowsum                                 1.02e-02    0.123 5.89e+07    0.192 100.0
+rowsum                                 2.82e-02 8.48e-02 3.74e+07    0.150 100.0
 1

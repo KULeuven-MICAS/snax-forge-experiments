@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : vecadd_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 21:22:42 2026
+Date   : Thu Nov  5 16:20:44 2026
 ****************************************
 
 
@@ -31,8 +31,8 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-vecadd_dace                            7.41e-02    0.180 6.01e+07    0.314 100.0
-  grp_module_vecadd_0_0_fu_40 (vecadd_dace_module_vecadd_0_0) 7.31e-02    0.168 5.58e+07    0.297  94.3
-    grp_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 (vecadd_dace_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1) 7.23e-02    0.161 5.31e+07    0.286  91.0
+vecadd_dace                            7.38e-02    0.180 6.02e+07    0.314 100.0
+  grp_module_vecadd_0_0_fu_40 (vecadd_dace_module_vecadd_0_0) 7.28e-02    0.167 5.60e+07    0.296  94.3
+    grp_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 (vecadd_dace_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1) 7.23e-02    0.161 5.32e+07    0.286  91.2
       flow_control_loop_pipe_sequential_init_U (vecadd_dace_flow_control_loop_pipe_sequential_init) 2.38e-05 3.86e-04 1.49e+05 5.59e-04   0.2
 1

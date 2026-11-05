@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : vecmul_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 21:38:50 2026
+Date   : Thu Nov  5 16:24:35 2026
 ****************************************
 
 
@@ -31,12 +31,12 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-vecmul_dace                               0.351    0.421 3.36e+08    1.108 100.0
-  grp_module_vecmul_0_0_fu_40 (vecmul_dace_module_vecmul_0_0)    0.350    0.408 3.32e+08    1.090  98.3
-    grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 (vecmul_dace_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1)    0.349    0.401 3.29e+08    1.079  97.4
-      flow_control_loop_pipe_sequential_init_U (vecmul_dace_flow_control_loop_pipe_sequential_init) 2.47e-05 3.85e-04 1.48e+05 5.59e-04   0.1
-      mul_64s_64s_64_1_1_U4 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0) 8.10e-02 7.09e-02 7.28e+07    0.225  20.3
-      mul_64s_64s_64_1_1_U3 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1) 8.08e-02 7.08e-02 7.28e+07    0.224  20.3
-      mul_64s_64s_64_1_1_U2 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2) 8.08e-02 7.08e-02 7.28e+07    0.224  20.3
-      mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3) 8.08e-02 7.08e-02 7.28e+07    0.224  20.3
+vecmul_dace                               0.524    0.599 3.21e+08    1.445 100.0
+  grp_module_vecmul_0_0_fu_40 (vecmul_dace_module_vecmul_0_0)    0.523    0.586 3.17e+08    1.427  98.7
+    grp_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1_fu_32 (vecmul_dace_module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1)    0.523    0.580 3.14e+08    1.417  98.0
+      flow_control_loop_pipe_sequential_init_U (vecmul_dace_flow_control_loop_pipe_sequential_init) 2.47e-05 3.85e-04 1.48e+05 5.59e-04   0.0
+      mul_64s_64s_64_1_1_U4 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0)    0.117    0.121 7.33e+07    0.311  21.5
+      mul_64s_64s_64_1_1_U3 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1)    0.117    0.121 7.33e+07    0.311  21.5
+      mul_64s_64s_64_1_1_U2 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2)    0.117    0.121 7.33e+07    0.311  21.6
+      mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3)    0.117    0.121 7.33e+07    0.312  21.6
 1

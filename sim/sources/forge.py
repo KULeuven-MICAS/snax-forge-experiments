@@ -37,8 +37,10 @@ import subprocess
 from pathlib import Path
 
 from . import hls
+from . import ports as _ports
 
 TB_VERSION = 1
+CLK, RST = _ports("forge")   # clk_i, rst_ni: syn/syn.py's SOURCES
 ROOT = Path(__file__).resolve().parents[2]
 RTL = ROOT / "rtl" / "forge"
 QUERY = ROOT / "forge" / "query.py"
@@ -127,7 +129,7 @@ def build(point: str, netlist: Path) -> dict:
                             "valid": f"{pre}_{k}_valid_{'i' if side == 'in' else 'o'}",
                             "ready": f"{pre}_{k}_ready_{'o' if side == 'in' else 'i'}"})
 
-    known = {"clk_i", "rst_ni", control["busy"], control["done"], *CSR_PORTS.values()}
+    known = {CLK, RST, control["busy"], control["done"], *CSR_PORTS.values()}
     known |= {s[k] for s in streams for k in ("data", "valid", "ready")}
     missing = sorted(known - set(ports))
     extra = sorted(set(ports) - known)
@@ -151,7 +153,7 @@ def build(point: str, netlist: Path) -> dict:
 
     return {"tb_version": TB_VERSION, "source": "forge", "point": point, "kernel": q["kernel"], "recipe": pj["recipe"],
             "top": top, "case": case, "W": w, "snax_forge_commit": pj["snax_forge_commit"],
-            "clock": {"port": "clk_i"}, "reset": {"port": "rst_ni", "active": "low", "sync": False},
+            "clock": {"port": CLK}, "reset": {"port": RST, "active": "low", "sync": False},
             "control": control, "streams": streams, "pins": [], "sizes": sizes}
 
 

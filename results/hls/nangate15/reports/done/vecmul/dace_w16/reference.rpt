@@ -3,7 +3,7 @@
 Report : reference
 Design : vecmul_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 21:36:34 2026
+Date   : Thu Nov  5 16:27:15 2026
 ****************************************
 
 Attributes:
@@ -28,7 +28,7 @@ NAND2_X1           NanGate_15nm_OCL     0.196608       4     0.786432
 NAND3_X1           NanGate_15nm_OCL     0.294912       1     0.294912
 NOR2_X1            NanGate_15nm_OCL     0.196608       5     0.983040
 OAI21_X1           NanGate_15nm_OCL     0.294912      28     8.257536
-vecmul_dace_module_vecmul_0_0 39075.005069       1  39075.005069  h, n
+vecmul_dace_module_vecmul_0_0 37397.152434       1  37397.152434  h, n
 -----------------------------------------------------------------------------
-Total 10 references                                 39188.595339
+Total 10 references                                 37510.742704
 1

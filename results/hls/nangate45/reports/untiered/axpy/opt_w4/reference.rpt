@@ -3,7 +3,7 @@
 Report : reference
 Design : axpy
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 20:19:14 2026
+Date   : Thu Nov  5 17:48:21 2026
 ****************************************
 
 Attributes:
@@ -19,40 +19,39 @@ Attributes:
 
 Reference          Library       Unit Area   Count    Total Area   Attributes
 -----------------------------------------------------------------------------
-AND2_X1            NangateOpenCellLibrary     1.064000       7     7.448000
-AND4_X1            NangateOpenCellLibrary     1.596000       1     1.596000
-AOI21_X1           NangateOpenCellLibrary     1.064000       9     9.576000
-AOI22_X1           NangateOpenCellLibrary     1.330000     119   158.270005
+AND2_X1            NangateOpenCellLibrary     1.064000       1     1.064000
+AOI21_X1           NangateOpenCellLibrary     1.064000      11    11.704000
+AOI22_X1           NangateOpenCellLibrary     1.330000     129   171.570006
 AOI211_X1          NangateOpenCellLibrary     1.330000      15    19.950001
-AOI221_X1          NangateOpenCellLibrary     1.596000      21    33.515999
-BUF_X1             NangateOpenCellLibrary     0.798000       1     0.798000
-CLKBUF_X1          NangateOpenCellLibrary     0.798000      26    20.747999
+AOI221_X1          NangateOpenCellLibrary     1.596000      28    44.687999
+CLKBUF_X1          NangateOpenCellLibrary     0.798000      33    26.333999
 CLKBUF_X2          NangateOpenCellLibrary     1.064000       2     2.128000
-DFF_X1             NangateOpenCellLibrary     4.522000    1160  5245.519810 n
-FA_X1              NangateOpenCellLibrary     4.256000     248  1055.488010 r
-INV_X1             NangateOpenCellLibrary     0.532000     152    80.864001
-MUX2_X1            NangateOpenCellLibrary     1.862000    1081  2012.821988
+DFF_X1             NangateOpenCellLibrary     4.522000     391  1768.101936 n
+FA_X1              NangateOpenCellLibrary     4.256000     244  1038.464010 r
+INV_X1             NangateOpenCellLibrary     0.532000     138    73.416001
+MUX2_X1            NangateOpenCellLibrary     1.862000     305   567.909997
 MUX2_X2            NangateOpenCellLibrary     2.394000       3     7.182000
-NAND2_X1           NangateOpenCellLibrary     0.798000      18    14.364000
-NAND3_X1           NangateOpenCellLibrary     1.064000       1     1.064000
-NAND4_X1           NangateOpenCellLibrary     1.330000       4     5.320000
-NOR2_X1            NangateOpenCellLibrary     0.798000      19    15.162000
+NAND2_X1           NangateOpenCellLibrary     0.798000      17    13.566000
+NAND3_X1           NangateOpenCellLibrary     1.064000       6     6.384000
+NAND4_X1           NangateOpenCellLibrary     1.330000      11    14.630000
+NOR2_X1            NangateOpenCellLibrary     0.798000      23    18.353999
 NOR2_X2            NangateOpenCellLibrary     1.330000       2     2.660000
 NOR2_X4            NangateOpenCellLibrary     2.394000       1     2.394000
-NOR3_X1            NangateOpenCellLibrary     1.064000       4     4.256000
-NOR4_X1            NangateOpenCellLibrary     1.330000      12    15.960001
-OAI21_X1           NangateOpenCellLibrary     1.064000       3     3.192000
-OAI22_X1           NangateOpenCellLibrary     1.330000      22    29.260001
+NOR3_X1            NangateOpenCellLibrary     1.064000       3     3.192000
+NOR4_X1            NangateOpenCellLibrary     1.330000       5     6.650000
+OAI21_X1           NangateOpenCellLibrary     1.064000      15    15.960000
+OAI22_X1           NangateOpenCellLibrary     1.330000      19    25.270001
 OAI33_X1           NangateOpenCellLibrary     1.862000       1     1.862000
 OAI211_X1          NangateOpenCellLibrary     1.330000       4     5.320000
-OAI221_X1          NangateOpenCellLibrary     1.596000      21    33.515999
-OR2_X1             NangateOpenCellLibrary     1.064000       3     3.192000
-OR3_X1             NangateOpenCellLibrary     1.330000       5     6.650000
-XNOR2_X1           NangateOpenCellLibrary     1.596000       8    12.768000
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0  6950.314032       1  6950.314032 h
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1  6945.260032       1  6945.260032 h
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2  6948.452032       1  6948.452032 h
-axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3  6954.570032       1  6954.570032 h
+OAI221_X1          NangateOpenCellLibrary     1.596000      14    22.343999
+OR2_X1             NangateOpenCellLibrary     1.064000       2     2.128000
+OR4_X1             NangateOpenCellLibrary     1.596000       1     1.596000
+XNOR2_X1           NangateOpenCellLibrary     1.596000      12    19.151999
+XOR2_X1            NangateOpenCellLibrary     1.596000       4     6.384000
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0  6949.516032       1  6949.516032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1  6949.250032       1  6949.250032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2  6946.058032       1  6946.058032 h
+axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3  6953.506032       1  6953.506032 h
 -----------------------------------------------------------------------------
-Total 34 references                                 36611.441943
+Total 33 references                                 31698.688077
 1

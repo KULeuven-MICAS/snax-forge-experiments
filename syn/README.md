@@ -1,16 +1,18 @@
 # syn
 
-ASIC synthesis with Design Compiler, on a technology chosen per run: the Nangate 45 nm and 15 nm Open Cell Libraries. The points come from one of two sources (`--source`): `hls` (the default), hls-exercises' bench points, Vitis's Verilog of one point in hls-exercises' `rtl/`, nothing else, so no FPGA flow and no Vitis are needed; or `forge`, snax-forge's generated accelerators, bundled into this repo's `rtl/forge/` ([the forge source](#the-forge-source)).
+ASIC synthesis with Design Compiler, on a technology chosen per run: the Nangate 45 nm and 15 nm Open Cell Libraries. The points come from one of five sources (`--source`, [Sources](#sources)): three HLS tools, `hls` (Vitis, the default) and `bambu` from hls-exercises' `rtl/` and `xls` (Google XLS) from dslx-exercises' `rtl/`, each the tool's Verilog of one point and nothing else, so no FPGA flow and no HLS tool are needed; `forge`, snax-forge's generated accelerators, bundled into this repo's `rtl/forge/` ([the forge source](#the-forge-source)); and `char`, snax-forge's blocks alone (CHAR1, `rtl/char/`).
 
 ## Setup
 
 - `dc_shell` on the path, or `DC_SHELL=/path/to/dc_shell`.
-- hls-exercises checked out next to this repo, so the points are at `../hls-exercises/rtl/` from the repo root. Elsewhere: `SYN_RTL=/path/to/hls-exercises/rtl`.
+- hls-exercises checked out next to this repo, so the Vitis and Bambu points are at `../hls-exercises/rtl/` from the repo root. Elsewhere: `SYN_RTL=/path/to/hls-exercises/rtl`.
+- dslx-exercises next to it, for the XLS points at `../dslx-exercises/rtl/`. Elsewhere: `SYN_RTL_XLS=/path/to/dslx-exercises/rtl`.
 - RTL_flow_Nangate15 next to this repo too, holding both libraries. Elsewhere: `SYN_LIB_NANGATE45=/path/to/NangateOpenCellLibrary_typical.db` and `SYN_LIB_NANGATE15=/path/to/NanGate_15nm_OCL_typical_conditional_nldm.db`.
 
 ```
 <parent>/
-  hls-exercises/            writes rtl/<tier>/<kernel>/<point>/filelist.f
+  hls-exercises/            writes rtl/<tier>/<kernel>/<case>_w<W>/filelist.f (Vitis: opt, dace; Bambu: bambu)
+  dslx-exercises/           writes rtl/<tier>/<kernel>/xls_w<W>/filelist.f (Google XLS)
   snax-forge-experiments/   this repo: syn/ reads those, results/ keeps the summaries
   RTL_flow_Nangate15/       tech/nangate45/NangateOpenCellLibrary_typical.db
                             tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db
@@ -53,9 +55,34 @@ It then writes `reports/lib_info.txt`: the library name and units as read, the o
 
 No wire-load model applies on either library. On nangate45, whose library sets `default_wire_load 5K_hvratio_1_1`, `dc_syn.tcl` sets `auto_wire_load_selection false`, removes the library's `default_wire_load` before elaboration and runs `remove_wire_load_model` on the design after link (`auto_wire_load_selection false` alone still leaves `5K_hvratio_1_1`). On nangate15 (`none`) it checks that the library has no default model. Either way `area.rpt` says `No wire load specified` and `power.rpt` has no `Wire Load Model` table; syn.py marks a run whose area report says otherwise as failed.
 
+## Sources
+
+| `--source` | Points from | Cases listed | Format | Clock | Reset | Extra columns |
+|---|---|---|---|---|---|---|
+| `hls` (default) | `SYN_RTL`, default `../hls-exercises/rtl` | `opt`, `dace` (Vitis) | Verilog | `ap_clk` | `ap_rst_n` | none |
+| `bambu` | the same root as `hls` | `bambu` | Verilog | `clock` | `reset` | `ctrl_um2`, `datapath_um2`, `glue_um2` |
+| `xls` | `SYN_RTL_XLS`, default `../dslx-exercises/rtl` | `xls` | Verilog | `clk` | `rst` | none |
+| `forge` | `SYN_RTL_FORGE`, default `rtl/forge` | every folder with a `bundle.json` | SystemVerilog | `clk_i` | `rst_ni` | [the forge source](#the-forge-source) |
+| `char` | `SYN_RTL_CHAR`, default `rtl/char` | every folder with an `emitted.json` | SystemVerilog | `clock` | `reset` | `datapath`, `lanes`, `depth`, `op`, `form`, `snax_forge_commit` |
+
+**Case filters and `MAX_W`.** For the three HLS sources a point is a `*/*/*/filelist.f` folder named `<case>_w<W>`, with `<case>` in the source's cases and W <= `MAX_W` (16, a constant at the top of `syn.py`; docs X38: at most 16 64-bit channels per stream). Any other folder is not listed: Vitis's retired `unopt_w*`, every `*_w32`, a per-size folder such as `opt_n512_w8`, a clock variant such as `opt_w8_c10`, and, for `hls`, Bambu's `bambu_w*` that share its root (docs X39). With today's checkouts: `hls` 60 points (opt 40; dace 15 for vecadd, vecmul and matadd at W 1 to 16, plus `dace_w1` for vsum, dot, relu, axpy and rowsum), `bambu` 40, `xls` 40.
+
+**The port guard.** Before DC starts, `run` reads the `# top:` module's port list from the point's HDL files (ANSI or not) and checks that the source's clock and reset ports are on it. If one is missing the row's status is `failed: no clock port <name> on <top>` (or `reset`) and DC is not run. `pixi run syn check-ports [patterns] [--source S]` runs the guard alone on every listed point and prints one line per point, then the count that pass; it exits 1 if any fails. It needs no DC.
+
+**How each tool resets.** Found in the RTL; the reset port is kept ideal in `constraints.sdc` either way.
+
+| Case | Port | Style | Which flops are reset |
+|---|---|---|---|
+| Vitis | `ap_rst_n`, active low | synchronous | control only; data registers have no reset (PITFALLS Q1) |
+| Bambu | `reset`, active low | mostly synchronous | the FSM (`present_state`) and the stream modules' started flags; the beat registers (`register_SE`) have none; one 1-bit `register_AR` uses the same port asynchronously |
+| XLS | `rst`, active high | synchronous | all proc state, 32 to 160 bits (`--reset_data_path=true`) |
+| forge | `rst_ni`, active low | asynchronous | its RegInit registers (X22) |
+
+**Bambu's split (docs X41).** Bambu's top holds a `controller_*` and a `datapath_*` instance. A bambu row adds `ctrl_um2` (the `controller_*` instance with its children), `datapath_um2` (the `datapath_*` instance with its children) and `glue_um2` (`area_um2` minus the two), from the point's `synth_dc_modules.csv` rows (absolute totals, as forge's). A point without exactly one `controller_*` and one `datapath_*` row fails (`failed: Bambu split (...)`). Bambu's `datapath_*` also holds its loop counter and its stream interfaces. Vitis and XLS rows report totals only: their netlists are flat, and a split would have to be inferred.
+
 ## Run
 
-A point is named `<tier>/<kernel>/<point>`, the folder under hls-exercises' `rtl/` (for example `done/vecadd/opt_w8`, one hardware point that every size runs on). Patterns are shell globs over those names; quote them.
+A point is named `<tier>/<kernel>/<point>`, the folder under the source's `rtl/` (for example `done/vecadd/opt_w8`, one hardware point that every size runs on). Patterns are shell globs over those names; quote them.
 
 ```bash
 pixi run syn list 'done/vecadd/*'                                           # the points a pattern picks
@@ -64,40 +91,45 @@ pixi run syn run done/vecadd/opt_w8 --tech nangate45                        # on
 pixi run syn run 'done/*/opt_w8' --tech nangate15 -j 2                      # several, 2 DC runs at once
 pixi run syn summary --tech nangate15                                       # every nangate15 run so far
 pixi run syn list --tech nangate45                                          # the points with a nangate45 row
+pixi run syn list --source bambu                                            # Bambu's points
+pixi run syn run done/dot/xls_w16 --source xls --tech nangate45 --dry-run   # an XLS point
+pixi run syn check-ports --source bambu                                     # the port guard alone, every point
 ```
 
-`--source hls|forge` picks the points (default `hls`); `list`, `run` and `summary` all take it. `--clock` is the ASIC clock period in ns (default 10). `--cores` is the cores per DC run (default 16). `-j` is the number of DC runs at once, each of which holds a license. Without `--tech`, `list` lists the points and `summary` shows every technology.
+`--source hls|bambu|xls|forge|char` picks the points (default `hls`); `list`, `run`, `summary` and `check-ports` all take it. `--clock` is the ASIC clock period in ns (default 10). `--cores` is the cores per DC run (default 16). `-j` is the number of DC runs at once, each of which holds a license. Without `--tech`, `list` lists the points and `summary` shows every technology.
 
-syn.py passes DC: `SYN_FILELIST`, `SYN_LIB_DB` and `SYN_LIB_NAME`, `SYN_TIME_UNIT` and `SYN_CAP_UNIT` (the units to expect), `SYN_T_SCALE` and `SYN_C_SCALE`, `SYN_DRIVE_CELL`, `SYN_OUT_LOAD_FF`, `SYN_MAX_TRANS_NS`, `SYN_WIRE_LOAD`, `SYN_CLOCK_NS` and `SYN_CORES`, and from the source `SYN_FORMAT` (`verilog`; forge `sverilog`), `SYN_CLK_PORT` (`ap_clk`; forge `clk_i`) and `SYN_RST_PORT` (`ap_rst_n`; forge `rst_ni`). `dc_syn.tcl` takes the hls values when the three are not set.
+syn.py passes DC: `SYN_FILELIST`, `SYN_LIB_DB` and `SYN_LIB_NAME`, `SYN_TIME_UNIT` and `SYN_CAP_UNIT` (the units to expect), `SYN_T_SCALE` and `SYN_C_SCALE`, `SYN_DRIVE_CELL`, `SYN_OUT_LOAD_FF`, `SYN_MAX_TRANS_NS`, `SYN_WIRE_LOAD`, `SYN_CLOCK_NS` and `SYN_CORES`, and from the source `SYN_FORMAT`, `SYN_CLK_PORT` and `SYN_RST_PORT` ([Sources](#sources)). `dc_syn.tcl` takes the hls values when the three are not set. The dry run prints the port guard's result and these variables.
 
 ## What a run leaves
 
-Everything under `syn/runs/` stays local; git ignores it. Each technology has its own tree and summary:
+Everything under `syn/runs/` stays local; git ignores it. Each source and technology has its own tree and summary (`<source>` is `hls`, `bambu`, `xls`, `forge` or `char`):
 
 ```
-syn/runs/hls/<tech>/<tier>/<kernel>/<point>[_c<clock>]/   (clock tag only when not 10 ns)
+syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/   (clock tag only when not 10 ns)
   WORK/            DC's work library
   logs/            dc_shell.log, dc_stdout.log, check_design.log
   reports/         qor, area, area_hierarchy, reference, timing, constraint_setup, clock, port,
-                   design_rules, power, power_hierarchy, power_verbose_hierarchy (.rpt), lib_info.txt
+                   design_rules, power, power_hierarchy, power_verbose_hierarchy, path_classes
+                   (.rpt), lib_info.txt
   out/             <top>_mapped.v, .sdf
   tech.json        the tech file, the resolved values (.db path, its md5, T_SCALE, C_SCALE,
                    the DC environment) and what DC read into lib_info.txt
-syn/runs/hls/<tech>/summary.csv   one row per point and clock
+syn/runs/<source>/<tech>/summary.csv   one row per point and clock
 ```
 
-Every `run` keeps `results/hls/<tech>/` in step, and that is what is committed:
+Every `run` keeps `results/<source>/<tech>/` in step, and that is what is committed (char's two CSVs are named `char_synth.csv` and `char_synth_modules.csv`):
 
 ```
-results/hls/<tech>/synth_dc.csv            a copy of the summary
-results/hls/<tech>/synth_dc_modules.csv    one row per hierarchical cell
-results/hls/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>]/
+results/<source>/<tech>/synth_dc.csv            a copy of the summary
+results/<source>/<tech>/synth_dc_modules.csv    one row per hierarchical cell
+results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>]/
                                            area.rpt, area_hierarchy.rpt, reference.rpt, power.rpt,
-                                           power_hierarchy.rpt, qor.rpt, tech.json, lib_info.txt;
-                                           a file over 1 MB is left out and named in skipped.txt
+                                           power_hierarchy.rpt, qor.rpt, path_classes.rpt, tech.json,
+                                           lib_info.txt; a file over 1 MB is left out and named in
+                                           skipped.txt
 ```
 
-Only those eight files are committed per run (`KEPT_REPORTS` at the top of `syn.py`): they are what the area and energy model reads (area and power in total, per level of hierarchy and per cell type in `reference.rpt`), the QoR summary, and what the run ran on (`tech.json`, `lib_info.txt`). Everything else stays in the run folder: `timing.rpt` (the largest, about 30 kB a point), `constraint_setup.rpt`, `clock.rpt`, `port.rpt`, `design_rules.rpt`, `power_verbose_hierarchy.rpt`, the logs, the netlist and the sdf. Those check a run (the clock, the loads, the paths) rather than feed the model, and a rerun rebuilds them.
+Only those nine files are committed per run (`KEPT_REPORTS` at the top of `syn.py`): they are what the area and energy model reads (area and power in total, per level of hierarchy and per cell type in `reference.rpt`), the QoR summary, the path-class slacks, and what the run ran on (`tech.json`, `lib_info.txt`). Everything else stays in the run folder: `timing.rpt` (the largest, about 30 kB a point), `constraint_setup.rpt`, `clock.rpt`, `port.rpt`, `design_rules.rpt`, `power_verbose_hierarchy.rpt`, the logs, the netlist and the sdf. Those check a run (the clock, the loads, the paths) rather than feed the model, and a rerun rebuilds them.
 
 `port.rpt` covers a sample of ports (clock, reset, the first and last data input and output): the full report runs to hundreds of kB on the wide AXI-stream tops. `design_rules.rpt` holds the design's max transition and max fanout in library units and a tally of every output's max pin load.
 
@@ -108,12 +140,13 @@ Only those eight files are committed per run (`KEPT_REPORTS` at the top of `syn.
 | column | what it is |
 |---|---|
 | `point`, `top`, `tech`, `clock_ns` | the point, its top module, the technology, the clock period |
-| `status` | `ok`, `ok, timing violated`, `failed: ...` (no area report, `licence (<the line>)`, library mismatch, a wire-load model applied, power groups that do not sum) or `skipped: needs a RAM macro ...` |
+| `status` | `ok`, `ok, timing violated`, `failed: ...` (no clock or reset port on the top, no area report, `licence (<the line>)`, library mismatch, a wire-load model applied, power groups that do not sum, Bambu's split) or `skipped: needs a RAM macro ...` |
 | `errors` | `Error:` lines in `dc_shell.log` |
 | `area_um2`, `comb_area_um2`, `seq_area_um2`, `buf_inv_area_um2` | `area.rpt`: total cell, combinational, noncombinational, buf/inv area |
 | `cells`, `seq_cells` | number of cells, of sequential cells |
 | `crit_path_ns`, `slack_ns` | `qor.rpt`'s critical path length and slack, converted from library units to ns |
 | `fmax_mhz` | 1000 / (`clock_ns` - `slack_ns`) |
+| `slack_in2reg_ns`, `slack_reg2reg_ns`, `slack_reg2out_ns`, `slack_in2out_ns` | the worst setup slack of each path class (docs X40), from `path_classes.rpt`, in ns; empty when the class has no path, and in rows synthesized before HSYN1 R3 |
 | `maxcap_nets`, `maxtrans_nets` | `qor.rpt`: Max Cap Violations, Max Trans Violations |
 | `dyn_power_uw`, `leak_power_uw` | `power.rpt`'s total dynamic and cell leakage power, in uW |
 | `e_clk_pj`, `e_reg_pj`, `e_seq_pj`, `e_comb_pj`, `e_total_pj` | energy per cycle of the power groups clock_network, register, sequential, combinational: (internal + switching) [uW] x `clock_ns` / 1000; the total is their sum, and syn.py checks it against `dyn_power_uw` x `clock_ns` / 1000 |
@@ -123,13 +156,15 @@ Only those eight files are committed per run (`KEPT_REPORTS` at the top of `syn.
 
 `power.rpt` states its units (`Dynamic Power Units`, `Leakage Power Units`: 1 uW and 1 nW on nangate45, 1 mW and 1 pW on nangate15), and the totals carry their own suffix; syn.py reads both and converts to uW.
 
-A forge row has seven more columns after `run`, described in [the forge source](#the-forge-source): `recipe`, `W`, `snax_forge_commit`, `csr_um2`, `ctrl_um2`, `datapath_um2`, `glue_um2`.
+A forge row has seven more columns after `run`, described in [the forge source](#the-forge-source): `recipe`, `W`, `snax_forge_commit`, `csr_um2`, `ctrl_um2`, `datapath_um2`, `glue_um2`. A bambu row has three: `ctrl_um2`, `datapath_um2`, `glue_um2` ([Sources](#sources)).
+
+**Path classes.** After compile and the other reports, `dc_syn.tcl` measures four path classes with `get_timing_paths -delay_type max -max_paths 1 -from ... -to ...` and nothing else (no `group_path`, nothing that could change the compile): in2reg (inputs to register data pins), reg2reg (register clock pins to register data pins), reg2out (register clock pins to outputs) and in2out (inputs to outputs). Inputs are every input but the clock and the reset port. `path_classes.rpt` has one line per class: the class, the slack in library time units (`none` when there is no path), the start point and the endpoint. XLS's points are one combinational stage, so their in2out slack is what `fmax_mhz` hides.
 
 `synth_dc_modules.csv`: `point, tech, clock_ns, path, design, area_um2, comb_um2, seq_um2, bbox_um2, dyn_power_uw, leak_power_uw`, one row per hierarchical cell of `area_hierarchy.rpt` (the top, then the paths below it) joined by path with `power_hierarchy.rpt`. `area_um2` is the cell's absolute total, its children included; `comb_um2`, `seq_um2` and `bbox_um2` count only the cell's own level. The power columns include the children and carry about 3 digits: DC's hierarchical power report ignores `-significant_digits`. A flat top gives one row.
 
 ## Licence errors
 
-A DC run that fails on a licence is rerun once by `run` itself (docs X17, PITFALLS L1). After each DC run, `syn.py` looks in `logs/dc_shell.log` and `logs/dc_stdout.log` for a licence failure (`LICENCE_ERROR` at the top of `syn.py`): a line with `licensing error`, `Unable to obtain feature` or `is not enabled. (DCSH-1)`, or an `Error:` or `Fatal:` line that names a licence. A bare "license" is not enough, as every good run's banner says `license agreement` and its DesignWare table `Licensed DW Building Blocks`. On a match it prints `retry <point> on <tech>: licence error: <the line>`, empties the run folder and runs DC again; the run ends with `licence retries: <n> (<points>)`. After a second licence failure the row's status is `failed: licence (<the line>)`. A rerun that fails otherwise gets the usual status. This applies to both sources.
+A DC run that fails on a licence is rerun once by `run` itself (docs X17, PITFALLS L1). After each DC run, `syn.py` looks in `logs/dc_shell.log` and `logs/dc_stdout.log` for a licence failure (`LICENCE_ERROR` at the top of `syn.py`): a line with `licensing error`, `Unable to obtain feature` or `is not enabled. (DCSH-1)`, or an `Error:` or `Fatal:` line that names a licence. A bare "license" is not enough, as every good run's banner says `license agreement` and its DesignWare table `Licensed DW Building Blocks`. On a match it prints `retry <point> on <tech>: licence error: <the line>`, empties the run folder and runs DC again; the run ends with `licence retries: <n> (<points>)`. After a second licence failure the row's status is `failed: licence (<the line>)`. A rerun that fails otherwise gets the usual status. This applies to every source.
 
 ## Caveats
 
@@ -144,14 +179,14 @@ A DC run that fails on a licence is rerun once by `run` itself (docs X17, PITFAL
 
 | File | What it is |
 |---|---|
-| `syn.py` | The driver: picks points, reads the tech file, sets the environment, runs DC in the point's run folder, reads the reports into `summary.csv`, and keeps `results/hls/<tech>/` in step |
+| `syn.py` | The driver: picks points, checks their clock and reset ports, reads the tech file, sets the environment, runs DC in the point's run folder, reads the reports into `summary.csv`, and keeps `results/<source>/<tech>/` in step |
 | `tech/<tech>.json` | One technology: library, units, driving cell, output load, max transition, wire load |
-| `scripts/dc_syn.tcl` | One DC run: reads the point's `filelist.f` (as `SYN_FORMAT`: `verilog`, or `sverilog` for forge), sets the library and checks its name and units, writes `lib_info.txt`, keeps wire-load models out, links with DesignWare, `compile_ultra -no_autoungroup`, writes reports and the mapped netlist |
-| `scripts/constraints.sdc` | Clock on `$clk_port` (`ap_clk`; forge `clk_i`) at `$clock_ns`, uncertainties, the tech file's input drive, output load and max transition, small IO delays, all scaled to the library's units, and the reset `$rst_port` (`ap_rst_n`, synchronous; forge `rst_ni`, asynchronous) kept as an ideal network (its tree belongs to place and route) |
+| `scripts/dc_syn.tcl` | One DC run: reads the point's `filelist.f` (as `SYN_FORMAT`: `verilog`, or `sverilog` for forge and char), sets the library and checks its name and units, writes `lib_info.txt`, keeps wire-load models out, links with DesignWare, `compile_ultra -no_autoungroup`, writes reports, the path classes and the mapped netlist |
+| `scripts/constraints.sdc` | Clock on `$clk_port` ([Sources](#sources)) at `$clock_ns`, uncertainties, the tech file's input drive, output load and max transition, small IO delays, all scaled to the library's units, and the reset `$rst_port` kept as an ideal network (its tree belongs to place and route) |
 
 ## The filelist
 
-hls-exercises' `bench/bench.py` writes `filelist.f` into every point folder in its `rtl/`. It holds the top module on a `# top:` line, then the Verilog files relative to the folder, the top's own file last. Any tool can read it:
+hls-exercises' `bench/bench.py` (Vitis) and `bench/bambu.py` (Bambu), and dslx-exercises for XLS, write `filelist.f` into every point folder in their `rtl/`. It holds the top module on a `# top:` line, then the Verilog files relative to the folder (Vitis puts the top's own file last; Bambu its `panda_libtech.v` library). Any tool can read it:
 
 ```
 # top: vecadd
@@ -172,7 +207,7 @@ A `# ram:` line names a memory Vitis built. Neither library has RAM cells, and D
 
 **The ports.** The RTL is SystemVerilog (`SYN_FORMAT=sverilog`); the clock is `clk_i` and the reset `rst_ni`, active low and asynchronous (firtool's flops take the active-high `reset` the wrapper derives from it). `rst_ni` is kept ideal like `ap_rst_n`.
 
-**The results tree.** As for HLS, under `forge` in place of `hls`: runs in `syn/runs/forge/<tech>/<tier>/<kernel>/<point>/` with `syn/runs/forge/<tech>/summary.csv`, committed results in `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `reports/` with `KEPT_REPORTS`). A forge row of `synth_dc.csv` has seven more columns after `run`: `recipe`, `W` (from `point.json`), `snax_forge_commit` (from `bundle.json`), and the area split of the wrapper, in um2: `csr_um2`, `ctrl_um2` and `datapath_um2` (the absolute total, children included, of the rows of `synth_dc_modules.csv` whose design is `snax_forge_csr`, `snax_forge_ctrl` and `snax_forge_datapath`, the keys of `bundle.json`'s `modules`), and `glue_um2` = `area_um2` minus the three.
+**The results tree.** As for the HLS sources, under `forge`: runs in `syn/runs/forge/<tech>/<tier>/<kernel>/<point>/` with `syn/runs/forge/<tech>/summary.csv`, committed results in `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `reports/` with `KEPT_REPORTS`). A forge row of `synth_dc.csv` has seven more columns after `run`: `recipe`, `W` (from `point.json`), `snax_forge_commit` (from `bundle.json`), and the area split of the wrapper, in um2: `csr_um2`, `ctrl_um2` and `datapath_um2` (the absolute total, children included, of the rows of `synth_dc_modules.csv` whose design is `snax_forge_csr`, `snax_forge_ctrl` and `snax_forge_datapath`, the keys of `bundle.json`'s `modules`), and `glue_um2` = `area_um2` minus the three.
 
 **The glue.** DC's boundary optimization is left on, so forge compiles like the HLS points (`compile_ultra -no_autoungroup`). It moves a few cells to the wrapper's own level: the inverter that turns `rst_ni` into the active-high `reset` of firtool's flops, and inverters on outputs taken out of the modules (R0's `dot_3` W=4: 2.1 um2 on nangate45, 0.3 um2 on nangate15). `glue_um2` is their area. `run` prints a point whose glue is negative or above 1 % of the total (`GLUE_MAX`), or that has no row for one of the three modules (then the glue is empty); it does not fail it.
 

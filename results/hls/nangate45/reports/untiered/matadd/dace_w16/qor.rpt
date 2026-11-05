@@ -5,7 +5,7 @@ Warning: Design 'matadd_dace' contains 1 high-fanout nets. A fanout number of 10
 Report : qor
 Design : matadd_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 20:30:47 2026
+Date   : Thu Nov  5 17:49:48 2026
 ****************************************
 
 
@@ -65,12 +65,12 @@ Date   : Wed Oct 28 20:30:47 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 0.95874
-  Logic Optimization:               9.46183
-  Mapping Optimization:            23.41748
+  Resource Sharing:                 0.82986
+  Logic Optimization:               2.29266
+  Mapping Optimization:             6.38043
   -----------------------------------------
-  Overall Compile Time:            73.31512
-  Overall Compile Wall Clock Time: 24.15905
+  Overall Compile Time:            29.64620
+  Overall Compile Wall Clock Time: 22.89508
 
   --------------------------------------------------------------------
 

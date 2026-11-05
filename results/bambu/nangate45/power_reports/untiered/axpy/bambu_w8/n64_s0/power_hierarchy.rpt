@@ -1,0 +1,152 @@
+****************************************
+Report : Averaged Power
+	-hierarchy
+	-significant_digits
+	-nosplit
+Design : p_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj
+Version: W-2024.09-SP5
+Date   : Thu Nov  5 18:51:11 2026
+****************************************
+
+
+
+                                      Int                       Switch                    Leak                      Total
+Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+p_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj 4.502826e-03             3.177612e-03              1.413170e-03              9.093608e-03              100.0
+  PBI_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_i0 (PBI_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj) 4.502826e-03        3.177612e-03        1.413170e-03        9.093608e-03        100.0
+    done_delayed_REG (register_AR_BITSIZE_in11_BITSIZE_out11) 7.771228e-07        1.512500e-07        8.732241e-08        1.015695e-06          0.0
+    Datapath_i (datapath_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj) 4.498152e-03        3.171346e-03        1.411652e-03        9.081149e-03         99.9
+      mu_S_4 (SIMPLEJOIN_FU_BITSIZE_ops1_PORTSIZE_ops3) 2.941342e-06        1.826501e-07        5.088800e-07        3.632872e-06                0.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429090 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in29_BITSIZE_out164_PRECISION512_4) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429517 (ui_shr_node_FU_BITSIZE_in1288_BITSIZE_in29_BITSIZE_out132_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429091 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_4) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429092 (ui_mul_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_PIPE_PARAMETER0_2) 3.592513e-04        3.125148e-04        1.462513e-04        8.180174e-04          9.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429093 (ui_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_2) 1.703361e-05        6.660839e-06        4.468701e-06        2.816315e-05          0.3
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429094 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out132_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429095 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1352_PRECISION512_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429096 (ui_and_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429097 (ui_shr_node_FU_BITSIZE_in164_BITSIZE_in26_BITSIZE_out132_PRECISION64_2) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429098 (UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_3) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429040 (ui_mul_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_PIPE_PARAMETER0_6) 3.628025e-04        3.094390e-04        1.455101e-04        8.177515e-04          9.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429099 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1384_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429041 (ui_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_6) 1.749402e-05        6.922744e-06        4.449185e-06        2.886595e-05          0.3
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429042 (ui_and_node_FU_BITSIZE_in164_BITSIZE_in232_BITSIZE_out132_2) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429043 (UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_9) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429044 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in27_BITSIZE_out196_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429045 (ui_or_node_FU_BITSIZE_in196_BITSIZE_in264_BITSIZE_out196) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429046 (ui_shr_node_FU_BITSIZE_in164_BITSIZE_in26_BITSIZE_out132_PRECISION64_6) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429047 (UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_8) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429048 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in27_BITSIZE_out1128_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429049 (ui_or_node_FU_BITSIZE_in196_BITSIZE_in2128_BITSIZE_out1128) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429521 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1288_PRECISION512_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      reg_0 (register_SE_BITSIZE_in132_BITSIZE_out132_3) 2.269977e-05        3.812344e-07        3.449474e-06        2.653048e-05               0.3
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429525 (ui_shr_node_FU_BITSIZE_in1352_BITSIZE_in29_BITSIZE_out132_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      reg_1 (register_SE_BITSIZE_in132_BITSIZE_out132_2) 2.308711e-05        4.402864e-07        3.379273e-06        2.690667e-05               0.3
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429100 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in29_BITSIZE_out164_PRECISION512_3) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429101 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_3) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      reg_3 (register_SE_BITSIZE_in1512_BITSIZE_out1512_2) 4.599135e-04        2.158756e-04        5.940189e-05        7.351910e-04             8.1
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429102 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in29_BITSIZE_out164_PRECISION512_2) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429529 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1352_PRECISION512_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429103 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_2) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      reg_5 (register_SE_BITSIZE_in1512_BITSIZE_out1512_1) 4.670862e-04        7.940230e-05        5.937062e-05        6.058592e-04             6.7
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429104 (ui_mul_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_PIPE_PARAMETER0_1) 3.518698e-04        3.018304e-04        1.463118e-04        8.000119e-04          8.8
+      reg_6 (register_SE_BITSIZE_in11_BITSIZE_out11) 6.651481e-07        1.833053e-08        1.099259e-07           7.934045e-07                0.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429105 (ui_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_1) 1.573457e-05        6.161883e-06        4.496505e-06        2.639296e-05          0.3
+      reg_7 (register_SE_BITSIZE_in1512_BITSIZE_out1512_0) 4.369616e-04        4.403607e-05        5.891300e-05        5.399107e-04             5.9
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429106 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out132_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429107 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1416_PRECISION512_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0 (MUX2_GATE_BITSIZE_in1512_BITSIZE_in2512_BITSIZE_out1512) 6.577635e-05        3.050713e-04        1.685716e-05        3.877048e-04          4.3
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429108 (ui_and_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429109 (ui_shr_node_FU_BITSIZE_in164_BITSIZE_in26_BITSIZE_out132_PRECISION64_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429050 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in28_BITSIZE_out164_PRECISION512_3) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429051 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_11) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429052 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in28_BITSIZE_out164_PRECISION512_2) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429053 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_10) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429054 (ui_mul_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_PIPE_PARAMETER0_5) 3.638212e-04        3.141879e-04        1.457090e-04        8.237181e-04          9.1
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429055 (ui_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_5) 1.808740e-05        7.075330e-06        4.483230e-06        2.964596e-05          0.3
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429056 (ui_and_node_FU_BITSIZE_in164_BITSIZE_in232_BITSIZE_out132_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429057 (UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_7) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429058 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in28_BITSIZE_out1160_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429059 (ui_or_node_FU_BITSIZE_in1128_BITSIZE_in2160_BITSIZE_out1160) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429533 (ui_shr_node_FU_BITSIZE_in1416_BITSIZE_in29_BITSIZE_out132_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429110 (UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_2) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429111 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1448_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429537 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1416_PRECISION512_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429112 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in29_BITSIZE_out164_PRECISION512_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429113 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429114 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in29_BITSIZE_out164_PRECISION512_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429115 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429116 (ui_mul_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_PIPE_PARAMETER0_0) 3.702003e-04        3.185522e-04        1.461271e-04        8.348796e-04          9.2
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429117 (ui_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_0) 1.787273e-05        6.968876e-06        4.552025e-06        2.939363e-05          0.3
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429118 (ui_and_node_FU_BITSIZE_in164_BITSIZE_in232_BITSIZE_out132_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429119 (UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429060 (ui_shr_node_FU_BITSIZE_in164_BITSIZE_in26_BITSIZE_out132_PRECISION64_5) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429061 (UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_6) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429062 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in28_BITSIZE_out1192_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429063 (ui_or_node_FU_BITSIZE_in1160_BITSIZE_in2192_BITSIZE_out1192) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429064 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in28_BITSIZE_out164_PRECISION512_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429065 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_9) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429066 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in28_BITSIZE_out164_PRECISION512_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429067 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_8) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429435 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out11) 0.000000e+00        0.000000e+00        4.231127e-07        4.231127e-07          0.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429068 (ui_mul_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_PIPE_PARAMETER0_4) 3.439703e-04        2.913426e-04        1.465707e-04        7.818836e-04          8.6
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436 (multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429069 (ui_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_4) 1.668930e-05        6.579389e-06        4.406691e-06        2.767538e-05          0.3
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429120 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1480_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429121 (ui_shr_node_FU_BITSIZE_in164_BITSIZE_in26_BITSIZE_out132_PRECISION64_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429122 (UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429123 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1512_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429124 (ui_or_node_FU_BITSIZE_in1256_BITSIZE_in2224_BITSIZE_out1256) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429125 (ui_or_node_FU_BITSIZE_in1256_BITSIZE_in2288_BITSIZE_out1288) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429126 (ui_or_node_FU_BITSIZE_in1288_BITSIZE_in2320_BITSIZE_out1320) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429127 (ui_or_node_FU_BITSIZE_in1320_BITSIZE_in2352_BITSIZE_out1352) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429128 (ui_xor_node_FU_BITSIZE_in1352_BITSIZE_in2384_BITSIZE_out1384) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429070 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out132_3) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429129 (ui_xor_node_FU_BITSIZE_in1384_BITSIZE_in2416_BITSIZE_out1416) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429071 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in28_BITSIZE_out1224_PRECISION512_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429072 (ui_and_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_3) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429073 (ui_shr_node_FU_BITSIZE_in164_BITSIZE_in26_BITSIZE_out132_PRECISION64_4) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429074 (UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_5) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429075 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in28_BITSIZE_out1256_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429076 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in29_BITSIZE_out164_PRECISION512_7) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429077 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_7) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429078 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in29_BITSIZE_out164_PRECISION512_6) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429079 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_6) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028 (x_bambu_artificial_ParmMgr_Read_axis_modgen_BITSIZE_in11_BITSIZE_in210_BITSIZE_in3512_BITSIZE_in432_BITSIZE_out1512) 8.074745e-07        4.228381e-07        1.690721e-07        1.399385e-06          0.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429130 (ui_xor_node_FU_BITSIZE_in1416_BITSIZE_in2448_BITSIZE_out1448) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429131 (ui_xor_node_FU_BITSIZE_in1448_BITSIZE_in2480_BITSIZE_out1480) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429132 (ui_xor_node_FU_BITSIZE_in1480_BITSIZE_in2512_BITSIZE_out1512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501 (y_out_bambu_artificial_ParmMgr_Write_axis_modgen_BITSIZE_in11_BITSIZE_in210_BITSIZE_in3512_BITSIZE_in432) 8.111061e-07        4.167298e-07        1.620404e-07        1.389876e-06          0.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429133 (ui_xor_node_FU_BITSIZE_in1512_BITSIZE_in2192_BITSIZE_out1512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429136 (ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132) 2.949331e-07        6.668901e-07        1.681048e-06        2.642871e-06          0.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429137 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11) 4.653146e-07        2.308370e-07        1.593522e-06        2.289673e-06          0.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138 (multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429506 (ui_shr_node_FU_BITSIZE_in1224_BITSIZE_in28_BITSIZE_out132_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429080 (ui_mul_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_PIPE_PARAMETER0_3) 3.671653e-04        3.154792e-04        1.452379e-04        8.278824e-04          9.1
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429081 (ui_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_3) 1.800157e-05        7.120741e-06        4.466673e-06        2.958898e-05          0.3
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429082 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out132_2) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429083 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1288_PRECISION512_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429084 (ui_and_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_2) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429085 (ui_shr_node_FU_BITSIZE_in164_BITSIZE_in26_BITSIZE_out132_PRECISION64_3) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429086 (UUdata_converter_FU_BITSIZE_in132_BITSIZE_out132_4) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429087 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in29_BITSIZE_out1320_PRECISION512) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429088 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in29_BITSIZE_out164_PRECISION512_5) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030 (y_bambu_artificial_ParmMgr_Read_axis_modgen_BITSIZE_in11_BITSIZE_in210_BITSIZE_in3512_BITSIZE_in432_BITSIZE_out1512) 8.074681e-07        4.247121e-07        1.690721e-07        1.401252e-06          0.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429089 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_5) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429031 (UUdata_converter_FU_BITSIZE_in1512_BITSIZE_out164_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429032 (UUdata_converter_FU_BITSIZE_in1512_BITSIZE_out164_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429033 (ui_mul_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_PIPE_PARAMETER0_7) 3.560628e-04        3.059276e-04        1.454899e-04        8.074802e-04          8.9
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429034 (ui_add_node_FU_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164_7) 1.706402e-05        6.725205e-06        4.504157e-06        2.829338e-05          0.3
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429035 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_14) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429036 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in27_BITSIZE_out164_PRECISION512_1) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      MUX_33_multi_read_cond_FU_34_i0_0_0_0 (MUX2_GATE_BITSIZE_in11_BITSIZE_in21_BITSIZE_out11) 3.055028e-08        2.536352e-08        2.997888e-08        8.589267e-08          0.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429037 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_13) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429038 (ui_shr_node_FU_BITSIZE_in1512_BITSIZE_in27_BITSIZE_out164_PRECISION512_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429039 (UUdata_converter_FU_BITSIZE_in164_BITSIZE_out164_12) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+      MUX_35_reg_0_0_0_0 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_1) 0.000000e+00        0.000000e+00        6.645903e-07        6.645903e-07          0.0
+      MUX_35_reg_0_0_0_1 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_0) 4.318422e-07        8.002244e-08        9.785346e-07        1.490399e-06          0.0
+      mu_S_0 (SIMPLEJOIN_FU_BITSIZE_ops1_PORTSIZE_ops2) 2.251039e-06        1.822191e-07        4.027599e-07        2.836018e-06                0.0
+      fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429513 (ui_shl_node_FU_BITSIZE_in132_BITSIZE_in28_BITSIZE_out1224_PRECISION512_0) 0.000000e+00        0.000000e+00        0.000000e+00        0.000000e+00          N/A
+    Controller_i (controller_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj) 3.897348e-06        6.114220e-06        1.430543e-06        1.144211e-05          0.1
+1

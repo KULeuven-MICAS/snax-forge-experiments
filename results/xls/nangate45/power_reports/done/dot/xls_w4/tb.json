@@ -1,0 +1,90 @@
+{
+ "tb_version": 1,
+ "source": "xls",
+ "point": "done/dot/xls_w4",
+ "kernel": "dot",
+ "top": "dot",
+ "case": "xls",
+ "W": 4,
+ "clock": {
+  "port": "clk"
+ },
+ "reset": {
+  "port": "rst",
+  "active": "high",
+  "sync": true
+ },
+ "control": {
+  "kind": "xls_cfg",
+  "data": "_cfg_TDATA",
+  "valid": "_cfg_TVALID",
+  "ready": "_cfg_TREADY",
+  "bits": 64,
+  "fields": [
+   {
+    "name": "loop_count",
+    "bits": 32,
+    "from": "config"
+   },
+   {
+    "name": "len",
+    "bits": 32,
+    "from": "config"
+   }
+  ]
+ },
+ "streams": [
+  {
+   "arg": "A",
+   "xls_arg": "a",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 4,
+   "dtype": "int64",
+   "data": "_a_TDATA",
+   "valid": "_a_TVALID",
+   "ready": "_a_TREADY"
+  },
+  {
+   "arg": "B",
+   "xls_arg": "b",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 4,
+   "dtype": "int64",
+   "data": "_b_TDATA",
+   "valid": "_b_TVALID",
+   "ready": "_b_TREADY"
+  },
+  {
+   "arg": "out",
+   "xls_arg": "res",
+   "dir": "out",
+   "kind": "axis",
+   "lanes": 1,
+   "dtype": "int64",
+   "data": "_res_TDATA",
+   "valid": "_res_TVALID",
+   "ready": "_res_TREADY"
+  }
+ ],
+ "pins": [],
+ "sizes": {
+  "n64": {
+   "loop_count": 16,
+   "len": 16
+  },
+  "n512": {
+   "loop_count": 128,
+   "len": 128
+  },
+  "b64": {
+   "loop_count": 64,
+   "len": 64
+  },
+  "n2048": {
+   "loop_count": 512,
+   "len": 512
+  }
+ }
+}

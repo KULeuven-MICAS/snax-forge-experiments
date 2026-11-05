@@ -5,7 +5,7 @@ Report : Averaged Power
 	-nosplit
 Design : vecmul_dace
 Version: W-2024.09-SP5
-Date   : Thu Oct 29 10:18:49 2026
+Date   : Thu Nov  5 17:11:24 2026
 ****************************************
 
 
@@ -13,6 +13,6 @@ Date   : Thu Oct 29 10:18:49 2026
                                       Int                       Switch                    Leak                      Total
 Hierarchy                             Power                     Power                     Power                     Power                     %
 ------------------------------------------------------------------------------------------------------------------------------------------------------
-vecmul_dace                           2.110172e-04              2.305049e-04              8.981995e-05              5.313420e-04              100.0
-  mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64) 1.484366e-04        1.973702e-04        7.296089e-05        4.187676e-04         78.8
+vecmul_dace                           1.878909e-04              2.148953e-04              8.595845e-05              4.887446e-04              100.0
+  mul_64s_64s_64_1_1_U1 (vecmul_dace_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64) 1.466778e-04        1.982115e-04        7.338294e-05        4.182723e-04         85.6
 1

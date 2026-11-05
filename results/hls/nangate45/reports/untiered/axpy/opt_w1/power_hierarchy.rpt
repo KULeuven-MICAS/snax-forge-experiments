@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : axpy
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 20:11:57 2026
+Date   : Thu Nov  5 17:47:49 2026
 ****************************************
 
 
@@ -31,6 +31,6 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-axpy                                    144.756  368.845 1.94e+05  707.393 100.0
-  mul_64s_64s_64_1_1_U1 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64)  124.054  182.207 1.37e+05  443.385  62.7
+axpy                                    287.616  471.322 1.71e+05  930.010 100.0
+  mul_64s_64s_64_1_1_U1 (axpy_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64)  262.159  338.665 1.37e+05  737.476  79.3
 1

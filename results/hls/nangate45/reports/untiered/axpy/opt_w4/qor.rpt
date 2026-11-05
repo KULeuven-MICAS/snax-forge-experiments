@@ -1,19 +1,18 @@
 Information: Updating design information... (UID-85)
-Warning: Design 'axpy' contains 1 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
  
 ****************************************
 Report : qor
 Design : axpy
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 20:19:14 2026
+Date   : Thu Nov  5 17:48:20 2026
 ****************************************
 
 
   Timing Path Group 'clk'
   -----------------------------------
-  Levels of Logic:           75.00000
-  Critical Path Length:       5.55327
-  Critical Path Slack:        4.30570
+  Levels of Logic:           76.00000
+  Critical Path Length:       5.47174
+  Critical Path Slack:        4.36761
   Critical Path Clk Period:  10.00000
   Total Negative Slack:       0.00000
   No. of Violating Paths:     0.00000
@@ -27,37 +26,37 @@ Date   : Wed Oct 28 20:19:14 2026
   -----------------------------------
   Hierarchical Cell Count:          4
   Hierarchical Port Count:        768
-  Leaf Cell Count:              19200
-  Buf/Inv Cell Count:            1356
-  Buf Cell Count:                 545
-  Inv Cell Count:                 811
+  Leaf Cell Count:              17666
+  Buf/Inv Cell Count:            1347
+  Buf Cell Count:                 551
+  Inv Cell Count:                 796
   CT Buf/Inv Cell Count:            0
-  Combinational Cell Count:     18040
-  Sequential Cell Count:         1160
+  Combinational Cell Count:     17275
+  Sequential Cell Count:          391
   Macro Count:                      0
   -----------------------------------
 
 
   Area
   -----------------------------------
-  Combinational Area:     31365.92213
-  Noncombinational Area:   5245.51981
-  Buf/Inv Area:             866.89399
-  Total Buffer Area:        435.44199
-  Total Inverter Area:      431.45200
+  Combinational Area:     29930.58614
+  Noncombinational Area:   1768.10194
+  Buf/Inv Area:             863.70199
+  Total Buffer Area:        440.22999
+  Total Inverter Area:      423.47200
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:              36611.44194
-  Design Area:            36611.44194
+  Cell Area:              31698.68808
+  Design Area:            31698.68808
 
 
   Design Rules
   -----------------------------------
-  Total Number of Nets:         22773
-  Nets With Violations:             0
+  Total Number of Nets:         21249
+  Nets With Violations:             1
   Max Trans Violations:             0
-  Max Cap Violations:               0
+  Max Cap Violations:               1
   -----------------------------------
 
 
@@ -65,12 +64,12 @@ Date   : Wed Oct 28 20:19:14 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 2.12878
-  Logic Optimization:              32.41743
-  Mapping Optimization:            116.36731
+  Resource Sharing:                 2.01233
+  Logic Optimization:               9.38402
+  Mapping Optimization:            30.81055
   -----------------------------------------
-  Overall Compile Time:            283.20056
-  Overall Compile Wall Clock Time: 59.57637
+  Overall Compile Time:            114.51988
+  Overall Compile Wall Clock Time: 56.08986
 
   --------------------------------------------------------------------
 

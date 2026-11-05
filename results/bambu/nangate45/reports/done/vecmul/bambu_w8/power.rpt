@@ -1,0 +1,56 @@
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : p_Z6vecmulPK6ac_intILi512ELb0EES2_PS0_j
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 15:59:45 2026
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+Attributes
+----------
+i - Including register clock pin internal power
+
+
+  Cell Internal Power  = 1.110844 mW   (70%)
+  Net Switching Power  = 472.370422 uW   (30%)
+                         ---------
+Total Dynamic Power    = 1.583215 mW  (100%)
+
+Cell Leakage Power     =   1.3609 mW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
+black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
+clock_network  605.588013          0.000000          0.000000        605.588013  (  20.57%)  i
+register        42.365051         45.762920        1.276088e+05        215.737244
+                                                                                 (   7.33%)
+sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
+combinational  462.891052        426.608948        1.233285e+06        2.122785e+03
+                                                                                 (  72.10%)
+--------------------------------------------------------------------------------------------------
+Total          1.110844e+03 uW     472.371857 uW     1.360894e+06 nW     2.944111e+03 uW
+1

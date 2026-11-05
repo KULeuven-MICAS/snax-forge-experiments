@@ -3,7 +3,7 @@
 Report : area
 Design : relu_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:43:42 2026
+Date   : Thu Nov  5 18:23:42 2026
 ****************************************
 
 Library(s) Used:
@@ -11,21 +11,21 @@ Library(s) Used:
     NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
 
 Number of ports:                          171
-Number of nets:                           832
-Number of cells:                          731
-Number of combinational cells:            566
-Number of sequential cells:               163
+Number of nets:                           738
+Number of cells:                          637
+Number of combinational cells:            473
+Number of sequential cells:               162
 Number of macros/black boxes:               0
-Number of buf/inv:                        162
-Number of references:                      17
+Number of buf/inv:                        154
+Number of references:                      15
 
-Combinational area:                149.127170
-Buf/Inv area:                       24.281089
-Noncombinational area:             208.306169
+Combinational area:                122.339330
+Buf/Inv area:                       23.199745
+Noncombinational area:             207.028217
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                   357.433339
+Total cell area:                   329.367547
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,8 +36,8 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
                                   Total      Total    national  national   boxes   Design
 --------------------------------  ---------  -------  --------  ---------  ------  ---------
-relu_dace                          357.4333    100.0  149.1272   208.3062  0.0000  relu_dace
+relu_dace                          329.3675    100.0  122.3393   207.0282  0.0000  relu_dace
 --------------------------------  ---------  -------  --------  ---------  ------  ---------
-Total                                                 149.1272   208.3062  0.0000
+Total                                                 122.3393   207.0282  0.0000
 
 1

@@ -3,7 +3,7 @@
 Report : reference
 Design : vsum_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:02:04 2026
+Date   : Thu Nov  5 16:28:33 2026
 ****************************************
 
 Attributes:
@@ -19,18 +19,18 @@ Attributes:
 
 Reference          Library       Unit Area   Count    Total Area   Attributes
 -----------------------------------------------------------------------------
-AND2_X1            NanGate_15nm_OCL     0.294912       1     0.294912
-AOI21_X1           NanGate_15nm_OCL     0.294912       1     0.294912
-AOI22_X1           NanGate_15nm_OCL     0.344064      63    21.676032
+AND2_X1            NanGate_15nm_OCL     0.294912       3     0.884736
+AOI21_X1           NanGate_15nm_OCL     0.294912       2     0.589824
+AOI22_X1           NanGate_15nm_OCL     0.344064      32    11.010048
 BUF_X2             NanGate_15nm_OCL     0.245760       1     0.245760
 DFFSNQ_X1          NanGate_15nm_OCL     1.277952      68    86.900733 n
-INV_X1             NanGate_15nm_OCL     0.147456      70    10.321920
-NAND2_X1           NanGate_15nm_OCL     0.196608       6     1.179648
-NOR2_X1            NanGate_15nm_OCL     0.196608       6     1.179648
-NOR3_X1            NanGate_15nm_OCL     0.294912       1     0.294912
-OAI21_X1           NanGate_15nm_OCL     0.294912      35    10.321920
-OR2_X1             NanGate_15nm_OCL     0.294912       1     0.294912
-vsum_dace_vsum_dace_Pipeline_VITIS_LOOP_37_1   404.520957       1   404.520957 h, n
+INV_X1             NanGate_15nm_OCL     0.147456      69    10.174464
+NAND2_X1           NanGate_15nm_OCL     0.196608       5     0.983040
+NOR2_X1            NanGate_15nm_OCL     0.196608       5     0.983040
+NOR3_X1            NanGate_15nm_OCL     0.294912       2     0.589824
+OAI21_X1           NanGate_15nm_OCL     0.294912      33     9.732096
+OAI22_X1           NanGate_15nm_OCL     0.344064      31    10.665984
+vsum_dace_vsum_dace_Pipeline_VITIS_LOOP_37_1   290.095103       1   290.095103 h, n
 -----------------------------------------------------------------------------
-Total 12 references                                   537.526266
+Total 12 references                                   422.854653
 1

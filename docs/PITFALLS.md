@@ -53,6 +53,27 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** fixed in snax-forge (branch `ry/span1-read`, commit `2741b46`, KULeuven-MICAS/snax-forge#46): `SerialAccumulate.scala` writes the update as `acc := Mux(first && lane === 0, 0, acc) + x`, the adder's acc input cleared on a restart and the lane selected once; at 2 lanes firtool now emits `acc <= (io_lane ? acc : 64'h0) + (io_lane ? io_in_1 : io_in_0)`, with no branch on `io_lane`, and dot_5 and dot_6 at W = 2 synthesize on both technologies. If DC dies with this error id on other RTL, look for the same shape (a mux inside arithmetic under a branch on its own select) and try the block alone, then W-2024.09-SP5.
 - **Found in:** `results/forge/runs/2026-10-31_syn1_r1.md`; cause and fix in `results/forge/runs/2026-10-31_syn1_r1b.md`.
 
+### DC8. Bambu's declaration initializers are dropped (VER-708)
+
+- **Symptom:** on a Bambu point DC warns five times `The construct 'declaration initial assignment' is not supported in synthesis; it is ignored. (VER-708)`: `register_SE`'s `reg reg_out1 = 0` (`panda_libtech.v:78`), `SIMPLEJOIN_FU`'s `current = 0` and `started = 0` (424, 425), `register_AR`'s `reg_out1 = 0` (534) and the controller's `present_state = S_9` (`dot.v:1040`). No error, and the row is ok.
+- **Cause:** Bambu writes power-on values as Verilog initializers; DC ignores them, so the netlist's flops start at X. The controller's `present_state` is also reset by `reset` (active low); the beat registers (`register_SE`) have no reset, as Vitis's data registers (Q1).
+- **Fix or check:** nothing for synthesis (an ASIC has no RTL power-on state). For gate-level simulation (R5), the same as Q1: `vopt +initreg+0` starts every flop at 0, as the initializers do; check that the bambu power source keeps it, and that its TB holds `reset` low for a few cycles first.
+- **Found in:** `results/runs/2026-11-05_hsyn1_r4.md`.
+
+### DC9. A Bambu point has fewer flops than its register instances: DC removes unloaded registers (OPT-1207)
+
+- **Symptom:** `done/dot/bambu_w8` has `seq_cells` 1264 on both technologies, against 1347 bits of `register_*` instances in `dot.v` (1360 with the controller's state, the stream modules' and `SIMPLEJOIN_FU`'s flags). No error.
+- **Cause:** DC removes 96 register bits with `Information: The register '...' will be removed. (OPT-1207)`: `reg_3` and `reg_5` (32 bits each) drive the address input (`in2`) of the A and B AXI-stream read modules, which a stream does not use, and `reg_0` (32 bits) only feeds its own increment and select back into itself. 1360 - 96 = 1264.
+- **Fix or check:** compare a Bambu point's `seq_cells` with the RTL's register bits minus the bits in `logs/dc_shell.log`'s OPT-1207 lines (each line is printed twice there: count the unique ones). A flop count from the RTL alone overstates Bambu's registers.
+- **Found in:** `results/runs/2026-11-05_hsyn1_r4.md`.
+
+### DC10. Vitis's flops: the elaborator trims bits and compile removes constants, with no OPT-1207
+
+- **Symptom:** Vitis's dace points have 1 to 19 fewer `seq_cells` than the flop bits of their Verilog (every `<=` target's declared width): vecadd `dace_w16` 1163 against 1144, `dace_w1` 164 against 163. No OPT-1207 line.
+- **Cause:** two steps. The elaborator (Presto) infers some registers narrower than declared, with no message: the `Inferred memory devices` tables in `dc_shell.log` give `loop_count_preg_reg` 31 bits for a 32-bit reg (1 to 5 bits per point). Then compile removes constant registers, `Information: The register '...' is a constant and will be removed. (OPT-1206)` (2 to 14 per point; Bambu's removals are unloaded registers, OPT-1207, DC9). Verilog bits - trimmed bits - OPT-1206 - OPT-1207 = `seq_cells` on all 31 Vitis points of tier done; the opt points lose none.
+- **Fix or check:** to compare `seq_cells` with an HLS tool's RTL, sum the `Inferred memory devices` widths and subtract the unique OPT-1206 and OPT-1207 lines. For Bambu this table does not work: it lists each library design once (`register_SE_BITSIZE_in132_...`), not once per instance; use the instance parameters (DC9).
+- **Found in:** `results/runs/2026-11-05_hsyn1_r6.md`.
+
 ## Libraries
 
 ### LIB1. nangate15's flops all have async reset or set
@@ -138,6 +159,21 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** `logic clk = 1'b0` is an X -> 0 change at time 0, so `@(negedge clk)` fires at time 0; axpy opt's netlist drives `y_out_TVALID` = 1 while in reset (with `+initreg+0`). A sink that samples whenever TVALID = 1 takes that as a beat, and every later beat is off by one.
 - **Fix or check:** count beats only once reset is released (`rst_n === 1`), as `sim/tb/axis_sink.sv` does.
 - **Found in:** `2026-10-29_pwr_tasks.md`.
+- **Also:** Bambu's `done/dot/bambu_w8` on nangate15 with a random register start (Q9) has `out_TVALID` = 1 before the first clock edge (a flop's random value); neither Bambu nor XLS raises TVALID in reset with `+initreg+0` (HSYN1 R5, `results/runs/2026-11-05_hsyn1_r5.md`). The same sinks handle it.
+
+### Q8. nangate45's flops start with Q and QN both 0 under `+initreg+0`
+
+- **Symptom:** before the first clock edge, XLS's `done/dot/xls_w16` on nangate45 drives `_res_TDATA` = `0000200000000000` with every register at 0; after the first edge it is 0.
+- **Cause** (most likely; not traced net by net): nangate45's model file writes a flop as a behavioral module with two regs, `Q` and `QN` (`output reg Q, QN`, DFFR_X1). `+initreg+0` sets both to 0, so QN is not ~Q until the first edge loads them; logic that uses a flop's QN sees the wrong value for that half cycle. A random start (Q9) sets them independently too. nangate15's flops are UDPs with one state, `QN` a `not` of it.
+- **Fix or check:** none needed: every TB holds reset for 5 cycles, so every flop has been clocked long before dumping starts. A TB that samples outputs before the first clock edge must not trust them on nangate45.
+- **Found in:** `results/runs/2026-11-05_hsyn1_r5.md`.
+
+### Q9. A random register start in Questa 2022.4: `vopt +initreg=ru` and `vsim +initreg+<seed>`
+
+- **Symptom:** none by itself; the option is easy to get wrong. `vopt +initreg+0` (the default here) sets every variable and sequential UDP to 0. `vopt +initreg` with no value and no spec prepares 4-state (`r`), 2-state (`b`), enum (`e`) and UDP (`u`) variables for randomization, the TB's own `bit` and `int` flags and counters included.
+- **Cause:** the spec selects the variable kinds (vopt -help: `+initreg[=<spec>][+0|1|X|Z]`); the seed is a vsim option (`+initreg+<seed>`), not vopt's.
+- **Fix or check:** `sim/pwr.py run --initreg-seed N` uses `vopt +initreg=ru` (4-state regs: nangate45's behavioral flops; UDPs: nangate15's) and `vsim +initreg+N`; the sequencers give every flag an initial value. Check that it took: the outputs fed by unreset registers differ from 0 before the first edge (Bambu's `out_TDATA` = `10c0e48981e32dca` on nangate45 at seed 1). It is a check, never the default, and writes nothing to `results/`.
+- **Found in:** `results/runs/2026-11-05_hsyn1_r5.md`.
 
 ## vcd2saif
 
@@ -185,6 +221,7 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** the setup is the same in both tools (netlist, loads, constraints, leakage equal). PT is the reference tool for energy and the setup check is a diagnostic that never fails a point (X25, which replaces X10's tolerances: 2.5 % on nangate15's combinational group, 0.1 % elsewhere); its differences go into the run note.
 - **Found in:** `2026-10-29_pwr_r1.md` (setup-check).
 - **On snax-forge's wrapper** (`pwr setup-check --source forge`, `done/vecadd/forge_w4`, SYN1 R2): nangate45 agrees within 0.02 % in every group; nangate15's register group is -0.55 % (switching -1.49 %, 1.92299 against 1.95198 µW; internal -0.15 %), over its 0.1 %, and combinational +1.17 %, within 2.5 %. The activity is the same in both tools; holding `rst_ni` static changes nothing (the flops' asynchronous reset is not it); a few register-driven nets have up to 1.5 % less load in PT (`_ctrl_io_groups_0_status[0]` 35.34 against 35.88 fF). Only nangate15 has `rise/fall_capacitance_range` (338 entries, none on nangate45), the same switching difference this entry found on NAND2/NOR2, here on the flops' output nets. Why the register group differs, checked on `dot/forge5_w4` (2026-11-01): the two tools add up a net's pin load differently on nangate15's `rise/fall_capacitance_range`. PT takes the larger of the sum of the load pins' rise-range upper bounds and the sum of their fall-range upper bounds; DC sums, pin by pin, the larger of the two upper bounds (it matches DC's net load on 227 of the 227 flop nets DC's flat report names), so PT's load is at most DC's and lower where the pins of a net disagree (`io_status[0]`: 6.091 against 6.600 fF). nangate45 has no ranges. Settled in X25 (no tolerance; PT is the reference, the register group is 1.3 % to 14 % of e_dyn on these points). Found in `results/forge/runs/2026-10-31_syn1_r2.md`. SYN1 R3 on nangate15: `done/dot/forge5_w4` register -1.08 %, combinational +2.21 %; `done/vsum/forge_w8` register -0.25 %, combinational +1.79 %; the HLS point `done/vecadd/opt_w8` again register -0.08 %, combinational +1.95 % (as in `2026-10-29_pwr_r1.md`), so the register gap is the forge netlists' (`results/forge/runs/2026-11-01_syn1_r3.md`).
+- **On Bambu and XLS** (`pwr setup-check --source bambu|xls`, HSYN1 R5): nangate45 within 0.03 % (Bambu register -0.026 %) and 0.005 % in every group; nangate15 `done/dot/bambu_w8` register -0.91 %, combinational +2.22 %; `done/dot/xls_w16` register -0.45 %, combinational +2.00 %; clock and leakage equal. The same pattern as Vitis and forge (`results/runs/2026-11-05_hsyn1_r5.md`).
 
 ### PT6. PT counts floating port nets of a constant output as not annotated
 
@@ -216,6 +253,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** it is put on PATH from `~/.bashrc`, which a non-interactive shell may not read; earlier runs used Vivado's `lmutil`.
 - **Fix or check:** set `LMUTIL` to the binary (Questa's: `/esat/micas-data/software/Mentor/questasim_2022.4/linux_x86_64/lmutil`).
 - **Found in:** `2026-10-28_step0_libs.md`, `2026-10-29_pwr_step0.md` (Tools).
+
+### L4. `compile_ultra` needs a DC-Expert licence as well as Design-Compiler
+
+- **Symptom:** with J DC runs sized from the free Design-Compiler licences alone (9), some runs end with `Error: All 'DC-Expert' licenses are in use. (SEC-50)` at `compile_ultra`; DC still writes its reports, of an empty design: `area.rpt` with a total cell area of 0. Before commit `c44ac94` syn.py took such a row as ok (area 0, slack 9.88 ns, errors 1) after its licence retry also failed.
+- **Cause:** `compile_ultra` checks out DC-Expert besides Design-Compiler; both have 10 licences on 1709@licserv, used by other people independently. LICENCE_ERROR matched the line and the run was retried once (X17), but read_run failed a row only when the area report was missing.
+- **Fix or check:** J = min(free Design-Compiler, free DC-Expert) at each batch's start (`lmutil lmstat -f Design-Compiler`, `-f DC-Expert`); since `c44ac94` syn.py fails a row with a licence error or an area of 0 whatever its reports say.
+- **Found in:** `results/runs/2026-11-05_hsyn1_r6.md`.
 
 ## Environment
 

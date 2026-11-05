@@ -3,7 +3,7 @@
 Report : area
 Design : dot
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:11:32 2026
+Date   : Thu Nov  5 15:35:47 2026
 ****************************************
 
 Library(s) Used:
@@ -11,21 +11,21 @@ Library(s) Used:
     NangateOpenCellLibrary (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db)
 
 Number of ports:                          782
-Number of nets:                         12128
-Number of cells:                         9901
-Number of combinational cells:           9313
-Number of sequential cells:               586
+Number of nets:                         11534
+Number of cells:                         9317
+Number of combinational cells:           9050
+Number of sequential cells:               264
 Number of macros/black boxes:               0
-Number of buf/inv:                        729
-Number of references:                      29
+Number of buf/inv:                        790
+Number of references:                      26
 
-Combinational area:              15909.992076
-Buf/Inv area:                      443.687998
-Noncombinational area:            2649.891904
+Combinational area:              15300.586083
+Buf/Inv area:                      475.341999
+Noncombinational area:            1193.807957
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                 18559.883980
+Total cell area:                 16494.394040
 Total area:                 undefined
 
 Hierarchical area distribution
@@ -36,10 +36,10 @@ Hierarchical area distribution
 Hierarchical cell                 Absolute    Percent  Combi-      Noncombi-  Black-
                                   Total       Total    national    national   boxes   Design
 --------------------------------  ----------  -------  ----------  ---------  ------  ------------------------------------------------------------------------------
-dot                               18559.8840    100.0   2059.3720  2649.8919  0.0000  dot
-mul_64s_64s_64_1_1_U1              6925.3100     37.3   6925.3100     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
-mul_64s_64s_64_1_1_U2              6925.3100     37.3   6925.3100     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
+dot                               16494.3940    100.0   1450.4980  1193.8080  0.0000  dot
+mul_64s_64s_64_1_1_U1              6925.0440     42.0   6925.0440     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1
+mul_64s_64s_64_1_1_U2              6925.0440     42.0   6925.0440     0.0000  0.0000  dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0
 --------------------------------  ----------  -------  ----------  ---------  ------  ------------------------------------------------------------------------------
-Total                                                  15909.9921  2649.8919  0.0000
+Total                                                  15300.5861  1193.8080  0.0000
 
 1

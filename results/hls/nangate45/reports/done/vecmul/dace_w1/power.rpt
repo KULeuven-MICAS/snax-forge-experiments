@@ -4,7 +4,7 @@ Report : power
         -analysis_effort low
 Design : vecmul_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 19:38:37 2026
+Date   : Thu Nov  5 15:42:08 2026
 ****************************************
 
 
@@ -31,12 +31,12 @@ Attributes
 i - Including register clock pin internal power
 
 
-  Cell Internal Power  = 125.532295 uW   (85%)
-  Net Switching Power  = 22.757483 uW   (15%)
+  Cell Internal Power  = 587.007263 uW   (62%)
+  Net Switching Power  = 361.853455 uW   (38%)
                          ---------
-Total Dynamic Power    = 148.289780 uW  (100%)
+Total Dynamic Power    = 948.860718 uW  (100%)
 
-Cell Leakage Power     = 172.2420 uW
+Cell Leakage Power     = 165.4465 uW
 
 
                  Internal         Switching           Leakage            Total
@@ -45,12 +45,12 @@ Power Group      Power            Power               Power              Power  
 io_pad           0.000000          0.000000          0.000000          0.000000  (   0.00%)
 memory           0.000000          0.000000          0.000000          0.000000  (   0.00%)
 black_box        0.000000          0.000000          0.000000          0.000000  (   0.00%)
-clock_network  100.127434          0.000000          0.000000        100.127434  (  31.24%)  i
-register         5.000778          2.590192        1.783228e+04         25.423325
-                                                                                 (   7.93%)
+clock_network   76.920876          0.000000          0.000000         76.920876  (   6.90%)  i
+register         5.018784          2.908746        1.276684e+04         20.694399
+                                                                                 (   1.86%)
 sequential       0.000000          0.000000          0.000000          0.000000  (   0.00%)
-combinational   20.404060         20.167282        1.544097e+05        194.981064
-                                                                                 (  60.83%)
+combinational  505.067993        358.944611        1.526796e+05        1.016692e+03
+                                                                                 (  91.24%)
 --------------------------------------------------------------------------------------------------
-Total          125.532272 uW      22.757475 uW     1.722420e+05 nW     320.531830 uW
+Total          587.007629 uW     361.853363 uW     1.654465e+05 nW     1.114307e+03 uW
 1

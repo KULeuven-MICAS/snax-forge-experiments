@@ -3,7 +3,7 @@
 Report : reference
 Design : vecadd_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 21:20:19 2026
+Date   : Thu Nov  5 16:19:31 2026
 ****************************************
 
 Attributes:
@@ -19,21 +19,18 @@ Attributes:
 
 Reference          Library       Unit Area   Count    Total Area   Attributes
 -----------------------------------------------------------------------------
-AND2_X1            NanGate_15nm_OCL     0.294912       3     0.884736
-AOI21_X1           NanGate_15nm_OCL     0.294912      14     4.128768
+AND2_X1            NanGate_15nm_OCL     0.294912       2     0.589824
+AOI21_X1           NanGate_15nm_OCL     0.294912      15     4.423680
 AOI22_X1           NanGate_15nm_OCL     0.344064      89    30.621696
-BUF_X1             NanGate_15nm_OCL     0.245760       1     0.245760
-BUF_X2             NanGate_15nm_OCL     0.245760       1     0.245760
-DFFSNQ_X1          NanGate_15nm_OCL     1.277952      65    83.066877 n
-INV_X1             NanGate_15nm_OCL     0.147456      81    11.943936
-NAND2_X1           NanGate_15nm_OCL     0.196608      19     3.735552
-NOR2_X1            NanGate_15nm_OCL     0.196608      20     3.932160
+DFFSNQ_X1          NanGate_15nm_OCL     1.277952      95   121.405436 n
+INV_X1             NanGate_15nm_OCL     0.147456     100    14.745601
+NAND2_X1           NanGate_15nm_OCL     0.196608      20     3.932160
+NOR2_X1            NanGate_15nm_OCL     0.196608      19     3.735552
 NOR3_X1            NanGate_15nm_OCL     0.294912       1     0.294912
-NOR4_X1            NanGate_15nm_OCL     0.344064       2     0.688128
-OAI21_X1           NanGate_15nm_OCL     0.294912      16     4.718592
-OAI22_X1           NanGate_15nm_OCL     0.344064       1     0.344064
+OAI21_X1           NanGate_15nm_OCL     0.294912      46    13.565952
+OAI22_X1           NanGate_15nm_OCL     0.344064       3     1.032192
 XNOR2_X1           NanGate_15nm_OCL     0.442368       1     0.442368
 vecadd_dace_vecadd_dace_Pipeline_VITIS_LOOP_19_1   489.062400       1   489.062400 h, n
 -----------------------------------------------------------------------------
-Total 15 references                                   634.355710
+Total 12 references                                   683.851773
 1

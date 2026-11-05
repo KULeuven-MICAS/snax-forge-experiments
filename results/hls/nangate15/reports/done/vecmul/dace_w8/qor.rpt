@@ -1,26 +1,25 @@
 Information: Updating design information... (UID-85)
-Warning: Design 'vecmul_dace' contains 2 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
  
 ****************************************
 Report : qor
 Design : vecmul_dace
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 21:41:56 2026
+Date   : Thu Nov  5 16:26:24 2026
 ****************************************
 
 
   Timing Path Group 'clk'
   -----------------------------------
-  Levels of Logic:           78.00000
-  Critical Path Length:     739.67731
-  Critical Path Slack:     9150.32227
+  Levels of Logic:           80.00000
+  Critical Path Length:     723.18921
+  Critical Path Slack:     9158.27246
   Critical Path Clk Period:
                           10000.00000
   Total Negative Slack:       0.00000
   No. of Violating Paths:     0.00000
   Worst Hold Violation:      -9.24144
-  Total Hold Violation:   -3670.87744
-  No. of Hold Violations:   893.00000
+  Total Hold Violation:    -835.55298
+  No. of Hold Violations:   124.00000
   -----------------------------------
 
 
@@ -28,34 +27,34 @@ Date   : Wed Oct 28 21:41:56 2026
   -----------------------------------
   Hierarchical Cell Count:         11
   Hierarchical Port Count:       4706
-  Leaf Cell Count:              41942
-  Buf/Inv Cell Count:            4715
-  Buf Cell Count:                 583
-  Inv Cell Count:                4132
+  Leaf Cell Count:              40676
+  Buf/Inv Cell Count:            4473
+  Buf Cell Count:                 914
+  Inv Cell Count:                3559
   CT Buf/Inv Cell Count:            0
-  Combinational Cell Count:     40794
-  Sequential Cell Count:         1148
+  Combinational Cell Count:     40040
+  Sequential Cell Count:          636
   Macro Count:                      0
   -----------------------------------
 
 
   Area
   -----------------------------------
-  Combinational Area:     18278.89189
-  Noncombinational Area:   1467.08885
-  Buf/Inv Area:             752.56629
-  Total Buffer Area:        143.27808
-  Total Inverter Area:      609.28821
+  Combinational Area:     18094.12952
+  Noncombinational Area:    812.77744
+  Buf/Inv Area:             749.42056
+  Total Buffer Area:        224.62463
+  Total Inverter Area:      524.79592
   Macro/Black Box Area:       0.00000
   Net Area:                   0.00000
   -----------------------------------
-  Cell Area:              19745.98074
-  Design Area:            19745.98074
+  Cell Area:              18906.90697
+  Design Area:            18906.90697
 
 
   Design Rules
   -----------------------------------
-  Total Number of Nets:         50692
+  Total Number of Nets:         49426
   Nets With Violations:             0
   Max Trans Violations:             0
   Max Cap Violations:               0
@@ -66,19 +65,19 @@ Date   : Wed Oct 28 21:41:56 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 1.31848
-  Logic Optimization:              75.41631
-  Mapping Optimization:            193.89868
+  Resource Sharing:                 1.26489
+  Logic Optimization:              23.85744
+  Mapping Optimization:            62.15149
   -----------------------------------------
-  Overall Compile Time:            568.19159
-  Overall Compile Wall Clock Time: 125.50422
+  Overall Compile Time:            258.16116
+  Overall Compile Wall Clock Time: 128.70137
 
   --------------------------------------------------------------------
 
   Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
 
 
-  Design (Hold)  WNS: 9.24144  TNS: 3670.87744  Number of Violating Paths: 893
+  Design (Hold)  WNS: 9.24144  TNS: 835.55298  Number of Violating Paths: 124
 
   --------------------------------------------------------------------
 

@@ -3,7 +3,7 @@
 Report : area
 Design : axpy
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:18:35 2026
+Date   : Thu Nov  5 18:18:39 2026
 ****************************************
 
 Library(s) Used:
@@ -11,20 +11,20 @@ Library(s) Used:
     NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
 
 Number of ports:                         1646
-Number of nets:                         28852
-Number of cells:                        23384
-Number of combinational cells:          22219
-Number of sequential cells:              1160
+Number of nets:                         26506
+Number of cells:                        21042
+Number of combinational cells:          20646
+Number of sequential cells:               391
 Number of macros/black boxes:               0
-Number of buf/inv:                       3210
-Number of references:                      23
+Number of buf/inv:                       2395
+Number of references:                      21
 
-Combinational area:               9824.551111
-Buf/Inv area:                      514.326540
-Noncombinational area:            1482.424269
+Combinational area:               9436.004549
+Buf/Inv area:                      392.675336
+Noncombinational area:             499.679215
 Macro/Black Box area:                0.000000
 Net Interconnect area:      undefined  (No wire load specified)
 
-Total cell area:                 11306.975380
+Total cell area:                  9935.683764
 Total area:                 undefined
 1

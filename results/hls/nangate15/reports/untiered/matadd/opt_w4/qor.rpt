@@ -4,7 +4,7 @@ Information: Updating design information... (UID-85)
 Report : qor
 Design : matadd
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:36:53 2026
+Date   : Thu Nov  5 18:23:29 2026
 ****************************************
 
 
@@ -65,12 +65,12 @@ Date   : Wed Oct 28 22:36:53 2026
 
   Compile CPU Statistics
   -----------------------------------------
-  Resource Sharing:                 0.19647
-  Logic Optimization:               2.76468
-  Mapping Optimization:             8.17999
+  Resource Sharing:                 0.24268
+  Logic Optimization:               0.65819
+  Mapping Optimization:             2.04059
   -----------------------------------------
-  Overall Compile Time:            22.82627
-  Overall Compile Wall Clock Time:  6.92693
+  Overall Compile Time:             8.18940
+  Overall Compile Wall Clock Time:  6.61990
 
   --------------------------------------------------------------------
 

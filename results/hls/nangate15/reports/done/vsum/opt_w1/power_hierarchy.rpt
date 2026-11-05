@@ -5,7 +5,7 @@ Report : power
         -analysis_effort low
 Design : vsum
 Version: Y-2026.03-SP2
-Date   : Wed Oct 28 22:02:21 2026
+Date   : Thu Nov  5 16:29:35 2026
 ****************************************
 
 
@@ -31,5 +31,5 @@ Power-specific unit information :
                                        Switch   Int      Leak     Total
 Hierarchy                              Power    Power    Power    Power    %
 --------------------------------------------------------------------------------
-vsum                                   5.53e-03 5.43e-02 2.49e+07 8.48e-02 100.0
+vsum                                   6.19e-03 5.58e-02 2.44e+07 8.64e-02 100.0
 1
