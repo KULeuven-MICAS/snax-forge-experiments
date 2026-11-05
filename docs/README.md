@@ -18,9 +18,8 @@ Vitis-side nuances (pragmas, ports, the cases, cosim) live in hls-exercises' [`d
 | `sim/probe/` | Power step 0, by hand, on `done/vecadd/opt_w8`: the TB, the vsim do-file, `pt_power.tcl` (PrimePower), `dc_readback.tcl` (DC on the same netlist, used by `pwr setup-check`), `make_vectors.py`, `saif_compare.py`, `pwr_table.py`. Kept unchanged. |
 | `results/hls/<tech>/` | The results per technology (`nangate45`, `nangate15`): `synth_dc.csv`, `synth_dc_modules.csv`, and per point the eight reports in `KEPT_REPORTS` under `reports/<tier>/<kernel>/<point>/` (`syn/syn.py`); `power_pt.csv`, `power_pt_modules.csv` and `power_reports/` (`sim/pwr.py`, X20). |
 | `results/hls/runs/` | Run notes, one per run, named `<date>_<what>.md`, with a folder of the same name when the note keeps reports or logs. Notes before 28 Oct 2026 are on gscl45nm (retired, X1). |
-| `results/hls/` | hls-exercises' bench summaries: `hls_cycles.csv`, `hls_loops.csv`, `forge_cycles.csv`, `report_<tier>.md`. `forge_cycles.csv` is superseded by `results/forge_vs_hls.md` and stays unchanged. |
+| `results/hls/` | hls-exercises' bench summaries: `hls_cycles.csv`, `hls_loops.csv`, `forge_cycles.csv`, `report_<tier>.md`. `forge_cycles.csv` stays unchanged. |
 | `results/forge/<tech>/`, `results/forge/runs/` | snax-forge's points (X21 to X23): the same files as `results/hls/<tech>/`, with `recipe`, `W` and `snax_forge_commit`; SYN1's run notes. |
-| `results/forge_vs_hls.md` | SYN1's joined table at n2048 (X24), and `forge_vs_hls_<tech>.csv`, written by `report/forge_vs_hls.py` (`pixi run table`). |
 
 ## Sibling repos
 

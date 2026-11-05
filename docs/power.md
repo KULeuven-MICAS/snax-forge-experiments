@@ -19,7 +19,6 @@ pixi run pwr run 'done/vecadd/*_w8' --tech nangate45 --size n512         # at a 
 pixi run pwr run 'done/*/*_w*' --tech nangate45 --size n2048             # SYN1: one task of N = 2048 (tier done)
 pixi run pwr run done/vecadd/opt_w8 --tech nangate45 --stim forge --size n512   # data.h, validation only
 pixi run pwr run 'done/*/*' 'untiered/*/*' --tech nangate45 --size all   # whole tasks: every size in sizes.txt
-pixi run python sim/report_energy.py                                     # results/hls/report_energy.md from power_pt.csv
 pixi run pwr summary 'done/vecadd/*' --tech nangate45                    # print power_pt.csv
 pixi run pwr tbjson done/dot/forge5_w4 --source forge                    # a forge point's tb.json
 pixi run pwr run 'done/*/forge*' --source forge --tech nangate45 --size n2048
