@@ -53,6 +53,20 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** fixed in snax-forge (branch `ry/span1-read`, commit `2741b46`, KULeuven-MICAS/snax-forge#46): `SerialAccumulate.scala` writes the update as `acc := Mux(first && lane === 0, 0, acc) + x`, the adder's acc input cleared on a restart and the lane selected once; at 2 lanes firtool now emits `acc <= (io_lane ? acc : 64'h0) + (io_lane ? io_in_1 : io_in_0)`, with no branch on `io_lane`, and dot_5 and dot_6 at W = 2 synthesize on both technologies. If DC dies with this error id on other RTL, look for the same shape (a mux inside arithmetic under a branch on its own select) and try the block alone, then W-2024.09-SP5.
 - **Found in:** `results/forge/runs/2026-10-31_syn1_r1.md`; cause and fix in `results/forge/runs/2026-10-31_syn1_r1b.md`.
 
+### DC8. Bambu's declaration initializers are dropped (VER-708)
+
+- **Symptom:** on a Bambu point DC warns five times `The construct 'declaration initial assignment' is not supported in synthesis; it is ignored. (VER-708)`: `register_SE`'s `reg reg_out1 = 0` (`panda_libtech.v:78`), `SIMPLEJOIN_FU`'s `current = 0` and `started = 0` (424, 425), `register_AR`'s `reg_out1 = 0` (534) and the controller's `present_state = S_9` (`dot.v:1040`). No error, and the row is ok.
+- **Cause:** Bambu writes power-on values as Verilog initializers; DC ignores them, so the netlist's flops start at X. The controller's `present_state` is also reset by `reset` (active low); the beat registers (`register_SE`) have no reset, as Vitis's data registers (Q1).
+- **Fix or check:** nothing for synthesis (an ASIC has no RTL power-on state). For gate-level simulation (R5), the same as Q1: `vopt +initreg+0` starts every flop at 0, as the initializers do; check that the bambu power source keeps it, and that its TB holds `reset` low for a few cycles first.
+- **Found in:** `results/runs/2026-11-05_hsyn1_r4.md`.
+
+### DC9. A Bambu point has fewer flops than its register instances: DC removes unloaded registers (OPT-1207)
+
+- **Symptom:** `done/dot/bambu_w8` has `seq_cells` 1264 on both technologies, against 1347 bits of `register_*` instances in `dot.v` (1360 with the controller's state, the stream modules' and `SIMPLEJOIN_FU`'s flags). No error.
+- **Cause:** DC removes 96 register bits with `Information: The register '...' will be removed. (OPT-1207)`: `reg_3` and `reg_5` (32 bits each) drive the address input (`in2`) of the A and B AXI-stream read modules, which a stream does not use, and `reg_0` (32 bits) only feeds its own increment and select back into itself. 1360 - 96 = 1264.
+- **Fix or check:** compare a Bambu point's `seq_cells` with the RTL's register bits minus the bits in `logs/dc_shell.log`'s OPT-1207 lines (each line is printed twice there: count the unique ones). A flop count from the RTL alone overstates Bambu's registers.
+- **Found in:** `results/runs/2026-11-05_hsyn1_r4.md`.
+
 ## Libraries
 
 ### LIB1. nangate15's flops all have async reset or set

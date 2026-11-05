@@ -1,0 +1,2 @@
+point,tech,clock_ns,path,design,area_um2,comb_um2,seq_um2,bbox_um2,dyn_power_uw,leak_power_uw
+done/dot/xls_w16,nangate15,10,dot,dot,36357.8335,36153.3612,204.4723,0.0000,1890,1200

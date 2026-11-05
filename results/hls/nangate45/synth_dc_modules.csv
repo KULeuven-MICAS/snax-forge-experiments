@@ -1,0 +1,10 @@
+point,tech,clock_ns,path,design,area_um2,comb_um2,seq_um2,bbox_um2,dyn_power_uw,leak_power_uw
+done/dot/opt_w8,nangate45,10,dot,dot,60079.0262,3195.4580,1483.2159,0.0000,7480,1230
+done/dot/opt_w8,nangate45,10,mul_64s_64s_64_1_1_U1,dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_7,6925.0440,6925.0440,0.0000,0.0000,866.122,143
+done/dot/opt_w8,nangate45,10,mul_64s_64s_64_1_1_U2,dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_6,6925.0440,6925.0440,0.0000,0.0000,862.803,143
+done/dot/opt_w8,nangate45,10,mul_64s_64s_64_1_1_U3,dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_5,6925.0440,6925.0440,0.0000,0.0000,862.404,143
+done/dot/opt_w8,nangate45,10,mul_64s_64s_64_1_1_U4,dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_4,6925.0440,6925.0440,0.0000,0.0000,864.737,143
+done/dot/opt_w8,nangate45,10,mul_64s_64s_64_1_1_U5,dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_3,6925.0440,6925.0440,0.0000,0.0000,864.904,143
+done/dot/opt_w8,nangate45,10,mul_64s_64s_64_1_1_U6,dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_2,6925.0440,6925.0440,0.0000,0.0000,862.302,143
+done/dot/opt_w8,nangate45,10,mul_64s_64s_64_1_1_U7,dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_1,6925.0440,6925.0440,0.0000,0.0000,864.239,143
+done/dot/opt_w8,nangate45,10,mul_64s_64s_64_1_1_U8,dot_mul_64s_64s_64_1_1_ID1_NUM_STAGE1_din0_WIDTH64_din1_WIDTH64_dout_WIDTH64_0,6925.0440,6925.0440,0.0000,0.0000,863.84,143
