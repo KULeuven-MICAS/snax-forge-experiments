@@ -399,6 +399,7 @@ def stimulus(tb: dict, size: str, stim: str, seed: int) -> dict:
     beats = cfg["loop_count"]
     ins_s = [s for s in tb["streams"] if s["dir"] == "in"]
     data_pins = [p["port"] for p in tb["pins"] if p["from"].startswith("data:")]
+    data_pins += [f["name"] for f in tb["control"].get("fields", []) if f["from"].startswith("data:")]   # xls cfg
     pins = dict(cfg)
     if stim == "rand64":
         rng = np.random.default_rng(seed)
@@ -696,6 +697,8 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         plus += [f"+{s['arg']}_HEX={f}", f"+{s['arg']}_BEATS={len(x) // s['lanes']}"]
     for p in tb["pins"]:
         plus.append(f"+PIN_{p['port']}={st['pins'][p['port']] & ((1 << p['bits']) - 1):x}")
+    if tb["control"]["kind"] == "xls_cfg":      # the one cfg beat, fields packed first-high (X44)
+        plus.append(f"+CFG={src().cfg_word(tb, st['pins']):x}")
     (rdir / "stim" / "pins.json").write_text(json.dumps(st["pins"], indent=1) + "\n")
     info["untoggled_bits"] = st["untoggled"]
     if forge:
