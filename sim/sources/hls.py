@@ -25,7 +25,10 @@ import os
 import re
 from pathlib import Path
 
+from . import ports as _ports
+
 TB_VERSION = 1
+CLK, RST = _ports("hls")     # ap_clk, ap_rst_n: syn/syn.py's SOURCES
 HLS = Path(os.environ.get("SIM_HLS", Path(__file__).resolve().parents[3] / "hls-exercises")).resolve()
 RTL = HLS / "rtl"
 BENCH = HLS / "bench"
@@ -100,7 +103,7 @@ def build(point: str) -> dict:
     if prm.get("iface") != "axis":
         raise ValueError(f"{point}: iface {prm.get('iface')}, only axis is built")
 
-    for p in ("ap_clk", "ap_rst_n", "ap_start", "ap_done", "ap_ready", "ap_idle"):
+    for p in (CLK, RST, "ap_start", "ap_done", "ap_ready", "ap_idle"):
         if p not in ports:
             raise ValueError(f"{point}: no {p}: not ap_ctrl_hs")
     control = {"kind": "ap_ctrl_hs", "start": "ap_start", "done": "ap_done", "ready": "ap_ready", "idle": "ap_idle"}
@@ -124,7 +127,7 @@ def build(point: str) -> dict:
         pins.append({"port": name, "bits": ports[name][1], "vld": f"{name}_ap_vld",
                      "from": "config" if name in prm.get("config", {}) else f"data:{name}"})
 
-    known = {"ap_clk", "ap_rst_n", *control.values()}
+    known = {CLK, RST, *control.values()}
     known |= {s[k] for s in streams for k in ("data", "valid", "ready")}
     known |= {p[k] for p in pins for k in ("port", "vld")}
     extra = sorted(set(ports) - known)
@@ -146,8 +149,8 @@ def build(point: str) -> dict:
         sizes[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in prm["config"].items()}
 
     return {"tb_version": TB_VERSION, "point": point, "kernel": prm["kernel"], "top": top, "case": case, "W": w,
-            "clock": {"port": "ap_clk"},
-            "reset": {"port": "ap_rst_n", "active": "low", "sync": True},
+            "clock": {"port": CLK},
+            "reset": {"port": RST, "active": "low", "sync": True},
             "control": control, "streams": streams, "pins": pins, "sizes": sizes}
 
 

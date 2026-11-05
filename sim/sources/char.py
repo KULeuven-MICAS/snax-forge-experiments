@@ -44,6 +44,9 @@ import re
 from pathlib import Path
 
 from . import hls
+from . import ports as _ports
+
+CLK, RST = _ports("char")    # clock, reset: syn/syn.py's SOURCES
 
 TB_VERSION = 1
 ROOT = Path(__file__).resolve().parents[2]
@@ -103,7 +106,7 @@ def build(point: str, netlist: Path) -> dict:
     data_re = re.compile(rf"io_({'|'.join(INS[dp])})(_\d+)?")
     data_in = [p for p, (dr, _) in ports.items() if dr == "in" and data_re.fullmatch(p)]
     outs = [p for p, (dr, _) in ports.items() if dr == "out" and re.fullmatch(r"io_out(_\d+)?", p)]
-    known = {"clock", "reset", *data_in, *outs, *(p["port"] for p in pins.values())}
+    known = {CLK, RST, *data_in, *outs, *(p["port"] for p in pins.values())}
     if set(ports) != known:
         raise ValueError(f"{point}: netlist ports not as expected: missing {sorted(known - set(ports))}, "
                          f"not covered {sorted(set(ports) - known)}")
@@ -119,7 +122,7 @@ def build(point: str, netlist: Path) -> dict:
     tb = {"tb_version": TB_VERSION, "source": "char", "point": point, "datapath": dp, "params": params, "kind": kind,
           "top": top, "W": params.get("lanes", 1), "depth": params.get("depth", ""),
           "snax_forge_commit": pj["snax_forge_commit"],
-          "clock": {"port": "clock"}, "reset": {"port": "reset", "active": "high", "sync": False},
+          "clock": {"port": CLK}, "reset": {"port": RST, "active": "high", "sync": False},
           "control": {"kind": f"char_{kind}"},
           "data_in": _order(data_in, INS[dp]), "outs": _order(outs, ["out"]), "pins": pins,
           "tb_files": SEQ_FILES[kind]}
