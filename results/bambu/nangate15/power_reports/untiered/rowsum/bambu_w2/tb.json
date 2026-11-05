@@ -1,0 +1,67 @@
+{
+ "tb_version": 1,
+ "source": "bambu",
+ "point": "untiered/rowsum/bambu_w2",
+ "kernel": "rowsum",
+ "top": "p_Z6rowsumPK6ac_intILi128ELb0EEPxjj",
+ "case": "bambu",
+ "W": 2,
+ "clock": {
+  "port": "clock"
+ },
+ "reset": {
+  "port": "reset",
+  "active": "low",
+  "sync": true
+ },
+ "control": {
+  "kind": "bambu_ctl",
+  "start": "start_port",
+  "done": "done_port",
+  "idle": "idle_port"
+ },
+ "streams": [
+  {
+   "arg": "A",
+   "dir": "in",
+   "kind": "axis",
+   "lanes": 2,
+   "dtype": "int64",
+   "data": "A_TDATA",
+   "valid": "A_TVALID",
+   "ready": "A_TREADY"
+  },
+  {
+   "arg": "y",
+   "dir": "out",
+   "kind": "axis",
+   "lanes": 1,
+   "dtype": "int64",
+   "data": "y_TDATA",
+   "valid": "y_TVALID",
+   "ready": "y_TREADY"
+  }
+ ],
+ "pins": [
+  {
+   "port": "loop_count",
+   "bits": 32,
+   "from": "config"
+  },
+  {
+   "port": "len",
+   "bits": 32,
+   "from": "config"
+  }
+ ],
+ "sizes": {
+  "m4_n16": {
+   "loop_count": 32,
+   "len": 8
+  },
+  "m8_n64": {
+   "loop_count": 256,
+   "len": 32
+  }
+ }
+}

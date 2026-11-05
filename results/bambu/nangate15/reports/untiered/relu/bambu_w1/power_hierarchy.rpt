@@ -1,0 +1,61 @@
+ 
+****************************************
+Report : power
+        -hier
+        -analysis_effort low
+Design : p_Z4reluPKxPxj
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 18:33:40 2026
+****************************************
+
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+
+Operating Conditions: typical   Library: NanGate_15nm_OCL
+Wire Load Model Mode: top
+
+
+Global Operating Voltage = 0.8  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ps
+    Dynamic Power Units = 1mW    (derived from V,C,T units)
+    Leakage Power Units = 1pW
+
+
+--------------------------------------------------------------------------------
+                                       Switch   Int      Leak     Total
+Hierarchy                              Power    Power    Power    Power    %
+--------------------------------------------------------------------------------
+p_Z4reluPKxPxj                         3.68e-03 4.04e-02 1.81e+07 6.23e-02 100.0
+  PBI_Z4reluPKxPxj_i0 (PBI_Z4reluPKxPxj) 3.68e-03 4.04e-02 1.81e+07 6.23e-02 100.0
+    done_delayed_REG (register_AR_BITSIZE_in11_BITSIZE_out11)    0.000 1.90e-04 3.68e+04 2.27e-04   0.4
+    Datapath_i (datapath_Z4reluPKxPxj) 2.88e-03 3.95e-02 1.76e+07 6.00e-02  96.3
+      reg_5 (register_SE_BITSIZE_in163_BITSIZE_out163) 3.72e-04 1.22e-02 4.12e+06 1.67e-02  26.9
+      reg_4 (register_SE_BITSIZE_in11_BITSIZE_out11)    0.000 1.88e-04 6.73e+04 2.55e-04   0.4
+      reg_3 (register_SE_BITSIZE_in164_BITSIZE_out164) 6.42e-04 1.28e-02 4.24e+06 1.77e-02  28.4
+      reg_1 (register_SE_BITSIZE_in132_BITSIZE_out132_1) 1.60e-04 6.12e-03 1.98e+06 8.27e-03  13.3
+      reg_0 (register_SE_BITSIZE_in132_BITSIZE_out132_2) 1.97e-04 6.16e-03 1.97e+06 8.33e-03  13.4
+      mu_S_4 (SIMPLEJOIN_FU_BITSIZE_ops1_PORTSIZE_ops2) 4.22e-05 6.10e-04 2.17e+05 8.69e-04   1.4
+      fu_Z4reluPKxPxj_428999_429113 (B_bambu_artificial_ParmMgr_Write_axis_modgen_BITSIZE_in11_BITSIZE_in27_BITSIZE_in364_BITSIZE_in432) 3.78e-05 2.10e-04 9.13e+04 3.39e-04   0.5
+      fu_Z4reluPKxPxj_428999_429085 (IUdata_converter_FU_BITSIZE_in164_BITSIZE_out163)    0.000    0.000    0.000    0.000   0.0
+      fu_Z4reluPKxPxj_428999_429077 (UIdata_converter_FU_BITSIZE_in164_BITSIZE_out164)    0.000    0.000    0.000    0.000   0.0
+      fu_Z4reluPKxPxj_428999_429062 (multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_0)    0.000    0.000    0.000    0.000   0.0
+      fu_Z4reluPKxPxj_428999_429061 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out11) 1.26e-05 3.64e-05 4.03e+04 8.93e-05   0.1
+      fu_Z4reluPKxPxj_428999_429024 (multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_1)    0.000    0.000    0.000    0.000   0.0
+      fu_Z4reluPKxPxj_428999_429023 (ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11) 1.39e-04 4.34e-04 8.58e+05 1.43e-03   2.3
+      fu_Z4reluPKxPxj_428999_429022 (ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132) 5.16e-05 1.45e-05 7.74e+05 8.40e-04   1.3
+      fu_Z4reluPKxPxj_428999_429019 (max_node_FU_BITSIZE_in164_BITSIZE_in21_BITSIZE_out164) 1.79e-04 1.73e-04 9.95e+05 1.35e-03   2.2
+      fu_Z4reluPKxPxj_428999_429018 (A_bambu_artificial_ParmMgr_Read_axis_modgen_BITSIZE_in11_BITSIZE_in27_BITSIZE_in364_BITSIZE_in432_BITSIZE_out164) 6.40e-05 2.17e-04 8.55e+04 3.66e-04   0.6
+      conv_out_reg_5_reg_5_63_64 (UUdata_converter_FU_BITSIZE_in163_BITSIZE_out164_0)    0.000    0.000    0.000    0.000   0.0
+      conv_out_IUdata_converter_FU_4_i0_fu_Z4reluPKxPxj_428999_429085_63_64 (UUdata_converter_FU_BITSIZE_in163_BITSIZE_out164_1)    0.000    0.000    0.000    0.000   0.0
+      MUX_6_B_bambu_artificial_ParmMgr_Write_axis_modgen_15_i0_2_0_0 (MUX2_GATE_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164) 8.92e-04 2.06e-04 1.24e+06 2.34e-03   3.8
+      MUX_16_reg_0_0_0_1 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_1) 8.46e-05 6.68e-05 5.81e+05 7.33e-04   1.2
+      MUX_16_reg_0_0_0_0 (MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_2) 1.80e-06 2.03e-05 2.94e+05 3.16e-04   0.5
+      MUX_14_multi_read_cond_FU_5_i0_0_0_0 (MUX2_GATE_BITSIZE_in11_BITSIZE_in21_BITSIZE_out11) 2.66e-06 3.19e-06 2.51e+04 3.09e-05   0.0
+    Controller_i (controller_Z4reluPKxPxj) 8.06e-04 7.52e-04 5.22e+05 2.08e-03   3.3
+1

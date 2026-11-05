@@ -1,0 +1,69 @@
+ 
+****************************************
+Report : area
+Design : p_Z4reluPKxPxj
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 18:33:40 2026
+****************************************
+
+Library(s) Used:
+
+    NanGate_15nm_OCL (File: /users/micas/rantonio/no_backup/kul_main/RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db)
+
+Number of ports:                         2694
+Number of nets:                          3397
+Number of cells:                         1125
+Number of combinational cells:            888
+Number of sequential cells:               201
+Number of macros/black boxes:               0
+Number of buf/inv:                        342
+Number of references:                       1
+
+Combinational area:                228.950019
+Buf/Inv area:                       51.412994
+Noncombinational area:             256.868343
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (No wire load specified)
+
+Total cell area:                   485.818362
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area          Local cell area
+                                  ------------------  --------------------------- 
+Hierarchical cell                 Absolute   Percent  Combi-    Noncombi-  Black-
+                                  Total      Total    national  national   boxes   Design
+--------------------------------  ---------  -------  --------  ---------  ------  ----------------------------------------------------------------------------------------------------------------
+p_Z4reluPKxPxj                     485.8184    100.0    0.0000     0.0000  0.0000  p_Z4reluPKxPxj
+PBI_Z4reluPKxPxj_i0                485.8184    100.0    0.0000     0.0000  0.0000  PBI_Z4reluPKxPxj
+PBI_Z4reluPKxPxj_i0/Controller_i    13.6643      2.8    9.8304     3.8339  0.0000  controller_Z4reluPKxPxj
+PBI_Z4reluPKxPxj_i0/Datapath_i     470.8762     96.9    0.0000     0.0000  0.0000  datapath_Z4reluPKxPxj
+PBI_Z4reluPKxPxj_i0/Datapath_i/MUX_14_multi_read_cond_FU_5_i0_0_0_0    0.6390     0.1   0.6390    0.0000 0.0000 MUX2_GATE_BITSIZE_in11_BITSIZE_in21_BITSIZE_out11
+PBI_Z4reluPKxPxj_i0/Datapath_i/MUX_16_reg_0_0_0_0    9.4372     1.9   9.4372    0.0000 0.0000 MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_2
+PBI_Z4reluPKxPxj_i0/Datapath_i/MUX_16_reg_0_0_0_1   16.1219     3.3  16.1219    0.0000 0.0000 MUX2_GATE_BITSIZE_in132_BITSIZE_in232_BITSIZE_out132_1
+PBI_Z4reluPKxPxj_i0/Datapath_i/MUX_6_B_bambu_artificial_ParmMgr_Write_axis_modgen_15_i0_2_0_0   31.7522     6.5  31.7522    0.0000 0.0000 MUX2_GATE_BITSIZE_in164_BITSIZE_in264_BITSIZE_out164
+PBI_Z4reluPKxPxj_i0/Datapath_i/conv_out_IUdata_converter_FU_4_i0_fu_Z4reluPKxPxj_428999_429085_63_64    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in163_BITSIZE_out164_1
+PBI_Z4reluPKxPxj_i0/Datapath_i/conv_out_reg_5_reg_5_63_64    0.0000     0.0   0.0000    0.0000 0.0000 UUdata_converter_FU_BITSIZE_in163_BITSIZE_out164_0
+PBI_Z4reluPKxPxj_i0/Datapath_i/fu_Z4reluPKxPxj_428999_429018    2.2118     0.5   0.9339    1.2780 0.0000 A_bambu_artificial_ParmMgr_Read_axis_modgen_BITSIZE_in11_BITSIZE_in27_BITSIZE_in364_BITSIZE_in432_BITSIZE_out164
+PBI_Z4reluPKxPxj_i0/Datapath_i/fu_Z4reluPKxPxj_428999_429019   18.9727     3.9  18.9727    0.0000 0.0000 max_node_FU_BITSIZE_in164_BITSIZE_in21_BITSIZE_out164
+PBI_Z4reluPKxPxj_i0/Datapath_i/fu_Z4reluPKxPxj_428999_429022   19.7591     4.1  19.7591    0.0000 0.0000 ui_add_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out132
+PBI_Z4reluPKxPxj_i0/Datapath_i/fu_Z4reluPKxPxj_428999_429023   17.7930     3.7  17.7930    0.0000 0.0000 ui_eq_node_FU_BITSIZE_in132_BITSIZE_in232_BITSIZE_out11
+PBI_Z4reluPKxPxj_i0/Datapath_i/fu_Z4reluPKxPxj_428999_429024    0.0000     0.0   0.0000    0.0000 0.0000 multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_1
+PBI_Z4reluPKxPxj_i0/Datapath_i/fu_Z4reluPKxPxj_428999_429061    3.6372     0.7   3.6372    0.0000 0.0000 ui_eq_node_FU_BITSIZE_in132_BITSIZE_in21_BITSIZE_out11
+PBI_Z4reluPKxPxj_i0/Datapath_i/fu_Z4reluPKxPxj_428999_429062    0.0000     0.0   0.0000    0.0000 0.0000 multi_read_cond_FU_BITSIZE_in11_PORTSIZE_in11_BITSIZE_out11_0
+PBI_Z4reluPKxPxj_i0/Datapath_i/fu_Z4reluPKxPxj_428999_429077    0.0000     0.0   0.0000    0.0000 0.0000 UIdata_converter_FU_BITSIZE_in164_BITSIZE_out164
+PBI_Z4reluPKxPxj_i0/Datapath_i/fu_Z4reluPKxPxj_428999_429085    0.0000     0.0   0.0000    0.0000 0.0000 IUdata_converter_FU_BITSIZE_in164_BITSIZE_out163
+PBI_Z4reluPKxPxj_i0/Datapath_i/fu_Z4reluPKxPxj_428999_429113    2.2610     0.5   0.9830    1.2780 0.0000 B_bambu_artificial_ParmMgr_Write_axis_modgen_BITSIZE_in11_BITSIZE_in27_BITSIZE_in364_BITSIZE_in432
+PBI_Z4reluPKxPxj_i0/Datapath_i/mu_S_4    6.0457     1.2   2.2118    3.8339 0.0000  SIMPLEJOIN_FU_BITSIZE_ops1_PORTSIZE_ops2
+PBI_Z4reluPKxPxj_i0/Datapath_i/reg_0   57.0163    11.7  16.1219   40.8945  0.0000  register_SE_BITSIZE_in132_BITSIZE_out132_2
+PBI_Z4reluPKxPxj_i0/Datapath_i/reg_1   57.0163    11.7  16.1219   40.8945  0.0000  register_SE_BITSIZE_in132_BITSIZE_out132_1
+PBI_Z4reluPKxPxj_i0/Datapath_i/reg_3  114.0326    23.5  32.2437   81.7889  0.0000  register_SE_BITSIZE_in164_BITSIZE_out164
+PBI_Z4reluPKxPxj_i0/Datapath_i/reg_4    1.9169     0.4   0.6390    1.2780  0.0000  register_SE_BITSIZE_in11_BITSIZE_out11
+PBI_Z4reluPKxPxj_i0/Datapath_i/reg_5  112.2632    23.1  31.7522   80.5110  0.0000  register_SE_BITSIZE_in163_BITSIZE_out163
+PBI_Z4reluPKxPxj_i0/done_delayed_REG    1.2780     0.3   0.0000    1.2780  0.0000  register_AR_BITSIZE_in11_BITSIZE_out11
+--------------------------------  ---------  -------  --------  ---------  ------  ----------------------------------------------------------------------------------------------------------------
+Total                                                 228.9500   256.8683  0.0000
+
+1

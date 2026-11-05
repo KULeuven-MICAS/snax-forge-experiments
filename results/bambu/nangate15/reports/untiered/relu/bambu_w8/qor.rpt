@@ -1,0 +1,86 @@
+Information: Updating design information... (UID-85)
+Warning: Design 'p_Z4reluPK6ac_intILi512ELb0EEPS0_j' contains 1 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+ 
+****************************************
+Report : qor
+Design : p_Z4reluPK6ac_intILi512ELb0EEPS0_j
+Version: Y-2026.03-SP2
+Date   : Thu Nov  5 18:36:27 2026
+****************************************
+
+
+  Timing Path Group 'clk'
+  -----------------------------------
+  Levels of Logic:           47.00000
+  Critical Path Length:     311.07153
+  Critical Path Slack:     9580.31738
+  Critical Path Clk Period:
+                          10000.00000
+  Total Negative Slack:       0.00000
+  No. of Violating Paths:     0.00000
+  Worst Hold Violation:      -7.99308
+  Total Hold Violation:   -6889.44531
+  No. of Hold Violations:  1089.00000
+  -----------------------------------
+
+
+  Cell Count
+  -----------------------------------
+  Hierarchical Cell Count:        136
+  Hierarchical Port Count:      44403
+  Leaf Cell Count:               5176
+  Buf/Inv Cell Count:            1771
+  Buf Cell Count:                  59
+  Inv Cell Count:                1712
+  CT Buf/Inv Cell Count:            0
+  Combinational Cell Count:      4086
+  Sequential Cell Count:         1090
+  Macro Count:                      0
+  -----------------------------------
+
+
+  Area
+  -----------------------------------
+  Combinational Area:      1031.89710
+  Noncombinational Area:   1392.96763
+  Buf/Inv Area:             266.94452
+  Total Buffer Area:         14.49984
+  Total Inverter Area:      252.44468
+  Macro/Black Box Area:       0.00000
+  Net Area:                   0.00000
+  -----------------------------------
+  Cell Area:               2424.86473
+  Design Area:             2424.86473
+
+
+  Design Rules
+  -----------------------------------
+  Total Number of Nets:         18508
+  Nets With Violations:             0
+  Max Trans Violations:             0
+  Max Cap Violations:               0
+  -----------------------------------
+
+
+  Hostname: micas-lapserv1.esat.kuleuven.be
+
+  Compile CPU Statistics
+  -----------------------------------------
+  Resource Sharing:                 3.40762
+  Logic Optimization:               1.76741
+  Mapping Optimization:            10.83862
+  -----------------------------------------
+  Overall Compile Time:            47.05038
+  Overall Compile Wall Clock Time: 32.88865
+
+  --------------------------------------------------------------------
+
+  Design  WNS: 0.00000  TNS: 0.00000  Number of Violating Paths: 0
+
+
+  Design (Hold)  WNS: 7.99308  TNS: 6889.44531  Number of Violating Paths: 1089
+
+  --------------------------------------------------------------------
+
+
+1
