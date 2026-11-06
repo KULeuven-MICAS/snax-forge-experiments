@@ -211,12 +211,9 @@ def inodes(path: Path) -> int:
 
 
 def _top_folders(paths: list[Path]) -> list[Path]:
-    """The given folders without those below another one of them."""
-    out = []
-    for p in sorted(set(paths)):
-        if not any(q in p.parents for q in out):
-            out.append(p)
-    return out
+    """The given folders without those below another one of them (linear: each path's parents in a set)."""
+    every = set(paths)
+    return sorted(p for p in every if not any(q in every for q in p.parents))
 
 
 def leftovers(root: Path = ROOT) -> dict[str, list[str]]:
