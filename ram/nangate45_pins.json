@@ -1,0 +1,237 @@
+{
+  "library": {
+    "file": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib",
+    "md5": "afe86ccefc885369314b77cface912f6",
+    "db": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db",
+    "db_md5": "09a484fa91bd090e4975b6a605c0aa9c",
+    "name": {
+      "value": "NangateOpenCellLibrary",
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:37 library(NangateOpenCellLibrary)"
+    }
+  },
+  "units": {
+    "time_unit": {
+      "value": "1ns",
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:51 library(NangateOpenCellLibrary)/time_unit"
+    },
+    "voltage_unit": {
+      "value": "1V",
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:53 library(NangateOpenCellLibrary)/voltage_unit"
+    },
+    "current_unit": {
+      "value": "1mA",
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:54 library(NangateOpenCellLibrary)/current_unit"
+    },
+    "leakage_power_unit": {
+      "value": "1nW",
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:52 library(NangateOpenCellLibrary)/leakage_power_unit"
+    },
+    "pulling_resistance_unit": {
+      "value": "1kohm",
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:55 library(NangateOpenCellLibrary)/pulling_resistance_unit"
+    },
+    "capacitive_load_unit": {
+      "value": "1,ff",
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:56 library(NangateOpenCellLibrary)/capacitive_load_unit"
+    }
+  },
+  "nom_process": {
+    "value": 1.0,
+    "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:59 library(NangateOpenCellLibrary)/nom_process"
+  },
+  "nom_voltage": {
+    "value": 1.1,
+    "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:61 library(NangateOpenCellLibrary)/nom_voltage"
+  },
+  "nom_temperature": {
+    "value": 25.0,
+    "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:60 library(NangateOpenCellLibrary)/nom_temperature"
+  },
+  "operating_conditions": {
+    "name": {
+      "value": "typical",
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:67 library(NangateOpenCellLibrary)/operating_conditions(typical)"
+    },
+    "process": {
+      "value": 1.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:69 library(NangateOpenCellLibrary)/operating_conditions(typical)/process"
+    },
+    "voltage": {
+      "value": 1.1,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:70 library(NangateOpenCellLibrary)/operating_conditions(typical)/voltage"
+    },
+    "temperature": {
+      "value": 25.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:71 library(NangateOpenCellLibrary)/operating_conditions(typical)/temperature"
+    },
+    "tree_type": {
+      "value": "balanced_tree",
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:72 library(NangateOpenCellLibrary)/operating_conditions(typical)/tree_type"
+    },
+    "process_corner": {
+      "value": "TypTyp",
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:68 library(NangateOpenCellLibrary)/operating_conditions(typical)/process_corner"
+    }
+  },
+  "default_operating_conditions": {
+    "value": "typical",
+    "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:74 library(NangateOpenCellLibrary)/default_operating_conditions"
+  },
+  "thresholds": {
+    "slew_lower_threshold_pct_rise": {
+      "value": 30.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:78 library(NangateOpenCellLibrary)/slew_lower_threshold_pct_rise"
+    },
+    "slew_lower_threshold_pct_fall": {
+      "value": 30.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:77 library(NangateOpenCellLibrary)/slew_lower_threshold_pct_fall"
+    },
+    "slew_upper_threshold_pct_rise": {
+      "value": 70.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:80 library(NangateOpenCellLibrary)/slew_upper_threshold_pct_rise"
+    },
+    "slew_upper_threshold_pct_fall": {
+      "value": 70.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:79 library(NangateOpenCellLibrary)/slew_upper_threshold_pct_fall"
+    },
+    "input_threshold_pct_rise": {
+      "value": 50.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:83 library(NangateOpenCellLibrary)/input_threshold_pct_rise"
+    },
+    "input_threshold_pct_fall": {
+      "value": 50.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:82 library(NangateOpenCellLibrary)/input_threshold_pct_fall"
+    },
+    "output_threshold_pct_rise": {
+      "value": 50.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:85 library(NangateOpenCellLibrary)/output_threshold_pct_rise"
+    },
+    "output_threshold_pct_fall": {
+      "value": 50.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:84 library(NangateOpenCellLibrary)/output_threshold_pct_fall"
+    },
+    "slew_derate_from_library": {
+      "value": 1.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:81 library(NangateOpenCellLibrary)/slew_derate_from_library"
+    }
+  },
+  "defaults": {
+    "default_fanout_load": {
+      "value": 1.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:93 library(NangateOpenCellLibrary)/default_fanout_load"
+    },
+    "default_inout_pin_cap": {
+      "value": 1.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:90 library(NangateOpenCellLibrary)/default_inout_pin_cap"
+    },
+    "default_input_pin_cap": {
+      "value": 1.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:91 library(NangateOpenCellLibrary)/default_input_pin_cap"
+    },
+    "default_output_pin_cap": {
+      "value": 0.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:92 library(NangateOpenCellLibrary)/default_output_pin_cap"
+    },
+    "default_cell_leakage_power": {
+      "value": 0.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:87 library(NangateOpenCellLibrary)/default_cell_leakage_power"
+    },
+    "default_leakage_power_density": {
+      "value": 0.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:86 library(NangateOpenCellLibrary)/default_leakage_power_density"
+    }
+  },
+  "internal_power_unit": {
+    "value": "1fJ",
+    "source": "derived: capacitive_load_unit (1 fF, ../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:56) x voltage_unit^2 (1 V, ../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:53); the library has no internal_power_unit attribute; dc_shell report_lib on the .db prints 'Dynamic Energy Unit : 0.001000pJ (derived from V,C units)' (RAM1 R3)"
+  },
+  "DFF_X1": {
+    "D": {
+      "capacitance": {
+        "value": 1.14029,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45341 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(D)/capacitance"
+      },
+      "rise_capacitance": {
+        "value": 1.14029,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45343 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(D)/rise_capacitance"
+      },
+      "fall_capacitance": {
+        "value": 1.062342,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45342 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(D)/fall_capacitance"
+      }
+    },
+    "CK": {
+      "capacitance": {
+        "value": 0.949653,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45452 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(CK)/capacitance"
+      },
+      "rise_capacitance": {
+        "value": 0.949653,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45454 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(CK)/rise_capacitance"
+      },
+      "fall_capacitance": {
+        "value": 0.85644,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45453 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(CK)/fall_capacitance"
+      }
+    },
+    "setup_rising_D_CK": {
+      "rise_constraint": {
+        "value": 0.055773,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45379 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(D)/timing()/rise_constraint(Setup_3_3)/values (Setup_3_3 template; largest of the 3x3 table, index_1[2]=0.198535 ns constrained_pin_transition, index_2[0]=0.00117378 ns related_pin_transition)"
+      },
+      "fall_constraint": {
+        "value": 0.100487,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45372 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(D)/timing()/fall_constraint(Setup_3_3)/values (Setup_3_3 template; largest of the 3x3 table, index_1[2]=0.198535 ns constrained_pin_transition, index_2[0]=0.00117378 ns related_pin_transition)"
+      },
+      "max": {
+        "value": 0.100487,
+        "source": "the larger of rise_constraint and fall_constraint above"
+      }
+    },
+    "hold_rising_D_CK": {
+      "rise_constraint": {
+        "value": 0.121949,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45359 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(D)/timing()/rise_constraint(Hold_3_3)/values (Hold_3_3 template; largest of the 3x3 table, index_1[2]=0.198535 ns constrained_pin_transition, index_2[2]=0.198535 ns related_pin_transition)"
+      },
+      "fall_constraint": {
+        "value": 0.153005,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45352 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(D)/timing()/fall_constraint(Hold_3_3)/values (Hold_3_3 template; largest of the 3x3 table, index_1[2]=0.198535 ns constrained_pin_transition, index_2[1]=0.0449324 ns related_pin_transition)"
+      },
+      "max": {
+        "value": 0.153005,
+        "source": "the larger of rise_constraint and fall_constraint above"
+      }
+    },
+    "min_pulse_width_CK": {
+      "rise_constraint": {
+        "value": 0.198733,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45466 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(CK)/timing()/rise_constraint(Pulse_width_3)/values (Pulse_width_3 template; largest of the 3x1 table, index_1[0]=0.00117378 ns related_pin_transition)"
+      },
+      "fall_constraint": {
+        "value": 0.198733,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:45462 library(NangateOpenCellLibrary)/cell(DFF_X1)/pin(CK)/timing()/fall_constraint(Pulse_width_3)/values (Pulse_width_3 template; largest of the 3x1 table, index_1[0]=0.00117378 ns related_pin_transition)"
+      },
+      "max": {
+        "value": 0.198733,
+        "source": "the larger of rise_constraint and fall_constraint above"
+      },
+      "note": "rise_constraint is the high pulse, fall_constraint the low pulse"
+    }
+  },
+  "BUF_X4": {
+    "Z": {
+      "max_capacitance": {
+        "value": 242.31,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:31065 library(NangateOpenCellLibrary)/cell(BUF_X4)/pin(Z)/max_capacitance"
+      },
+      "rise_transition": {
+        "value": 0.0204176,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:31109 library(NangateOpenCellLibrary)/cell(BUF_X4)/pin(Z)/timing()/rise_transition(Timing_7_7)/values (Timing_7_7 template; middle entry of the 7x7 table, index_1[3]=0.0409838 ns input_net_transition, index_2[3]=30.2888 fF total_output_net_capacitance)"
+      },
+      "fall_transition": {
+        "value": 0.0118147,
+        "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:31098 library(NangateOpenCellLibrary)/cell(BUF_X4)/pin(Z)/timing()/fall_transition(Timing_7_7)/values (Timing_7_7 template; middle entry of the 7x7 table, index_1[3]=0.0409838 ns input_net_transition, index_2[3]=30.2888 fF total_output_net_capacitance)"
+      }
+    }
+  }
+}

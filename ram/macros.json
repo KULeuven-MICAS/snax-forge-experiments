@@ -1,0 +1,7 @@
+{
+  "macros": [
+    {"depth": 512, "width": 64, "mask": 8, "use": "snax_cluster TCDM bank; DaCe dot buffer (E7)"},
+    {"depth": 128, "width": 256, "use": "snax_cluster icache data"},
+    {"depth": 128, "width": 39, "use": "snax_cluster icache tag"}
+  ]
+}

@@ -44,10 +44,11 @@ repo too, or are pointed to with environment variables.
 | `char/`, `rtl/char/`, `results/char/` | CHAR1: snax-forge's catalogue blocks alone (no csr, no ctrl), 27 points at int64 in `char/points.json`, area and dynamic energy on both technologies (X28 to X37): `char/blocks.py` (`pixi run char-rtl`) writes them with snax-forge's `gen-block` into `rtl/char/` (git ignores it), `syn/syn.py --source char` synthesizes them (`char_synth.csv`), `sim/pwr.py --source char` simulates their busy, idle and stream windows (`char_power.csv`), `report/char_export.py` (`pixi run char-export`) writes the table snax-forge reads, `results/char/<tech>/char.json`, and `report/char_table.py` (`pixi run char-table`) writes `results/char/char_table.md`, with the model checked against SYN2 ([`results/char/README.md`](results/char/README.md)). |
 | `report/` | `char_export.py` and `char_table.py` (CHAR1, above); `import_cycles.py` (`pixi run import-cycles`): the Bambu and XLS cycle CSVs copied with their provenance (X42); `compare.py` (`pixi run compare`): the two tier comparison CSVs (X45); `compare_hls.py` (`pixi run compare-hls`): `results/compare_hls.md` and its figures (X46). SYN1's and SYN2's analysis scripts and their results were retired in HSYN1 R3 (X43); git history keeps them. |
 | `results/hls/<tech>/` | The results per technology (`nangate45`, `nangate15`): `synth_dc.csv`, `synth_dc_modules.csv` and every run's reports in `reports/` (`syn/syn.py`); `power_pt.csv`, `power_pt_modules.csv` and `power_reports/` (`sim/pwr.py`). |
+| `ram/` | RAM1: SRAM bank area and dynamic energy per access from CACTI 7 at 45 nm (X47; OpenRAM was probed and dropped): `ram.py` (`pixi run ram`), CACTI built into `ram/cacti/` by `pixi run ram-build` (git-ignored, as are the runs in `ram/runs/`). See [`ram/README.md`](ram/README.md). |
+| `results/ram/nangate45/` | `ram_table.csv`: the lookup table, every depth 32 to 4096 in steps of 32 and width 8 to 256 in steps of 8 (X48); run notes in `results/ram/runs/`. |
 
 Planned:
 
-- `ram/`: OpenRAM macros, with a `tc_sram`-compatible wrapper for each.
 - `cost/`: the fitted area and energy tables per technology, for snax-forge's first-order estimates.
 
 ## Run

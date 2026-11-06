@@ -104,6 +104,20 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** read every number with its unit; syn.py converts times to ns and power to uW from the reports' own unit lines.
 - **Found in:** `2026-10-28_step0_libs.md`, `syn/README.md` (Columns).
 
+### LIB5. nangate45's `.lib` puts a group and its first attribute on one line
+
+- **Symptom:** a line-based Liberty reader loses its group nesting in nangate45's `NangateOpenCellLibrary_typical.lib` (RAM1 R3's first `ram/pins.py` raised on an unbalanced `}`).
+- **Cause:** the zero-power groups are written `rise_power(scalar) {values ("0.0");` with the closing `}` on the next line (line 32065 and on).
+- **Fix or check:** split the text into statements at `{`, `}` and `;` outside quotes, not at line ends (`ram/pins.py`, `statements`).
+- **Found in:** `results/ram/runs/2026-11-06_ram1_r3.md`.
+
+### LIB6. lc_shell on a generated memory macro: the warnings and what each change does
+
+- **Symptom:** `lc_shell` (Y-2026.03-SP2) compiles a minimal macro `.lib` with rc 0 and prints LBDB-172 six times (`default_fanout_load`, `default_inout_pin_cap`, `default_input_pin_cap`, `default_output_pin_cap`, `default_cell_leakage_power`, `default_leakage_power_density` not specified), LBDB-366 (`internal_power_calculation` in `char_config` required for an NLPM library), "Pin/bus ... has no 'function' attribute" on the output bus and LIBG-10 (failed to recognize the functionality of the cell).
+- **Cause:** a black-box cell has no functional description; the library-level attributes have defaults lc_shell applies and reports.
+- **Fix or check:** copy nangate45's `default_*` values (the same as lc_shell's defaults) and add `char_config () { internal_power_calculation : exclude_switching_on_rise_and_fall; }`: the LBDB lines go. The two functionality warnings stay and are expected; `is_memory_cell : true` changes nothing, and a cell `memory ()` group replaces them with LIBG-280 (memory groups deprecated, Information). None of this is needed for the `.db`, DC or PT (`ram/ram.py` writes no `memory` group).
+- **Found in:** `results/ram/runs/2026-11-06_ram1_r3.md`, `results/ram/runs/2026-11-05_ram1_r0.md` (LBDB-366, LIBG-280).
+
 ## Questa
 
 ### Q1. Gate-level X from Vitis registers without reset
@@ -175,6 +189,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** `sim/pwr.py run --initreg-seed N` uses `vopt +initreg=ru` (4-state regs: nangate45's behavioral flops; UDPs: nangate15's) and `vsim +initreg+N`; the sequencers give every flag an initial value. Check that it took: the outputs fed by unreset registers differ from 0 before the first edge (Bambu's `out_TDATA` = `10c0e48981e32dca` on nangate45 at seed 1). It is a check, never the default, and writes nothing to `results/`.
 - **Found in:** `results/runs/2026-11-05_hsyn1_r5.md`.
 
+### Q10. An `initial` block next to `always_ff` drives the same variable: vopt-7061
+
+- **Symptom:** vlog accepts the model; vopt warns `(vopt-7061) Variable 'mem' driven in an always_ff block, may not be driven by any other process`, once per variable.
+- **Cause:** RAM1 R3's first macro `.v` zeroed `mem`, the read address and `rdata_o` in an `initial` block under `SRAM_INIT_ZERO`, beside the `always_ff` that writes them.
+- **Fix or check:** declaration initializers (`logic [63:0] mem [0:511] = '{default: '0};`) and an internal `rdata_q` with `assign rdata_o = rdata_q`; vopt is then clean. Check with `vsim -c` (elaboration), not vlog alone.
+- **Found in:** `results/ram/runs/2026-11-06_ram1_r3.md`.
+
 ## vcd2saif
 
 ### VS1. `vcd2saif -time t0 t1` on a shared VCD adds a phantom toggle before the window
@@ -231,6 +252,20 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Since CTRL1** (snax-forge `f9764d5`, D152): STATUS is 2 bits wide, so its constant bits and their floating port nets are gone; SYN2 R2 had no floating net in any of its 96 runs and the exclusion is no longer needed. It stays in `sim/pwr.py` (it changes nothing when there is none) for SYN1's netlists.
 - **Found in:** `results/forge/runs/2026-10-31_syn1_r2.md`.
 
+### PT7. Averaged mode charges `when` internal power with independent pin probabilities
+
+- **Symptom:** a memory macro whose `.lib` charges the read energy `when "req_i & !we_i"` and the write energy `when "req_i & we_i"` (rising edge of `clk_i`) gets 12.46 % less internal energy in PrimePower's averaged mode (SAIF from vcd2saif) than the counted accesses times the `.lib`'s energies; time-based mode on the same VCD gives the counted figure to 1e-7.
+- **Cause:** the SAIF holds each net's own static probability and toggle count, not joint states, so PT takes P(req & !we) = P(req) x P(!we). On the probe's 1,000 reads, 1,500 writes and 1,500 idle cycles (we_i low when idle) that is 0.39 reads and 0.23 writes per cycle against the true 0.25 and 0.375; the averaged figure equals that product to 0.004 pJ. The gap depends on the mix and on what we_i does while idle.
+- **Fix or check:** report memory energy as counted accesses x the table (the macro `.v`'s `RAMCOUNT`), or from time-based PT on the VCD, not from averaged PT.
+- **Found in:** `results/ram/runs/2026-11-06_ram1_r3.md` (step 6).
+
+### PT8. `report_switching_activity -nosplit` stops the script
+
+- **Symptom:** `Error: unknown option '-nosplit' (CMD-010)` written into the redirected report, then `Errors detected during redirect` (CMD-013) and the script stops (CMD-081); the reports after it are missing.
+- **Cause:** `report_switching_activity` has no `-nosplit` (W-2024.09-SP5); `report_power` has.
+- **Fix or check:** no `-nosplit` on it (as `sim/scripts/pt_power.tcl`).
+- **Found in:** `results/ram/runs/2026-11-06_ram1_r3.md`.
+
 ## Licences
 
 ### L1. Transient error -92 from DC
@@ -260,6 +295,50 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** `compile_ultra` checks out DC-Expert besides Design-Compiler; both have 10 licences on 1709@licserv, used by other people independently. LICENCE_ERROR matched the line and the run was retried once (X17), but read_run failed a row only when the area report was missing.
 - **Fix or check:** J = min(free Design-Compiler, free DC-Expert) at each batch's start (`lmutil lmstat -f Design-Compiler`, `-f DC-Expert`); since `c44ac94` syn.py fails a row with a licence error or an area of 0 whatever its reports say.
 - **Found in:** `results/runs/2026-11-05_hsyn1_r6.md`.
+
+## CACTI
+
+### C1. CACTI reads `tech_params/` relative to its working directory
+
+- **Symptom:** CACTI 7 (`1ffd8df`) run from any folder but its own echoes its input parameters and dies with a segmentation fault (rc 139, core dumped), with no message about a missing file.
+- **Cause:** `parameter.cc` opens `"tech_params/<node>.dat"` (here `tech_params/45nm.dat`) by a relative path and does not check the `fopen`.
+- **Fix or check:** run CACTI from `ram/cacti/`, or link `tech_params` into the run folder; `ram/ram.py` runs each point in `ram/runs/cacti/<point>/` with `tech_params` (and `contention.dat`) linked in. A run with rc 139 and no `Cache Parameters:` block in its output is this.
+- **Found in:** `results/ram/runs/2026-11-05_ram1_r1.md`.
+
+### C2. `cache.cfg`'s `-Optimize "ED^2"` overrides the design objective
+
+- **Symptom:** changing `-design objective` or `-deviate` has no effect on the organization CACTI picks or on its numbers.
+- **Cause:** with `-Optimize ED or ED^2` set to `ED` or `ED^2` (`cache.cfg` has `"ED^2"`), `find_optimal_uca` (`Ucache.cc`) minimizes the energy-delay product and ignores the objective weights and the deviate line.
+- **Fix or check:** `-Optimize ED or ED^2 (ED, ED^2, NONE): "NONE"`; `ram.py` sets it (X47). Two runs with different objectives that give identical numbers are this.
+- **Found in:** `results/ram/runs/2026-11-05_ram1_r1.md`.
+
+### C3. `cache.cfg` turns ECC on
+
+- **Symptom:** area, energy and leakage about 12 % higher than the bank needs (512 x 64: area +11.2 %, read +13.5 %, write +13.0 %).
+- **Cause:** `cache.cfg` has `-Add ECC - "true"`, which adds one bit per 8 data bits to every data signal on the H-trees (`ECC_adjustment`).
+- **Fix or check:** `-Add ECC - "false"` for a bank without ECC (a TCDM bank has none); `ram.py` sets it (X47), `point --ecc` turns it on for a one-off check.
+- **Found in:** `results/ram/runs/2026-11-05_ram1_r1.md`.
+
+### C4. A size CACTI rejects exits with rc 0
+
+- **Symptom:** CACTI exits 0 and writes no results; the reason is one line on stderr (`Cache size must >=64`).
+- **Cause:** CACTI checks the size before modelling and returns normally after printing the message. Depth 16 fails at every width with `ERROR: no valid data array organizations found` (rc 1): it needs at least 2 x 16 rows.
+- **Fix or check:** do not trust the return code; `ram.py` marks a point failed unless `cacti.out` holds the access time, both energies, the data array's area and the height x width, and gives stderr's error lines in `status`. Smallest modelled sizes: 64 bytes and 32 words.
+- **Found in:** `results/ram/runs/2026-11-05_ram1_r1.md`.
+
+### C5. CACTI's numbers jump between neighbouring sizes
+
+- **Symptom:** interpolating between table points, or fitting a curve, misses by up to 30 to 40 % at some sizes, however dense the points; for example 480 x 200 reads at 14.07 pJ where 448 x 200 reads at 9.53 pJ.
+- **Cause:** CACTI picks the array organization (Nspd, Ndcm, Ndbl) per size; where the choice changes between two neighbouring sizes, area and energy step. Against the mean of its four neighbours on the 32-word by 8-bit grid, a point differs by 0.4 / 1.1 / 1.0 % on average (area / read / write) and up to 15 / 28 / 30 %.
+- **Fix or check:** look up the exact size in `ram_table.csv` (X48) instead of interpolating or fitting; the `nspd` and `ndcm` columns show where the organization changes.
+- **Found in:** `results/ram/runs/2026-11-06_ram1_r2.md`.
+
+### C6. CACTI's cycle time is shorter than its access time
+
+- **Symptom:** `t_cycle_ns` < `t_access_ns` in the table: 0.210 against 0.269 ns at 512 x 64, 0.222 against 0.235 at 128 x 256, 0.151 against 0.198 at 128 x 40.
+- **Cause:** CACTI's SRAM cycle time is the mat's own cycle: the delay inside the mat plus wordline reset and bitline restore, or a predecoder's delay if longer (`uca.cc`, `UCA::compute_delays`); the access time adds the H-tree delays to and from the mats, which the cycle time leaves out.
+- **Fix or check:** the generated `.lib` uses `t_access_ns` for clk-to-`rdata_o` and `t_cycle_ns` only for `min_period` and the min pulse widths; at the 10 ns clock (X2) neither limits.
+- **Found in:** `results/ram/runs/2026-11-06_ram1_r3.md`.
 
 ## Environment
 
