@@ -16,14 +16,16 @@ removed, the inner CONDA_PREFIX checked). gen-block's list is written to
 rtl/char/gen-block.json and its output to rtl/char/char-rtl.log. Each block is
 the top module with the asynchronous active-high reset it has inside an
 accelerator: rtl/char/<point>/sv/, one file per module, and emitted.json
-(block, params, top, modules, files). A point's folder is emptied first.
+(block, params, top, modules, files). A point's folder and zip are removed
+first; a kept point's folder is packed into rtl/char/<point>.zip, test-read
+and deleted (docs X51): syn/syn.py and sim/pwr.py read the zip.
 
 A kept point gets point.json: point, datapath, params, snax_forge_commit,
 dirty, date. The commit and dirty are snax-forge's `git rev-parse HEAD` and
 `git status --porcelain`, as its bundle.py records them, taken before and
 after the call (dirty if either is). A dirty checkout is refused before
 anything runs unless --allow-dirty. git ignores rtl/: a block is rebuilt from
-its commit. Standard library only.
+its commit. Standard library and arc/arc.py only.
 """
 
 from __future__ import annotations
@@ -40,7 +42,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from forge.bundles import FORGE, check_env, forge_cmd, inner_env  # noqa: E402
+from forge.bundles import FORGE, arc, check_env, forge_cmd, inner_env  # noqa: E402
 
 POINTS = ROOT / "char" / "points.json"
 OUT = ROOT / "rtl" / "char"
@@ -112,6 +114,8 @@ def main() -> int:
         dest = OUT / p["point"]
         if dest.exists():
             shutil.rmtree(dest)
+        if dest.with_name(dest.name + ".zip").exists():
+            dest.with_name(dest.name + ".zip").unlink()
     OUT.mkdir(parents=True, exist_ok=True)
     LIST.write_text(json.dumps(entries(pts), indent=1) + "\n")
     done = subprocess.run(cmd, cwd=FORGE, env=inner_env(), capture_output=True, text=True, check=False)
@@ -132,6 +136,7 @@ def main() -> int:
             "snax_forge_commit": commit, "dirty": dirty,
             "date": dt.datetime.now().isoformat(timespec="seconds"),
         }, indent=2) + "\n")
+        arc.pack_bundle(dest)               # rtl/char/<point>.zip, test-read; the folder goes (X51)
         made.append(p["point"])
         print(f"made  {p['point']}  {emitted['top']}  ({len(emitted['files'])} file(s))", flush=True)
     if failed:

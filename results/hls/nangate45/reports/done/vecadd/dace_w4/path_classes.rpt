@@ -1,7 +1,0 @@
-# Worst setup slack per path class of vecadd_dace at 10 ns, in library time units (1ns)
-# inputs 549 (all but ap_clk and ap_rst_n), outputs 262, register clock pins 384, register data pins 384
-# class slack startpoint endpoint
-in2reg 5.31104 A_TDATA[64] grp_module_vecadd_0_0_fu_40/grp_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/add_ln414_1_reg_224_reg[63]/D
-reg2reg 7.87692 grp_module_vecadd_0_0_fu_40/grp_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1_fu_32_ap_start_reg_reg/CK grp_module_vecadd_0_0_fu_40/grp_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1_fu_32/add_ln414_reg_219_reg[61]/D
-reg2out 7.8084 grp_module_vecadd_0_0_fu_40/grp_module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1_fu_32_ap_start_reg_reg/CK C_TVALID
-in2out 8.99605 C_TREADY C_TVALID

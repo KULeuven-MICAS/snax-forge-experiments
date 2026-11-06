@@ -1,7 +1,0 @@
-# Worst setup slack per path class of vsum at 10 ns, in library time units (1ns)
-# inputs 323 (all but clk and rst), outputs 67, register clock pins 160, register data pins 160
-# class slack startpoint endpoint
-in2reg 5.05064 _a_TDATA[64] ____state_3_reg[63]/D
-reg2reg 4.46579 ____state_0_reg[30]/CK ____state_3_reg[63]/D
-reg2out 4.53566 ____state_0_reg[30]/CK _res_TDATA[63]
-in2out 5.12051 _a_TDATA[64] _res_TDATA[63]

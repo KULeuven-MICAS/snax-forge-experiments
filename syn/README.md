@@ -62,8 +62,8 @@ No wire-load model applies on either library. On nangate45, whose library sets `
 | `hls` (default) | `SYN_RTL`, default `../hls-exercises/rtl` | `opt`, `dace` (Vitis) | Verilog | `ap_clk` | `ap_rst_n` | none |
 | `bambu` | the same root as `hls` | `bambu` | Verilog | `clock` | `reset` | `ctrl_um2`, `datapath_um2`, `glue_um2` |
 | `xls` | `SYN_RTL_XLS`, default `../dslx-exercises/rtl` | `xls` | Verilog | `clk` | `rst` | none |
-| `forge` | `SYN_RTL_FORGE`, default `rtl/forge` | every folder with a `bundle.json` | SystemVerilog | `clk_i` | `rst_ni` | [the forge source](#the-forge-source) |
-| `char` | `SYN_RTL_CHAR`, default `rtl/char` | every folder with an `emitted.json` | SystemVerilog | `clock` | `reset` | `datapath`, `lanes`, `depth`, `op`, `form`, `snax_forge_commit` |
+| `forge` | `SYN_RTL_FORGE`, default `rtl/forge` | every zip with a `bundle.json` | SystemVerilog | `clk_i` | `rst_ni` | [the forge source](#the-forge-source) |
+| `char` | `SYN_RTL_CHAR`, default `rtl/char` | every zip with an `emitted.json` | SystemVerilog | `clock` | `reset` | `datapath`, `lanes`, `depth`, `op`, `form`, `snax_forge_commit` |
 
 **Case filters and `MAX_W`.** For the three HLS sources a point is a `*/*/*/filelist.f` folder named `<case>_w<W>`, with `<case>` in the source's cases and W <= `MAX_W` (16, a constant at the top of `syn.py`; docs X38: at most 16 64-bit channels per stream). Any other folder is not listed: Vitis's retired `unopt_w*`, every `*_w32`, a per-size folder such as `opt_n512_w8`, a clock variant such as `opt_w8_c10`, and, for `hls`, Bambu's `bambu_w*` that share its root (docs X39). With today's checkouts: `hls` 60 points (opt 40; dace 15 for vecadd, vecmul and matadd at W 1 to 16, plus `dace_w1` for vsum, dot, relu, axpy and rowsum), `bambu` 40, `xls` 40.
 
@@ -102,10 +102,19 @@ syn.py passes DC: `SYN_FILELIST`, `SYN_LIB_DB` and `SYN_LIB_NAME`, `SYN_TIME_UNI
 
 ## What a run leaves
 
-Everything under `syn/runs/` stays local; git ignores it. Each source and technology has its own tree and summary (`<source>` is `hls`, `bambu`, `xls`, `forge` or `char`):
+Everything under `syn/runs/` stays local; git ignores it. Each source and technology has its own tree and summary (`<source>` is `hls`, `bambu`, `xls`, `forge` or `char`). DC works in the point's run folder; when it ends, `syn.py` packs what is kept into the point's zip next to it (`KEEP_RUN` at the top of `syn.py`, docs X51), test-reads the zip and deletes the folder, scratch with it. Everything that reads a run afterwards (the summary row, `synth_dc_modules.csv`, the committed reports, `sim/pwr.py` and `pt_power.tcl`) reads the zip; `pixi run arc ls <zip>` lists it and `pixi run arc cat <zip> <member>` prints a member.
 
 ```
-syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/   (clock tag only when not 10 ns)
+syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>].zip   (clock tag only when not 10 ns)
+  out/<top>_mapped.v, tech.json, logs/dc_shell.log, logs/dc_stdout.log,
+  reports/{area,area_hierarchy,reference,power,power_hierarchy,qor,path_classes}.rpt, reports/lib_info.txt
+syn/runs/<source>/<tech>/summary.csv   one row per point and clock
+```
+
+The run folder, while DC runs (all but the zip's members is scratch):
+
+```
+syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/
   WORK/            DC's work library
   logs/            dc_shell.log, dc_stdout.log, check_design.log
   reports/         qor, area, area_hierarchy, reference, timing, constraint_setup, clock, port,
@@ -114,7 +123,6 @@ syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/   (clock tag only w
   out/             <top>_mapped.v, .sdf
   tech.json        the tech file, the resolved values (.db path, its md5, T_SCALE, C_SCALE,
                    the DC environment) and what DC read into lib_info.txt
-syn/runs/<source>/<tech>/summary.csv   one row per point and clock
 ```
 
 Every `run` keeps `results/<source>/<tech>/` in step, and that is what is committed (char's two CSVs are named `char_synth.csv` and `char_synth_modules.csv`):
@@ -122,14 +130,14 @@ Every `run` keeps `results/<source>/<tech>/` in step, and that is what is commit
 ```
 results/<source>/<tech>/synth_dc.csv            a copy of the summary
 results/<source>/<tech>/synth_dc_modules.csv    one row per hierarchical cell
-results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>]/
+results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>].zip
                                            area.rpt, area_hierarchy.rpt, reference.rpt, power.rpt,
                                            power_hierarchy.rpt, qor.rpt, path_classes.rpt, tech.json,
                                            lib_info.txt; a file over 1 MB is left out and named in
                                            skipped.txt
 ```
 
-Only those nine files are committed per run (`KEPT_REPORTS` at the top of `syn.py`): they are what the area and energy model reads (area and power in total, per level of hierarchy and per cell type in `reference.rpt`), the QoR summary, the path-class slacks, and what the run ran on (`tech.json`, `lib_info.txt`). Everything else stays in the run folder: `timing.rpt` (the largest, about 30 kB a point), `constraint_setup.rpt`, `clock.rpt`, `port.rpt`, `design_rules.rpt`, `power_verbose_hierarchy.rpt`, the logs, the netlist and the sdf. Those check a run (the clock, the loads, the paths) rather than feed the model, and a rerun rebuilds them.
+Only those nine files are committed per run (`KEPT_REPORTS` at the top of `syn.py`): they are what the area and energy model reads (area and power in total, per level of hierarchy and per cell type in `reference.rpt`), the QoR summary, the path-class slacks, and what the run ran on (`tech.json`, `lib_info.txt`). The run's zip keeps those plus the netlist and the two DC logs; everything else is scratch, deleted with the run folder: `timing.rpt` (the largest, about 30 kB a point), `constraint_setup.rpt`, `clock.rpt`, `port.rpt`, `design_rules.rpt`, `power_verbose_hierarchy.rpt`, `check_design.log`, the sdf, `default.svf`, `WORK/` and `alib-52/` (X51). Those check a run (the clock, the loads, the paths) rather than feed the model, and a rerun rebuilds them. Each committed report zip is deterministic (X51): a rerun with the same reports gives the same bytes, so it changes in git only when a report does (DC's `Date` line and `qor.rpt`'s CPU times are enough, PITFALLS Z1).
 
 `port.rpt` covers a sample of ports (clock, reset, the first and last data input and output): the full report runs to hundreds of kB on the wide AXI-stream tops. `design_rules.rpt` holds the design's max transition and max fanout in library units and a tally of every output's max pin load.
 
@@ -152,7 +160,7 @@ Only those nine files are committed per run (`KEPT_REPORTS` at the top of `syn.p
 | `e_clk_pj`, `e_reg_pj`, `e_seq_pj`, `e_comb_pj`, `e_total_pj` | energy per cycle of the power groups clock_network, register, sequential, combinational: (internal + switching) [uW] x `clock_ns` / 1000; the total is their sum, and syn.py checks it against `dyn_power_uw` x `clock_ns` / 1000 |
 | `leak_clk_uw`, `leak_reg_uw`, `leak_seq_uw`, `leak_comb_uw` | the same groups' leakage, in uW |
 | `lib_md5`, `dc_version` | the .db's md5 and DC's version |
-| `date`, `run` | when the row was written, the run folder |
+| `date`, `run` | when the row was written, the run folder (its zip is `<run>.zip`) |
 
 `power.rpt` states its units (`Dynamic Power Units`, `Leakage Power Units`: 1 uW and 1 nW on nangate45, 1 mW and 1 pW on nangate15), and the totals carry their own suffix; syn.py reads both and converts to uW.
 
@@ -199,15 +207,15 @@ A `# ram:` line names a memory Vitis built. Neither library has RAM cells, and D
 
 `--source forge` synthesizes snax-forge's accelerators: per point, the accelerator `snax_forge_shell_wrapper` (its modules `snax_forge_csr`, `snax_forge_ctrl` and `snax_forge_datapath`, snax-forge `docs/CONTRACTS.md` §17–18), with no streamers, as the HLS blocks have none.
 
-**Where the points come from.** `forge/points.json` lists them: name, snax-forge recipe and W. `pixi run forge-rtl [patterns] [--list] [--dry-run] [-j N] [--allow-dirty]` (`forge/bundles.py`) runs, per point, snax-forge's `sandbox` (the recipe at `--set W=<w>`), `design` (its last `.snaxdfg` on `platforms/snax_forge.json`) and `bundle`, in the snax-forge checkout next to this repo (`SNAX_FORGE`, default `../snax-forge`) and through that checkout's own pixi environment, into `rtl/forge/<point>/`. git ignores `rtl/`: a bundle is rebuilt from its commit. A bundle whose `bundle.json` says `dirty: true` is refused unless `--allow-dirty`. Each bundle gets `point.json` (point, recipe, W, `snax_forge_commit`, `dirty`, date) and `forge-rtl.log` (the three tasks' output). The names join with hls-exercises': vecadd and vecmul `done/<kernel>/forge_w<W>`, vsum_tree `done/vsum/forge_w<W>`, dot_k `done/dot/forge<k>_w<W>`.
+**Where the points come from.** `forge/points.json` lists them: name, snax-forge recipe and W. `pixi run forge-rtl [patterns] [--list] [--dry-run] [-j N] [--allow-dirty]` (`forge/bundles.py`) runs, per point, snax-forge's `sandbox` (the recipe at `--set W=<w>`), `design` (its last `.snaxdfg` on `platforms/snax_forge.json`) and `bundle`, in the snax-forge checkout next to this repo (`SNAX_FORGE`, default `../snax-forge`) and through that checkout's own pixi environment, into `rtl/forge/<point>/`, then packs the folder into `rtl/forge/<point>.zip` and deletes it (X51). git ignores `rtl/`: a bundle is rebuilt from its commit. A bundle whose `bundle.json` says `dirty: true` is refused unless `--allow-dirty`. Each bundle gets `point.json` (point, recipe, W, `snax_forge_commit`, `dirty`, date) and `forge-rtl.log` (the three tasks' output). The names join with hls-exercises': vecadd and vecmul `done/<kernel>/forge_w<W>`, vsum_tree `done/vsum/forge_w<W>`, dot_k `done/dot/forge<k>_w<W>`.
 
-**The points.** A forge point is a folder under `rtl/forge/` (`SYN_RTL_FORGE` overrides) holding a `bundle.json`; its top is `bundle.json`'s `top`. Sizes are run-time CSRs, so one bundle serves every N.
+**The points.** A forge point is a zip under `rtl/forge/` (`SYN_RTL_FORGE` overrides) holding a `bundle.json`; its top is `bundle.json`'s `top`, read from the zip. Sizes are run-time CSRs, so one bundle serves every N.
 
-**The filelist.** `run` writes the point's `filelist.f` into the run folder: `# top: <top>`, then the bundle's `rtl/files.f` with each path (relative to the bundle's `rtl/`) made absolute. `dc_syn.tcl` reads it as it reads an HLS filelist. There is no `# ram:` handling.
+**The filelist.** `run` unpacks the bundle into `tmp/` for the length of the DC run (deleted after, also on a failure) and writes the point's `filelist.f` into the run folder: `# top: <top>`, then the bundle's `rtl/files.f` with each path (relative to the bundle's `rtl/`) in the unpacked bundle. The port guard reads the sources straight from the zip. `dc_syn.tcl` reads it as it reads an HLS filelist. There is no `# ram:` handling.
 
 **The ports.** The RTL is SystemVerilog (`SYN_FORMAT=sverilog`); the clock is `clk_i` and the reset `rst_ni`, active low and asynchronous (firtool's flops take the active-high `reset` the wrapper derives from it). `rst_ni` is kept ideal like `ap_rst_n`.
 
-**The results tree.** As for the HLS sources, under `forge`: runs in `syn/runs/forge/<tech>/<tier>/<kernel>/<point>/` with `syn/runs/forge/<tech>/summary.csv`, committed results in `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `reports/` with `KEPT_REPORTS`). A forge row of `synth_dc.csv` has seven more columns after `run`: `recipe`, `W` (from `point.json`), `snax_forge_commit` (from `bundle.json`), and the area split of the wrapper, in um2: `csr_um2`, `ctrl_um2` and `datapath_um2` (the absolute total, children included, of the rows of `synth_dc_modules.csv` whose design is `snax_forge_csr`, `snax_forge_ctrl` and `snax_forge_datapath`, the keys of `bundle.json`'s `modules`), and `glue_um2` = `area_um2` minus the three.
+**The results tree.** As for the HLS sources, under `forge`: runs in `syn/runs/forge/<tech>/<tier>/<kernel>/<point>.zip` with `syn/runs/forge/<tech>/summary.csv`, committed results in `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `reports/` with one zip of `KEPT_REPORTS` per point). A forge row of `synth_dc.csv` has seven more columns after `run`: `recipe`, `W` (from `point.json`), `snax_forge_commit` (from `bundle.json`), and the area split of the wrapper, in um2: `csr_um2`, `ctrl_um2` and `datapath_um2` (the absolute total, children included, of the rows of `synth_dc_modules.csv` whose design is `snax_forge_csr`, `snax_forge_ctrl` and `snax_forge_datapath`, the keys of `bundle.json`'s `modules`), and `glue_um2` = `area_um2` minus the three.
 
 **The glue.** DC's boundary optimization is left on, so forge compiles like the HLS points (`compile_ultra -no_autoungroup`). It moves a few cells to the wrapper's own level: the inverter that turns `rst_ni` into the active-high `reset` of firtool's flops, and inverters on outputs taken out of the modules (R0's `dot_3` W=4: 2.1 um2 on nangate45, 0.3 um2 on nangate15). `glue_um2` is their area. `run` prints a point whose glue is negative or above 1 % of the total (`GLUE_MAX`), or that has no row for one of the three modules (then the glue is empty); it does not fail it.
 

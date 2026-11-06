@@ -1,7 +1,0 @@
-# Worst setup slack per path class of vsum_dace at 10 ns, in library time units (1ps)
-# inputs 133 (all but ap_clk and ap_rst_n), outputs 69, register clock pins 166, register data pins 166
-# class slack startpoint endpoint
-in2reg 9302.46 A_TDATA[0] grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53/old_val_fu_42_reg[63]/D
-reg2reg 9289.58 grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53/old_val_fu_42_reg[0]/CLK grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53/old_val_fu_42_reg[63]/D
-reg2out 9822.47 grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53/p_i0_fu_46_reg[8]/CLK A_TREADY
-in2out 9846.02 out_r_TREADY ap_done

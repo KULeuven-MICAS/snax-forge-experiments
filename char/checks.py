@@ -6,10 +6,10 @@
 
 Read from the committed CSVs (results/char/<tech>/char_synth.csv and
 char_synth_modules.csv; SYN2's results/forge/<tech>/synth_dc_modules.csv), and
-rtl/char/ and rtl/forge/ (local) for the RTL table. None is a gate.
+rtl/char/ and rtl/forge/'s bundle zips (local, X51) for the RTL table. None is a gate.
 
   rtl      each block's top .sv against the file of the same name in SYN2's
-           bundles (rtl/forge/<point>/rtl/sv/): identical or not, per bundle
+           bundles (rtl/sv/ in rtl/forge/<point>.zip): identical or not, per bundle
   inside   each point against every hierarchical cell of SYN2's forge rows
            whose design is the block's top (DC may add _<n>): area, comb and
            seq alone (the char row) and inside (the cell's subtree: area is the
@@ -32,7 +32,7 @@ With --power (R2), from char_power.csv (and SYN2's results/forge/<tech>/power_pt
   syn2     busy (link: stream) against every hierarchical cell of SYN2's forge rows whose design is the block's
            top (e_dyn_pj per cycle of the forge point's run): a check of size, the stimulus differs
 
-Standard library only.
+Standard library and arc/arc.py only.
 """
 
 from __future__ import annotations
@@ -41,9 +41,13 @@ import argparse
 import csv
 import json
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "arc"))
+import arc  # noqa: E402  the bundles are zips (X51)
+
 TECHS = ("nangate45", "nangate15")
 SLOPE_MIN = 0.7      # a LinkBuffer slope ratio below this calls for R2's diagnostic (not a gate)
 LANE_SERIES = {"ElementwiseLanes add": "lanes/add_w{}", "ElementwiseLanes mul": "lanes/mul_w{}",
@@ -67,13 +71,18 @@ def f2(x: float) -> str:
 
 def rtl_table() -> str:
     body = []
-    for e in sorted((ROOT / "rtl" / "char").rglob("emitted.json")):
-        point = str(e.parent.relative_to(ROOT / "rtl" / "char"))
-        top = json.loads(e.read_text())["top"]
+    forge = sorted((ROOT / "rtl" / "forge").glob("done/*/*.zip"))
+    for z in sorted((ROOT / "rtl" / "char").rglob("*.zip")):
+        if not arc.has(z, "emitted.json"):
+            continue
+        point = z.relative_to(ROOT / "rtl" / "char").with_suffix("").as_posix()
+        top = json.loads(arc.read(z, "emitted.json"))["top"]
+        mine = arc.read(z, f"sv/{top}.sv")
         same, differ = [], []
-        for f in sorted((ROOT / "rtl" / "forge").glob(f"done/*/*/rtl/sv/{top}.sv")):
-            b = "/".join(f.parts[-5:-3])
-            (same if f.read_bytes() == (e.parent / "sv" / f"{top}.sv").read_bytes() else differ).append(b)
+        for f in forge:
+            if arc.has(f, f"rtl/sv/{top}.sv"):
+                b = f.relative_to(ROOT / "rtl" / "forge" / "done").with_suffix("").as_posix()
+                (same if arc.read(f, f"rtl/sv/{top}.sv") == mine else differ).append(b)
         body.append([point, f"`{top}`", ", ".join(same) or "-", ", ".join(differ) or "-"])
     return table(["point", "top", "identical in", "differs in"], body)
 

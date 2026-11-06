@@ -4,7 +4,7 @@ Dynamic energy per cycle and per firing of a mapped netlist, from simulated acti
 
 ## Before a run
 
-- The point's synthesis run exists: `syn/runs/<source>/<tech>/<tier>/<kernel>/<point>/out/<top>_mapped.v` and `tech.json` (`pixi run syn run ... --source <source>`).
+- The point's synthesis run exists: `syn/runs/<source>/<tech>/<tier>/<kernel>/<point>.zip` with `out/<top>_mapped.v`, `tech.json` and `reports/lib_info.txt` (`pixi run syn run ... --source <source>`); `pwr` unpacks those three into `tmp/` for the point (X51) and PT reads them there.
 - `pixi install` once (docs X15).
 - Tools: `vlib`, `vlog`, `vopt`, `vsim` from PATH; `pt_shell` from PATH or `PT_SHELL`; `lmutil` from PATH or `LMUTIL` (a non-interactive shell may not have it on PATH, PITFALLS L3); `vcd2saif` from PATH, else next to `pt_shell`; `dc_shell` (setup-check only) from `DC_SHELL` or PATH. Licence servers from `MGLS_LICENSE_FILE` and `SNPSLMD_LICENSE_FILE`.
 
@@ -39,7 +39,7 @@ One worker per point; J workers at once and nproc // J PT threads each, from the
 |---|---|---|
 | tb.json | `sim/sources/hls.py` from the top's Verilog ports, `filelist.f` and `params.json` (X14); a `# ram:` point is `skipped` | a port is not covered, or `control.kind` is not `ap_ctrl_hs` |
 | compile | `sim/tb/*.sv` and the generated `tb.sv`; the netlist with `vlog -timescale 1ns/1ps`; `vopt +initreg+0 +acc=n` against the cell models compiled once per technology into `sim/runs/<tech>/_cells` | vlog or vopt errors |
-| stimulus | rand64 (or forge) per X19, the reference from `sim/ref.py`, `$readmemh` files | an input stream bit never toggles in a run of 64 beats or more (fewer: counted in `result.json`); forge: `sim/ref.py` differs from `data.h`'s `EXP_*` |
+| stimulus | rand64 (or forge) per X19, the reference from `sim/ref.py`, `$readmemh` files | an input stream bit never toggles in a run of 64 beats or more (fewer: counted in the run's info, printed); forge: `sim/ref.py` differs from `data.h`'s `EXP_*` |
 | vsim | `vsim -c` with no SDF, `+nospecify +notimingchecks`, data and sizes by plusargs (`sim/scripts/run.do`); the TB compares every output beat and dumps the DUT's scopes from the edge raising `ap_start` to the done edge | a mismatch, X/Z on a valid output, a timeout |
 | cycles | the TB's count (X12) against cosim's line a x loop_count + b, or cosim exactly at a cosim size (X19) | a different count, or no integer line |
 | vcd2saif | `-instance tb/dut -time t0 t1` in the VCD's unit; the VCD is deleted at once (X8, X18) | no SAIF |
@@ -53,7 +53,7 @@ A tool that fails on a licence error is run once more (X17); its first log is ke
 
 ## Forge (`--source forge`)
 
-snax-forge's accelerators (SYN1): the bundles in `rtl/forge/<point>/` (`forge/bundles.py`), the netlists DC wrote in `syn/runs/forge/<tech>/` (`syn.py --source forge`, X6). snax-forge is not changed. The default stays `--source hls`, and the HLS path is as above.
+snax-forge's accelerators (SYN1): the bundles in `rtl/forge/<point>.zip` (`forge/bundles.py`), unpacked into `tmp/` for the point (`forge/query.py` reads the folder), the netlists DC wrote in `syn/runs/forge/<tech>/` (`syn.py --source forge`, X6). snax-forge is not changed. The default stays `--source hls`, and the HLS path is as above.
 
 - **tb.json** (`sim/sources/forge.py`, X14): from the bundle's `point.json` (recipe, W, `snax_forge_commit`), `bundle.json` (the top), `accelerator.json` (its one group's CSRs by offset, its outer ports in order with lanes and dtype; a point with more than one group is refused, dot 1 is not in SYN1), the streamer hjson (each mover's `num_channel`) and the netlist's port list, every port covered as C§17's wrapper has them (`clk_i`, `rst_ni`, the CSR port, `stream2acc_<k>_*`, `acc2stream_<k>_*`, `<group>_busy_o`, `<group>_done_o`). The rest comes from snax-forge's own code, through `forge/query.py` run in snax-forge's pixi environment with `forge/bundles.py`'s cleaned environment: each port's container (the design point's graph, as its `gen/rtl.py` finds it), the recipe's kernel, and `expected_cycles`, the group's busy cycles from `gen/rtl.py`'s `group_counter` (snax-gvsoc's group rule, every input valid and the output ready) with JOBS and the units' T as the program writes them.
 - **Control `forge_csr`:** the CSR port's names, the group's `busy` and `done` pins and its CSR offsets. One size, `n2048` (N = 2048 for every SYN1 comparison): an elementwise group writes JOBS = N / W, a group with a fold (a unit with JOB_BEATS) JOBS = 1 and JOB_BEATS = N / W, then START. No other read-write CSR is accepted.
@@ -61,12 +61,12 @@ snax-forge's accelerators (SYN1): the bundles in `rtl/forge/<point>/` (`forge/bu
 - **The window:** START is accepted in cycle a, the group is busy in a + 1 .. E and `<group>_done_o` is high in E + 1, so COUNTER = E - a (C§17). The window opens at the falling edge before the edge that accepts START and closes at the falling edge before e_E, one cycle before the first falling edge that samples done = 1: its rising edges are e_a .. e_{E-1}, E - a of them, as X12 counts an HLS run. Dumping runs from the edge that offers START to the edge after done is seen (PITFALLS Q6). After the run the TB reads COUNTER over the CSR port and prints it beside the window's cycles.
 - **Checks:** every output beat against `sim/ref.py` (vecadd, vecmul, vsum, dot); the window's cycles = COUNTER read back = `expected_cycles`, any mismatch fails the point; once per kernel, size and seed in a batch, `sim/ref.py` against snax-forge's kernel body (`kernels/<...>/<kernel>.py`, its `SPEC.func`, run by `forge/query.py ref` on the same inputs; the inputs depend on N and the seed only). The SAIF check is X9's with `clk_i`; PT must annotate 99 % of the nets that are not floating: a net PT leaves at default that the SAIF has at Z for the whole window has no driver (STATUS bits 2 to 31, PITFALLS PT6) and leaves the denominator. Every module of the netlist must get a dump scope (PITFALLS DC6).
 - **Stimulus:** rand64 only (X19): N full-range int64 per input stream, seed 0, stream by stream in tb.json order; N / W beats, at least 64 at every W, so the toggle check applies.
-- **Runs and results:** `sim/runs/forge/<tech>/<point>/n2048_s0/` (the cell models stay in `sim/runs/<tech>/_cells/`); `results/forge/<tech>/power_pt.csv`, `power_pt_modules.csv` and `power_reports/`, with X20's columns plus `recipe` and `snax_forge_commit`. `config` is the CSR writes before START, `beats` the beats per input stream, and per firing is per input beat.
+- **Runs and results:** `sim/runs/forge/<tech>/<point>.zip`, run tag `n2048_s0/` (the cell models stay in `sim/runs/<tech>/_cells/`); `results/forge/<tech>/power_pt.csv`, `power_pt_modules.csv` and `power_reports/`, with X20's columns plus `recipe` and `snax_forge_commit`. `config` is the CSR writes before START, `beats` the beats per input stream, and per firing is per input beat.
 - **Setup check:** `pt_power.tcl` and `dc_readback.tcl` take the clock and reset ports from the run's `tech.json` (`dc_env`'s `SYN_CLK_PORT`, `SYN_RST_PORT`), else `ap_clk` and `ap_rst_n`, since `constraints.sdc` names them (SYN1 R0). On nangate15 the forge points' register group is below DC's: -0.55 % (`done/vecadd/forge_w4`), -1.08 % (`done/dot/forge5_w4`), -0.25 % (`done/vsum/forge_w8`), against -0.08 % on the HLS point and within 0.02 % on nangate45 (PITFALLS PT5); the check is a diagnostic (X25).
 
 ## Char (`--source char`)
 
-CHAR1's blocks alone: snax-forge's catalogue datapaths in `rtl/char/<point>/` (`char/blocks.py`, R0) and their netlists in `syn/runs/char/<tech>/` (`syn.py --source char`). A block has no CSRs, no START and no done, so the TB drives its data and pins as its group's control unit would, through fixed windows, and the energy per cycle of each window is measured apart. First run in CHAR1 R1 (`results/char/runs/2026-11-03_char1_r1.md`, six points, R1's windows); R2 has the windows below and runs all 27 points on both technologies.
+CHAR1's blocks alone: snax-forge's catalogue datapaths in `rtl/char/<point>.zip` (`char/blocks.py`, R0) and their netlists in `syn/runs/char/<tech>/` (`syn.py --source char`). A block has no CSRs, no START and no done, so the TB drives its data and pins as its group's control unit would, through fixed windows, and the energy per cycle of each window is measured apart. First run in CHAR1 R1 (`results/char/runs/2026-11-03_char1_r1.md`, six points, R1's windows); R2 has the windows below and runs all 27 points on both technologies.
 
 - **tb.json** (`sim/sources/char.py`): from `point.json`, `emitted.json` and the netlist's ports, every port covered: `clock`, `reset`, the 64-bit data inputs one per lane (`data_in`, in the catalogue's port order then lane order: rand64 draws one stream per port in this order), the 64-bit outputs (`outs`), and the kind's pins that have bits (a pin of no bits is absent: LinkBuffer's `wslot` and `rslot` at depth 1, SerialAccumulate's `lane` at lanes 1; ElementwiseLanes keeps an unused `clock` and `reset`). The kind comes from the datapath: lanes (ElementwiseLanes), fold (the accumulating Mac, TreeAccumulate), serial (SerialAccumulate), link (LinkBuffer).
 - **The TB**: `sim/tb/char_<kind>_seq.sv` with the shared `char_seq_core.svh` (compiled with `+incdir+sim/tb`) and the generated `tb.sv`. Reset asynchronous, active high, 5 cycles, released at a falling edge; 4 settle slots with every input low; then per window a lead-in of the window's own kind (one slot; link's stream: D slots, the fill) and the window's 128 slots (serial's busy is 128 beats of W slots). A slot's inputs are applied at its rising edge, after the flops take the slot before (as SYN1 and SYN2's TBs and a block's neighbours inside an accelerator change them), its outputs are sampled at its falling edge and compared with `sim/ref.py`'s `char_ref`, and the next rising edge takes it. A window runs from a quarter cycle before its first slot's rising edge to a quarter cycle before the rising edge after its last slot: its own input changes, captures of its own kind only (the lead-in's and its own but the last, which falls on the next lead-in's edge), and no event at either end. The TB prints `TB: window <name> t0_ns <t0> t1_ns <t1> cycles <c> fires <f>` and `TB: changes <name> <n>` per window.
@@ -91,7 +91,7 @@ Bambu's points (HSYN1, X44): `rtl/<tier>/<kernel>/bambu_w<W>/` in hls-exercises 
 - **The window:** opens at the falling edge before the first rising edge that samples `start_port` = 1 and closes at the falling edge before the first rising edge that samples `done_port` = 1; its rising edges are Bambu's `cycles_done`. Dumping from the edge raising `start_port` to the done edge (PITFALLS Q6).
 - **Checks:** every output beat against `sim/ref.py`; the window's cycles against the line a x loop_count + b through `cycles_done` at the point's sizes in `results/bambu/bambu_cycles.csv` (status ok rows; integer, exact at those sizes; dot at W = 4 and 8: a = 2); X9's SAIF check with `clock`; at least 99 % of PT's nets annotated, no wire load (PITFALLS PT1), every module a dump scope (DC6). The SAIF holds about 17 600 nets at Z for the whole window on `done/dot/bambu_w8`: undriven bits of DC's declared vector wires (DC5), not PT nets.
 - **Stimulus:** rand64 (X19), the streams in tb.json order, then `alpha`.
-- **Runs and results:** `sim/runs/bambu/<tech>/<point>/<size>_s0/`; `results/bambu/<tech>/power_pt.csv`, `power_pt_modules.csv`, `power_reports/`, X20's columns.
+- **Runs and results:** `sim/runs/bambu/<tech>/<point>.zip`, run tags `<size>_s0/`; `results/bambu/<tech>/power_pt.csv`, `power_pt_modules.csv`, `power_reports/`, X20's columns.
 - **Setup check** (`--source bambu`, default `done/dot/bambu_w8`): nangate45 within 0.03 % in every group; nangate15 register -0.91 %, combinational +2.22 % (PITFALLS PT5).
 
 ## XLS (`--source xls`)
@@ -103,17 +103,25 @@ Google XLS's points (HSYN1, X44): `rtl/<tier>/<kernel>/xls_w<W>/` in dslx-exerci
 - **The TB** (`sim/tb/xls_seq.sv`): the same reset and idle cycles (`rst`, active high, is the TB's `~rst_n`); the sources valid one cycle before the cfg beat; the cfg beat held until a rising edge samples `_cfg_TREADY` = 1 (the cfg transfer edge). XLS holds every `_TREADY` low in reset and `_cfg_TREADY` low until cfg is valid.
 - **The window:** opens at the falling edge before the cfg transfer edge and closes at the falling edge after the rising edge that transfers the last output beat (every sink complete): its rising edges are XLS's `cycles` + 1, since the datapath is combinational and the cycle ending at the last transfer edge computes the last beat. Dumping from the edge raising `_cfg_TVALID` to the edge after the window.
 - **Checks:** as for Bambu, with the line through `cycles` in `results/xls/xls_cycles.csv` (a = 1, b = 0) plus 1, and X9 on `clk`.
-- **Runs and results:** `sim/runs/xls/<tech>/<point>/<size>_s0/`; `results/xls/<tech>/power_pt.csv`, `power_pt_modules.csv`, `power_reports/`, X20's columns.
+- **Runs and results:** `sim/runs/xls/<tech>/<point>.zip`, run tags `<size>_s0/`; `results/xls/<tech>/power_pt.csv`, `power_pt_modules.csv`, `power_reports/`, X20's columns.
 - **Setup check** (`--source xls`, default `done/dot/xls_w16`): nangate45 within 0.005 %; nangate15 register -0.45 %, combinational +2.00 % (PITFALLS PT5).
 - **Random register start:** XLS resets all proc state (`--reset_data_path=true`), so a random start gives the same energy to the last digit.
 
 ## Run folder
 
-Vitis's runs are in `sim/runs/<tech>/`, the other sources' in `sim/runs/<source>/<tech>/`; the cell models stay in `sim/runs/<tech>/_cells/`.
+Vitis's runs are in `sim/runs/<tech>/`, the other sources' in `sim/runs/<source>/<tech>/`; the cell models stay in `sim/runs/<tech>/_cells/`. What is kept of a point is one zip (X51); the point's folder exists only while its worker runs, then `pwr` packs it into the zip (merged: the folder's run tags replace the zip's, the zip's other runs stay), test-reads the zip and deletes the folder. The DC run's three files and a forge or char bundle are unpacked into `tmp/` for the point and deleted after.
 
 ```
-sim/runs/<tech>/_cells/                         cell models, compiled once per technology
+sim/runs/<tech>/_cells/                         cell models, compiled once per technology (a cache, kept)
 sim/runs/<tech>/batches.jsonl                   per batch: date, patterns, licence counts, J, threads
+sim/runs/<tech>/<tier>/<kernel>/<point>.zip     tb.json; per run tag busy.saif and pt/*.rpt (char: per window
+                                                <window>/<window>.saif and <window>/pt/*.rpt under s<seed>/)
+sim/runs/<tech>/setup_check/<point>.zip         check.json, pt/reports/*.rpt, dc/reports/*.rpt
+```
+
+The point's folder while its worker runs (all but the zip's members is scratch, deleted):
+
+```
 sim/runs/<tech>/<tier>/<kernel>/<point>/
   tb.json, tb.sv                                the point's description and generated top
   logs/                                         vlog_tb, vlog_netlist, vopt
@@ -123,12 +131,11 @@ sim/runs/<tech>/<tier>/<kernel>/<point>/
     busy.saif                                   the window's activity (kept, X18)
     pt/                                         pt_shell.log, power.rpt, power_hierarchy.rpt, switching_activity.rpt,
                                                 units.rpt, wire_load.rpt, licenses.rpt, not_annotated.rpt
-    not_annotated.rpt                           nets PT did not annotate from the SAIF
-    result.json                                 the row, expected cycles, window, SAIF stats, coverage, stage times
+    not_annotated.rpt                           nets PT did not annotate from the SAIF (a copy of pt/'s)
 sim/runs/<tech>/setup_check/<point>/            pt/, dc/, check.json
 ```
 
-Rerunning a point replaces only the run folders it reruns; other runs of the point and their SAIFs stay. git ignores `sim/runs/`.
+Rerunning a point replaces only the runs it reruns in the point's zip; the other runs and their SAIFs stay. No `result.json` is written any more (X51): the row is in the CSVs, the rest was printed. git ignores `sim/runs/`.
 
 ## What is committed
 
@@ -136,7 +143,7 @@ In `results/<source>/<tech>/` (X20; Vitis in `results/hls/`):
 
 - `power_pt.csv`: one row per point, size and seed, merged on those three, in the columns of X20;
 - `power_pt_modules.csv`: `point, tech, path, design, e_dyn_pj`, one row per hierarchical cell of the point's default run;
-- `power_reports/<tier>/<kernel>/<point>/`: `power.rpt`, `power_hierarchy.rpt`, `switching_activity.rpt` of the default run and the point's `tb.json`; other runs of the point in `<size>_<seed>/` below it.
+- `power_reports/<tier>/<kernel>/<point>.zip` (X51): `power.rpt`, `power_hierarchy.rpt`, `switching_activity.rpt` of the default run and the point's `tb.json`; other runs of the point in `<size>_<seed>/` inside it; char: one `<window>/` per window with `power.rpt` and `switching_activity.rpt`, and `tb.json`. Deterministic: it changes in git only when a report does (PT's `Date` line is enough, PITFALLS Z1).
 
 Tool versions, licence counts, the setup check and the validation go into the run note in `results/hls/runs/`.
 

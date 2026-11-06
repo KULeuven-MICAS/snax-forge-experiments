@@ -1,7 +1,0 @@
-# Worst setup slack per path class of vecmul at 10 ns, in library time units (1ps)
-# inputs 293 (all but ap_clk and ap_rst_n), outputs 134, register clock pins 198, register data pins 198
-# class slack startpoint endpoint
-in2reg 9158.31 B_TDATA[65] mul_ln13_1_reg_172_reg[63]/D
-reg2reg 9698.26 b_fu_52_reg[0]/CLK b_fu_52_reg[31]/D
-reg2out 9752.79 b_fu_52_reg[0]/CLK A_TREADY
-in2out 9757.98 loop_count[10] A_TREADY
