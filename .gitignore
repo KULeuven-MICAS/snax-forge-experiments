@@ -12,3 +12,5 @@ rtl/
 ram/runs/
 # CACTI's source and binary (pixi run ram-build); never committed
 ram/cacti/
+# arc/arc.py's temporary folders (unpacked zips, work folders), deleted after each step (X51)
+tmp/
