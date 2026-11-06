@@ -1,0 +1,42 @@
+{
+  "_doc": "STRM1: the streamer reader and TCDM sparse interconnect grid (strm/gen.py). snax_cluster is read at this commit only; its generators run in the image on a git-archive copy in tmp/strm/.",
+  "snax_cluster": {
+    "repo": "KULeuven-MICAS/snax_cluster",
+    "path": "../snax_cluster",
+    "branch": "main",
+    "commit": "ea9c837b514e38fd43f99543721a5eba447d91b0"
+  },
+  "image": "d3d8f5572ff4",
+  "tech": "nangate45",
+  "streamer": {
+    "name": "d{fifo_depth}_l{temporal_dim}_c{num_channel}",
+    "axes": {
+      "fifo_depth": [2, 4, 8, 16],
+      "temporal_dim": [1, 2, 3, 4, 5, 6, 7],
+      "num_channel": [1, 2, 4, 6, 8, 16]
+    },
+    "fixed": {
+      "_doc": "platforms/snax_forge_cluster.hjson in snax-forge: 64-bit TCDM of 128 KiB, spatial_bounds [num_channel], no configurable_channel, no datapath extension, no tcdm_logic_word_size (256), dynamicPriority as its default (true)",
+      "tcdm_size_kib": 128,
+      "tcdm_data_width": 64,
+      "tag_name": "strm"
+    }
+  },
+  "xbar": {
+    "name": "i{inputs}_b{banks}",
+    "axes": {
+      "inputs": [4, 8, 16, 24, 32, 40, 48, 56, 64],
+      "banks": [16, 32, 64]
+    },
+    "power_where": "inputs <= banks",
+    "fixed": {
+      "_doc": "snaxgen.py (Generating Sparse Interconnect) for a 128 KiB TCDM of 64-bit words: tcdmAddrWidth = log2(128 KiB) = 17; memAddrWidth = log2(128 KiB / banks / 8 B); priorityWidth 1 (a literal there); userWidth = core_id_width + 2 = 3 for snax_forge_cluster's 2 cores (the platform's user_width 3); strbWidth = dataWidth / 8; sparseConfig [[NumInp, 1]]",
+      "tcdm_size_kib": 128,
+      "dataWidth": 64,
+      "strbWidth": 8,
+      "tcdmAddrWidth": 17,
+      "priorityWidth": 1,
+      "userWidth": 3
+    }
+  }
+}
