@@ -102,6 +102,16 @@ Leave-one-out (`pixi run strm-table --loo`): each interior grid point predicted 
 | Interconnect energy, in 1/inputs | 11 | 2.49 % | +11.32 % (32 inputs, 64 banks, a measured dip); all others within 3.9 % |
 | Interconnect energy, in inputs (X53, replaced) | 11 | 8.98 % | +24.32 % (8 inputs, 64 banks) |
 
+The reader axis by axis: each interior grid value predicted from its two neighbours on one axis only, the other two axes held at grid values, which shows which axis bends.
+
+| Reader axis | Area mean / worst | Energy mean / worst | Shape at depth 8, 2 loops, 4 channels |
+|---|---|---|---|
+| Channels | 0.12 % / +0.81 % | 0.45 % / −1.72 % | straight: about +4,700 µm² and +4.9 pJ per beat per channel |
+| Loops | 0.03 % / −0.17 % | 0.42 % / +3.10 % | nearly flat: about +530 µm² and +0.3 pJ per beat per loop |
+| Depth | 0.74 % / +1.49 % | 3.95 % / −8.33 % | 9.77, 14.41, 20.30, 32.40 pJ per beat at depths 2, 4, 8, 16 |
+
+Depth is the only axis that bends, and only in energy: from depth 4 up each FIFO entry adds about 1.5 pJ per beat at 4 channels, while 2 to 4 adds about 2.3 pJ per entry, so depth 4 predicted from 2 and 8 comes out 6–8 % low at every channel count (not traced). Interpolating in log₂(depth) does worse (area 20.2 %, energy 9.3 % mean), so depth stays linear. The FIFO registers are not clock-gated, so every entry is clocked every cycle, used or not: about 4.6 fJ per register bit per cycle. A deeper FIFO costs energy per beat even when the extra entries are never filled.
+
 Fitted forms were tried too, each fitted per bank count and checked the same way (STRM1 R2); none does better than the table in 1/inputs, and all miss most at the same 32-input, 64-bank point:
 
 | Interconnect energy | Parameters | Mean | Worst |
