@@ -270,6 +270,34 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** run CACTI from `ram/cacti/`, or link `tech_params` into the run folder; `ram/ram.py` runs each point in `ram/runs/cacti/<point>/` with `tech_params` (and `contention.dat`) linked in. A run with rc 139 and no `Cache Parameters:` block in its output is this.
 - **Found in:** `results/ram/runs/2026-11-05_ram1_r1.md`.
 
+### C2. `cache.cfg`'s `-Optimize "ED^2"` overrides the design objective
+
+- **Symptom:** changing `-design objective` or `-deviate` has no effect on the organization CACTI picks or on its numbers.
+- **Cause:** with `-Optimize ED or ED^2` set to `ED` or `ED^2` (`cache.cfg` has `"ED^2"`), `find_optimal_uca` (`Ucache.cc`) minimizes the energy-delay product and ignores the objective weights and the deviate line.
+- **Fix or check:** `-Optimize ED or ED^2 (ED, ED^2, NONE): "NONE"`; `ram.py` sets it (X47). Two runs with different objectives that give identical numbers are this.
+- **Found in:** `results/ram/runs/2026-11-05_ram1_r1.md`.
+
+### C3. `cache.cfg` turns ECC on
+
+- **Symptom:** area, energy and leakage about 12 % higher than the bank needs (512 x 64: area +11.2 %, read +13.5 %, write +13.0 %).
+- **Cause:** `cache.cfg` has `-Add ECC - "true"`, which adds one bit per 8 data bits to every data signal on the H-trees (`ECC_adjustment`).
+- **Fix or check:** `-Add ECC - "false"` for a bank without ECC (a TCDM bank has none); `ram.py` sets it (X47), `point --ecc` turns it on for a one-off check.
+- **Found in:** `results/ram/runs/2026-11-05_ram1_r1.md`.
+
+### C4. A size CACTI rejects exits with rc 0
+
+- **Symptom:** CACTI exits 0 and writes no results; the reason is one line on stderr (`Cache size must >=64`).
+- **Cause:** CACTI checks the size before modelling and returns normally after printing the message. Depth 16 fails at every width with `ERROR: no valid data array organizations found` (rc 1): it needs at least 2 x 16 rows.
+- **Fix or check:** do not trust the return code; `ram.py` marks a point failed unless `cacti.out` holds the access time, both energies, the data array's area and the height x width, and gives stderr's error lines in `status`. Smallest modelled sizes: 64 bytes and 32 words.
+- **Found in:** `results/ram/runs/2026-11-05_ram1_r1.md`.
+
+### C5. CACTI's numbers jump between neighbouring sizes
+
+- **Symptom:** interpolating between table points, or fitting a curve, misses by up to 30 to 40 % at some sizes, however dense the points; for example 480 x 200 reads at 14.07 pJ where 448 x 200 reads at 9.53 pJ.
+- **Cause:** CACTI picks the array organization (Nspd, Ndcm, Ndbl) per size; where the choice changes between two neighbouring sizes, area and energy step. Against the mean of its four neighbours on the 32-word by 8-bit grid, a point differs by 0.4 / 1.1 / 1.0 % on average (area / read / write) and up to 15 / 28 / 30 %.
+- **Fix or check:** look up the exact size in `ram_table.csv` (X48) instead of interpolating or fitting; the `nspd` and `ndcm` columns show where the organization changes.
+- **Found in:** `results/ram/runs/2026-11-06_ram1_r2.md`.
+
 ## Environment
 
 ### E1. `pixi run python -c "..."` loses the inner quotes

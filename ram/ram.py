@@ -3,7 +3,7 @@
     pixi run ram-build                       # clone and build CACTI into ram/cacti/ (once)
     pixi run ram point 512 64                # one point: config, run, parse, print
     pixi run ram point 512 64 --objective 0:0:0:100:0
-    pixi run ram all -j 32                   # R1's grid and check points -> results/ram/nangate45/ram_cacti.csv
+    pixi run ram table -j 32                 # the lookup table -> results/ram/nangate45/ram_table.csv
 
 Each point runs in its own folder, ram/runs/cacti/d<d>_w<w>[_<variant>]/, with tech_params/ linked
 in: CACTI opens "tech_params/45nm.dat" relative to its working directory. A folder whose config
@@ -26,7 +26,7 @@ REPO = Path(__file__).resolve().parent.parent
 CACTI_DIR = REPO / "ram" / "cacti"
 CACTI_BIN = CACTI_DIR / "cacti"
 RUNS = REPO / "ram" / "runs" / "cacti"
-CSV_OUT = REPO / "results" / "ram" / "nangate45" / "ram_cacti.csv"
+TABLE_OUT = REPO / "results" / "ram" / "nangate45" / "ram_table.csv"
 
 TECH_U = 0.045
 VDD_CACTI = 1.0      # itrs-hp at 45 nm (tech_params/45nm.dat, -Vdd hp column); checked against CACTI's printout
@@ -35,11 +35,12 @@ E_SCALE = (VDD_TARGET / VDD_CACTI) ** 2
 OBJECTIVE = "0:50:0:0:50"   # weights: delay, dynamic power, leakage power, cycle time, area
 TIMEOUT_S = 3600
 
-GRID = [(d, w) for d in (16, 32, 64, 128, 256) for w in (8, 16, 32, 64, 128)]
-CHECKS = [(512, 64), (2048, 64), (128, 256), (128, 40), (128, 39), (1024, 64), (4096, 64)]
-# variants: (depth, width, objective, overrides, tag)
-VARIANTS = [(512, 64, "0:0:0:100:0", {}, "cacti_default_objective"),
-            (512, 64, OBJECTIVE, {"ecc": True}, "ecc")]
+# The lookup table (X48): every depth 32..4096 in steps of 32 words, every width 8..256 in steps of 8 bits.
+# Points CACTI rejects (under 64 bytes: only 32 x 8 here) are left out of the table.
+TABLE_DEPTHS = range(32, 4096 + 1, 32)
+TABLE_WIDTHS = range(8, 256 + 1, 8)
+TABLE_COLUMNS = ["depth", "width", "area_um2", "e_rd_pj", "e_wr_pj", "t_access_ns", "t_cycle_ns", "leak_uw",
+                 "ndwl", "ndbl", "nspd", "ndcm", "ndsam_l1", "ndsam_l2"]
 
 
 def cacti_commit():
@@ -226,29 +227,32 @@ def vdd_check():
     return len(v0)
 
 
-def run_all(j, csv_path):
+def run_table(j, csv_path):
+    """Run (or reuse) every point of the lookup table and write it, one row per point CACTI models."""
     n = vdd_check()
     print(f"vdd check: {n} itrs-hp (-Vdd[0]) lines, all {VDD_CACTI} V; energies scaled by {E_SCALE:.4f}")
-    jobs = [(d, w, OBJECTIVE, False, "") for d, w in GRID + CHECKS] + \
-           [(d, w, o, ov.get("ecc", False), tag) for d, w, o, ov, tag in VARIANTS]
+    jobs = [(d, w) for d in TABLE_DEPTHS for w in TABLE_WIDTHS]
+    t0 = time.time()
     with ThreadPoolExecutor(max_workers=j) as ex:
         results = list(ex.map(lambda a: row(*a), jobs))
-    rows = [r for r, _, _ in results]
     ran = sum(not c for _, c, _ in results)
-    print(f"{len(rows)} points, {ran} run, {len(rows) - ran} cached")
+    ok = [r for r, _, _ in results if r["status"] == "ok"]
+    print(f"{len(results)} points ({ran} run, {len(results) - ran} cached) in {time.time() - t0:.0f} s; {len(ok)} ok")
     for r, _, errs in results:
-        if errs or not r["status"].startswith("ok"):
-            print(f"  {r['run']}: {r['status']}")
-            for e in errs:
-                print("    " + e)
+        if r["status"] != "ok":
+            print(f"  left out {r['run']}: {r['status']}")
+    for r in ok:
+        if r["cacti_commit"] != ok[0]["cacti_commit"] or r["objective"] != OBJECTIVE or r["ecc"]:
+            sys.exit(f"{r['run']}: not run with this script's CACTI commit, objective and ECC off: stop")
     csv_path = Path(csv_path)
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with open(csv_path, "w", newline="") as f:
-        wr = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="ignore")
+        wr = csv.DictWriter(f, fieldnames=TABLE_COLUMNS, extrasaction="ignore", lineterminator="\n")
         wr.writeheader()
-        for r in rows:
+        for r in ok:
             wr.writerow(r)
-    print(f"wrote {csv_path} ({len(rows)} rows)")
+    print(f"wrote {csv_path} ({len(ok)} rows, CACTI {ok[0]['cacti_commit']}, objective {OBJECTIVE}, "
+          f"energies x {E_SCALE:.4f})")
 
 
 def main():
@@ -260,9 +264,9 @@ def main():
     p.add_argument("--objective", default=OBJECTIVE)
     p.add_argument("--ecc", action="store_true")
     p.add_argument("--tag", default="")
-    a = sub.add_parser("all", help="R1's grid, check points and variants, then the CSV")
+    a = sub.add_parser("table", help="the lookup table: every point of the dense grid, then the CSV")
     a.add_argument("-j", type=int, default=os.cpu_count())
-    a.add_argument("--csv", default=str(CSV_OUT))
+    a.add_argument("--csv", default=str(TABLE_OUT))
     args = ap.parse_args()
     if not CACTI_BIN.exists():
         sys.exit(f"{CACTI_BIN} not found: pixi run ram-build")
@@ -275,7 +279,7 @@ def main():
         for e in errs:
             print("  " + e)
     else:
-        run_all(args.j, args.csv)
+        run_table(args.j, args.csv)
 
 
 if __name__ == "__main__":

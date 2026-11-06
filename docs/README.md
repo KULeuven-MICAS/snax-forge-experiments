@@ -22,6 +22,7 @@ Vitis-side nuances (pragmas, ports, the cases, cosim) live in hls-exercises' [`d
 | `results/runs/` | Run notes of rounds that span several sources (HSYN1 on). |
 | `results/hls/` | Vitis (X38). hls-exercises' bench summaries: `hls_cycles.csv`, `hls_loops.csv`, `forge_cycles.csv`, `report_<tier>.md`. `forge_cycles.csv` stays unchanged. |
 | `results/forge/<tech>/`, `results/forge/runs/` | snax-forge's points (X21 to X23): the same files as `results/hls/<tech>/`, with `recipe`, `W` and `snax_forge_commit`; SYN1's run notes. |
+| `ram/`, `results/ram/` | RAM1: SRAM bank area and energy per access from CACTI 7 at 45 nm (X47): `ram/ram.py`, CACTI in `ram/cacti/` and runs in `ram/runs/` (both git-ignored); the lookup table `results/ram/nangate45/ram_table.csv` (X48) and run notes in `results/ram/runs/`. See [`ram/README.md`](../ram/README.md). |
 
 ## Sibling repos
 
