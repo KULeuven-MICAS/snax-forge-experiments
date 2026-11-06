@@ -26,3 +26,6 @@ arc = "python arc/arc.py"
 arc-test = "python arc/test_arc.py"
 # STRM1: the streamer reader and sparse interconnect bundles, rtl/streamer/ and rtl/xbar/ (strm/grid.json)
 strm-rtl = "python strm/gen.py"
+# STRM1 R1: the reader and interconnect tables and their reference interpolation (X53), and its tests
+strm-table = "python report/strm_table.py"
+strm-table-test = "python report/test_strm_table.py"
