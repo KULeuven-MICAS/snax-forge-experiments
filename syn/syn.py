@@ -29,10 +29,12 @@ source's cases and W <= MAX_W (16, docs X38): Vitis's unopt_w*, any *_w32, a per
 folder (opt_n512_w8) or a clock variant (opt_w8_c10) is not listed.
 
 Or forge, snax-forge's accelerator bundles that forge/bundles.py (pixi run
-forge-rtl) writes into rtl/forge/ in this repo. A forge point is a folder
-there holding a bundle.json, named as an HLS point (e.g. done/dot/forge3_w4);
-its top is bundle.json's "top", and run writes the point's filelist.f into
-the run folder: '# top: <top>', then rtl/files.f's paths made absolute. Forge
+forge-rtl) writes into rtl/forge/ in this repo. A forge point is a zip
+there holding a bundle.json, rtl/forge/<point>.zip, named as an HLS point
+(e.g. done/dot/forge3_w4); its top is bundle.json's "top", and run unpacks
+the zip into tmp/ for DC (deleted after) and writes the point's filelist.f
+into the run folder: '# top: <top>', then rtl/files.f's paths in the
+unpacked bundle. Forge
 RTL is SystemVerilog with clock clk_i and an asynchronous active-low reset
 rst_ni (SYN_FORMAT, SYN_CLK_PORT, SYN_RST_PORT below). Runs go to
 syn/runs/forge/<tech>/, results to results/forge/<tech>/, and a forge row has
@@ -44,10 +46,10 @@ level); run reports a glue that is negative or above 1 % of the total.
 
 Or char (CHAR1): snax-forge's catalogue blocks alone, which char/blocks.py
 (pixi run char-rtl) writes into rtl/char/ in this repo. A char point is a
-folder there holding an emitted.json, named <block>/<case>_w<W> (e.g.
-tree/add_w8); its top is emitted.json's "top", and run writes the point's
-filelist.f into the run folder: '# top: <top>', then emitted.json's "files"
-made absolute. Char RTL is SystemVerilog with clock clock and an asynchronous
+zip there holding an emitted.json, rtl/char/<point>.zip, named
+<block>/<case>_w<W> (e.g. tree/add_w8); its top is emitted.json's "top",
+and run unpacks it as a forge bundle and writes the point's filelist.f into
+the run folder: '# top: <top>', then emitted.json's "files". Char RTL is SystemVerilog with clock clock and an asynchronous
 active-high reset reset, kept ideal as the others. Runs go to
 syn/runs/char/<tech>/, results to results/char/<tech>/ under other names,
 char_synth.csv and char_synth_modules.csv (columns as synth_dc.csv and
@@ -86,12 +88,17 @@ any RTL if the library's own name or units differ from the tech file.
 Each run works in syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/ (the
 clock tag only for a clock other than the default): WORK/, logs/, reports/,
 out/ (the mapped netlist and sdf) and tech.json (the tech file, the resolved
-values, the .db's md5 and what DC read from the library). Every run also writes
-one row into syn/runs/<source>/<tech>/summary.csv. git ignores syn/runs/ entirely;
-results/<source>/<tech>/ keeps what is committed: synth_dc.csv (a copy of the
-summary), synth_dc_modules.csv (one row per hierarchical cell) and reports/
-(KEPT_REPORTS of every run: area, power, reference, qor, path classes, tech.json,
-lib_info.txt).
+values, the .db's md5 and what DC read from the library). When DC ends, the
+folder is packed into <point>[_c<clock>].zip next to it (KEEP_RUN: the mapped
+netlist, KEPT_REPORTS, dc_shell.log and dc_stdout.log; docs X51), the zip is
+test-read and the folder deleted, scratch with it; everything that reads a run
+afterwards reads the zip. Every run also writes one row into
+syn/runs/<source>/<tech>/summary.csv, whose run column names the folder (its
+zip is <run>.zip). git ignores syn/runs/ entirely; results/<source>/<tech>/
+keeps what is committed: synth_dc.csv (a copy of the summary),
+synth_dc_modules.csv (one row per hierarchical cell) and per run one zip
+reports/<tier>/<kernel>/<point>[_c<clock>].zip (KEPT_REPORTS: area, power,
+reference, qor, path classes, tech.json, lib_info.txt).
 
 A point whose filelist.f has '# ram:' lines holds a memory Vitis built (e.g.
 DaCe's dot buffer). Neither library has RAM cells, and DC would build it from
@@ -103,8 +110,8 @@ Environment, all optional:
   DC_SHELL            dc_shell                 (Design Compiler)
   SYN_RTL             ../hls-exercises/rtl     (the hls and bambu points)
   SYN_RTL_XLS         ../dslx-exercises/rtl    (the xls points)
-  SYN_RTL_FORGE       rtl/forge                (the forge points)
-  SYN_RTL_CHAR        rtl/char                 (the char points)
+  SYN_RTL_FORGE       rtl/forge                (the forge points' zips)
+  SYN_RTL_CHAR        rtl/char                 (the char points' zips)
   SYN_LIB_NANGATE45   the nangate45 .db, instead of the tech file's lib_default
   SYN_LIB_NANGATE15   the nangate15 .db, instead of the tech file's lib_default
                       (in general: the tech file's lib_env)
@@ -114,18 +121,20 @@ SYN_MAX_TRANS_NS, SYN_WIRE_LOAD, SYN_CLOCK_NS, SYN_CORES, and from the
 source SYN_FORMAT (verilog; forge and char sverilog), SYN_CLK_PORT (ap_clk;
 bambu clock; xls clk; forge clk_i; char clock) and SYN_RST_PORT (ap_rst_n; bambu
 reset; xls rst; forge rst_ni; char reset).
-Standard library only.
+Standard library and arc/arc.py only.
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import datetime as dt
 import fnmatch
 import hashlib
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -136,6 +145,9 @@ from pathlib import Path
 
 SYN = Path(__file__).resolve().parent
 ROOT = SYN.parent
+sys.path.insert(0, str(ROOT / "arc"))
+import arc  # noqa: E402  arc/arc.py: every output is one zip per point (X51)
+
 TECH_DIR = SYN / "tech"
 # Per source: the points' folder, the HDL format, the clock and reset ports (dc_syn.tcl's defaults
 # are the hls values) and, for the HLS tools, the cases listed (folders <case>_w<W>).
@@ -174,6 +186,12 @@ MAX_REPORT_BYTES = 1 << 20  # reports copied to results/ above this size are ski
 # (timing, constraints, ports, clocks, verbose power) stays in syn/runs/.
 KEPT_REPORTS = ("area.rpt", "area_hierarchy.rpt", "reference.rpt", "power.rpt", "power_hierarchy.rpt",
                 "qor.rpt", "path_classes.rpt", "tech.json", "lib_info.txt")
+# What a run's zip, syn/runs/<source>/<tech>/<point>[_c<clock>].zip, keeps of its folder (X51): the mapped netlist
+# (sim/pwr.py and pt_power.tcl read it), KEPT_REPORTS (tech.json at the top, the rest in reports/) and the two DC
+# logs (errors and licence lines). The rest (WORK/, alib-*/, the .sdf, default.svf, the other reports, command logs,
+# a forge or char point's filelist.f into the unpacked bundle) is scratch, deleted with the folder.
+KEEP_RUN = ("out/*_mapped.v", "tech.json", "logs/dc_shell.log", "logs/dc_stdout.log",
+            *(f"reports/{r}" for r in KEPT_REPORTS if r != "tech.json"))
 # dc_syn.tcl's path classes (X40), in reports/path_classes.rpt and the slack_<class>_ns columns
 PATH_CLASSES = ("in2reg", "reg2reg", "reg2out", "in2out")
 
@@ -262,10 +280,12 @@ def techs_with_summary(only: str | None) -> list[str]:
 
 # ---------------------------------------------------------------- points
 def all_points() -> list[str]:
-    if SOURCE == "forge":
-        return sorted(str(f.parent.relative_to(RTL)) for f in RTL.rglob("bundle.json"))
-    if SOURCE == "char":
-        return sorted(str(f.parent.relative_to(RTL)) for f in RTL.rglob("emitted.json"))
+    """The points of the source: a forge or char point is a bundle zip, rtl/<set>/<point>.zip, holding a
+    bundle.json (forge) or an emitted.json (char); an HLS tool's is an rtl/ folder with a filelist.f."""
+    if SOURCE in ("forge", "char"):
+        marker = "bundle.json" if SOURCE == "forge" else "emitted.json"
+        return sorted(f.relative_to(RTL).with_suffix("").as_posix() for f in RTL.rglob("*.zip")
+                      if marker in arc.names(f))
     name = re.compile(rf"({'|'.join(SOURCES[SOURCE]['cases'])})_w([0-9]+)")
     return sorted(str(f.parent.relative_to(RTL)) for f in RTL.glob("*/*/*/filelist.f")
                   if (m := name.fullmatch(f.parent.name)) and int(m.group(2)) <= MAX_W)
@@ -275,34 +295,48 @@ def columns() -> list[str]:
     return COLUMNS + {"forge": FORGE_COLUMNS, "char": CHAR_COLUMNS, "bambu": BAMBU_COLUMNS}.get(SOURCE, [])
 
 
+def bundle_zip(point: str) -> Path:
+    """A forge or char point's bundle: rtl/forge/<point>.zip or rtl/char/<point>.zip (forge/bundles.py,
+    char/blocks.py)."""
+    return RTL / f"{point}.zip"
+
+
 def forge_json(point: str, name: str) -> dict:
-    f = RTL / point / name
-    return json.loads(f.read_text()) if f.is_file() else {}
+    z = bundle_zip(point)
+    return json.loads(arc.read_text(z, name)) if arc.has(z, name) else {}
 
 
-def forge_filelist(point: str) -> list[str]:
-    """The bundle's rtl/files.f, each path made absolute."""
-    rtl = RTL / point / "rtl"
-    return [str((rtl / ln.strip()).resolve()) for ln in (rtl / "files.f").read_text().splitlines()
+def forge_members(point: str) -> list[str]:
+    """The bundle's rtl/files.f, as members of its zip."""
+    text = arc.read_text(bundle_zip(point), "rtl/files.f")
+    return [posixpath.normpath(f"rtl/{ln.strip()}") for ln in text.splitlines()
             if ln.strip() and not ln.strip().startswith("#")]
 
 
-def char_filelist(point: str) -> list[str]:
-    """emitted.json's files, each path made absolute."""
-    return [str((RTL / point / f).resolve()) for f in forge_json(point, "emitted.json")["files"]]
+def char_members(point: str) -> list[str]:
+    """emitted.json's files, as members of the block's zip."""
+    return [posixpath.normpath(f) for f in forge_json(point, "emitted.json")["files"]]
 
 
-def point_filelist(point: str) -> list[str]:
-    """A forge or char point's files, for the filelist.f that run writes into the run folder."""
-    return forge_filelist(point) if SOURCE == "forge" else char_filelist(point)
+def point_members(point: str) -> list[str]:
+    """A forge or char point's HDL files, as members of its bundle zip."""
+    return forge_members(point) if SOURCE == "forge" else char_members(point)
 
 
-def hdl_files(point: str) -> list[Path]:
-    """The point's HDL files: filelist.f's for the HLS tools, as run writes them for forge and char."""
+def point_filelist(point: str, bundle: Path) -> list[str]:
+    """A forge or char point's files in its unpacked bundle, for the filelist.f that run writes."""
+    return [str((bundle / m).resolve()) for m in point_members(point)]
+
+
+def hdl_texts(point: str) -> list[str]:
+    """The point's HDL sources: filelist.f's files for the HLS tools, the bundle zip's for forge and char;
+    a file that is not there is left out."""
     if SOURCE in ("forge", "char"):
-        return [Path(f) for f in point_filelist(point)]
-    return [RTL / point / ln.strip() for ln in (RTL / point / "filelist.f").read_text().splitlines()
-            if ln.strip() and not ln.strip().startswith("#")]
+        z, have = bundle_zip(point), set(arc.names(bundle_zip(point)))
+        return [arc.read_text(z, m, errors="replace") for m in point_members(point) if m in have]
+    files = [RTL / point / ln.strip() for ln in (RTL / point / "filelist.f").read_text().splitlines()
+             if ln.strip() and not ln.strip().startswith("#")]
+    return [f.read_text(errors="replace") for f in files if f.is_file()]
 
 
 def _balanced(text: str, i: int) -> int:
@@ -315,13 +349,11 @@ def _balanced(text: str, i: int) -> int:
     return -1
 
 
-def module_ports(files: list[Path], top: str) -> list[str] | None:
-    """The port names of module `top` in these files (ANSI or not), None if no file declares it.
+def module_ports(texts: list[str], top: str) -> list[str] | None:
+    """The port names of module `top` in these sources (ANSI or not), None if none declares it.
     Each item of the header's port list, split at top-level commas, names its port last."""
-    for f in files:
-        if not f.is_file():
-            continue
-        text = re.sub(r"//[^\n]*|/\*.*?\*/", " ", f.read_text(errors="replace"), flags=re.S)
+    for src in texts:
+        text = re.sub(r"//[^\n]*|/\*.*?\*/", " ", src, flags=re.S)
         m = re.search(rf"\bmodule\s+{re.escape(top)}\b", text)
         if not m:
             continue
@@ -357,7 +389,7 @@ def port_guard(point: str) -> str:
     """'' if the top has the source's clock and reset ports, else the row's failed status."""
     top, src = top_of(point), SOURCES[SOURCE]
     try:
-        ports = module_ports(hdl_files(point), top)
+        ports = module_ports(hdl_texts(point), top)
     except (OSError, KeyError) as e:
         return f"failed: port guard could not read the point's files ({e})"
     if ports is None:
@@ -419,7 +451,39 @@ def point_tag(point: str, clock: str) -> str:
 
 
 def run_dir(tech: str, point: str, clock: str) -> Path:
+    """The folder DC works in; it lives only during the run (X51), the CSVs' run column names it."""
     return RUNS / tech / point_tag(point, clock)
+
+
+def run_zip(tech: str, point: str, clock: str) -> Path:
+    """What is kept of a run: syn/runs/<source>/<tech>/<point>[_c<clock>].zip (KEEP_RUN)."""
+    d = run_dir(tech, point, clock)
+    return d.with_name(d.name + ".zip")
+
+
+def pack_run(rdir: Path) -> Path:
+    """A finished run folder to its zip (KEEP_RUN, test-read), then the folder goes, scratch with it."""
+    z = arc.write(rdir.with_name(rdir.name + ".zip"),
+                  {m: p.read_bytes() for m, p in arc.files_of(rdir, KEEP_RUN).items()})
+    shutil.rmtree(rdir)
+    return z
+
+
+def folder_reader(rdir: Path):
+    """get(member) -> the text of a file in a run folder, None if it is not there."""
+    def get(member: str) -> str | None:
+        f = rdir / member
+        return f.read_text(errors="replace") if f.is_file() else None
+    return get
+
+
+def zip_reader(z: Path):
+    """get(member) -> the text of a member of a run zip, None if it is not there."""
+    have = set(arc.names(z)) if z.is_file() else set()
+
+    def get(member: str) -> str | None:
+        return arc.read_text(z, member, errors="replace") if member in have else None
+    return get
 
 
 # ---------------------------------------------------------------- reports
@@ -440,11 +504,11 @@ def _power_unit(text: str, label: str) -> float | None:
     return float(m.group(1)) * TO_UW[m.group(2)] if m else None
 
 
-def lib_info(rdir: Path) -> dict:
-    f = rdir / "reports" / "lib_info.txt"
-    if not f.is_file():
+def lib_info(get) -> dict:
+    text = get("reports/lib_info.txt")
+    if text is None:
         return {}
-    return dict(ln.split(": ", 1) for ln in f.read_text().splitlines() if ": " in ln)
+    return dict(ln.split(": ", 1) for ln in text.splitlines() if ": " in ln)
 
 
 def power_groups(power: str) -> dict:
@@ -461,24 +525,24 @@ def power_groups(power: str) -> dict:
 
 
 def read_run(tech: dict, point: str, clock: str) -> dict:
+    """The summary row of a run, from its zip."""
     rdir = run_dir(tech["name"], point, clock)
-    rep = rdir / "reports"
+    get = zip_reader(run_zip(tech["name"], point, clock))
     t_scale = float(resolve(tech)["t_scale"])
     clock_ns = float(clock)
 
     def text(name: str) -> str:
-        f = rep / name
-        return f.read_text(errors="replace") if f.is_file() else ""
+        return get(f"reports/{name}") or ""
 
     area, qor, power, classes = text("area.rpt"), text("qor.rpt"), text("power.rpt"), text("path_classes.rpt")
-    log = rdir / "logs" / "dc_shell.log"
-    log_text = log.read_text(errors="replace") if log.is_file() else ""
-    info = lib_info(rdir)
-    tj = rdir / "tech.json"
+    log = get("logs/dc_shell.log")
+    log_text = log or ""
+    info = lib_info(get)
+    tj = get("tech.json")
     row = {c: "" for c in columns()}
     row.update({
         "point": point, "top": top_of(point), "tech": tech["name"], "clock_ns": clock,
-        "errors": len(re.findall(r"^Error:", log_text, re.M)) if log.is_file() else "",
+        "errors": len(re.findall(r"^Error:", log_text, re.M)) if log is not None else "",
         "area_um2": _first(area, r"Total cell area:\s*([0-9.]+)"),
         "comb_area_um2": _first(area, r"Combinational area:\s*([0-9.]+)"),
         "seq_area_um2": _first(area, r"Noncombinational area:\s*([0-9.]+)"),
@@ -487,7 +551,7 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         "seq_cells": _first(area, r"Number of sequential cells:\s*([0-9]+)"),
         "maxcap_nets": _first(qor, r"Max Cap Violations:\s*([0-9]+)"),
         "maxtrans_nets": _first(qor, r"Max Trans Violations:\s*([0-9]+)"),
-        "lib_md5": json.loads(tj.read_text())["resolved"]["lib_md5"] if tj.is_file() else "",
+        "lib_md5": json.loads(tj)["resolved"]["lib_md5"] if tj is not None else "",
         "dc_version": info.get("dc_version", ""),
         "date": dt.datetime.now().isoformat(timespec="seconds"),
         "run": str(rdir.relative_to(ROOT)),
@@ -532,7 +596,7 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         if dyn is not None:
             e_dyn = dyn * clock_ns / 1000.0
             energy_ok = abs(e_total - e_dyn) <= 1e-3 * max(abs(e_dyn), 1e-9) + 1e-6
-    lic = licence_error(rdir)
+    lic = licence_error(get)
     if not row["area_um2"] or float(row["area_um2"]) == 0 or lic:
         # A licence failure in compile_ultra (DC-Expert, SEC-50) still writes the reports, of an empty
         # design: area 0. It fails the row whatever the reports say (HSYN1 R6).
@@ -553,14 +617,14 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
     return row
 
 
-def licence_error(rdir: Path) -> str:
+def licence_error(get) -> str:
     """The first licence-failure line (LICENCE_ERROR) of the run's dc_shell.log or dc_stdout.log,
-    the most telling first ('licensing error' over the rest); '' if none."""
+    the most telling first ('licensing error' over the rest); '' if none. get: folder_reader or zip_reader."""
     found = []
     for name in ("dc_shell.log", "dc_stdout.log"):
-        f = rdir / "logs" / name
-        if f.is_file():
-            found += [m.group(0).strip() for m in LICENCE_ERROR.finditer(f.read_text(errors="replace"))]
+        text = get(f"logs/{name}")
+        if text is not None:
+            found += [m.group(0).strip() for m in LICENCE_ERROR.finditer(text)]
     found.sort(key=lambda x: "licensing error" not in x.lower())
     return found[0] if found else ""
 
@@ -607,14 +671,14 @@ def _floats(xs: list[str]) -> bool:
 
 
 def read_modules(tech: dict, point: str, clock: str) -> list[dict]:
-    """area_hierarchy.rpt's hierarchical cells joined with power_hierarchy.rpt, by path."""
-    rep = run_dir(tech["name"], point, clock) / "reports"
-    af, pf = rep / "area_hierarchy.rpt", rep / "power_hierarchy.rpt"
-    if not af.is_file() or not pf.is_file():
+    """area_hierarchy.rpt's hierarchical cells joined with power_hierarchy.rpt, by path (from the run's zip)."""
+    get = zip_reader(run_zip(tech["name"], point, clock))
+    area_text, power = get("reports/area_hierarchy.rpt"), get("reports/power_hierarchy.rpt")
+    if area_text is None or power is None:
         return []
     # area: 'path  abs_total  percent  comb  noncomb  bbox  design'
     rows = []
-    for ln in af.read_text(errors="replace").split("Hierarchical cell", 1)[-1].splitlines():
+    for ln in area_text.split("Hierarchical cell", 1)[-1].splitlines():
         t = ln.split()
         if len(t) == 7 and _floats(t[1:6]):
             rows.append({"path": t[0], "design": t[6], "area_um2": t[1], "comb_um2": t[3], "seq_um2": t[4],
@@ -622,7 +686,6 @@ def read_modules(tech: dict, point: str, clock: str) -> list[dict]:
     # power: instance names indented two spaces per level, '<inst> (<design>)' below the top, then
     # switching, internal, leakage, total, percent; switching and internal in dynamic units, leakage in
     # leakage units (3 digits: the hierarchical report ignores -significant_digits)
-    power = pf.read_text(errors="replace")
     dyn, leak = _power_unit(power, "Dynamic Power Units"), _power_unit(power, "Leakage Power Units")
     pw, stack = {}, []
     body = power.split("Hierarchy", 1)[-1] if dyn is not None and leak is not None else ""
@@ -643,26 +706,33 @@ def read_modules(tech: dict, point: str, clock: str) -> list[dict]:
     return out
 
 
+def report_zip(tech: str, point: str, clock: str) -> Path:
+    """The committed reports of a run: results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>].zip."""
+    return RESULTS / tech / "reports" / f"{point_tag(point, clock)}.zip"
+
+
 def copy_reports(tech: str, point: str, clock: str) -> list[str]:
-    """KEPT_REPORTS into results/; returns what was skipped."""
-    rdir = run_dir(tech, point, clock)
-    dest = RESULTS / tech / "reports" / point_tag(point, clock)
-    if dest.exists():
-        shutil.rmtree(dest)
-    files = [rdir / name if name == "tech.json" else rdir / "reports" / name for name in KEPT_REPORTS]
-    skipped = []
-    for f in files:
-        if not f.is_file():
+    """KEPT_REPORTS, from the run's zip, into the committed report zip (flat); returns what was skipped."""
+    z = run_zip(tech, point, clock)
+    dest = report_zip(tech, point, clock)
+    have = set(arc.names(z)) if z.is_file() else set()
+    members, skipped = {}, []
+    for name in KEPT_REPORTS:
+        m = name if name == "tech.json" else f"reports/{name}"
+        if m not in have:
             continue
-        if f.stat().st_size > MAX_REPORT_BYTES:
-            skipped.append(f"{f.name} ({f.stat().st_size} B)")
+        data = arc.read(z, m)
+        if len(data) > MAX_REPORT_BYTES:
+            skipped.append(f"{name} ({len(data)} B)")
             continue
-        dest.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(f, dest / f.name)
+        members[name] = data
     if skipped:
-        dest.mkdir(parents=True, exist_ok=True)
-        (dest / "skipped.txt").write_text(
-            f"Over {MAX_REPORT_BYTES} B, kept only in {rdir.relative_to(ROOT)}/:\n" + "\n".join(skipped) + "\n")
+        members["skipped.txt"] = (f"Over {MAX_REPORT_BYTES} B, kept only in {z.relative_to(ROOT)}:\n"
+                                  + "\n".join(skipped) + "\n").encode()
+    if members:
+        arc.write(dest, members)
+    elif dest.exists():
+        dest.unlink()
     return skipped
 
 
@@ -698,9 +768,9 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
             if skipped:
                 print(f"results: {r['point']}: skipped over 1 MB: {', '.join(skipped)}")
         else:
-            stale = out / "reports" / point_tag(r["point"], r["clock_ns"])
+            stale = report_zip(name, r["point"], r["clock_ns"])
             if stale.exists():
-                shutil.rmtree(stale)
+                stale.unlink()
     _merge(out / modules_csv, MODULE_COLUMNS, key, modules, done)
 
 
@@ -779,41 +849,45 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
     if args.dry_run:
         print(f"\n# {point} on {name}")
         print(f"# port guard: ok, clock {syn_env['SYN_CLK_PORT']} and reset {syn_env['SYN_RST_PORT']} on {top_of(point)}")
-        if SOURCE == "forge":
-            print(f"# run writes {syn_env['SYN_FILELIST']}: '# top: {top_of(point)}', "
-                  f"then {len(forge_filelist(point))} files from {RTL / point / 'rtl' / 'files.f'}")
-        if SOURCE == "char":
-            print(f"# run writes {syn_env['SYN_FILELIST']}: '# top: {top_of(point)}', "
-                  f"then {len(char_filelist(point))} files from {RTL / point / 'emitted.json'}")
+        if SOURCE in ("forge", "char"):
+            print(f"# run unpacks {bundle_zip(point).relative_to(ROOT)} into tmp/ and writes "
+                  f"{syn_env['SYN_FILELIST']}: '# top: {top_of(point)}', then its {len(point_members(point))} "
+                  f"files ({'rtl/files.f' if SOURCE == 'forge' else 'emitted.json'})")
         for k, v in syn_env.items():
             print(f"export {k}='{v}'")
         print(f"mkdir -p {rdir}/logs && cd {rdir} && {' '.join(cmd)}")
+        print(f"# then {run_zip(name, point, args.clock).relative_to(ROOT)} keeps {', '.join(KEEP_RUN)}; "
+              f"the folder is deleted")
         return None
-    for attempt in (1, 2):
-        if rdir.exists():
-            shutil.rmtree(rdir)
-        (rdir / "logs").mkdir(parents=True)
-        if SOURCE in ("forge", "char"):
-            Path(syn_env["SYN_FILELIST"]).write_text(
-                f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in point_filelist(point)))
-        print(f"run  {point} on {name} at {args.clock} ns in {rdir.relative_to(ROOT)}"
-              + (" (licence retry)" if attempt == 2 else ""), flush=True)
-        with (rdir / "logs" / "dc_stdout.log").open("w") as fh:
-            rc = subprocess.run(cmd, cwd=rdir, env=dict(os.environ, **syn_env), stdout=fh,
-                                stderr=subprocess.STDOUT, check=False).returncode
-        lic = licence_error(rdir)
-        if not lic or attempt == 2:
-            break
-        with RETRIES_LOCK:
-            RETRIES.append(point)
-        print(f"retry {point} on {name}: licence error: {lic}", flush=True)
+    with contextlib.ExitStack() as stack:     # a forge or char bundle, unpacked for DC, deleted after (X51)
+        bundle = (stack.enter_context(arc.unpacked(bundle_zip(point))) if SOURCE in ("forge", "char")
+                  else None)
+        for attempt in (1, 2):
+            if rdir.exists():
+                shutil.rmtree(rdir)
+            (rdir / "logs").mkdir(parents=True)
+            if bundle is not None:
+                Path(syn_env["SYN_FILELIST"]).write_text(
+                    f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in point_filelist(point, bundle)))
+            print(f"run  {point} on {name} at {args.clock} ns in {rdir.relative_to(ROOT)}"
+                  + (" (licence retry)" if attempt == 2 else ""), flush=True)
+            with (rdir / "logs" / "dc_stdout.log").open("w") as fh:
+                rc = subprocess.run(cmd, cwd=rdir, env=dict(os.environ, **syn_env), stdout=fh,
+                                    stderr=subprocess.STDOUT, check=False).returncode
+            lic = licence_error(folder_reader(rdir))
+            if not lic or attempt == 2:
+                break
+            with RETRIES_LOCK:
+                RETRIES.append(point)
+            print(f"retry {point} on {name}: licence error: {lic}", flush=True)
     (rdir / "tech.json").write_text(json.dumps({
         "tech_file": str((TECH_DIR / f"{name}.json").relative_to(ROOT)),
         "tech": tech,
         "resolved": {**res, "clock_ns": args.clock, "cores": args.cores,
                      "dc_env": syn_env, "dc_returncode": rc},
-        "dc_lib_info": lib_info(rdir),
+        "dc_lib_info": lib_info(folder_reader(rdir)),
     }, indent=2) + "\n")
+    pack_run(rdir)
     row = read_run(tech, point, args.clock)
     print(f"done {point} on {name}: {row['status']}  area {row['area_um2'] or '-'} um2"
           f"  slack {row['slack_ns'] or '-'} ns  errors {row['errors']}", flush=True)

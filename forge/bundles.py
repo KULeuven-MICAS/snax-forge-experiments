@@ -22,7 +22,9 @@ commit). A point's folder is emptied first. bundle.json names the commit and
 whether snax-forge's work tree was dirty; a dirty bundle is refused (its folder
 emptied but for the log) unless --allow-dirty. A bundle that is kept gets
 point.json: point, recipe, W, snax_forge_commit, dirty, date. Each point's
-task output is in <DIR>/<point>/forge-rtl.log.
+task output is in forge-rtl.log. When the point is done, its folder is packed
+into <DIR>/<point>.zip, test-read and deleted (docs X51): syn/syn.py and
+sim/pwr.py read the zip, a failed or refused point's zip holds the log only.
 
 The tasks run inside this repo's `pixi run`, whose PIXI_* and CONDA_*
 variables and .pixi/ PATH entries would make the inner pixi take this repo's
@@ -33,7 +35,7 @@ The first point runs alone when hw/chisel's Emit classpath
 (hw/chisel/target/emit-classpath.txt) is not there yet: the first Emit exports
 it through sbt, and parallel first calls would race. --set adds to the sandbox
 step (e.g. --set N=2048) and to the sandbox and design folder names.
-Standard library only.
+Standard library and arc/arc.py only.
 """
 
 from __future__ import annotations
@@ -52,6 +54,9 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "arc"))
+import arc  # noqa: E402  arc/arc.py: a bundle is one zip (X51)
+
 POINTS = ROOT / "forge" / "points.json"
 FORGE = Path(os.environ.get("SNAX_FORGE", ROOT.parent / "snax-forge")).resolve()
 PLATFORM = "platforms/snax_forge.json"
@@ -185,6 +190,7 @@ def run_point(p: dict, args) -> dict:
         for f in dest.iterdir():
             if f.name != LOG:
                 shutil.rmtree(f) if f.is_dir() else f.unlink()
+    arc.pack_bundle(dest)                   # <DIR>/<point>.zip, test-read; the folder goes (X51)
     res["seconds"] = time.monotonic() - t0
     print(f"{res['status']:<10}  {p['point']}  {res['seconds']:.1f} s", flush=True)
     if res["error"]:
@@ -202,7 +208,7 @@ def main() -> int:
     ap.add_argument("--set", action="append", default=[], metavar="K=V",
                     help="more --set for the sandbox step (e.g. N=2048); also tags the sandbox and design folders")
     ap.add_argument("--out", type=Path, default=ROOT / "rtl" / "forge",
-                    help="where the bundles go, one folder per point (default rtl/forge)")
+                    help="where the bundles go, one zip per point (default rtl/forge)")
     args = ap.parse_args()
     args.out = args.out.resolve()
     pts = select(load_points(), args.patterns)

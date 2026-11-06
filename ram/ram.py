@@ -4,13 +4,16 @@
     pixi run ram point 512 64                # one point: config, run, parse, print
     pixi run ram point 512 64 --objective 0:0:0:100:0
     pixi run ram table -j 32                 # the lookup table -> results/ram/nangate45/ram_table.csv
-    pixi run ram lib 512 64 --mask 8         # one SRAM macro (.lib, .db, .v) -> ram/runs/lib/sram_d512_w64_m8/
+    pixi run ram lib 512 64 --mask 8         # one SRAM macro (.lib, .db, .v) -> ram/runs/lib/sram_d512_w64_m8.zip
     pixi run ram libs ram/macros.json -j 4   # the macros in a list
 
-Each point runs in its own folder, ram/runs/cacti/d<d>_w<w>[_<variant>]/, with tech_params/ linked
-in: CACTI opens "tech_params/45nm.dat" relative to its working directory. A folder whose config
-(and CACTI commit) is unchanged is not rerun. Dynamic energies are scaled from CACTI's itrs-hp
-Vdd (1.0 V at 45 nm) to Nangate 45 nm's 1.10 V by (1.1 / 1.0)^2; area and timing are not scaled.
+Each point runs in a temporary folder under tmp/ with tech_params/ linked in: CACTI opens
+"tech_params/45nm.dat" relative to its working directory. What is kept of it, key.json, rc,
+cacti.out and cacti.err, goes into one zip, ram/runs/cacti.zip, as d<d>_w<w>[_<variant>]/... (X51;
+the vdd check as vdd_check/...); the main thread rewrites the zip once at the end of a command when
+points were added or changed. A point whose config (and CACTI commit) is unchanged in the zip is not
+rerun. Dynamic energies are scaled from CACTI's itrs-hp Vdd (1.0 V at 45 nm) to Nangate 45 nm's
+1.10 V by (1.1 / 1.0)^2; area and timing are not scaled.
 """
 
 import argparse
@@ -19,16 +22,23 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO / "arc"))
+import arc  # noqa: E402  arc/arc.py: outputs zipped (X51)
+
 CACTI_DIR = REPO / "ram" / "cacti"
 CACTI_BIN = CACTI_DIR / "cacti"
-RUNS = REPO / "ram" / "runs" / "cacti"
+RUNS = REPO / "ram" / "runs" / "cacti"          # the folders before X51 (pixi run arc migrate packs them)
+CACTI_ZIP = REPO / "ram" / "runs" / "cacti.zip"
+CACTI_KEEP = ("key.json", "rc", "cacti.out", "cacti.err")   # per point; the rest of its run folder is scratch
 TABLE_OUT = REPO / "results" / "ram" / "nangate45" / "ram_table.csv"
 
 TECH_U = 0.045
@@ -95,35 +105,102 @@ def make_config(d, w, objective=OBJECTIVE, ecc=False):
     return "\n".join(lines) + "\n"
 
 
-def run_dir(d, w, tag=""):
-    return RUNS / (f"d{d}_w{w}" + (f"_{tag}" if tag else ""))
+class Cache:
+    """ram/runs/cacti.zip in memory, {point: {file: bytes}}: loaded once, new or changed points added by the workers,
+    written back whole by the main thread (save) when something changed."""
+
+    def __init__(self, path):
+        self.path, self.points, self.changed = path, None, False
+        self.lock = threading.Lock()
+
+    def _load(self):
+        with self.lock:
+            if self.points is None:
+                self.points = {}
+                for m, b in arc.read_all(self.path).items():
+                    pt, f = m.split("/", 1)
+                    self.points.setdefault(pt, {})[f] = b
+
+    def get(self, name):
+        self._load()
+        return self.points.get(name)
+
+    def put(self, name, files):
+        self._load()
+        with self.lock:
+            self.points[name] = dict(files)
+            self.changed = True
+
+    def save(self):
+        """Rewrite the zip (not appended), test-read, when points were added or changed; returns the point count."""
+        if self.points is None or not self.changed:
+            return 0
+        with self.lock:
+            arc.write(self.path, {f"{pt}/{f}": b for pt, fs in self.points.items() for f, b in fs.items()})
+            self.changed = False
+            return len(self.points)
+
+
+CACHE = Cache(CACTI_ZIP)
+
+
+def point_name(d, w, tag=""):
+    return f"d{d}_w{w}" + (f"_{tag}" if tag else "")
+
+
+def run_cacti(name, cfg, key, split_err=True):
+    """CACTI on one config in a temporary folder under tmp/ (tech_params linked in, PITFALLS C1); returns the files
+    kept (CACTI_KEEP). The folder is deleted, the files go into CACHE."""
+    with arc.workdir(f"cacti_{name}") as rd:
+        for link in ("tech_params", "contention.dat"):
+            (rd / link).symlink_to(CACTI_DIR / link)
+        (rd / "cacti.cfg").write_text(cfg)
+        try:
+            with open(rd / "cacti.out", "w") as out, open(rd / "cacti.err", "w") as err:
+                rc = subprocess.run([str(CACTI_BIN), "-infile", "cacti.cfg"], cwd=rd, stdout=out,
+                                    stderr=err if split_err else subprocess.STDOUT, timeout=TIMEOUT_S).returncode
+        except subprocess.TimeoutExpired:
+            rc = "timeout"
+        files = {"key.json": json.dumps(key).encode(), "cacti.out": (rd / "cacti.out").read_bytes()}
+        if split_err:
+            files.update({"rc": f"{rc}\n".encode(), "cacti.err": (rd / "cacti.err").read_bytes()})
+    CACHE.put(name, files)
+    return files
 
 
 def run_point(d, w, objective=OBJECTIVE, ecc=False, tag=""):
-    """Write the config, run CACTI unless the folder already ran this config, return the folder."""
-    rd = run_dir(d, w, tag)
-    rd.mkdir(parents=True, exist_ok=True)
+    """Run CACTI on the point unless cacti.zip already holds this config; returns (name, files, cached)."""
+    name = point_name(d, w, tag)
     cfg = make_config(d, w, objective, ecc)
     key = {"cfg": cfg, "cacti_commit": cacti_commit()}
-    keyf = rd / "key.json"
-    if keyf.exists() and (rd / "rc").exists() and json.loads(keyf.read_text()) == key:
-        return rd, True
-    for name in ("tech_params", "contention.dat"):
-        link = rd / name
-        if not link.exists():
-            link.symlink_to(CACTI_DIR / name)
-    (rd / "cacti.cfg").write_text(cfg)
-    t0 = time.time()
-    try:
-        with open(rd / "cacti.out", "w") as out, open(rd / "cacti.err", "w") as err:
-            rc = subprocess.run([str(CACTI_BIN), "-infile", "cacti.cfg"], cwd=rd, stdout=out, stderr=err,
-                                timeout=TIMEOUT_S).returncode
-    except subprocess.TimeoutExpired:
-        rc = "timeout"
-    (rd / "time_s").write_text(f"{time.time() - t0:.2f}\n")
-    (rd / "rc").write_text(f"{rc}\n")
-    keyf.write_text(json.dumps(key))
-    return rd, False
+    got = CACHE.get(name)
+    if got and "rc" in got and "key.json" in got and json.loads(got["key.json"]) == key:
+        return name, got, True
+    return name, run_cacti(name, cfg, key), False
+
+
+def migrate_cacti(inventory=None):
+    """The run folders of ram/runs/cacti/ into cacti.zip (CACTI_KEEP), folders deleted after the zip's test read;
+    a folder without key.json is kept; inventory(kind, folder, files, inodes, zip) per point. Returns (points,
+    [(folder, why)])."""
+    if not RUNS.is_dir():
+        return 0, []
+    done, failed = [], []
+    for rd in sorted(p for p in RUNS.iterdir() if p.is_dir() and not p.is_symlink()):
+        if not (rd / "key.json").is_file():
+            failed.append((str(rd.relative_to(REPO)), "no key.json"))
+            continue
+        CACHE.put(rd.name, {f: (rd / f).read_bytes() for f in CACTI_KEEP if (rd / f).is_file()})
+        done.append(rd)
+    CACHE.save()
+    for rd in done:
+        if inventory:
+            inventory("ram/runs/cacti", str(rd.relative_to(REPO)), sum(1 for _ in rd.iterdir()),
+                      arc.inodes(rd), CACTI_ZIP, len(CACHE.get(rd.name)))
+        shutil.rmtree(rd)
+    if not any(RUNS.iterdir()):
+        RUNS.rmdir()
+    return len(done), failed
 
 
 FIELDS = {  # CACTI's printed label -> (key, unit factor to ours)
@@ -157,9 +234,9 @@ def sig(x, n=6):
     return x if isinstance(x, (int, str)) else float(f"{x:.{n}g}")
 
 
-def parse(rd):
+def parse(files):
     """CACTI's output, by label. The first occurrence of each label is the summary block's."""
-    out = (rd / "cacti.out").read_text(errors="replace")
+    out = files["cacti.out"].decode(errors="replace")
     vals = {}
     for line in out.splitlines():
         s = line.strip()
@@ -176,25 +253,24 @@ def parse(rd):
     return vals
 
 
-def error_lines(rd, n=30):
+def error_lines(files, n=30):
     lines = []
     for name in ("cacti.err", "cacti.out"):
-        p = rd / name
-        if p.exists():
-            lines += [l.rstrip() for l in p.read_text(errors="replace").splitlines() if ERROR_RE.search(l)]
+        if name in files:
+            lines += [l.rstrip() for l in files[name].decode(errors="replace").splitlines() if ERROR_RE.search(l)]
     return lines[:n]
 
 
 def row(d, w, objective=OBJECTIVE, ecc=False, tag=""):
-    rd, cached = run_point(d, w, objective, ecc, tag)
+    name, files, cached = run_point(d, w, objective, ecc, tag)
     wc = cacti_width(w)
     r = {"depth": d, "width": w, "width_cacti": wc, "bits": d * w, "objective": objective, "ecc": int(ecc),
-         "cacti_commit": json.loads((rd / "key.json").read_text())["cacti_commit"], "run": rd.name}
-    rc = (rd / "rc").read_text().strip()
-    vals = parse(rd)
+         "cacti_commit": json.loads(files["key.json"])["cacti_commit"], "run": name}
+    rc = files["rc"].decode().strip()
+    vals = parse(files)
     need = ("t_access_ns", "e_rd_raw_pj", "e_wr_raw_pj", "data_area_um2", "height_um")
     if rc != "0" or not all(k in vals for k in need):
-        errs = error_lines(rd)
+        errs = error_lines(files)
         r["status"] = f"failed: rc {rc}: " + (errs[0] if errs else "no results in cacti.out")
         return r, cached, errs
     r.update(vals)
@@ -211,22 +287,15 @@ def vdd_check():
     """Run 512 x 64 once with CACTI's debug print of the tech tables; every itrs-hp block (flavor 0) must be at
     VDD_CACTI. The data peripherals and the SRAM cell load flavor 0; flavor 1 (lstp, 1.1 V) is the sleep
     transistor (power gating off) and flavor 3 (lp-dram, 1.1 V) the DRAM wordline device."""
-    rd = RUNS / "vdd_check"
-    rd.mkdir(parents=True, exist_ok=True)
     cfg = make_config(512, 64) + '-print option - "debug detail"\n'
     key = {"cfg": cfg, "cacti_commit": cacti_commit()}
-    if not ((rd / "key.json").exists() and json.loads((rd / "key.json").read_text()) == key):
-        link = rd / "tech_params"
-        if not link.exists():
-            link.symlink_to(CACTI_DIR / "tech_params")
-        (rd / "cacti.cfg").write_text(cfg)
-        with open(rd / "cacti.out", "w") as out:
-            subprocess.run([str(CACTI_BIN), "-infile", "cacti.cfg"], cwd=rd, stdout=out, stderr=subprocess.STDOUT,
-                           timeout=TIMEOUT_S)
-        (rd / "key.json").write_text(json.dumps(key))
-    v0 = [float(m) for m in re.findall(r"^-Vdd\[0\]: ([0-9.eE+-]+) \(V\)", (rd / "cacti.out").read_text(), re.M)]
+    files = CACHE.get("vdd_check")
+    if not (files and "key.json" in files and json.loads(files["key.json"]) == key):
+        files = run_cacti("vdd_check", cfg, key, split_err=False)
+    v0 = [float(m) for m in re.findall(r"^-Vdd\[0\]: ([0-9.eE+-]+) \(V\)", files["cacti.out"].decode(), re.M)]
     if not v0 or any(abs(v - VDD_CACTI) > 1e-9 for v in v0):
-        sys.exit(f"vdd check: CACTI's itrs-hp Vdd lines are {sorted(set(v0))}, not {VDD_CACTI}: stop ({rd})")
+        sys.exit(f"vdd check: CACTI's itrs-hp Vdd lines are {sorted(set(v0))}, not {VDD_CACTI}: stop "
+                 f"({CACTI_ZIP.relative_to(REPO)}, vdd_check/)")
     return len(v0)
 
 
@@ -345,7 +414,7 @@ def gen_lib(name, d, w, mask, r, pv):
       + ", read data one cycle after the read (rising edge), as tc_sram at NumPorts 1, Latency 1.")
     o(f" * Generated by snax-forge-experiments ram/ram.py (lib, generator version {GEN_VERSION}); never committed.")
     o(f" * Numbers: CACTI 7 commit {r['cacti_commit']}, 45 nm itrs-hp, objective {r['objective']}, ECC off, point "
-      f"ram/runs/cacti/{r['run']} ({d} x {r['width_cacti']}" + (", ports keep the real width " + str(w) if w != r["width_cacti"] else "") + ").")
+      f"{r['run']} of ram/runs/cacti.zip ({d} x {r['width_cacti']}" + (", ports keep the real width " + str(w) if w != r["width_cacti"] else "") + ").")
     o(f" * Energies are CACTI's at 1.0 V scaled to 1.1 V by {E_SCALE:.4f} (as results/ram/nangate45/ram_table.csv, X48):")
     o(f" *   read {r['e_rd_pj']} pJ, write {r['e_wr_pj']} pJ per access, written below in the library's internal-power "
       f"unit ({pv['ipu']}).")
@@ -524,12 +593,31 @@ def lc_free():
     return int(m.group(1)) - int(m.group(2)) if m else None
 
 
+def macro_keep(name):
+    """What ram/runs/lib/<name>.zip keeps (X51): the .lib, .db and .v, lc_shell's log, key.json and result.json (the
+    cache check reads both); lc.tcl and lc_shell's command log and output are scratch."""
+    return (f"{name}.lib", f"{name}.db", f"{name}.v", "lc.log", "key.json", "result.json")
+
+
+def macro_zip(name):
+    return LIB_RUNS / f"{name}.zip"
+
+
+def pack_macro(od):
+    """A macro's folder to ram/runs/lib/<name>.zip (macro_keep), test-read; then the folder goes."""
+    z = macro_zip(od.name)
+    arc.pack(od, z, macro_keep(od.name))
+    shutil.rmtree(od)
+    return z
+
+
 def make_macro(d, w, mask=None):
-    """Write the .lib and .v, compile the .db with lc_shell; reuse the folder if its key is unchanged."""
+    """Write the .lib and .v, compile the .db with lc_shell in a folder under tmp/, keep them in
+    ram/runs/lib/<name>.zip; reuse the zip if its key is unchanged."""
     if mask and w % mask:
         raise ValueError(f"width {w} is not a multiple of the mask {mask}")
     name = macro_name(d, w, mask)
-    od = LIB_RUNS / name
+    z = macro_zip(name)
     r, _, errs = row(d, cacti_width(w))
     if not r["status"].startswith("ok"):
         return {"name": name, "status": r["status"], "errors": errs}
@@ -538,15 +626,17 @@ def make_macro(d, w, mask=None):
     md5 = lambda t: hashlib.md5(t.encode()).hexdigest()
     key = {"row": r, "pins_md5": pv["md5"], "generator": GEN_VERSION, "width": w, "mask": mask, "lc_shell": LC_SHELL,
            "lib_md5": md5(lib_text), "v_md5": md5(v_text)}   # the texts too: a generator edit regenerates
-    keyf, resf = od / "key.json", od / "result.json"
-    if keyf.exists() and resf.exists() and json.loads(keyf.read_text()) == key:
-        res = json.loads(resf.read_text())
+    if arc.has(z, "key.json") and arc.has(z, "result.json") and json.loads(arc.read(z, "key.json")) == key:
+        res = json.loads(arc.read(z, "result.json"))
         if res["status"] == "ok":
             return {**res, "cached": True}
-    od.mkdir(parents=True, exist_ok=True)
-    for f in od.iterdir():
-        if f.is_file():
-            f.unlink()
+    with arc.workdir(name) as od:
+        res = _build_macro(od, name, d, w, mask, r, pv, key, lib_text, v_text)
+        arc.pack(od, z, macro_keep(name))
+    return {**res, "cached": False}
+
+
+def _build_macro(od, name, d, w, mask, r, pv, key, lib_text, v_text):
     (od / f"{name}.lib").write_text(lib_text)
     (od / f"{name}.v").write_text(v_text)
     (od / "lc.tcl").write_text(f"read_lib {name}.lib\nwrite_lib {name} -format db -output {name}.db\nexit\n")
@@ -573,13 +663,13 @@ def make_macro(d, w, mask=None):
            "lib_values": {k: float(f6(x)) for k, x in lv.items()}, "lc_s": round(time.time() - t0, 1),
            "warnings": [m for m in msgs if m.startswith("Warning")],
            "information": [m for m in msgs if m.startswith("Information")], "errors": errors[:30]}
-    resf.write_text(json.dumps(res, indent=2) + "\n")
-    keyf.write_text(json.dumps(key, indent=2) + "\n")
-    return {**res, "cached": False}
+    (od / "result.json").write_text(json.dumps(res, indent=2) + "\n")
+    (od / "key.json").write_text(json.dumps(key, indent=2) + "\n")
+    return res
 
 
 def print_macro(res):
-    print(f"{LIB_RUNS / res['name']}{' (cached)' if res.get('cached') else ''}: {res['status']}")
+    print(f"{macro_zip(res['name'])}{' (cached)' if res.get('cached') else ''}: {res['status']}")
     if "area_um2" in res:
         print(f"  {res['depth']} x {res['width']}" + (f" (CACTI {res['width_cacti']})" if res['width_cacti'] != res['width'] else "")
               + (f", mask {res['mask']}" if res['mask'] else "") +
@@ -619,7 +709,7 @@ def main():
     a = sub.add_parser("table", help="the lookup table: every point of the dense grid, then the CSV")
     a.add_argument("-j", type=int, default=os.cpu_count())
     a.add_argument("--csv", default=str(TABLE_OUT))
-    m = sub.add_parser("lib", help="one SRAM macro: .lib, .db (lc_shell) and .v in ram/runs/lib/<name>/")
+    m = sub.add_parser("lib", help="one SRAM macro: .lib, .db (lc_shell) and .v in ram/runs/lib/<name>.zip")
     m.add_argument("depth", type=int)
     m.add_argument("width", type=int)
     m.add_argument("--mask", type=int, default=None, help="byte-enable granularity in bits (be_i[width/mask-1:0])")
@@ -629,9 +719,18 @@ def main():
     args = ap.parse_args()
     if not CACTI_BIN.exists():
         sys.exit(f"{CACTI_BIN} not found: pixi run ram-build")
+    try:
+        run_cmd(args)
+    finally:                    # the main thread writes cacti.zip once, also when a command stops (X51)
+        n = CACHE.save()
+        if n:
+            print(f"wrote {CACTI_ZIP.relative_to(REPO)} ({n} points)")
+
+
+def run_cmd(args):
     if args.cmd == "point":
         r, cached, errs = row(args.depth, args.width, args.objective, args.ecc, args.tag)
-        print(f"{RUNS / r['run']}{' (cached)' if cached else ''}")
+        print(f"{CACTI_ZIP}: {r['run']}/{' (cached)' if cached else ''}")
         for k in COLUMNS:
             if k in r:
                 print(f"  {k}: {r[k]}")

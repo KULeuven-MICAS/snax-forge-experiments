@@ -1,6 +1,6 @@
 """sim/sources/forge.py - a snax-forge point -> tb.json (docs/DECISIONS.md X14).
 
-snax-forge is not changed for this: the adapter reads its bundle in rtl/forge/<point>/ (forge/bundles.py)
+snax-forge is not changed for this: the adapter reads its bundle, rtl/forge/<point>.zip (forge/bundles.py), unpacked by sim/pwr.py
 and asks snax-forge's own code for the rest (forge/query.py, run in snax-forge's pixi environment):
   - point.json          recipe, W, snax_forge_commit
   - bundle.json         top, the design point (for the containers, through forge/query.py point)
@@ -64,12 +64,12 @@ def query(*args: str) -> dict:
     return json.loads(r.stdout.strip().splitlines()[-1])
 
 
-def bundle_of(point: str) -> Path:
-    b = RTL / point
+def bundle_of(point: str, bundle: Path) -> Path:
+    """The point's bundle, unpacked from rtl/forge/<point>.zip by sim/pwr.py (X51), with the files it needs."""
     for f in ("bundle.json", "accelerator.json", "point.json"):
-        if not (b / f).is_file():
-            raise FileNotFoundError(f"{point}: no {f} in {b} (pixi run forge-rtl)")
-    return b
+        if not (bundle / f).is_file():
+            raise FileNotFoundError(f"{point}: no {f} in {RTL / point}.zip (pixi run forge-rtl)")
+    return bundle
 
 
 def streamer_channels(b: Path, tag: str) -> dict:
@@ -80,8 +80,8 @@ def streamer_channels(b: Path, tag: str) -> dict:
             "out": d.get("data_writer_params", {}).get("num_channel", [])}
 
 
-def build(point: str, netlist: Path) -> dict:
-    b = bundle_of(point)
+def build(point: str, netlist: Path, bundle: Path) -> dict:
+    b = bundle_of(point, bundle)
     bundle = json.loads((b / "bundle.json").read_text())
     acc = json.loads((b / "accelerator.json").read_text())
     pj = json.loads((b / "point.json").read_text())

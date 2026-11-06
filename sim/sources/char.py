@@ -1,6 +1,6 @@
 """sim/sources/char.py - a CHAR1 block point -> tb.json, and the slot schedule its sequencer drives (X14).
 
-A char point is one snax-forge catalogue block alone (char/blocks.py, rtl/char/<point>/: point.json, emitted.json),
+A char point is one snax-forge catalogue block alone (char/blocks.py, rtl/char/<point>.zip: point.json, emitted.json, unpacked by sim/pwr.py),
 synthesized by syn/syn.py --source char. It has no CSRs, no START and no done: a sequencer of sim/tb/ drives its
 data and pins as its group's control unit would, through fixed windows, and every output is compared at every
 falling edge (sim/pwr.py --source char, docs/power.md, Char).
@@ -63,12 +63,12 @@ SEQ_FILES = {k: [f"char_{k}_seq.sv"] for k in PINS}
 CORE = "char_seq_core.svh"
 
 
-def point_dir(point: str) -> Path:
-    d = RTL / point
+def point_dir(point: str, bundle: Path) -> Path:
+    """The block, unpacked from rtl/char/<point>.zip by sim/pwr.py (X51), with the files it needs."""
     for f in ("point.json", "emitted.json"):
-        if not (d / f).is_file():
-            raise FileNotFoundError(f"{point}: no {f} in {d} (pixi run char-rtl)")
-    return d
+        if not (bundle / f).is_file():
+            raise FileNotFoundError(f"{point}: no {f} in {RTL / point}.zip (pixi run char-rtl)")
+    return bundle
 
 
 def pin_bits(datapath: str, params: dict) -> dict:
@@ -90,8 +90,8 @@ def _order(ports: list[str], bases: list[str]) -> list[str]:
     return sorted(ports, key=key)
 
 
-def build(point: str, netlist: Path) -> dict:
-    d = point_dir(point)
+def build(point: str, netlist: Path, bundle: Path) -> dict:
+    d = point_dir(point, bundle)
     pj = json.loads((d / "point.json").read_text())
     top = json.loads((d / "emitted.json").read_text())["top"]
     dp, params = pj["datapath"], pj["params"]

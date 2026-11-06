@@ -32,8 +32,9 @@ line through results/<source>/<source>_cycles.csv (bambu: cycles_done; xls: cycl
 in sim/runs/<source>/<tech>/, results in results/<source>/<tech>/ with X20's columns (docs/power.md, Bambu, XLS).
 
 A point is an hls-exercises rtl/ folder, <tier>/<kernel>/<point>, whose mapped netlist is already in
-syn/runs/hls/<tech>/<point>/out/ (syn/syn.py). Per point, one worker runs, start to end:
-  tb.json    sim/sources/hls.py (docs/DECISIONS.md X14), written into the run folder
+syn/runs/hls/<tech>/<point>.zip (syn/syn.py). Per point, one worker runs, start to end:
+  inputs     the DC zip's netlist, tech.json and lib_info.txt (and a forge or char bundle) unpacked into tmp/
+  tb.json    sim/sources/hls.py (docs/DECISIONS.md X14), written into the point's folder
   compile    the fixed TB (sim/tb/) and a generated top (tb.sv), vlog; vopt +initreg+0 +acc=n
   per run (size, stimulus):
     stimulus rand64 (seed 0, 64 beats; rowsum at m8_n64) or forge (data.h at a cosim size, validation)
@@ -44,9 +45,11 @@ syn/runs/hls/<tech>/<point>/out/ (syn/syn.py). Per point, one worker runs, start
     vcd2saif the busy window, in the VCD's time unit; the VCD is deleted at once (X8, X18)
     saif     T0 + T1 + TX = DURATION on every net, DURATION = cycles x clock, clock TC = 2 x cycles (X9)
     pt       sim/scripts/pt_power.tcl: read_saif, >= 99% of nets annotated, report_power
-  cleanup    the compiled design library and vsim.wlf are deleted (X18)
+  cleanup    the compiled design library and vsim.wlf are deleted (X18); the point's folder is packed into
+             sim/runs/.../<point>.zip (tb.json, per run tag the SAIF and PT's reports, merged with the zip's
+             other runs), test-read and deleted with the rest, and tmp/ is cleaned (X51)
 Results: results/hls/<tech>/power_pt.csv (one row per point, size and seed), power_pt_modules.csv
-(the default run of each point) and power_reports/<point>/ (X20).
+(the default run of each point) and power_reports/<point>.zip (X20, X51).
 
 Parallel workers J = min(free msimhdlsim, free PrimePower, free PrimeTime, nproc) from lmutil lmstat;
 PT threads per run = max(1, nproc // J) (X16). A tool that fails on a licence error is retried once (X17).
@@ -61,6 +64,7 @@ Environment, all optional:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import datetime as dt
 import importlib
@@ -86,6 +90,7 @@ from sources import char as char_src  # noqa: E402
 from ref import char_ref, ref  # noqa: E402
 
 syn = _syn()      # syn/syn.py, loaded once (sim/sources/__init__.py): its SOURCES is the one port table (X44)
+arc = syn.arc     # arc/arc.py (X51), as syn/syn.py imports it
 
 RUNS = SIM / "runs"
 SOURCE = "hls"
@@ -124,7 +129,7 @@ MASK64 = (1 << 64) - 1
 # --initreg-seed N replaces it with Questa 2022.4's random start, for checking only (docs/power.md): vopt
 # +initreg=ru marks 4-state variables (r: nangate45's flops are behavioral regs) and sequential UDPs (u:
 # nangate15's) for randomization, and vsim +initreg+<N> seeds it. Such runs get the run tag suffix _r<N> and are
-# not written to results/ (their result.json stays in sim/runs/).
+# not written to results/ (their SAIFs and PT reports stay in the point's zip in sim/runs/).
 INITREG_SEED: int | None = None
 
 
@@ -199,15 +204,50 @@ def run_tool(cmd: list[str], log: Path, cwd: Path, env: dict | None = None, stdi
 
 
 # ---------------------------------------------------------------- points, tb.json, top
+# What a point keeps (X51): sim/runs/.../<point>.zip with tb.json and, per run tag, the SAIF and PT's reports
+# (char: per window); setup-check's check.json and reports. The rest of the point's folder (Questa's work/ and
+# logs, tb.sv, stim/, transcripts, vsim and vcd2saif logs, PT's logs, result.json) is scratch, deleted.
+KEEP_POINT = ("tb.json", "check.json", "*.saif", "*/pt/*.rpt", "*/reports/*.rpt")
+# What PT, DC's readback and Questa read of a DC run (pt_power.tcl, dc_readback.tcl): unpacked from its zip
+SYN_MEMBERS = ("tech.json", "reports/lib_info.txt")
+
+
 def syn_run(tech: str, point: str) -> Path:
+    """The DC run's folder name (as the CSVs' run column); what is kept of it is syn_zip()."""
     return SYN_RUNS / tech / point
 
 
-def netlist_of(tech: str, point: str) -> Path:
-    found = sorted((syn_run(tech, point) / "out").glob("*_mapped.v"))
-    if not found:
+def syn_zip(tech: str, point: str) -> Path:
+    return SYN_RUNS / tech / f"{point}.zip"
+
+
+def point_zip(pdir: Path) -> Path:
+    return pdir.with_name(pdir.name + ".zip")
+
+
+def point_inputs(stack: contextlib.ExitStack, tech: str, point: str) -> tuple[Path, Path, Path | None]:
+    """The DC run's netlist, tech.json and lib_info.txt unpacked into tmp/ (PWR_RUN), the netlist, and for forge and
+    char the bundle unpacked as well; all deleted when `stack` closes (X51)."""
+    z = syn_zip(tech, point)
+    have = arc.names(z) if z.is_file() else []
+    nets = sorted(n for n in have if re.fullmatch(r"out/[^/]*_mapped\.v", n))
+    if not nets:
         raise Fail(f"no mapped netlist in {syn_run(tech, point).relative_to(ROOT)}/out")
-    return found[0]
+    d = stack.enter_context(arc.unpacked(z, [nets[0], *(m for m in SYN_MEMBERS if m in have)]))
+    bundle = stack.enter_context(arc.unpacked(syn.bundle_zip(point))) if SOURCE in ("forge", "char") else None
+    return d, d / nets[0], bundle
+
+
+def pack_point(pdir: Path) -> Path:
+    """A point's folder into its zip (KEEP_POINT), merged: the folder's top-level files and run tags replace the
+    zip's, the zip's other runs stay; test-read, then the folder goes."""
+    z = point_zip(pdir)
+    new = {m: p.read_bytes() for m, p in arc.files_of(pdir, KEEP_POINT).items()}
+    tags = {d.name for d in pdir.iterdir() if d.is_dir()}
+    old = {m: b for m, b in arc.read_all(z).items() if "/" in m and m.split("/", 1)[0] not in tags}
+    arc.write(z, {**old, **new})
+    shutil.rmtree(pdir)
+    return z
 
 
 def scopes(netlist: Path, top: str, reached: set | None = None) -> list[str]:
@@ -735,8 +775,9 @@ def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -
 
 
 def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, threads: int, times: dict,
-            row: dict) -> dict:
-    """One run; fills `row` as it goes, so a failed run keeps what it got (cycles). Returns its info."""
+            row: dict, syn_d: Path) -> dict:
+    """One run; fills `row` as it goes, so a failed run keeps what it got (cycles). Returns its info.
+    syn_d: the DC run unpacked (point_inputs), PT's PWR_RUN."""
     rdir = pdir / run_tag(size, stim, seed)
     if rdir.exists():
         shutil.rmtree(rdir)
@@ -837,7 +878,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
     t = time.time()
     ptd = rdir / "pt"
     ptd.mkdir()
-    env = {**os.environ, "PWR_RUN": str(syn_run(tech, tb["point"])), "PWR_MODE": "saif", "PWR_ACT": str(saif),
+    env = {**os.environ, "PWR_RUN": str(syn_d), "PWR_MODE": "saif", "PWR_ACT": str(saif),
            "PWR_STRIP": f"{TB_TOP}/{DUT}", "PWR_OUT": str(ptd), "PWR_THREADS": str(threads)}
     rc = run_tool([tool("pt_shell", "PT_SHELL"), "-no_init", "-f", str(PT_SCRIPT), "-output_log_file",
                    str(ptd / "pt_shell.log")], ptd / "pt_stdout.log", ptd, env, stdin_null=True)
@@ -880,12 +921,13 @@ def wire_load_check(rpt: Path) -> dict:
     return {"nets": nets, "wire_cap_nets": wc, "wire_res_nets": wr}
 
 
-def build_tb(point: str, tech: str) -> dict:
-    """The point's tb.json from its source's adapter (forge: from the bundle and the netlist's ports)."""
-    if SOURCE == "forge":
-        tb = forge_src.build(point, netlist_of(tech, point))
-    elif SOURCE in ("char", "bambu", "xls"):
-        tb = src().build(point, netlist_of(tech, point))
+def build_tb(point: str, netlist: Path, bundle: Path | None) -> dict:
+    """The point's tb.json from its source's adapter (forge, char: from the unpacked bundle and the netlist's
+    ports; bambu, xls: from the netlist's ports)."""
+    if SOURCE in ("forge", "char"):
+        tb = src().build(point, netlist, bundle)
+    elif SOURCE in ("bambu", "xls"):
+        tb = src().build(point, netlist)
     else:
         tb = hls.build(point)
     src().check(tb)
@@ -893,7 +935,14 @@ def build_tb(point: str, tech: str) -> dict:
 
 
 def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict, dict]]:
-    """One worker: tb.json, compile, every requested run, cleanup. Returns [(row, info)]."""
+    """One worker: the DC run (and bundle) unpacked, tb.json, compile, every requested run, cleanup, then the
+    point's folder packed into its zip (X51). Returns [(row, info)]."""
+    with contextlib.ExitStack() as stack:
+        rows = _do_point(stack, point, tech, runs, threads)
+    return rows
+
+
+def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, threads: int) -> list[tuple[dict, dict]]:
     pdir = tech_runs(tech) / point
     out = []
     try:
@@ -904,12 +953,20 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
                         "seed": "", "status": f"skipped: needs a RAM macro ({', '.join(rams)}); "
                                               f"{tech} has no RAM cells, RAM1 builds one (OpenRAM)"})
             return [(row, {})]
-        tb = build_tb(point, tech)
+        try:
+            syn_d, netlist, bundle = point_inputs(stack, tech, point)
+            input_err = None
+        except Fail as e:       # hls builds tb.json without the netlist: each run fails at compile, as before
+            if SOURCE != "hls":
+                raise
+            syn_d = netlist = bundle = None
+            input_err = str(e)
+        tb = build_tb(point, netlist, bundle)
     except (ValueError, KeyError, FileNotFoundError, Fail) as e:
         row = {c: "" for c in COLUMNS}
         row.update({"point": point, "tech": tech, "size": "", "seed": "", "status": f"failed: tb.json: {e}"})
         return [(row, {})]
-    pdir.mkdir(parents=True, exist_ok=True)     # other runs of the point (their SAIFs) stay
+    pdir.mkdir(parents=True, exist_ok=True)     # the point's other runs stay in its zip (pack_point merges)
     for stale in ("work", "logs"):
         shutil.rmtree(pdir / stale, ignore_errors=True)
     tb_text = json.dumps(tb, indent=1) + "\n"
@@ -919,7 +976,8 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
         compile_times = {}
         t = time.time()
         try:
-            netlist = netlist_of(tech, point)
+            if input_err:
+                raise Fail(input_err)
             compile_point(tb, tech, pdir, netlist, RUNS / tech / "_cells")     # the cells: one per technology
             compile_err = None
         except Fail as e:
@@ -940,21 +998,19 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
             if SOURCE == "forge":
                 base.update({"recipe": tb["recipe"], "snax_forge_commit": tb["snax_forge_commit"]})
             info = {"run": str((pdir / run_tag(size, stim, seed)).relative_to(ROOT)), "times": times,
-                    "default": (stim, seed, size) == ("rand64", 0, src().default_size(tb)) and INITREG_SEED is None}
+                    "default": (stim, seed, size) == ("rand64", 0, src().default_size(tb)) and INITREG_SEED is None,
+                    "zip": point_zip(pdir), "prefix": f"{run_tag(size, stim, seed)}/"}
             try:
                 if size not in tb["sizes"]:
                     raise Fail(f"size {size} not in tb.json ({', '.join(tb['sizes'])})")
                 if compile_err:
                     raise Fail(compile_err)
-                info.update(run_one(tb, tech, pdir, size, stim, seed, threads, times, base))
+                info.update(run_one(tb, tech, pdir, size, stim, seed, threads, times, base, syn_d))
             except Fail as e:
                 base["status"] = f"failed: {e}"
             except Exception as e:          # noqa: BLE001  a crash fails this run, not the batch
                 base["status"] = f"failed: {type(e).__name__}: {e}"
             info["row"] = base
-            rdir = ROOT / info["run"]
-            if rdir.is_dir():
-                (rdir / "result.json").write_text(json.dumps(info, indent=1, default=str) + "\n")
             out.append((base, info))
     finally:
         shutil.rmtree(pdir / "work", ignore_errors=True)        # X18: no compiled design is kept
@@ -962,6 +1018,7 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
             f.unlink()
         for f in pdir.rglob("*.vcd"):
             f.unlink()
+        pack_point(pdir)                                         # X51: tb.json, SAIFs, PT reports; the rest goes
     for _, info in out:
         info.setdefault("times", {})["point_total"] = time.time() - t_point
     return out
@@ -988,34 +1045,48 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
     rows = [r for r, _ in results]
     _merge(out / "power_pt.csv", columns(), key, rows, {key(r) for r in rows})
     mods, mod_points = [], set()
+    reports: dict[str, dict] = {}       # point -> the members of results/<source>/<tech>/power_reports/<point>.zip
+
+    def members(point: str) -> dict:
+        if point not in reports:
+            reports[point] = arc.read_all(power_zip(tech, point))
+        return reports[point]
     for r, info in results:
         if not info.get("default"):
             continue
         mod_points.add(r["point"])
-        dest = out / "power_reports" / r["point"]
-        if dest.exists():
-            for f in dest.iterdir():
-                if f.is_file():
-                    f.unlink()
+        have = members(r["point"])
+        for k in [k for k in have if "/" not in k]:     # the default run's reports and tb.json, at the top
+            del have[k]
         if r["status"] != "ok":
             continue
-        dest.mkdir(parents=True, exist_ok=True)
-        for m in info.get("modules", []):
-            mods.append({"point": r["point"], "tech": tech, "path": m["path"], "design": m["design"],
-                         "e_dyn_pj": m["dyn_uw"] * CLOCK_NS / 1000.0})
+        for mod in info.get("modules", []):
+            mods.append({"point": r["point"], "tech": tech, "path": mod["path"], "design": mod["design"],
+                         "e_dyn_pj": mod["dyn_uw"] * CLOCK_NS / 1000.0})
     _merge(out / "power_pt_modules.csv", MODULE_COLUMNS, lambda r: r["point"], mods, mod_points)
     for r, info in results:
         if r["status"] != "ok":
             continue
-        rdir = ROOT / info["run"]
-        dest = out / "power_reports" / r["point"]
-        if not info.get("default"):
-            dest = dest / rdir.name
-            shutil.rmtree(dest, ignore_errors=True)
-        dest.mkdir(parents=True, exist_ok=True)
+        m = members(r["point"])
+        sub = ""
+        if not info.get("default"):       # another run: in <run tag>/ inside the point's zip
+            sub = info["prefix"]
+            for k in [k for k in m if k.startswith(sub)]:
+                del m[k]
         for f in KEPT:
-            shutil.copy2(rdir / "pt" / f, dest / f)
-        shutil.copy2(rdir.parent / "tb.json", out / "power_reports" / r["point"] / "tb.json")
+            m[sub + f] = arc.read(info["zip"], f"{info['prefix']}pt/{f}")
+        m["tb.json"] = arc.read(info["zip"], "tb.json")
+    for point, m in reports.items():
+        z = power_zip(tech, point)
+        if m:
+            arc.write(z, m)
+        elif z.exists():
+            z.unlink()
+
+
+def power_zip(tech: str, point: str) -> Path:
+    """The committed PT reports of a point: results/<source>/<tech>/power_reports/<point>.zip (X20, X51)."""
+    return RESULTS / tech / "power_reports" / f"{point}.zip"
 
 
 # ---------------------------------------------------------------- char (CHAR1): a block alone, per window
@@ -1181,15 +1252,23 @@ def _pack(values: list[int]) -> str:
 
 
 def do_point_char(point: str, tech: str, seed: int, threads: int) -> list[tuple[dict, dict]]:
-    """One worker: tb.json, compile, one simulation over every window, then per window vcd2saif, the SAIF check and
-    PT; cleanup. Returns [(row, info)], one per window."""
+    """One worker: the DC run and the block unpacked, tb.json, compile, one simulation over every window, then per
+    window vcd2saif, the SAIF check and PT; cleanup, and the point's folder packed into its zip (X51). Returns
+    [(row, info)], one per window."""
+    with contextlib.ExitStack() as stack:
+        rows = _do_point_char(stack, point, tech, seed, threads)
+    return rows
+
+
+def _do_point_char(stack: contextlib.ExitStack, point: str, tech: str, seed: int, threads: int) -> list[tuple[dict, dict]]:
     t_point = time.time()
     extra = syn.char_extra(point)
     base = {c: "" for c in CHAR_COLUMNS}
     base.update({"point": point, "tech": tech, "clock_ns": _num(CLOCK_NS), "seed": seed,
                  **{k: extra[k] for k in ("datapath", "lanes", "depth", "op", "form", "snax_forge_commit")}})
     try:
-        tb = build_tb(point, tech)
+        syn_d, netlist, bundle = point_inputs(stack, tech, point)
+        tb = build_tb(point, netlist, bundle)
     except (ValueError, KeyError, FileNotFoundError, Fail) as e:
         return [({**base, "window": "", "status": f"failed: tb.json: {e}"}, {})]
     rows = {w["name"]: {**base, "window": w["name"]} for w in tb["windows"]}
@@ -1205,7 +1284,6 @@ def do_point_char(point: str, tech: str, seed: int, threads: int) -> list[tuple[
     sim: dict = {"run": str(rdir.relative_to(ROOT)), "times": times}
     try:
         t = time.time()
-        netlist = netlist_of(tech, point)
         compile_point(tb, tech, pdir, netlist, RUNS / tech / "_cells")
         times["compile"] = time.time() - t
         t = time.time()
@@ -1289,7 +1367,7 @@ def do_point_char(point: str, tech: str, seed: int, threads: int) -> list[tuple[
             info["saif"] = saif_check(wdir / f"{w}.saif", r["cycles"], tb["clock"]["port"])
             ptd = wdir / "pt"
             ptd.mkdir()
-            env = {**os.environ, "PWR_RUN": str(syn_run(tech, point)), "PWR_MODE": "saif",
+            env = {**os.environ, "PWR_RUN": str(syn_d), "PWR_MODE": "saif",
                    "PWR_ACT": str(wdir / f"{w}.saif"), "PWR_STRIP": f"{TB_TOP}/{DUT}", "PWR_OUT": str(ptd),
                    "PWR_THREADS": str(threads)}
             rc = run_tool([tool("pt_shell", "PT_SHELL"), "-no_init", "-f", str(PT_SCRIPT), "-output_log_file",
@@ -1315,12 +1393,9 @@ def do_point_char(point: str, tech: str, seed: int, threads: int) -> list[tuple[
     sim["times"]["point_total"] = time.time() - t_point
     out = []
     for w, r in rows.items():
-        info = {**infos[w], "sim": sim, "row": r, "run": str((rdir / w).relative_to(ROOT))}
-        if (rdir / w).is_dir():
-            (rdir / w / "result.json").write_text(json.dumps(info, indent=1, default=str) + "\n")
-        out.append((r, info))
-    if rdir.is_dir():
-        (rdir / "result.json").write_text(json.dumps(sim, indent=1, default=str) + "\n")
+        out.append((r, {**infos[w], "sim": sim, "row": r, "run": str((rdir / w).relative_to(ROOT)),
+                        "zip": point_zip(pdir), "prefix": f"{rdir.name}/{w}/"}))
+    pack_point(pdir)                     # X51: tb.json, each window's SAIF and PT reports; the rest goes
     return out
 
 
@@ -1345,18 +1420,26 @@ def write_results_char(tech: str, results: list[tuple[dict, dict]]) -> None:
         w = csv.DictWriter(fh, fieldnames=CHAR_COLUMNS, extrasaction="ignore")
         w.writeheader()
         w.writerows(table)
+    reports: dict[str, dict] = {}       # point -> the members of power_reports/<point>.zip, a folder per window
     for r, info in results:
         if not r["window"]:
             continue
-        dest = out / "power_reports" / r["point"] / r["window"]
-        shutil.rmtree(dest, ignore_errors=True)
+        if r["point"] not in reports:
+            reports[r["point"]] = arc.read_all(power_zip(tech, r["point"]))
+        m = reports[r["point"]]
+        for k in [k for k in m if k.startswith(f"{r['window']}/")]:
+            del m[k]
         if r["status"] != "ok":
             continue
-        dest.mkdir(parents=True)
         for name in CHAR_KEPT:
-            shutil.copy2(ROOT / info["run"] / "pt" / name, dest / name)
-        tbj = tech_runs(tech) / r["point"] / "tb.json"
-        shutil.copy2(tbj, out / "power_reports" / r["point"] / "tb.json")
+            m[f"{r['window']}/{name}"] = arc.read(info["zip"], f"{info['prefix']}pt/{name}")
+        m["tb.json"] = arc.read(info["zip"], "tb.json")
+    for point, m in reports.items():
+        z = power_zip(tech, point)
+        if m:
+            arc.write(z, m)
+        elif z.exists():
+            z.unlink()
 
 
 def run_char(points: list[str], tech: str, seed: int, j: int, threads: int) -> int:
@@ -1388,8 +1471,10 @@ def cmd_tbjson(args) -> int:
     if args.source == "hls":
         tb = hls.build(args.point)
         hls.check(tb)
-    else:       # forge, char: from the netlist's ports
-        tb = build_tb(args.point, args.tech)
+    else:       # forge, char, bambu, xls: from the netlist's ports (and the bundle), unpacked into tmp/
+        with contextlib.ExitStack() as stack:
+            _, netlist, bundle = point_inputs(stack, args.tech, args.point)
+            tb = build_tb(args.point, netlist, bundle)
     print(json.dumps(tb, indent=1))
     return 0
 
@@ -1449,7 +1534,7 @@ def cmd_run(args) -> int:
     bad = [r for r, _ in results if r["status"] != "ok"]
     if INITREG_SEED is not None:      # a check: nothing goes to results/
         print(f"pwr: {len(results) - len(bad)} ok, {len(bad)} not ok; random register start (seed {INITREG_SEED}), "
-              f"a check: results/ not written, result.json in the runs' _r{INITREG_SEED} folders")
+              f"a check: results/ not written; PT reports in the point zips' _r{INITREG_SEED} folders")
         return 1 if bad else 0
     write_results(args.tech, results)
     print(f"pwr: {len(results) - len(bad)} ok, {len(bad)} not ok -> {(RESULTS / args.tech / 'power_pt.csv').relative_to(ROOT)}")
@@ -1480,9 +1565,20 @@ def cmd_setup_check(args) -> int:
     tech = args.tech
     base = tech_runs(tech) / "setup_check" / point
     shutil.rmtree(base, ignore_errors=True)
-    (base / "pt").mkdir(parents=True)
-    (base / "dc").mkdir(parents=True)
-    run = syn_run(tech, point)
+    with contextlib.ExitStack() as stack:     # the DC run unpacked for PT and DC; the folder packed after (X51)
+        try:
+            run, _, _ = point_inputs(stack, tech, point)
+        except Fail as e:
+            sys.exit(f"setup-check: {e}")
+        (base / "pt").mkdir(parents=True)
+        (base / "dc").mkdir(parents=True)
+        try:
+            return _setup_check(tech, point, base, run)
+        finally:
+            pack_point(base)
+
+
+def _setup_check(tech: str, point: str, base: Path, run: Path) -> int:
     env = {**os.environ, "PWR_RUN": str(run), "PWR_MODE": "uniform", "PWR_OUT": str(base / "pt" / "reports")}
     t = time.time()
     rc = run_tool([tool("pt_shell", "PT_SHELL"), "-no_init", "-f", str(PT_SCRIPT), "-output_log_file",
