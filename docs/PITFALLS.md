@@ -1,6 +1,6 @@
 # Pitfalls
 
-Tool behaviour that gives wrong numbers, or no numbers, without an error. Grouped by tool (and the environment). Each entry: symptom, cause, fix or check, and the run note (in `results/hls/runs/`) that found it. The decisions they led to are in [`DECISIONS.md`](DECISIONS.md).
+Tool behaviour that gives wrong numbers, or no numbers, without an error. Grouped by tool (and the environment, and the zips of X51). Each entry: symptom, cause, fix or check, and the run note (in `results/hls/runs/`) that found it. The decisions they led to are in [`DECISIONS.md`](DECISIONS.md).
 
 ## DC
 
@@ -74,6 +74,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** to compare `seq_cells` with an HLS tool's RTL, sum the `Inferred memory devices` widths and subtract the unique OPT-1206 and OPT-1207 lines. For Bambu this table does not work: it lists each library design once (`register_SE_BITSIZE_in132_...`), not once per instance; use the instance parameters (DC9).
 - **Found in:** `results/runs/2026-11-05_hsyn1_r6.md`.
 
+### DC11. A rerun of one forge or char point widens the whole synth CSV
+
+- **Symptom:** after `syn run` on one forge or char point, `git diff` shows every line of `results/forge/<tech>/synth_dc.csv` or `results/char/<tech>/char_synth.csv` changed, though only the rerun row's `date` differs in value.
+- **Cause:** those CSVs were committed (SYN2, CHAR1) before X40 added the four `slack_<class>_ns` columns (HSYN1); `syn.py` writes every row with its current columns, so the old rows get the four columns empty and the rerun row gets them filled. The Vitis, Bambu and XLS CSVs already have them.
+- **Fix or check:** compare such CSVs cell by cell on the committed columns, not line by line; rerunning the source's points fills the columns.
+- **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4).
+
 ## Libraries
 
 ### LIB1. nangate15's flops all have async reset or set
@@ -117,6 +124,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** a black-box cell has no functional description; the library-level attributes have defaults lc_shell applies and reports.
 - **Fix or check:** copy nangate45's `default_*` values (the same as lc_shell's defaults) and add `char_config () { internal_power_calculation : exclude_switching_on_rise_and_fall; }`: the LBDB lines go. The two functionality warnings stay and are expected; `is_memory_cell : true` changes nothing, and a cell `memory ()` group replaces them with LIBG-280 (memory groups deprecated, Information). None of this is needed for the `.db`, DC or PT (`ram/ram.py` writes no `memory` group).
 - **Found in:** `results/ram/runs/2026-11-06_ram1_r3.md`, `results/ram/runs/2026-11-05_ram1_r0.md` (LBDB-366, LIBG-280).
+
+### LIB7. lc_shell Y-2026.03 writes no Liberty back from a `.db`
+
+- **Symptom:** `write_lib <lib> -format lib -output x.lib` after `read_db` stops with `Error: Invalid output format 'lib'. (UIL-23)` and writes nothing; a script that diffs two such files then compares two missing files and can report them equal.
+- **Cause:** this lc_shell writes `db` only.
+- **Fix or check:** compare two `.db` files with `report_lib <lib>` (or DC's `get_attribute` on the lib pins, as RAM1 R3), and check that each output exists and is not empty before diffing.
+- **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4).
 
 ## Questa
 
@@ -302,7 +316,7 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 
 - **Symptom:** CACTI 7 (`1ffd8df`) run from any folder but its own echoes its input parameters and dies with a segmentation fault (rc 139, core dumped), with no message about a missing file.
 - **Cause:** `parameter.cc` opens `"tech_params/<node>.dat"` (here `tech_params/45nm.dat`) by a relative path and does not check the `fopen`.
-- **Fix or check:** run CACTI from `ram/cacti/`, or link `tech_params` into the run folder; `ram/ram.py` runs each point in `ram/runs/cacti/<point>/` with `tech_params` (and `contention.dat`) linked in. A run with rc 139 and no `Cache Parameters:` block in its output is this.
+- **Fix or check:** run CACTI from `ram/cacti/`, or link `tech_params` into the run folder; `ram/ram.py` runs each point in a folder under `tmp/` (X51; `ram/runs/cacti/<point>/` before) with `tech_params` (and `contention.dat`) linked in. A run with rc 139 and no `Cache Parameters:` block in its output is this.
 - **Found in:** `results/ram/runs/2026-11-05_ram1_r1.md`.
 
 ### C2. `cache.cfg`'s `-Optimize "ED^2"` overrides the design objective
@@ -348,3 +362,26 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** pixi runs the command through its own task shell, which parses the quoting again.
 - **Fix or check:** put the code in a script file and run `pixi run python <file>` (or a heredoc to `pixi run python -`).
 - **Found in:** `2026-10-29_pwr_r1.md`.
+
+### E2. A forge power run needs snax-forge at a commit that still loads the bundle's design point
+
+- **Symptom:** `pwr run ... --source forge` on a SYN2 bundle fails at tb.json with `snax_forge.design.problems.DesignError: ... [graph.brm] node add: no BRM 'elementwise_add' in the library (['accumulate', 'mac', 'simd'])`; DC on the same bundle works.
+- **Cause:** `sim/sources/forge.py` asks snax-forge (`forge/query.py point`) about the bundle, and `query.py` loads the design point `bundle.json` names (`out/design/syn1/<point>/design_point.json` in the snax-forge checkout) with the checkout's own code. From DRY1-2 (snax-forge #52) the BRM library is indexed by family, and a design point from before (the bundles' `f9764d5`) no longer loads, on `main` as on the DRY1-3 branch.
+- **Fix or check:** run the forge power flow with snax-forge at the bundle's `snax_forge_commit` (its `point.json`): `git -C ../snax-forge checkout --detach <commit>`, the run, then back (the pixi lock is the same from `f9764d5` to `f49c394`), or rebuild the bundles (`pixi run forge-rtl`).
+- **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4).
+
+### E3. `git diff --word-diff` on a CSV marks whole rows
+
+- **Symptom:** a word diff of a results CSV shows complete rows removed and added though a single cell changed.
+- **Cause:** a CSV row has no spaces, so it is one word.
+- **Fix or check:** compare CSVs by key, cell by cell (parse both with `csv.DictReader`); keep line-level diffs for checking that a file is byte for byte the same.
+- **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4).
+
+## Zips (X51)
+
+### Z1. A rerun's report zip changes in git with the same numbers
+
+- **Symptom:** after a `syn` or `pwr` rerun that changes no number, `results/<source>/<tech>/reports/<point>.zip` and `power_reports/<point>.zip` show as modified.
+- **Cause:** the zips are deterministic in their contents, not in the tools': every DC and PT report has a `Date   :` line, `qor.rpt` the compile's CPU times, and `tech.json` the `--cores` of the run.
+- **Fix or check:** compare a rerun's zip with the committed one member by member, the `Date` lines, `qor.rpt`'s CPU-time lines and `tech.json`'s cores aside; commit a rerun's zips only with a change that is meant.
+- **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4).
