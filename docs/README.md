@@ -5,6 +5,7 @@ The settled choices of this repo and the tool nuances that give wrong numbers wi
 - [`DECISIONS.md`](DECISIONS.md): what was decided, numbered X1, X2, ..., each with its date, reason and source.
 - [`PITFALLS.md`](PITFALLS.md): per tool (DC, libraries, Questa, PrimeTime, licences, CACTI, environment), each symptom with its cause, its fix or check, and the run note that found it.
 - [`power.md`](power.md): how to run `pwr`, its stages, the run folder and what is committed.
+- [`cost_tables.md`](cost_tables.md): the cost tables HWCOST reads (SRAM banks, streamer reader, sparse interconnect): how each number is measured, how a cost is read between grid points (step by step, with worked examples), how well it agrees, and what the numbers assume; written to be reused as a methods section (X47–X54).
 - [`notes_control_boundary.md`](notes_control_boundary.md): working notes from SYN1's review: forge's control against HLS's, register by register, the block boundary, the HLS register stage, and the options to pick from.
 
 Vitis-side nuances (pragmas, ports, the cases, cosim) live in hls-exercises' [`docs/HLS_VS_FORGE.md`](https://github.com/rgantonio/hls-exercises/blob/main/docs/HLS_VS_FORGE.md).
@@ -22,7 +23,8 @@ Vitis-side nuances (pragmas, ports, the cases, cosim) live in hls-exercises' [`d
 | `results/runs/` | Run notes of rounds that span several sources (HSYN1 on). |
 | `results/hls/` | Vitis (X38). hls-exercises' bench summaries: `hls_cycles.csv`, `hls_loops.csv`, `forge_cycles.csv`, `report_<tier>.md`. `forge_cycles.csv` stays unchanged. |
 | `results/forge/<tech>/`, `results/forge/runs/` | snax-forge's points (X21 to X23): the same files as `results/hls/<tech>/`, with `recipe`, `W` and `snax_forge_commit`; SYN1's run notes. |
-| `rtl/` | The bundles forge/bundles.py and char/blocks.py write, one zip per point: `rtl/forge/<point>.zip`, `rtl/char/<point>.zip` (git-ignored; a bundle is rebuilt from its commit). |
+| `rtl/` | The bundles forge/bundles.py, char/blocks.py and strm/gen.py write, one zip per point: `rtl/forge/<point>.zip`, `rtl/char/<point>.zip`, `rtl/streamer/<point>.zip`, `rtl/xbar/<point>.zip` (git-ignored; a bundle is rebuilt from its commit). |
+| `strm/`, `results/strm/` | STRM1: snax_cluster's streamer reader and TCDM sparse interconnect (X52, X53). `strm/grid.json` (the grid, the snax_cluster commit, the image) and `strm/gen.py` (`pixi run strm-rtl`, the bundles in `rtl/streamer/` and `rtl/xbar/`); see [`strm/README.md`](../strm/README.md). DC and power through `syn.py` and `pwr.py` `--source streamer` and `--source xbar`, results in `results/streamer/<tech>/` and `results/xbar/<tech>/` (`synth_dc.csv`, `power_pt.csv`, report zips); the tables snax-forge reads, `results/strm/<tech>/streamer.csv` and `xbar.csv` (`report/strm_table.py`, with the reference interpolation); run notes in `results/strm/runs/`. |
 | `arc/`, `tmp/` | `arc/arc.py`, the zip helpers every script imports (`pack`, `read`, `names`, `unpacked`, `check`, X51), and its tests; `tmp/` (git-ignored) holds the folders it unpacks into, one point at a time, and is empty when nothing runs. |
 | `ram/`, `results/ram/` | RAM1: SRAM bank area and energy per access from CACTI 7 at 45 nm (X47): `ram/ram.py`, CACTI in `ram/cacti/` and runs in `ram/runs/` (both git-ignored): the CACTI cache `ram/runs/cacti.zip`, the macros `ram/runs/lib/<name>.zip` (X51); the lookup table `results/ram/nangate45/ram_table.csv` (X48) and run notes in `results/ram/runs/`. See [`ram/README.md`](../ram/README.md). |
 

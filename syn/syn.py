@@ -57,6 +57,24 @@ synth_dc_modules.csv), and a char row has more columns, from point.json:
 datapath, lanes, depth, op, form (a Mac's acc, plain or reg) and
 snax_forge_commit.
 
+Or streamer and xbar (STRM1, docs X52): snax_cluster's streamer reader and TCDM
+sparse interconnect, which strm/gen.py (pixi run strm-rtl) writes into
+rtl/streamer/ and rtl/xbar/ in this repo, one zip per point named after the
+grid (streamer d<depth>_l<loops>_c<channels>, xbar i<inputs>_b<banks>) holding
+config.json, point.json, filelist.f ('# top: <top>', then <top>.sv) and the SV.
+run unpacks the zip into tmp/ and writes the run folder's filelist.f with the
+unpacked file's path. The RTL is SystemVerilog with clock clock and reset reset
+(the reader's asynchronous, the interconnect's synchronous; both active high,
+kept ideal). Runs go to syn/runs/<source>/<tech>/, results to
+results/<source>/<tech>/synth_dc.csv and synth_dc_modules.csv; a row adds the
+grid's params (streamer depth, loops, channels; xbar inputs, banks),
+rtl_flop_bits (the register and memory bits the bundle's RTL declares,
+strm/gen.py's flop_bits), opt1207 (DC's unloaded registers removed, the unique
+OPT-1207 lines) and snax_cluster_commit. The flop check: a row whose seq_cells
+differs from rtl_flop_bits is "failed: flop check (...)". run starts the
+largest points first (xbar by inputs x banks, streamer by channels x depth,
+then loops).
+
 Before DC starts, the port guard reads the top's port list from the point's Verilog
 files and checks that the source's clock and reset ports are on it; if not, the row is
 "failed: no clock port <name> on <top>" (or reset) and DC is not run. check-ports runs
@@ -112,15 +130,18 @@ Environment, all optional:
   SYN_RTL_XLS         ../dslx-exercises/rtl    (the xls points)
   SYN_RTL_FORGE       rtl/forge                (the forge points' zips)
   SYN_RTL_CHAR        rtl/char                 (the char points' zips)
+  SYN_RTL_STREAMER    rtl/streamer             (the streamer points' zips)
+  SYN_RTL_XBAR        rtl/xbar                 (the xbar points' zips)
   SYN_LIB_NANGATE45   the nangate45 .db, instead of the tech file's lib_default
   SYN_LIB_NANGATE15   the nangate15 .db, instead of the tech file's lib_default
                       (in general: the tech file's lib_env)
 syn.py passes DC: SYN_FILELIST, SYN_LIB_DB, SYN_LIB_NAME, SYN_TIME_UNIT,
 SYN_CAP_UNIT, SYN_T_SCALE, SYN_C_SCALE, SYN_DRIVE_CELL, SYN_OUT_LOAD_FF,
 SYN_MAX_TRANS_NS, SYN_WIRE_LOAD, SYN_CLOCK_NS, SYN_CORES, and from the
-source SYN_FORMAT (verilog; forge and char sverilog), SYN_CLK_PORT (ap_clk;
-bambu clock; xls clk; forge clk_i; char clock) and SYN_RST_PORT (ap_rst_n; bambu
-reset; xls rst; forge rst_ni; char reset).
+source SYN_FORMAT (verilog; forge, char, streamer and xbar sverilog),
+SYN_CLK_PORT (ap_clk; bambu clock; xls clk; forge clk_i; char, streamer and
+xbar clock) and SYN_RST_PORT (ap_rst_n; bambu reset; xls rst; forge rst_ni;
+char, streamer and xbar reset).
 Standard library and arc/arc.py only.
 """
 
@@ -162,7 +183,14 @@ SOURCES = {
               "format": "sverilog", "clk": "clk_i", "rst": "rst_ni"},
     "char": {"rtl": Path(os.environ.get("SYN_RTL_CHAR", ROOT / "rtl" / "char")),
              "format": "sverilog", "clk": "clock", "rst": "reset"},
+    "streamer": {"rtl": Path(os.environ.get("SYN_RTL_STREAMER", ROOT / "rtl" / "streamer")),
+                 "format": "sverilog", "clk": "clock", "rst": "reset"},
+    "xbar": {"rtl": Path(os.environ.get("SYN_RTL_XBAR", ROOT / "rtl" / "xbar")),
+             "format": "sverilog", "clk": "clock", "rst": "reset"},
 }
+# The sources whose points are bundle zips in rtl/<source>/ (unpacked into tmp/ for DC); STRM: strm/gen.py's
+BUNDLED = ("forge", "char", "streamer", "xbar")
+STRM = ("streamer", "xbar")
 # The results/<source>/<tech>/ CSVs: synth_dc.csv and synth_dc_modules.csv, but for char
 RESULT_CSVS = {"char": ("char_synth.csv", "char_synth_modules.csv")}
 # X38: at most 16 64-bit channels per stream, so W <= 16 for every HLS case; W = 32 is retired
@@ -205,6 +233,11 @@ FORGE_COLUMNS = ["recipe", "W", "snax_forge_commit",   # after COLUMNS, forge ro
                  "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2"]
 CHAR_COLUMNS = ["datapath", "lanes", "depth", "op", "form", "snax_forge_commit"]  # after COLUMNS, char rows only
 BAMBU_COLUMNS = ["ctrl_um2", "datapath_um2", "glue_um2"]  # after COLUMNS, bambu rows only (X41)
+# after COLUMNS, streamer and xbar rows (X52): the grid's params, then the flop check's numbers
+STRM_COLUMNS = {"streamer": ["depth", "loops", "channels", "rtl_flop_bits", "opt1207", "snax_cluster_commit"],
+                "xbar": ["inputs", "banks", "rtl_flop_bits", "opt1207", "snax_cluster_commit"]}
+STRM_PARAMS = {"streamer": {"depth": "fifo_depth", "loops": "temporal_dim", "channels": "num_channel"},
+               "xbar": {"inputs": "inputs", "banks": "banks"}}
 GLUE_MAX = 0.01   # a glue share above this (or below 0) is reported, not failed
 # A licence failure, as DC prints it (PITFALLS L1): 'Error: Design-Compiler Internal licensing error
 # number -92 ...', 'Unable to obtain feature ...', 'Fatal: Design Compiler is not enabled. (DCSH-1)'.
@@ -282,8 +315,8 @@ def techs_with_summary(only: str | None) -> list[str]:
 def all_points() -> list[str]:
     """The points of the source: a forge or char point is a bundle zip, rtl/<set>/<point>.zip, holding a
     bundle.json (forge) or an emitted.json (char); an HLS tool's is an rtl/ folder with a filelist.f."""
-    if SOURCE in ("forge", "char"):
-        marker = "bundle.json" if SOURCE == "forge" else "emitted.json"
+    if SOURCE in BUNDLED:
+        marker = {"forge": "bundle.json", "char": "emitted.json"}.get(SOURCE, "config.json")
         return sorted(f.relative_to(RTL).with_suffix("").as_posix() for f in RTL.rglob("*.zip")
                       if marker in arc.names(f))
     name = re.compile(rf"({'|'.join(SOURCES[SOURCE]['cases'])})_w([0-9]+)")
@@ -292,7 +325,7 @@ def all_points() -> list[str]:
 
 
 def columns() -> list[str]:
-    return COLUMNS + {"forge": FORGE_COLUMNS, "char": CHAR_COLUMNS, "bambu": BAMBU_COLUMNS}.get(SOURCE, [])
+    return COLUMNS + {"forge": FORGE_COLUMNS, "char": CHAR_COLUMNS, "bambu": BAMBU_COLUMNS, **STRM_COLUMNS}.get(SOURCE, [])
 
 
 def bundle_zip(point: str) -> Path:
@@ -318,8 +351,44 @@ def char_members(point: str) -> list[str]:
     return [posixpath.normpath(f) for f in forge_json(point, "emitted.json")["files"]]
 
 
+def strm_members(point: str) -> list[str]:
+    """filelist.f's files (after its '# top:' line), as members of a streamer or xbar point's zip."""
+    return [posixpath.normpath(ln.strip()) for ln in arc.read_text(bundle_zip(point), "filelist.f").splitlines()
+            if ln.strip() and not ln.strip().startswith("#")]
+
+
+def strm_extra(point: str, top: str, log: str) -> dict:
+    """A streamer or xbar row's STRM_COLUMNS: the grid's params (config.json), the bits the RTL declares under the
+    top (strm/gen.py's flop_bits), DC's unique OPT-1207 lines and the snax_cluster commit."""
+    sys.path.insert(0, str(ROOT / "strm"))
+    import gen as strm_gen  # noqa: PLC0415  strm/gen.py, only for these two sources
+    z = bundle_zip(point)
+    cfg = forge_json(point, "config.json")
+    params = cfg.get("params", {})
+    out = {k: params.get(v, "") for k, v in STRM_PARAMS[SOURCE].items()}
+    try:
+        out["rtl_flop_bits"] = strm_gen.flop_bits(arc.read_text(z, f"{top}.sv"), top)
+    except (KeyError, ValueError) as e:
+        out["rtl_flop_bits"] = ""
+        print(f"flop check {point}: no RTL count ({e})", flush=True)
+    out["opt1207"] = len(set(re.findall(r"^Information: The register '([^']+)' will be removed\. \(OPT-1207\)",
+                                        log, re.M)))
+    out["snax_cluster_commit"] = cfg.get("snax_cluster_commit", "")
+    return out
+
+
+def strm_size(point: str) -> tuple:
+    """The order run starts streamer and xbar points in, largest first: inputs x banks; channels x depth, loops."""
+    p = forge_json(point, "config.json").get("params", {})
+    if SOURCE == "xbar":
+        return (p.get("inputs", 0) * p.get("banks", 0), p.get("banks", 0))
+    return (p.get("num_channel", 0) * p.get("fifo_depth", 0), p.get("num_channel", 0), p.get("temporal_dim", 0))
+
+
 def point_members(point: str) -> list[str]:
     """A forge or char point's HDL files, as members of its bundle zip."""
+    if SOURCE in STRM:
+        return strm_members(point)
     return forge_members(point) if SOURCE == "forge" else char_members(point)
 
 
@@ -331,7 +400,7 @@ def point_filelist(point: str, bundle: Path) -> list[str]:
 def hdl_texts(point: str) -> list[str]:
     """The point's HDL sources: filelist.f's files for the HLS tools, the bundle zip's for forge and char;
     a file that is not there is left out."""
-    if SOURCE in ("forge", "char"):
+    if SOURCE in BUNDLED:
         z, have = bundle_zip(point), set(arc.names(bundle_zip(point)))
         return [arc.read_text(z, m, errors="replace") for m in point_members(point) if m in have]
     files = [RTL / point / ln.strip() for ln in (RTL / point / "filelist.f").read_text().splitlines()
@@ -423,12 +492,15 @@ def top_of(point: str) -> str:
         return forge_json(point, "bundle.json").get("top", "")
     if SOURCE == "char":
         return forge_json(point, "emitted.json").get("top", "")
+    if SOURCE in STRM:
+        m = re.search(r"^#\s*top:\s*(\S+)", arc.read_text(bundle_zip(point), "filelist.f"), re.M)
+        return m.group(1) if m else ""
     m = re.search(r"^#\s*top:\s*(\S+)", (RTL / point / "filelist.f").read_text(), re.M)
     return m.group(1) if m else ""
 
 
 def rams_of(point: str) -> list[str]:
-    if SOURCE in ("forge", "char"):
+    if SOURCE in BUNDLED:
         return []
     return re.findall(r"^#\s*ram:\s*(\S+)", (RTL / point / "filelist.f").read_text(), re.M)
 
@@ -563,6 +635,8 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row.update(module_shares(tech, point, clock, row["area_um2"]))
     if SOURCE == "char":
         row.update(char_extra(point))
+    if SOURCE in STRM:
+        row.update(strm_extra(point, row["top"], log_text))
     split_error = ""
     if SOURCE == "bambu":
         split, split_error = bambu_split(tech, point, clock, row["area_um2"])
@@ -610,6 +684,10 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row["status"] = "failed: power groups do not sum to the total dynamic power"
     elif split_error:
         row["status"] = f"failed: Bambu split ({split_error})"
+    elif SOURCE in STRM and str(row["rtl_flop_bits"]) != row["seq_cells"]:
+        # STRM1 R0: every register the RTL declares is a flop after compile (no OPT-1207, no OPT-1206)
+        row["status"] = (f"failed: flop check (DC {row['seq_cells'] or '?'} flops, RTL {row['rtl_flop_bits'] or '?'} "
+                         f"bits, {row['opt1207']} OPT-1207)")
     elif row["slack_ns"] and float(row["slack_ns"]) < 0:
         row["status"] = "ok, timing violated"
     else:
@@ -807,7 +885,7 @@ def cmd_list(args) -> int:
 
 def dc_env(tech: dict, res: dict, point: str, args) -> dict:
     src = SOURCES[SOURCE]
-    filelist = (run_dir(tech["name"], point, args.clock) / "filelist.f" if SOURCE in ("forge", "char")
+    filelist = (run_dir(tech["name"], point, args.clock) / "filelist.f" if SOURCE in BUNDLED
                 else RTL / point / "filelist.f")
     return {
         "SYN_FILELIST": str(filelist),
@@ -849,10 +927,10 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
     if args.dry_run:
         print(f"\n# {point} on {name}")
         print(f"# port guard: ok, clock {syn_env['SYN_CLK_PORT']} and reset {syn_env['SYN_RST_PORT']} on {top_of(point)}")
-        if SOURCE in ("forge", "char"):
+        if SOURCE in BUNDLED:
             print(f"# run unpacks {bundle_zip(point).relative_to(ROOT)} into tmp/ and writes "
                   f"{syn_env['SYN_FILELIST']}: '# top: {top_of(point)}', then its {len(point_members(point))} "
-                  f"files ({'rtl/files.f' if SOURCE == 'forge' else 'emitted.json'})")
+                  f"files ({'rtl/files.f' if SOURCE == 'forge' else 'filelist.f' if SOURCE in STRM else 'emitted.json'})")
         for k, v in syn_env.items():
             print(f"export {k}='{v}'")
         print(f"mkdir -p {rdir}/logs && cd {rdir} && {' '.join(cmd)}")
@@ -860,7 +938,7 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
               f"the folder is deleted")
         return None
     with contextlib.ExitStack() as stack:     # a forge or char bundle, unpacked for DC, deleted after (X51)
-        bundle = (stack.enter_context(arc.unpacked(bundle_zip(point))) if SOURCE in ("forge", "char")
+        bundle = (stack.enter_context(arc.unpacked(bundle_zip(point))) if SOURCE in BUNDLED
                   else None)
         for attempt in (1, 2):
             if rdir.exists():
@@ -906,6 +984,8 @@ def cmd_run(args) -> int:
     points = select(args.patterns)
     if not points:
         sys.exit("no rtl point matches (syn.py list shows them)")
+    if SOURCE in STRM:          # the largest first, so the longest runs do not end the batch alone
+        points.sort(key=strm_size, reverse=True)
     tech = load_tech(args.tech)
     res = resolve(tech)
     lib = Path(res["lib_db"])
@@ -958,7 +1038,8 @@ def main() -> int:
         p.add_argument("--source", choices=sorted(SOURCES), default="hls",
                        help="hls (Vitis, hls-exercises' rtl/, the default), bambu (the same rtl/), xls "
                             "(dslx-exercises' rtl/), forge (rtl/forge/, pixi run forge-rtl) "
-                            "or char (rtl/char/, pixi run char-rtl)")
+                            "char (rtl/char/, pixi run char-rtl), streamer or xbar (rtl/streamer/, rtl/xbar/, "
+                            "pixi run strm-rtl)")
         if name == "check-ports":
             continue
         if name == "run":

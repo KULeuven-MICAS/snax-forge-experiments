@@ -6,7 +6,8 @@ __pycache__/
 .pixi/
 # Simulation and power runs stay local, as syn/runs/; the probe scripts are in sim/probe/
 sim/runs/
-# Generated RTL (forge/bundles.py writes rtl/forge/): never committed, a bundle is rebuilt from its commit
+# Generated RTL (forge/bundles.py writes rtl/forge/, char/blocks.py rtl/char/, strm/gen.py rtl/streamer/ and
+# rtl/xbar/): never committed, a bundle is rebuilt from its commit
 rtl/
 # RAM1 runs stay local (R0: the OpenRAM probe, its lc_shell and DC runs); only numbers and notes are committed
 ram/runs/
