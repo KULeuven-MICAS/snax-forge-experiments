@@ -35,3 +35,11 @@ pixi run ram point 512 64 --ecc --tag ecc
 It is a lookup table, not a fit: a reader takes the row of the exact (depth, width). With depths in steps of 32 and widths in steps of 8, (d, w) is data row `(d / 32 - 1) * 32 + w / 8 - 2`, counting from 0 after the header (the full grid's index, minus one for 32 x 8, the first point, which is left out). Interpolating between rows is not advised: CACTI's numbers jump by up to 30 % between neighbouring sizes where its organization changes (PITFALLS C5). What a reader does with a size that is not on the grid is the reader's choice (snax-forge's HWCOST).
 
 `point` prints every column CACTI gives (`COLUMNS` in `ram.py`), for one-off checks.
+
+## Nangate 45 nm pin values
+
+```sh
+pixi run python ram/pins.py
+```
+
+Writes `ram/nangate45_pins.json` (committed) from the Liberty text `NangateOpenCellLibrary_typical.lib` next to the `.db` that `syn/tech/nangate45.json` points to (`SYN_LIB_NANGATE45` overrides it, as in `syn.py`): the library units, `nom_*`, the `typical` operating conditions, the internal-power unit (1 fJ, derived from 1 fF x (1 V)², the library has no attribute for it), `DFF_X1` `D` and `CK` capacitance, the setup and hold of `D` against `CK` and `CK`'s min pulse width (each the largest entry of its table), and `BUF_X4/Z`'s `max_capacitance` and rise and fall transition (the middle entry of the 7 x 7 table). Each value has a `source` (file, line, group path, attribute). The macro generator reads only this file, never the library. In R3 the `.db` gave the same capacitances, units and `nom_*` as the text (`dc_shell`, `get_attribute` and `report_lib`).
