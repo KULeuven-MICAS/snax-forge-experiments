@@ -1401,7 +1401,7 @@ def _do_point_char(stack: contextlib.ExitStack, point: str, tech: str, seed: int
 
 def write_results_char(tech: str, results: list[tuple[dict, dict]]) -> None:
     """char_power.csv (merged on point, window and seed, in each kind's window order), and per ok window its
-    reports in power_reports/<point>/<window>/, the point's tb.json once in power_reports/<point>/."""
+    reports in power_reports/<point>.zip as <window>/..., the point's tb.json once at its top (X51)."""
     out = RESULTS / tech
     key = lambda r: (r["point"], r["window"], str(r["seed"]))  # noqa: E731
     rows = [r for r, _ in results]

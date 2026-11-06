@@ -431,7 +431,8 @@ def pack_bundle(d: Path) -> Path:
 
 
 def pack_report(d: Path) -> Path:
-    """A committed report folder (results/.../reports/<point>/, power_reports/<point>/) to <point>.zip."""
+    """A committed report folder from before X51 (results/.../reports/<point>/, power_reports/<point>/) to
+    <point>.zip, every file (they are what the flows keep); then the folder goes."""
     z = d.with_name(d.name + ".zip")
     pack(d, z)
     shutil.rmtree(d)
