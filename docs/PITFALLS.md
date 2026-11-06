@@ -210,6 +210,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** declaration initializers (`logic [63:0] mem [0:511] = '{default: '0};`) and an internal `rdata_q` with `assign rdata_o = rdata_q`; vopt is then clean. Check with `vsim -c` (elaboration), not vlog alone.
 - **Found in:** `results/ram/runs/2026-11-06_ram1_r3.md`.
 
+### Q11. `process::self().srandom()` in an `initial` block does not seed the `always` blocks' `$urandom`
+
+- **Symptom:** a TB that calls `process::self().srandom(<seed>)` in an `initial` block and draws its data with `$urandom` in `always` blocks gives the same data, and the same energy to every digit, whatever the seed (STRM1: `d8_l2_c4` at 20.29018 pJ per beat with seed 1 in R0 and seed 0 in R1).
+- **Cause:** every SystemVerilog process has its own random generator, seeded at elaboration from the root seed. `srandom` reseeds only the process that calls it, here the `initial` block; the `always` blocks' generators keep their seeds from the root seed, which `vsim -sv_seed` sets (0 by default).
+- **Fix or check:** seed through `vsim -sv_seed <seed>`, as `sim/pwr.py --source streamer|xbar` does with `--seed`; check that two seeds give different SAIFs.
+- **Found in:** `results/strm/runs/2026-11-06_strm1_r1.md`.
+
 ## vcd2saif
 
 ### VS1. `vcd2saif -time t0 t1` on a shared VCD adds a phantom toggle before the window
@@ -376,6 +383,72 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** a CSV row has no spaces, so it is one word.
 - **Fix or check:** compare CSVs by key, cell by cell (parse both with `csv.DictReader`); keep line-level diffs for checking that a file is byte for byte the same.
 - **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4).
+
+## snax_cluster's generators (STRM1)
+
+### SC1. A reader of a streamer set is named with a double underscore
+
+- **Symptom:** the reader of `StreamerGen --tag-name strm` is `strm__C0_Reader`, not `strm_C0_Reader`; a script that builds the name from the tag misses the module.
+- **Cause:** `StreamerGen` sets `tagName` to `<tag-name>_`, and `Streamer` names reader i `tagName + "_C" + i`.
+- **Fix or check:** `strm/gen.py` builds the name the same way (`config.json`'s `top`) and fails a point whose SV has no such module.
+- **Found in:** `results/strm/runs/2026-11-06_strm1_r0.md`.
+
+### SC2. The bundled reader is the reader as the Streamer uses it: firtool trims its unread ports
+
+- **Symptom:** `strm__C0_Reader` has no `io_bufferEmpty` port, and its TCDM request ports carry only `addr` and `priority`, with no `write`, `data` or `strb`, although `ReaderIO` declares them.
+- **Cause:** firtool elaborates the whole Streamer; in a module that is not the top it removes the output ports the parent never reads and propagates the constants the parent ties. No register goes with them (DC's flops equal the RTL's bits on every point); only the comb logic of `dataBuffer.io.allEmpty`'s reduction is missing.
+- **Also:** at 1 channel (`spatial_bounds [1]`) the spatial stride multiplies only channel 0's index, 0, so `io_aguCfg_spatialStrides_0` is gone too (STRM1 R1: the TB's port check refused the 28 `*_c1` points until the TB followed the netlist's ports).
+- **Fix or check:** none needed for STRM1: the cost of a reader inside a streamer is what the model wants (X52). A reader emitted as its own top (`ReaderEmitter`) would keep the ports. A TB connects what the netlist has: `sim/sources/strm.py` checks every connected port against the netlist's and every netlist port against the connected ones.
+- **Found in:** `results/strm/runs/2026-11-06_strm1_r0.md`, `results/strm/runs/2026-11-06_strm1_r1.md`.
+
+### SC3. `StreamerGen` always writes a CSR header
+
+- **Symptom:** without `--header-dir`, `StreamerGen` stops with `--header-dir is not provided`; with it, `streamer_csr_addr_map.h` appears there.
+- **Cause:** `Streamer.writeCsrAddrMap` runs in the class body, as a side effect of elaboration (it keeps `make rtl` self-contained).
+- **Fix or check:** `strm/gen.py` points `--header-dir` into `tmp/strm/` and drops the header with the folder.
+- **Found in:** `results/strm/runs/2026-11-06_strm1_r0.md`.
+
+### SC4. `git archive` leaves out submodules
+
+- **Symptom:** in a `git archive` copy of snax_cluster's `hw/chisel` and `hw/chisel_acc`, `hw/chisel_acc/subprojects/chisel-float` is an empty folder, which `hw/chisel/build.sbt` needs (`ProjectRef`).
+- **Cause:** chisel-float is a submodule, and `git archive` writes a gitlink as an empty folder.
+- **Fix or check:** `strm/gen.py` reads the gitlink (`git ls-tree <commit> hw/chisel_acc/subprojects/chisel-float`) and archives the submodule's checkout at that commit into the copy; it refuses when the checkout does not have the commit.
+- **Found in:** `results/strm/runs/2026-11-06_strm1_r0.md`.
+
+### SC5. `sbt -batch` stops at the first failing command
+
+- **Symptom:** one point whose `runMain` fails leaves every later point of the same sbt call ungenerated, with no error of its own.
+- **Cause:** sbt runs its command-line commands in order and stops at the first failure.
+- **Fix or check:** `strm/gen.py` reports the points after a failure as not run (`runMain not run (sbt stopped before it)`); the next call skips the points already made and generates the rest. R1 had no failure.
+- **Found in:** `results/strm/runs/2026-11-06_strm1_r0.md`.
+
+### SC6. The image has no Scala caches of its own
+
+- **Symptom:** every `podman run` of image `d3d8f5572ff4` downloads the sbt launcher, sbt, Chisel's dependencies and firtool; on 2026-11-04 about 70 such runs in a day got the host rate-limited by Maven (HTTP 429, then a launcher `shasum mismatch`).
+- **Cause:** the image has no `/root/.sbt`, coursier or `llvm-firtool` cache, and a container's are gone when it exits.
+- **Fix or check:** mount the home folder's caches under `/root` (`strm/gen.py`: `~/.sbt`, `~/.ivy2`, `~/.cache/coursier`, `~/.cache/sbt`, `~/.cache/llvm-firtool`, created when missing); with them STRM1's generation downloaded nothing (about 3,000 inodes, 778 MB).
+- **Found in:** `results/strm/runs/2026-11-06_strm1_r0.md`.
+
+### SC7. Counting `reg` declarations overstates a firtool design's registers
+
+- **Symptom:** a count of every `reg` in firtool's SV gives 32 more bits per `ram_<d>x<w>` and more for each register block than DC's flops.
+- **Cause:** firtool declares `_RANDOM` and `_RANDOM_MEM` temporaries inside its `ifdef ENABLE_INITIAL_REG_` and `ENABLE_INITIAL_MEM_` blocks, which exist only in simulation.
+- **Fix or check:** skip `_RANDOM*` (`strm/gen.py`'s `flop_bits`): the count then equals DC's `seq_cells` on every STRM1 point (syn.py's flop check).
+- **Found in:** `results/strm/runs/2026-11-06_strm1_r0.md`.
+
+### SC8. A temporal stride of 0 is the reader's repeat mode
+
+- **Symptom:** a reader configured with `temporalStrides_0` = 0 delivers `temporalBounds_0` copies of each beat and generates fewer addresses than the bounds' product.
+- **Cause:** `Reader` sets loop 0's bound to 1 for the address generator when its stride is 0 and repeats each beat `temporalBounds_0` times on the output (`HandShakeRepeater`).
+- **Fix or check:** the STRM1 TB uses unit strides, never 0 (`sim/sources/strm.py`'s `strides`), and checks every request address.
+- **Found in:** `results/strm/runs/2026-11-06_strm1_r0.md`.
+
+### SC9. A reader's loop stride is 16 bits, not the 17 its port has
+
+- **Symptom:** a reader at 16 channels and 6 or 7 loops, configured with an outermost stride of 65,536 B, delivers every beat with the right data but sends half of its 16,384 requests to the wrong address (8,192 address mismatches); nothing else fails.
+- **Cause:** `io_aguCfg_temporalStrides_<k>` is `addressWidth` (17) bits, but `ProgrammableCounter`'s `step` input is `width - 1` (16) bits, so a stride of 2^16 B becomes 0: loop k never moves. With 1,024 beats over 6 or 7 loops and the larger bounds innermost, the outermost bound is 2 and its stride 8 x 16 x 512 = 65,536 B.
+- **Fix or check:** the largest stride a reader takes is 65,535 B. `sim/sources/strm.py` puts the larger bounds outermost (the outermost stride is then at most 32,768 B on the grid) and refuses a stride over the step's range before simulating; the TB checks every request address.
+- **Found in:** `results/strm/runs/2026-11-06_strm1_r1.md`.
 
 ## Zips (X51)
 

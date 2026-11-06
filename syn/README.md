@@ -64,6 +64,8 @@ No wire-load model applies on either library. On nangate45, whose library sets `
 | `xls` | `SYN_RTL_XLS`, default `../dslx-exercises/rtl` | `xls` | Verilog | `clk` | `rst` | none |
 | `forge` | `SYN_RTL_FORGE`, default `rtl/forge` | every zip with a `bundle.json` | SystemVerilog | `clk_i` | `rst_ni` | [the forge source](#the-forge-source) |
 | `char` | `SYN_RTL_CHAR`, default `rtl/char` | every zip with an `emitted.json` | SystemVerilog | `clock` | `reset` | `datapath`, `lanes`, `depth`, `op`, `form`, `snax_forge_commit` |
+| `streamer` | `SYN_RTL_STREAMER`, default `rtl/streamer` | every zip with a `config.json` | SystemVerilog | `clock` | `reset` | `depth`, `loops`, `channels`, `rtl_flop_bits`, `opt1207`, `snax_cluster_commit` ([the streamer and xbar sources](#the-streamer-and-xbar-sources)) |
+| `xbar` | `SYN_RTL_XBAR`, default `rtl/xbar` | every zip with a `config.json` | SystemVerilog | `clock` | `reset` | `inputs`, `banks`, `rtl_flop_bits`, `opt1207`, `snax_cluster_commit` |
 
 **Case filters and `MAX_W`.** For the three HLS sources a point is a `*/*/*/filelist.f` folder named `<case>_w<W>`, with `<case>` in the source's cases and W <= `MAX_W` (16, a constant at the top of `syn.py`; docs X38: at most 16 64-bit channels per stream). Any other folder is not listed: Vitis's retired `unopt_w*`, every `*_w32`, a per-size folder such as `opt_n512_w8`, a clock variant such as `opt_w8_c10`, and, for `hls`, Bambu's `bambu_w*` that share its root (docs X39). With today's checkouts: `hls` 60 points (opt 40; dace 15 for vecadd, vecmul and matadd at W 1 to 16, plus `dace_w1` for vsum, dot, relu, axpy and rowsum), `bambu` 40, `xls` 40.
 
@@ -77,6 +79,8 @@ No wire-load model applies on either library. On nangate45, whose library sets `
 | Bambu | `reset`, active low | mostly synchronous | the FSM (`present_state`) and the stream modules' started flags; the beat registers (`register_SE`) have none; one 1-bit `register_AR` uses the same port asynchronously |
 | XLS | `rst`, active high | synchronous | all proc state, 32 to 160 bits (`--reset_data_path=true`) |
 | forge | `rst_ni`, active low | asynchronous | its RegInit registers (X22) |
+| streamer | `reset`, active high | asynchronous (`RequireAsyncReset`) | the reader's RegInit registers |
+| xbar | `reset`, active high | synchronous (a plain Chisel `Module`) | the arbiters' round-robin state |
 
 **Bambu's split (docs X41).** Bambu's top holds a `controller_*` and a `datapath_*` instance. A bambu row adds `ctrl_um2` (the `controller_*` instance with its children), `datapath_um2` (the `datapath_*` instance with its children) and `glue_um2` (`area_um2` minus the two), from the point's `synth_dc_modules.csv` rows (absolute totals, as forge's). A point without exactly one `controller_*` and one `datapath_*` row fails (`failed: Bambu split (...)`). Bambu's `datapath_*` also holds its loop counter and its stream interfaces. Vitis and XLS rows report totals only: their netlists are flat, and a split would have to be inferred.
 
@@ -189,7 +193,7 @@ A DC run that fails on a licence is rerun once by `run` itself (docs X17, PITFAL
 |---|---|
 | `syn.py` | The driver: picks points, checks their clock and reset ports, reads the tech file, sets the environment, runs DC in the point's run folder, reads the reports into `summary.csv`, and keeps `results/<source>/<tech>/` in step |
 | `tech/<tech>.json` | One technology: library, units, driving cell, output load, max transition, wire load |
-| `scripts/dc_syn.tcl` | One DC run: reads the point's `filelist.f` (as `SYN_FORMAT`: `verilog`, or `sverilog` for forge and char), sets the library and checks its name and units, writes `lib_info.txt`, keeps wire-load models out, links with DesignWare, `compile_ultra -no_autoungroup`, writes reports, the path classes and the mapped netlist |
+| `scripts/dc_syn.tcl` | One DC run: reads the point's `filelist.f` (as `SYN_FORMAT`: `verilog`, or `sverilog` for forge, char, streamer and xbar), sets the library and checks its name and units, writes `lib_info.txt`, keeps wire-load models out, links with DesignWare, `compile_ultra -no_autoungroup`, writes reports, the path classes and the mapped netlist |
 | `scripts/constraints.sdc` | Clock on `$clk_port` ([Sources](#sources)) at `$clock_ns`, uncertainties, the tech file's input drive, output load and max transition, small IO delays, all scaled to the library's units, and the reset `$rst_port` kept as an ideal network (its tree belongs to place and route) |
 
 ## The filelist
@@ -225,4 +229,18 @@ pixi run forge-rtl -j 6                                                    # all
 pixi run syn list --source forge                                           # the bundles syn.py sees
 pixi run syn run done/dot/forge3_w4 --source forge --tech nangate45        # one point
 pixi run syn summary --source forge                                        # every forge run so far
+```
+
+## The streamer and xbar sources
+
+`--source streamer` and `--source xbar` (STRM1, X52) synthesize snax_cluster's streamer reader alone (`strm__C0_Reader`, as the Streamer uses it) and its TCDM sparse interconnect (`SparseInterconnect`), one point per grid value: `rtl/streamer/d<depth>_l<loops>_c<channels>.zip` and `rtl/xbar/i<inputs>_b<banks>.zip`, which `pixi run strm-rtl` writes (`strm/README.md`).
+
+**The points.** Every zip there with a `config.json`; the top is its `filelist.f`'s `# top:` line. `run` unpacks the zip into `tmp/` for the DC run and writes the run folder's `filelist.f` with the unpacked `<top>.sv`. Settings as every source: X1 to X4, 10 ns, `compile_ultra -no_autoungroup`. `run` starts the largest points first (xbar by inputs x banks, streamer by channels x depth, then loops), so the longest runs do not end the batch alone.
+
+**The flop check.** A row adds `rtl_flop_bits`, the register and memory bits the bundle's RTL declares under the top (`strm/gen.py`'s `flop_bits`, firtool's simulation-only `_RANDOM*` temporaries left out, PITFALLS SC7), and `opt1207`, the registers DC removed as unloaded (its unique OPT-1207 lines). A row whose `seq_cells` differs from `rtl_flop_bits` is `failed: flop check (DC <n> flops, RTL <m> bits, <k> OPT-1207)`: a point alone must keep every register it has inside the cluster (R0 and R1: none trimmed). Rows also carry the grid's params and `snax_cluster_commit` (from `config.json`).
+
+```bash
+pixi run syn list --source streamer
+pixi run syn run '*' --source xbar --tech nangate45 -j 4 --cores 4          # STRM1 R1: with the streamer run beside it
+pixi run syn run 'd8_*' --source streamer --tech nangate45 -j 4 --cores 4
 ```
