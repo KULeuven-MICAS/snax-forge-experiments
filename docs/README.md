@@ -5,6 +5,7 @@ The settled choices of this repo and the tool nuances that give wrong numbers wi
 - [`DECISIONS.md`](DECISIONS.md): what was decided, numbered X1, X2, ..., each with its date, reason and source.
 - [`PITFALLS.md`](PITFALLS.md): per tool (DC, libraries, Questa, PrimeTime, licences, CACTI, environment), each symptom with its cause, its fix or check, and the run note that found it.
 - [`power.md`](power.md): how to run `pwr`, its stages, the run folder and what is committed.
+- [`interpolation.md`](interpolation.md): how a cost is read from the STRM tables between grid points, step by step with worked examples, and why the interconnect's energy goes in 1/inputs (X53, X54).
 - [`notes_control_boundary.md`](notes_control_boundary.md): working notes from SYN1's review: forge's control against HLS's, register by register, the block boundary, the HLS register stage, and the options to pick from.
 
 Vitis-side nuances (pragmas, ports, the cases, cosim) live in hls-exercises' [`docs/HLS_VS_FORGE.md`](https://github.com/rgantonio/hls-exercises/blob/main/docs/HLS_VS_FORGE.md).

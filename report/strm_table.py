@@ -20,14 +20,17 @@ has. A reader's cost also stands for a writer's (X52).
 The reference interpolation (X53), for a query inside the grid:
   reader  trilinear over (depth, loops, channels), linear in each raw value between the two grid values around
           it (a grid value is matched exactly); area and energy alike
-  xbar    bilinear over (inputs, banks), the same way. Energy where inputs > banks: each bank count's row is
-          completed with its value at inputs = banks (the most measured), then interpolated as the rest
+  xbar    bilinear over (inputs, banks): area linear in inputs and banks; energy linear in 1/inputs (its shape is
+          a + b/inputs, a per-cycle cost shared by the grants, docs/interpolation.md) and in banks. Energy where
+          inputs > banks: each bank count's row is completed with its value at inputs = banks (the most measured),
+          then interpolated as the rest
   A query outside the grid's range on any axis is refused (ValueError), as is one that needs a missing value.
 
 --loo prints the leave-one-out check (for information): each interior grid point predicted from its neighbours
 with its own value on every interpolated axis left out (reader: depth 4 and 8, loops 2 to 6, channels 2, 4, 6, 8,
-trilinear from the 8 surrounding points; xbar: inputs 8 to 56, linear in inputs at the same bank count; energy
-only where the point and both neighbours are measured), with the mean and worst error of area and energy.
+trilinear from the 8 surrounding points; xbar: inputs 8 to 56 at the same bank count, area linear in inputs,
+energy linear in 1/inputs, only where the point and both neighbours are measured), with the mean and worst error of
+area and energy. The worked steps are in docs/interpolation.md.
 Standard library only.
 """
 from __future__ import annotations
@@ -48,15 +51,24 @@ XBAR_COLUMNS = ["inputs", "banks", "area_um2", "e_access_pj", "flops", "slack_ns
 
 
 # ---------------------------------------------------------------- the reference interpolation (X53)
-class Table:
-    """A rectilinear grid: axes (name -> sorted values) and per field {coordinate tuple: value}."""
+# How an axis is measured for one field: "lin" (the raw value) or "inv" (1 / value). The weight between two grid
+# values lo < x < hi is (g(x) - g(lo)) / (g(hi) - g(lo)), so an "inv" axis reproduces a + b / x exactly.
+SCALES = {"lin": lambda x: x, "inv": lambda x: 1.0 / x}
+XBAR_SCALES = {"e_access_pj": {"inputs": "inv"}}
 
-    def __init__(self, axes: dict[str, list[float]], fields: dict[str, dict[tuple, float]]):
+
+class Table:
+    """A rectilinear grid: axes (name -> sorted values), per field {coordinate tuple: value}, and per field the
+    scale of each axis ("lin" unless named in scales[field][axis])."""
+
+    def __init__(self, axes: dict[str, list[float]], fields: dict[str, dict[tuple, float]],
+                 scales: dict[str, dict[str, str]] | None = None):
         self.axes = {k: sorted(v) for k, v in axes.items()}
         self.fields = fields
+        self.scales = scales or {}
 
     def at(self, field: str, **q: float) -> float:
-        """Multilinear interpolation of `field` at q (one value per axis), linear in each raw value."""
+        """Multilinear interpolation of `field` at q (one value per axis), linear in each axis's scale."""
         names = list(self.axes)
         if set(q) != set(names):
             raise ValueError(f"query {q}: give exactly {names}")
@@ -70,7 +82,8 @@ class Table:
                 spans.append([(vals[i], 1.0)])
             else:
                 lo, hi = vals[i - 1], vals[i]
-                w = (x - lo) / (hi - lo)
+                g = SCALES[self.scales.get(field, {}).get(n, "lin")]
+                w = (g(x) - g(lo)) / (g(hi) - g(lo))
                 spans.append([(lo, 1.0 - w), (hi, w)])
         total = 0.0
         for corner in itertools.product(*spans):
@@ -89,7 +102,8 @@ def _f(x: str) -> float | None:
     return float(x) if x not in ("", None) else None
 
 
-def load(path: Path, axes: tuple[str, ...], fields: tuple[str, ...]) -> Table:
+def load(path: Path, axes: tuple[str, ...], fields: tuple[str, ...],
+         scales: dict[str, dict[str, str]] | None = None) -> Table:
     """A table CSV (streamer.csv or xbar.csv) as a Table; rows whose status is not ok give no values."""
     with path.open(newline="") as fh:
         rows = list(csv.DictReader(fh))
@@ -103,7 +117,7 @@ def load(path: Path, axes: tuple[str, ...], fields: tuple[str, ...]) -> Table:
             v = _f(r[f])
             if v is not None:
                 fv[f][key] = v
-    return Table(ax, fv)
+    return Table(ax, fv, scales)
 
 
 def complete_xbar(t: Table) -> Table:
@@ -112,7 +126,7 @@ def complete_xbar(t: Table) -> Table:
     for (i, b) in itertools.product(t.axes["inputs"], t.axes["banks"]):
         if i > b and (i, b) not in e and (b, b) in e:
             e[(i, b)] = e[(b, b)]
-    return Table(t.axes, {**t.fields, "e_access_pj": e})
+    return Table(t.axes, {**t.fields, "e_access_pj": e}, t.scales)
 
 
 def reader_cost(t: Table, depth: float, loops: float, channels: float) -> tuple[float, float]:
@@ -198,8 +212,8 @@ def loo_reader(t: Table) -> dict[str, list[tuple]]:
 
 
 def loo_xbar(t: Table) -> dict[str, list[tuple]]:
-    """{field: [...]} for inputs 8 to 56, linear in inputs between the neighbours at the same bank count; energy
-    only where the point and both neighbours are measured (inputs <= banks)."""
+    """{field: [...]} for inputs 8 to 56 between the neighbours at the same bank count, each field in its scale
+    (energy in 1/inputs); energy only where the point and both neighbours are measured (inputs <= banks)."""
     ins = t.axes["inputs"]
     out: dict[str, list[tuple]] = {"area_um2": [], "e_access_pj": []}
     for i, b in itertools.product(ins[1:-1], t.axes["banks"]):
@@ -210,7 +224,8 @@ def loo_xbar(t: Table) -> dict[str, list[tuple]]:
             vals = t.fields[f]
             if (i, b) not in vals or (lo, b) not in vals or (hi, b) not in vals:
                 continue
-            w = (i - lo) / (hi - lo)
+            g = SCALES[t.scales.get(f, {}).get("inputs", "lin")]
+            w = (g(i) - g(lo)) / (g(hi) - g(lo))
             pred = (1 - w) * vals[(lo, b)] + w * vals[(hi, b)]
             out[f].append(((i, b), vals[(i, b)], pred, 100.0 * (pred - vals[(i, b)]) / vals[(i, b)]))
     return out
@@ -242,7 +257,7 @@ def main() -> int:
         for r in bad:
             print(f"  {' '.join(f'{a} {r[a]}' for a in axes)}: {r['status']}")
     reader = load(out / "streamer.csv", READER_AXES, ("area_um2", "e_beat_pj"))
-    xbar = load(out / "xbar.csv", XBAR_AXES, ("area_um2", "e_access_pj"))
+    xbar = load(out / "xbar.csv", XBAR_AXES, ("area_um2", "e_access_pj"), XBAR_SCALES)
     if args.loo:
         print_loo("reader", READER_AXES, loo_reader(reader))
         print_loo("xbar", XBAR_AXES, loo_xbar(xbar))

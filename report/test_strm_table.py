@@ -6,7 +6,8 @@
 On synthetic tables over the real grids: grid points come back exactly; a function multilinear in the raw values
 (a + b d + c l + e ch + f d ch + ...) is reproduced exactly anywhere inside; queries outside the grid and missing
 values are refused; the interconnect's energy for inputs > banks is its value at inputs = banks; a query between
-grid values stays between the corner values. Standard library only.
+grid values stays between the corner values; the interconnect's energy, linear in 1/inputs, reproduces
+a + b / inputs exactly while its area stays linear in inputs. Standard library only.
 """
 from __future__ import annotations
 
@@ -63,6 +64,22 @@ class TestInterpolation(unittest.TestCase):
             corners = [vals[(x, y)] for x in (lo_i, hi_i) for y in (lo_b, hi_b)]
             self.assertGreaterEqual(v, min(corners) - 1e-9)
             self.assertLessEqual(v, max(corners) + 1e-9)
+
+    def test_inverse_inputs(self):
+        a, b = 2.3, 13.0
+        keys = list(itertools.product(INPUTS, BANKS))
+        t = st.Table({"inputs": INPUTS, "banks": BANKS},
+                     {"area_um2": {(i, bk): 160.0 * i * bk for i, bk in keys},
+                      "e_access_pj": {(i, bk): (a + b / i) * bk / 32 for i, bk in keys}},
+                     st.XBAR_SCALES)
+        for _ in range(200):
+            i, bk = self.rng.uniform(4, 64), self.rng.choice(BANKS)
+            area, e = st.xbar_cost(t, i, bk)
+            self.assertAlmostEqual(e, (a + b / i) * bk / 32, places=9)
+            lo = max(x for x in INPUTS if x <= i)
+            hi = min(x for x in INPUTS if x >= i)
+            w = 0.0 if hi == lo else (i - lo) / (hi - lo)
+            self.assertAlmostEqual(area, 160.0 * bk * ((1 - w) * lo + w * hi), places=6)
 
     def test_outside_refused(self):
         t = reader_table(lambda d, lp, c: d + lp + c)

@@ -56,6 +56,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X50](#x50-memory-energy-is-counted-accesses-times-the-table) | Memory energy = counted reads and writes (`RAMCOUNT`) x the table's energies, added to PT's energy of the rest; an exception to X25 for macros |
 | [X52](#x52-the-streamer-reader-and-the-sparse-interconnect-characterized) | STRM1: snax_cluster's reader alone (also a writer's cost) and sparse interconnect, totals only, the reader as the Streamer uses it, the two stimuli, no clock gating, the run settings |
 | [X53](#x53-the-strm-tables-and-their-interpolation) | `results/strm/<tech>/streamer.csv` and `xbar.csv` (`report/strm_table.py`): totals per point; trilinear and bilinear interpolation in the raw values, refused outside the grid; the interconnect's energy above inputs = banks |
+| [X54](#x54-the-interconnects-energy-interpolated-in-1inputs) | The interconnect's energy interpolated linearly in 1/inputs (it goes as a + b/inputs); replaces X53's linear rule for that field only |
 
 ## Synthesis
 
@@ -503,3 +504,11 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
   - **Interconnect energy:** mean 8.98 %, worst +24.32 % (8 inputs, 64 banks). The energy per access falls roughly as a + b / inputs at a fixed bank count, so 8 and 16 inputs are overestimated by 11 to 24 %; 64 banks also dips at 32 inputs (+11.4 %); from 24 inputs up within 5 % otherwise.
   - Leaving a point out doubles the gap the rule bridges, so a query between two real grid values sees less error than this.
 - **Source:** `results/strm/runs/2026-11-06_strm1_r1.md`.
+- **Replaced in part:** by X54 for the interconnect's energy, which is interpolated in 1/inputs.
+
+### X54. The interconnect's energy interpolated in 1/inputs
+
+- **Date:** 2026-11-06 (STRM1 R2)
+- **Decision:** in `report/strm_table.py`'s reference interpolation, the interconnect's `e_access_pj` is interpolated linearly in 1/inputs along the inputs axis (and linearly in banks); its area and every reader field stay linear in the raw values (X53). Inputs > banks still take the value at inputs = banks. No curve fit is used; the worked steps, the reason and the checks are in `docs/interpolation.md`. This replaces X53's rule for that one field.
+- **Why:** at a fixed bank count the energy per access is $a + b/n$: a per-cycle cost $b$ (the registers, which are not clock-gated, and the bank side, about 0.38 pJ per bank per cycle) shared by the $n$ grants of a conflict-free cycle, plus a cost $a$ per access. Interpolation in 1/inputs reproduces that form exactly between two grid points. Leave-one-out over the 11 interior points: mean 2.49 % and worst +11.32 % (32 inputs, 64 banks, a measured dip; all others within 3.9 %), against 8.98 % and +24.32 % in inputs. Seven fitted forms (power, exponential, second-order polynomials in $n$ and $1/n$, $a + b/n + c\,n$) did no better; the best, $a + b/n + c\,n$, ties at 2.7 % and +10.8 %.
+- **Source:** `results/strm/runs/2026-11-06_strm1_r2.md`, `docs/interpolation.md`.
