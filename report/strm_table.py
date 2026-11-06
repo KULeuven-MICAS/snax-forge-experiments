@@ -21,7 +21,7 @@ The reference interpolation (X53), for a query inside the grid:
   reader  trilinear over (depth, loops, channels), linear in each raw value between the two grid values around
           it (a grid value is matched exactly); area and energy alike
   xbar    bilinear over (inputs, banks): area linear in inputs and banks; energy linear in 1/inputs (its shape is
-          a + b/inputs, a per-cycle cost shared by the grants, docs/interpolation.md) and in banks. Energy where
+          a + b/inputs, a per-cycle cost shared by the grants, docs/cost_tables.md) and in banks. Energy where
           inputs > banks: each bank count's row is completed with its value at inputs = banks (the most measured),
           then interpolated as the rest
   A query outside the grid's range on any axis is refused (ValueError), as is one that needs a missing value.
@@ -30,7 +30,7 @@ The reference interpolation (X53), for a query inside the grid:
 with its own value on every interpolated axis left out (reader: depth 4 and 8, loops 2 to 6, channels 2, 4, 6, 8,
 trilinear from the 8 surrounding points; xbar: inputs 8 to 56 at the same bank count, area linear in inputs,
 energy linear in 1/inputs, only where the point and both neighbours are measured), with the mean and worst error of
-area and energy. The worked steps are in docs/interpolation.md.
+area and energy. The worked steps are in docs/cost_tables.md.
 Standard library only.
 """
 from __future__ import annotations
