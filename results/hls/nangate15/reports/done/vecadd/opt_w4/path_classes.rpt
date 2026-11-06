@@ -1,7 +1,0 @@
-# Worst setup slack per path class of vecadd at 10 ns, in library time units (1ps)
-# inputs 549 (all but ap_clk and ap_rst_n), outputs 262, register clock pins 326, register data pins 326
-# class slack startpoint endpoint
-in2reg 9305.1 B_TDATA[0] add_ln13_reg_229_reg[63]/D
-reg2reg 9687.55 b_fu_60_reg[0]/CLK b_fu_60_reg[31]/D
-reg2out 9742.18 b_fu_60_reg[0]/CLK A_TREADY
-in2out 9747.36 loop_count[10] A_TREADY

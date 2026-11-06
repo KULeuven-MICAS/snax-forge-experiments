@@ -1,7 +1,0 @@
-# Worst setup slack per path class of axpy at 10 ns, in library time units (1ps)
-# inputs 1124 (all but clk and rst), outputs 516, register clock pins 96, register data pins 96
-# class slack startpoint endpoint
-in2reg 9779.07 _x_TVALID ____state_0_reg[30]/D
-reg2reg 9575.01 ____state_0_reg[0]/CLK ____state_0_reg[30]/D
-reg2out 8901.78 ____state_0_reg[0]/CLK _y_out_TDATA[511]
-in2out 9094.98 _x_TDATA[448] _y_out_TDATA[511]

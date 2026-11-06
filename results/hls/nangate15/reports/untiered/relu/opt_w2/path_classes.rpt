@@ -1,7 +1,0 @@
-# Worst setup slack per path class of relu at 10 ns, in library time units (1ps)
-# inputs 164 (all but ap_clk and ap_rst_n), outputs 133, register clock pins 196, register data pins 196
-# class slack startpoint endpoint
-in2reg 9695.78 loop_count[11] select_ln14_reg_191_reg[56]/D
-reg2reg 9688.03 b_fu_58_reg[0]/CLK select_ln14_reg_191_reg[56]/D
-reg2out 9753.13 b_fu_58_reg[0]/CLK A_TREADY
-in2out 9760.88 loop_count[11] A_TREADY
