@@ -237,6 +237,32 @@ def subtree(mods: dict[str, str], top: str) -> list[str]:
     return order
 
 
+REG = re.compile(r"^\s*reg\s+(?:\[(\d+):(\d+)\]\s+)?(\w+)\s*(?:\[(\d+):(\d+)\])?\s*;", re.M)
+
+
+def flop_bits(sv: str, top: str) -> int:
+    """The register and memory bits the bundle's RTL declares under `top`, over the instance tree: firtool writes
+    a register as `reg [h:l] x;` (1 bit without a range) and a memory as `reg [h:l] x [0:N-1];`. Its `_RANDOM*`
+    temporaries live only in the simulation-only init blocks and are skipped. DC's flop count must equal it (STRM1
+    R0: no register trimmed)."""
+    _pre, mods = split_modules(sv)
+    memo: dict[str, int] = {}
+
+    def total(m: str) -> int:
+        if m not in memo:
+            n = 0
+            for h, lo, name, a, b in REG.findall(mods[m]):
+                if not name.startswith("_RANDOM"):
+                    n += (int(h) - int(lo) + 1 if h else 1) * (abs(int(b) - int(a)) + 1 if a else 1)
+            for child in INSTANCE.findall(mods[m]):
+                if child in mods and child != m:
+                    n += total(child)
+            memo[m] = n
+        return memo[m]
+
+    return total(top)
+
+
 def bundle(cfg: dict, sv_dir: Path) -> tuple[dict[str, bytes], dict]:
     """The zip's SV and file list from the emitted folder, and facts for point.json."""
     files = sorted(sv_dir.glob("*.sv"))
