@@ -77,6 +77,70 @@
     "value": "typical",
     "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:74 library(NangateOpenCellLibrary)/default_operating_conditions"
   },
+  "thresholds": {
+    "slew_lower_threshold_pct_rise": {
+      "value": 30.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:78 library(NangateOpenCellLibrary)/slew_lower_threshold_pct_rise"
+    },
+    "slew_lower_threshold_pct_fall": {
+      "value": 30.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:77 library(NangateOpenCellLibrary)/slew_lower_threshold_pct_fall"
+    },
+    "slew_upper_threshold_pct_rise": {
+      "value": 70.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:80 library(NangateOpenCellLibrary)/slew_upper_threshold_pct_rise"
+    },
+    "slew_upper_threshold_pct_fall": {
+      "value": 70.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:79 library(NangateOpenCellLibrary)/slew_upper_threshold_pct_fall"
+    },
+    "input_threshold_pct_rise": {
+      "value": 50.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:83 library(NangateOpenCellLibrary)/input_threshold_pct_rise"
+    },
+    "input_threshold_pct_fall": {
+      "value": 50.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:82 library(NangateOpenCellLibrary)/input_threshold_pct_fall"
+    },
+    "output_threshold_pct_rise": {
+      "value": 50.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:85 library(NangateOpenCellLibrary)/output_threshold_pct_rise"
+    },
+    "output_threshold_pct_fall": {
+      "value": 50.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:84 library(NangateOpenCellLibrary)/output_threshold_pct_fall"
+    },
+    "slew_derate_from_library": {
+      "value": 1.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:81 library(NangateOpenCellLibrary)/slew_derate_from_library"
+    }
+  },
+  "defaults": {
+    "default_fanout_load": {
+      "value": 1.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:93 library(NangateOpenCellLibrary)/default_fanout_load"
+    },
+    "default_inout_pin_cap": {
+      "value": 1.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:90 library(NangateOpenCellLibrary)/default_inout_pin_cap"
+    },
+    "default_input_pin_cap": {
+      "value": 1.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:91 library(NangateOpenCellLibrary)/default_input_pin_cap"
+    },
+    "default_output_pin_cap": {
+      "value": 0.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:92 library(NangateOpenCellLibrary)/default_output_pin_cap"
+    },
+    "default_cell_leakage_power": {
+      "value": 0.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:87 library(NangateOpenCellLibrary)/default_cell_leakage_power"
+    },
+    "default_leakage_power_density": {
+      "value": 0.0,
+      "source": "../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:86 library(NangateOpenCellLibrary)/default_leakage_power_density"
+    }
+  },
   "internal_power_unit": {
     "value": "1fJ",
     "source": "derived: capacitive_load_unit (1 fF, ../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:56) x voltage_unit^2 (1 V, ../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.lib:53); the library has no internal_power_unit attribute; dc_shell report_lib on the .db prints 'Dynamic Energy Unit : 0.001000pJ (derived from V,C units)' (RAM1 R3)"

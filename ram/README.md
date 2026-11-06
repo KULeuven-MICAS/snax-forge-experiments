@@ -42,4 +42,37 @@ It is a lookup table, not a fit: a reader takes the row of the exact (depth, wid
 pixi run python ram/pins.py
 ```
 
-Writes `ram/nangate45_pins.json` (committed) from the Liberty text `NangateOpenCellLibrary_typical.lib` next to the `.db` that `syn/tech/nangate45.json` points to (`SYN_LIB_NANGATE45` overrides it, as in `syn.py`): the library units, `nom_*`, the `typical` operating conditions, the internal-power unit (1 fJ, derived from 1 fF x (1 V)², the library has no attribute for it), `DFF_X1` `D` and `CK` capacitance, the setup and hold of `D` against `CK` and `CK`'s min pulse width (each the largest entry of its table), and `BUF_X4/Z`'s `max_capacitance` and rise and fall transition (the middle entry of the 7 x 7 table). Each value has a `source` (file, line, group path, attribute). The macro generator reads only this file, never the library. In R3 the `.db` gave the same capacitances, units and `nom_*` as the text (`dc_shell`, `get_attribute` and `report_lib`).
+Writes `ram/nangate45_pins.json` (committed) from the Liberty text `NangateOpenCellLibrary_typical.lib` next to the `.db` that `syn/tech/nangate45.json` points to (`SYN_LIB_NANGATE45` overrides it, as in `syn.py`): the library units, `nom_*`, the `typical` operating conditions, the slew and delay thresholds (30/70 %, 50 %) and the `default_*` attributes, the internal-power unit (1 fJ, derived from 1 fF x (1 V)², the library has no attribute for it), `DFF_X1` `D` and `CK` capacitance, the setup and hold of `D` against `CK` and `CK`'s min pulse width (each the largest entry of its table), and `BUF_X4/Z`'s `max_capacitance` and rise and fall transition (the middle entry of the 7 x 7 table). Each value has a `source` (file, line, group path, attribute). The macro generator reads only this file, never the library. In R3 the `.db` gave the same capacitances, units and `nom_*` as the text (`dc_shell`, `get_attribute` and `report_lib`).
+
+## SRAM macros for DC, Questa and PT (X49)
+
+```sh
+pixi run ram lib 512 64 --mask 8         # one macro -> ram/runs/lib/sram_d512_w64_m8/
+pixi run ram libs ram/macros.json -j 4   # every macro in the list, at most as many at once as free Library-Compiler licences
+```
+
+A macro is named `sram_d<depth>_w<width>`, plus `_m<mask>` with `--mask`. Its folder in `ram/runs/lib/<name>/` (git-ignored, never committed) holds `<name>.lib`, `<name>.db`, `<name>.v`, `lc.tcl` and `lc.log` (lc_shell), `result.json` (the numbers, lc_shell's warnings) and `key.json` (the CACTI row, the md5 of `nangate45_pins.json`, the generator version and the md5 of the generated `.lib` and `.v` text). A folder whose key is unchanged and whose last run was ok is not regenerated. `lc_shell` is `/esat/micas-data/software/Synopsys/lc/Y-2026.03-SP2/bin/lc_shell` (not on PATH; `LC_SHELL` overrides it); a macro fails on any `Error` line, a non-zero rc or a missing `.db`. `ram/macros.json` lists what the cluster and DaCe need now: the TCDM bank 512 x 64 with mask 8 (also DaCe's dot buffer), the icache data 128 x 256 and the icache tag 128 x 39.
+
+**Numbers.** `row(depth, cacti_width(width))`: the cached CACTI point, the same numbers as `ram_table.csv` for sizes on its grid. Ports keep the real width (39 stays 39); the costs are those of the width padded to whole bytes (40).
+
+**Ports,** all active high, as `tc_sram_impl` with one port and no `impl_*`: `clk_i`, `req_i`, `we_i`, `addr_i[$clog2(depth)-1:0]`, `wdata_i[width-1:0]`, `be_i[width/mask-1:0]` (only with `--mask`), `rdata_o[width-1:0]`. No reset.
+
+**The `.lib`** (one library per macro, named as the cell), with every value's origin:
+
+| what | value | from |
+|---|---|---|
+| units, `nom_*`, operating conditions `typical`, slew and delay thresholds, `default_*` | 1 ns, 1 fF, 1 V, 1 mA, 1 nW, 1 kΩ; 1.0, 1.10 V, 25 C; 30/70 %, 50 % | `nangate45_pins.json` (nangate45's `.lib`) |
+| `char_config` | `internal_power_calculation : exclude_switching_on_rise_and_fall` | the energy on `clk_i` is the macro's own; `rdata_o`'s load is switching power DC and PT add (PITFALLS LIB6) |
+| `area` | CACTI's `area_um2` | the CACTI row |
+| `dont_use`, `dont_touch` | true | |
+| `cell_leakage_power` | CACTI's leakage in nW (not used by the cost model) | the CACTI row |
+| `clk_i` | `clock : true`, capacitance of `DFF_X1/CK`, `min_period` CACTI's `t_cycle_ns`, min pulse width high and low half of it | the CACTI row, `nangate45_pins.json` |
+| `clk_i` `internal_power` | `rise_power` = read energy `when "req_i & !we_i"`, write energy `when "req_i & we_i"`, 0 `when "!req_i"`; `fall_power` 0 in all three; in fJ (1 fF x (1 V)²) | the CACTI row at 1.1 V (x 1.21) |
+| `req_i`, `we_i`, `addr_i`, `wdata_i`, `be_i` | capacitance of `DFF_X1/D`; `setup_rising` and `hold_rising` to `clk_i` with `DFF_X1`'s rise and fall constraints (the largest entry of each table) | `nangate45_pins.json` |
+| `rdata_o` | `max_capacitance` of `BUF_X4/Z`; a `rising_edge` arc from `clk_i`, `cell_rise` = `cell_fall` = CACTI's `t_access_ns`, `BUF_X4`'s rise and fall transition (the middle entry of its table) | the CACTI row, `nangate45_pins.json` |
+
+Every table is `scalar`; buses have one `type` per width. A byte-masked write is charged as a full write (CACTI gives one write energy), as the `.lib`'s comment block says, with the CACTI commit, the point, the 1.21 scaling and the generator. There is no `memory` group: lc_shell compiles without it, and its two remaining warnings (no `function` on `rdata_o`, LIBG-10) are expected for a black box (PITFALLS LIB6).
+
+**The `.v`** (SystemVerilog, `timescale 1ns/1ps`, one `always_ff @(posedge clk_i)`) behaves as `tc_sram` (tech_cells_generic v0.2.14, snax_cluster's `Bender.lock`) at `NumPorts 1`, `Latency 1`: `rdata_o` is a register loaded at every rising edge, with `mem[addr_i]` on a read (`req_i & !we_i`) and with the word at the last read address (its value before the edge) on a write or while deselected. So after a read it shows the word read, after a write it keeps the last read word (and shows a write to that word one cycle later), and while deselected it holds. A write stores only the bytes whose `be_i` bit is set. Contents start X; with `+define+SRAM_INIT_ZERO` contents, read address and `rdata_o` start 0 (as `tc_sram` after reset with `SimInit "zeros"`). Without a reset port the read address starts X, which shows the same X as `tc_sram` after reset until the first read. Under `` `ifndef SYNTHESIS `` two 64-bit counters count reads (`req_i & !we_i`) and writes (`req_i & we_i`, masked or not) at the rising edge, and a `final` block prints one line: `RAMCOUNT <%m> <cell> reads <n> writes <n>`. In R3 the `.v` matched `tc_sram` cycle for cycle over 20,000 random cycles, X and zero start.
+
+**Memory energy** of a run is `reads x e_rd_pj + writes x e_wr_pj` from `RAMCOUNT` and the table, or time-based PT on the VCD (exact in R3); averaged PT (SAIF) takes `req_i` and `we_i` as independent and was 12.5 % low (PITFALLS PT7).

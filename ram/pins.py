@@ -152,6 +152,14 @@ def main():
         "process_corner": val(oc, "process_corner"),
     }
     out["default_operating_conditions"] = val(lib, "default_operating_conditions")
+    out["thresholds"] = {k: val(lib, k, float) for k in
+                         ["slew_lower_threshold_pct_rise", "slew_lower_threshold_pct_fall",
+                          "slew_upper_threshold_pct_rise", "slew_upper_threshold_pct_fall",
+                          "input_threshold_pct_rise", "input_threshold_pct_fall",
+                          "output_threshold_pct_rise", "output_threshold_pct_fall", "slew_derate_from_library"]}
+    out["defaults"] = {k: val(lib, k, float) for k in
+                       ["default_fanout_load", "default_inout_pin_cap", "default_input_pin_cap",
+                        "default_output_pin_cap", "default_cell_leakage_power", "default_leakage_power_density"]}
     if any(k in lib.attrs for k in ("internal_power_unit", "dynamic_power_unit")):
         raise ValueError("library has an explicit internal power unit: read it instead of deriving one")
     cv, cu = re.match(r'([0-9.]+)\s*,\s*(\w+)', cap[0]).groups()
