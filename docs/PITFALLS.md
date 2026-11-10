@@ -384,6 +384,20 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** compare CSVs by key, cell by cell (parse both with `csv.DictReader`); keep line-level diffs for checking that a file is byte for byte the same.
 - **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4).
 
+### E4. snax-forge's relu, matadd and axpy recipes bundle int32 datapaths
+
+- **Symptom:** `untiered/relu/forge_w4`'s bundle (snax-forge `e8bb93e`) has ports `int32 x 4` on 2 channels, axpy's K1 is one 32-bit CSR; nothing fails, the rowsums and every tier done recipe are int64, and every HLS point is int64.
+- **Cause:** snax-forge's kernels `relu`, `matadd` and `axpy` are int32 (its D113, two per 64-bit word); a recipe keeps the kernel's dtypes unless its `dtypes` field says otherwise, and these recipes have none.
+- **Fix or check:** X57: `forge/points.json` gives these points `dtypes` int64 and `forge/bundles.py` feeds the sandbox snax-forge's recipe with that field. Check `accelerator.json`'s port dtypes (and a scalar's `K1_LO`, `K1_HI`) before measuring a new recipe; `sim/sources/forge.py` refuses any port that is not int64.
+- **Found in:** `results/forge/runs/2026-11-10_csyn1_r1.md` (step 1).
+
+### E5. snax-forge's module names carry the design's name since D157
+
+- **Symptom:** a bundle from snax-forge `e8bb93e` has `snax_forge_dot_4_shell_wrapper`, `snax_forge_dot_4_ctrl`, ... where the SYN1 bundles (`f9764d5`) had `snax_forge_shell_wrapper`, `snax_forge_ctrl`; vecadd's `ElementwiseLanes_*` is `SimdLanes_*`. A byte diff of the SV says every file changed.
+- **Cause:** the tag is `<accelerator_slot>_<design name>` (snax-forge's `gen/accelerator.py` `tag`), and the lanes block was renamed; `accelerator.json` also nests groups under `accelerators` (`forge/query.py`'s `flat` reads both forms).
+- **Fix or check:** compare SV with the tag and block names masked (CSYN1 R1: dot_4 and vecadd at W = 4 identical). `syn.py` takes the three modules from `bundle.json` and follows the names; `report/compare.py`'s `PARTS` still names `snax_forge_csr`, `snax_forge_ctrl`, `snax_forge_datapath` and must match by suffix before it reads rows of new bundles.
+- **Found in:** `results/forge/runs/2026-11-10_csyn1_r1.md` (step 1).
+
 ## snax_cluster's generators (STRM1)
 
 ### SC1. A reader of a streamer set is named with a double underscore

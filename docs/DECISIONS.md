@@ -59,6 +59,9 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X54](#x54-the-interconnects-energy-interpolated-in-1inputs) | The interconnect's energy interpolated linearly in 1/inputs (it goes as a + b/inputs); replaces X53's linear rule for that field only |
 | [X55](#x55-untiered-at-n2048) | Untiered at n2048 for every source (relu and axpy n2048, matadd m32_n64, rowsum m16_n128); forge has only that size; amends X24 and X45 |
 | [X56](#x56-cycles-checked-within-5-) | The start-to-done window is the measurement; expected cycles beside it, a point fails only past 5 %; replaces X19's and X23's exact match |
+| [X57](#x57-forges-untiered-points-at-int64) | forge's relu, matadd, axpy and axpy_baked at int64: snax-forge's recipe with a `dtypes` override from `forge/points.json`, fed to its sandbox from `tmp/` |
+| [X58](#x58-a-forge-points-program-from-snax-forges-lower) | A forge point is bundled at its n2048 shape (its sets, tier done N = 2048 too) and driven with what snax-forge's LOWER writes for it: JOBS, JOB_BEATS, scalar CSRs, each stream's element order |
+| [X59](#x59-at-most-16-cores-and-some-licences-left-free) | Everything a round runs at once uses at most 16 cores and leaves licences free: DC `-j 4 --cores 4`, `pwr run --cores 16 -j 4`, one batch at a time; amends X16 |
 
 ## Synthesis
 
@@ -530,3 +533,24 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Decision:** the window is the measurement: each tool's start-to-done window as X12, X13, X23 and X44 define it. The expected cycles are a column beside it with the difference: for forge the COUNTER read back and snax-forge's model, for HLS cosim's line. A point fails only when the window differs from the expected count by more than 5 %. Replaces the exact match in X19 and X23.
 - **Why:** energy is taken per task over the measured window, and a few cycles of fill or drain change it very little; a gap past 5 % means a wrong size, CSR or stimulus, which is what the check is for.
 - **Source:** agreed 2026-11-10, CSYN1 Part A topic 3.
+
+### X57. forge's untiered points at int64
+
+- **Date:** 2026-11-10 (CSYN1 R1)
+- **Decision:** the forge points of relu, matadd, axpy and axpy_baked are built at int64: `forge/points.json` gives them `dtypes` (every container of the kernel int64: relu A, B; matadd A, B, C; axpy alpha, x, y), and `forge/bundles.py` writes snax-forge's recipe (found by name, `recipes/**/`) with that `dtypes` field into `tmp/forge_recipes/<work name>.json`, runs the sandbox on that file and deletes it when the point ends. The work folders end `_int64`; `point.json` records `dtypes` and `recipe_file`. snax-forge is not changed, and the steps are its recipe's. axpy's scalar is then int64, two CSRs `K1_LO` and `K1_HI` (C§17). `forge/query.py ref` runs snax-forge's kernel body at the same dtypes.
+- **Why:** snax-forge's relu, matadd and axpy kernels are int32 (its D113, packed two per 64-bit word), so their recipes bundle int32 datapaths (4 lanes in 2 channels at W = 4, K1 one 32-bit CSR), while every HLS point and forge's rowsums are int64. The recipe's own `dtypes` field (snax-forge's `recipe.py`) is the switch snax-forge offers for this (`vecadd_i32` uses it the other way); the bundle is clean (`dirty: false`). Agreed with Ryan on 2026-11-10 (CSYN1 R1, step 1).
+- **Source:** `results/forge/runs/2026-11-10_csyn1_r1.md`.
+
+### X58. A forge point's program from snax-forge's LOWER
+
+- **Date:** 2026-11-10 (CSYN1 R1)
+- **Decision:** every forge point, tier done included, is bundled at its n2048 shape: its `sets` in `forge/points.json` (tier done `N=2048`, untiered X55's), so its design point is that task's. `sim/sources/forge.py` refuses a bundle whose sets are not X55's shape and takes what it writes from snax-forge's LOWER for that design point (`forge/query.py program`: `lower/derive.py`'s task list, `lower/c.py`'s `job_writes`): JOBS and each JOB_BEATS, and each slot read from a scalar container, written before START with the container's value (X19's data pin, or the value the recipe bakes, which has no CSR). Each stream's element order is the streamer task's loops (bounds and strides, temporal and spatial) mapped back through the container's L1 layout; the TB feeds and collects each stream in that order (`order` in tb.json when it is not the identity). A container with an input and an output stream (axpy's y, in place) has two TB streams, `<c>_in` and `<c>_out`. Replaces X23's rule per group (an elementwise group N / W jobs, a fold one job of N / W beats, no other read-write CSR) and amends X21 (the tier done bundles had their recipe's default N).
+- **Why:** the rule per group does not hold for the untiered recipes (rowsum JOBS M, JOB_BEATS N / W; rowsum_2 JOBS M / W, JOB_BEATS N; axpy's K1), and the TB fed every container in flat order, which is wrong for rowsum_2's column walk. LOWER is the program snax-forge runs on the cluster, so the TB drives the accelerator as the cluster would, and the design point must be at the task's size for LOWER to write that task. The rebuilt tier done bundles give the same values as the rule (vecadd W = 4 JOBS 512, dot_4 W = 4 JOBS 1 and JOB_BEATS 512) and the same SystemVerilog once snax-forge's renames are masked (the tag now carries the design's name, `snax_forge_dot_4_*`; `ElementwiseLanes` is `SimdLanes`).
+- **Source:** `results/forge/runs/2026-11-10_csyn1_r1.md`.
+
+### X59. At most 16 cores, and some licences left free
+
+- **Date:** 2026-11-10 (CSYN1 R1)
+- **Decision:** everything a round runs at the same time (DC, Questa, PT, CACTI) uses at most 16 cores of the host, and never all the free licences: DC `syn.py run -j 4 --cores 4` (4 Design-Compiler and DC-Expert licences); power `pwr run --cores 16 -j 4` (`--cores` added to `sim/pwr.py`: J <= cores, PT threads = cores // J, so 4 workers with 4 PT threads); one batch at a time, not DC beside power or one source's power beside another's. Amends X16 (J and the threads from nproc, DC at `--cores 16`).
+- **Why:** the host and the licences are shared. CSYN1 R1's first probe ran six DC runs at `--cores 16` beside three power batches of 3 workers with 10 PT threads each: load 74 on 32 cores, and six DC runs held 8 of the 10 DC-Expert licences (a multicore DC run can take more than one), so two of them hit SEC-50 (PITFALLS L4). Ryan asked to keep to 16 cores and leave licences free; the batches were stopped, their folders deleted and the runs repeated within the budget.
+- **Source:** `results/forge/runs/2026-11-10_csyn1_r1.md`.
