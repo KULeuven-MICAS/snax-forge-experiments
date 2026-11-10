@@ -66,6 +66,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X61](#x61-the-tables-with-forge-and-n2048-untiered-on-nangate45) | compare.py and compare_hls.py with forge's untiered points: new module names and cases, untiered n2048 required and its parts on nangate45 only, compare_hls.md with forge's cases and every tier at n2048; amends X45, X46, X55 |
 | [X62](#x62-a-vitis-ram-swapped-for-an-sram-macro) | Vitis dace's one-port RAM swapped for a CACTI macro of the instance's size (2048 x 64 for dot and axpy), a wrapper with Vitis's ports; rowsum's two-port 16-word buffer from flops; `ram_um2`, `e_ram_pj` and the counts beside the totals |
 | [X63](#x63-the-parts-at-n2048-and-forges-total-without-csr) | `compare_hls.md`'s parts at n2048 (forge csr, ctrl, datapath, total, total without csr; Bambu ctrl, datapath, total; Vitis dace's RAM apart; totals otherwise); forge without csr is the like-for-like figure; each compare row takes its own run's parts |
+| [X65](#x65-forges-csr-without-its-peripherals) | forge's csr part is the csr cell minus its `<tag>_peripherals` child (BUSY_COUNTER, snax-forge D168), in area and energy; the child kept in `peripherals_um2` and `e_dyn_peripherals_pj`, in no page; amends X63 |
 | [X64](#x64-the-comparison-one-page-per-kernel) | `results/compare/`: a README (setup, summary, parts' basis, nangate15 check) and one page per kernel with its figure, table, insights and parts; replaces `results/compare_hls.md`; amends X46, X61, X63 |
 
 ## Synthesis
@@ -594,3 +595,13 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Decision:** `report/compare_hls.py` (`pixi run compare-hls`) writes `results/compare/` instead of `results/compare_hls.md` and `results/compare_hls/`: `README.md` holds the index, the setup, the summary across kernels (hand-written), the parts' basis (X63) and the nangate15 check; `<tier>/<kernel>.md` holds one kernel's figure and table, its insights (hand-written) and its parts at n2048, with the figure beside it as `<tier>/<kernel>.png`. The markers are the same kind as before (`gen:index`, `gen:setup`, `gen:parts-basis`, `gen:tech` in the README; `gen:main` and `gen:parts` on each page), and the hand-written text was moved over unchanged apart from its cross-references. The generated parts and the figures are the same as in the single file. Amends X46, X61 and X63, which name `compare_hls.md`.
 - **Why:** the single file had grown past 1,000 lines; a page per kernel keeps each kernel's numbers and insights together and short.
 - **Source:** CSYN1, after R4.
+
+## CTRL2: snax-forge's leaner control unit
+
+### X65. forge's csr without its peripherals
+
+- **Date:** 2026-11-11 (CTRL2 R5)
+- **Decision:** from snax-forge D168 (CTRL2) the busy-cycle CSR is BUSY_COUNTER (accelerator.json, `+BUSY_COUNTER_ADDR` in `csr_seq.sv`; `sim/sources/forge.py` refuses a bundle without it), and it sits in `snax_forge_<design>_peripherals`, a child of `<tag>_csr`. `report/compare.py` makes forge's `csr` part the `snax_forge_(<design>_)?csr` cell minus that child, one level below it: in area from `synth_dc_modules.csv` (DC's `area_hierarchy.rpt`), in energy from `power_pt_modules.csv` (X60's rows). The child's own figures are kept for the record in `peripherals_um2` and `e_dyn_peripherals_pj` of the compare CSVs, and in no page; the split check sums csr, ctrl, datapath, glue and peripherals to the total, and the glue stays the total minus the wrapper's three instances (the whole csr). A bundle without `_peripherals` (every point before CTRL2 R5, nangate15's among them) subtracts nothing. X63's basis is unchanged: forge's total without csr (total minus this csr) is the like-for-like figure against an HLS total, and it now holds the peripherals, a cost forge's block carries whatever its interface. The README and every kernel page of `results/compare/` say so in one line on top. Amends X63.
+- **Why:** snax-forge D168 moved BUSY_COUNTER out of the settings into a module that is neither the cluster interface nor the control; counting it in the csr would charge the interface for an observability counter, and no HLS block has one.
+- **Source:** `results/forge/runs/2026-11-11_ctrl2_r5.md`.
+

@@ -1,5 +1,7 @@
 # matadd (tier untiered)
 
+csr excludes `<tag>_peripherals` (BUSY_COUNTER), snax-forge D168.
+
 Part of [the comparison](../README.md): setup, summary across kernels and the parts' basis are there.
 
 <!-- gen:main -->

@@ -178,11 +178,14 @@ def tech_check(done: list[dict], untiered: list[dict]) -> list[str]:
     return lines
 
 
+# X65: the line on top of the README and of every kernel page (hand-written text, outside the markers)
+PERIPHERALS_LINE = "csr excludes `<tag>_peripherals` (BUSY_COUNTER), snax-forge D168."
 PARTS_BASIS = (
     "Every point at n2048 on nangate45 (2048 elements per input stream), per kernel and W. A part's energy per task "
     "is its energy per cycle (PT's hierarchical report of that run, `power_pt_modules.csv`, X60) times the window's "
     "cycles; pJ per element divides it by 2048. forge: csr, ctrl and datapath (the wrapper's three instances), the "
-    "total (glue included), and the total without csr. Bambu: ctrl and datapath (X41), the total (glue included). "
+    "total (glue included), and the total without csr; the csr is the csr cell without its `<tag>_peripherals` "
+    "child (BUSY_COUNTER, snax-forge D168, X65), which the totals hold. Bambu: ctrl and datapath (X41), the total (glue included). "
     "Vitis dace with a RAM: the RAM apart (X62: the macro's area and its counted accesses x CACTI's energies, or its "
     "flops' area and PT energy) and the logic without it. Vitis opt and XLS: totals only. **Basis (X63):** the HLS "
     "tools take their sizes on plain pins (`loop_count`, `len`, axpy's `alpha`) and have no CSR file, while forge "
@@ -241,7 +244,7 @@ def index() -> list[str]:
 
 
 def template_readme() -> str:
-    parts = ["# forge and the HLS cases side by side: Vitis opt and dace, Bambu, XLS", "",
+    parts = ["# forge and the HLS cases side by side: Vitis opt and dace, Bambu, XLS", "", PERIPHERALS_LINE, "",
              "Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs "
              "(X45, X46, X61, X64); the text outside the `gen` markers is written by hand. One page per kernel.", "",
              "<!-- gen:index -->", "<!-- /gen -->", "", "## 1. Setup", "", "<!-- gen:setup -->", "<!-- /gen -->", "",
@@ -253,7 +256,7 @@ def template_readme() -> str:
 
 
 def template_page(tier: str, kernel: str) -> str:
-    return "\n".join([f"# {kernel} (tier {tier})", "", "Part of [the comparison](../README.md): setup, summary across "
+    return "\n".join([f"# {kernel} (tier {tier})", "", PERIPHERALS_LINE, "", "Part of [the comparison](../README.md): setup, summary across "
                       "kernels and the parts' basis are there.", "", "<!-- gen:main -->", "<!-- /gen -->", "",
                       "## Insights", "", "- (to write)", "", "## Parts at n2048", "", "<!-- gen:parts -->",
                       "<!-- /gen -->", ""])

@@ -26,7 +26,9 @@ Columns:
              window is defined for the tool: X12, X44)
   area       area_um2, comb_area_um2, seq_area_um2, buf_inv_area_um2, cells, seq_cells, and the split where
              the RTL declares it as hierarchy (X41): csr_um2 (forge), ctrl_um2, datapath_um2, glue_um2
-             (forge, bambu); empty for vitis and xls; ram_kind and ram_um2 for a Vitis point with a RAM (X62:
+             (forge, bambu); empty for vitis and xls; forge's csr_um2 is the csr cell without its child
+             <tag>_peripherals (BUSY_COUNTER, snax-forge D168; X65), whose area is peripherals_um2 (for the
+             record, empty where the bundle has none: every point before CTRL2 R5); ram_kind and ram_um2 for a Vitis point with a RAM (X62:
              an SRAM macro or flops, inside area_um2)
   timing     crit_path_ns, slack_ns, fmax_mhz, slack_in2reg_ns, slack_reg2reg_ns, slack_reg2out_ns,
              slack_in2out_ns (X40; empty on forge rows, synthesized before X40)
@@ -35,7 +37,7 @@ Columns:
              leak_dc_uw (DC's leakage estimate, X7); ram_reads, ram_writes, e_ram_pj (the RAM's share of
              e_run_pj, X62: counted accesses x CACTI's energies for a macro, X50; PT's for flops)
   parts      e_dyn_csr_pj, e_dyn_ctrl_pj, e_dyn_datapath_pj, e_dyn_glue_pj (per cycle, forge and bambu
-             only), parts_size (the run they come from: the row's own run where power_pt_modules.csv has it
+             only; forge's csr without its _peripherals child, whose energy is e_dyn_peripherals_pj, X65), parts_size (the run they come from: the row's own run where power_pt_modules.csv has it
              (X60: every n2048 run; X63), else the point's default run: tier done b64 (rowsum m8_n64), forge
              n2048, untiered on nangate45 n2048 (X55), on nangate15 the default run (X61))
   provenance rtl_commit (the tool repo commit the RTL was measured at; forge: snax_forge_commit),
@@ -43,7 +45,7 @@ Columns:
 
 Checks (any failure: exit 1, nothing written): every listed point has a synthesis row on both technologies
 (an untiered forge point on nangate45 only); every ok point has the same sizes as the other points of its
-kernel, n2048 among them (X24; X55 on nangate45, X61), each with an ok power row; no duplicate key; the split columns sum to the area where they exist; a point with parts has an ok
+kernel, n2048 among them (X24; X55 on nangate45, X61), each with an ok power row; no duplicate key; the split columns (peripherals included) sum to the area where they exist; a point with parts has an ok
 run at its default size. A glue energy within 1e-5 of the total (PT's rounding) is written as 0.
 """
 from __future__ import annotations
@@ -79,6 +81,10 @@ PARTS = {
               "datapath": r"snax_forge_(?:\w+_)?datapath"},
     "bambu": {"ctrl": r"(?i)controller_.*", "datapath": r"(?i)datapath_.*"},
 }
+# X65: forge's csr holds <tag>_peripherals (BUSY_COUNTER, snax-forge D168), neither interface nor control: the csr
+# part is the csr cell minus this child (one level below it), kept apart for the record; a bundle without it
+# (every point before CTRL2 R5) subtracts nothing
+PERIPHERALS = r"snax_forge_(?:\w+_)?peripherals"
 # The size of a point's default run (power_pt_modules.csv has it, X60): b64 (X19), but rowsum's default is its
 # m8_n64 task, and forge runs n2048 only. Untiered rows take their parts from n2048 (X55).
 DEFAULT_SIZE = {"rowsum": "m8_n64"}
@@ -92,12 +98,13 @@ POINT = re.compile(r"^(?P<tier>[^/]+)/(?P<kernel>[^/]+)/(?P<case>[a-z]+[0-9]*(?:
 KEY = ["tech", "tier", "kernel", "W", "tool", "case", "point", "size", "status"]
 TASK = ["beats", "elements", "cycles", "window"]
 AREA = ["area_um2", "comb_area_um2", "seq_area_um2", "buf_inv_area_um2", "cells", "seq_cells",
-        "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2", "ram_kind", "ram_um2"]
+        "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2", "ram_kind", "ram_um2", "peripherals_um2"]
 TIMING = ["crit_path_ns", "slack_ns", "fmax_mhz", "slack_in2reg_ns", "slack_reg2reg_ns", "slack_reg2out_ns",
           "slack_in2out_ns"]
 ENERGY = ["e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw", "e_run_pj",
           "pj_per_elem", "flop_bits", "e_bit_pj", "leak_dc_uw", "ram_reads", "ram_writes", "e_ram_pj"]
-PART_E = ["e_dyn_csr_pj", "e_dyn_ctrl_pj", "e_dyn_datapath_pj", "e_dyn_glue_pj", "parts_size"]
+PART_E = ["e_dyn_csr_pj", "e_dyn_ctrl_pj", "e_dyn_datapath_pj", "e_dyn_glue_pj", "parts_size",
+          "e_dyn_peripherals_pj"]
 PROV = ["rtl_commit", "tool_version", "dc_version", "syn_date"]
 COLUMNS = KEY + TASK + AREA + TIMING + ENERGY + PART_E + PROV
 
@@ -152,11 +159,31 @@ def part_energy(source: str, mods: list[dict]) -> dict:
         if source == "forge" and depth[part] != top["path"].count("/") + 1:
             raise ValueError(f"{top['point']} {top['size']}: {hit['design']} is not one of the wrapper's instances")
         out[f"e_dyn_{part}_pj"] = float(hit["e_dyn_pj"])
+        if source == "forge" and part == "csr":
+            csr_path = hit["path"]
     glue = total - sum(out.values())
     # PT prints about 7 significant digits, so a wrapper with nothing but its parts leaves a glue of
     # +-1e-6 of the total: that is rounding, written as 0
     out["e_dyn_glue_pj"] = 0.0 if abs(glue) <= 1e-5 * abs(total) else glue
+    if source == "forge":       # X65: the glue above counts the whole csr; the csr part leaves its peripherals out
+        per = peripherals(mods, csr_path, f"{top['point']} {top['size']}")
+        if per is not None:
+            e_per = float(per["e_dyn_pj"])
+            out["e_dyn_csr_pj"] -= e_per
+            out["e_dyn_peripherals_pj"] = e_per
     return {k: f"{v:.6g}" for k, v in out.items()}
+
+
+def peripherals(mods: list[dict], csr_path: str, what: str) -> dict | None:
+    """X65: the csr's <tag>_peripherals child (one level below the csr cell at csr_path), or None (a bundle before
+    snax-forge D168)."""
+    hits = [r for r in mods if re.fullmatch(PERIPHERALS, r["design"])]
+    if not hits:
+        return None
+    kids = [r for r in hits if r["path"].startswith(csr_path + "/") and r["path"].count("/") == csr_path.count("/") + 1]
+    if len(kids) != 1 or len(hits) != 1:
+        raise ValueError(f"{what}: peripherals cells {[r['path'] for r in hits]}, expected one child of {csr_path}")
+    return kids[0]
 
 
 def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
@@ -168,6 +195,10 @@ def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
     mods = defaultdict(list)
     for r in read(base / "power_pt_modules.csv"):
         mods[(r["point"], r["size"])].append(r)
+    synth_mods = defaultdict(list)
+    if source == "forge":
+        for r in read(base / "synth_dc_modules.csv"):
+            synth_mods[r["point"]].append(r)
     prov = provenance(source)
     out = []
     for point in sorted(p for p in synth if listed(source, p)):
@@ -190,8 +221,21 @@ def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
                 row[c] = ""
             out.append(row)
             continue
-        split = [c for c in ("csr_um2", "ctrl_um2", "datapath_um2", "glue_um2") if s.get(c)]
-        if split and abs(sum(float(s[c]) for c in split) - float(s["area_um2"])) > 0.01:
+        if source == "forge" and s.get("csr_um2"):     # X65: the csr part without its peripherals child
+            csr = [r for r in synth_mods[point] if re.fullmatch(PARTS["forge"]["csr"], r["design"])]
+            try:
+                if len(csr) != 1:
+                    raise ValueError(f"{point}: csr cells {[r['path'] for r in csr]} in synth_dc_modules.csv")
+                per = peripherals(synth_mods[point], csr[0]["path"], point)
+            except ValueError as e:
+                problems.append(f"{tech} {e}")
+                per = None
+            if per is not None:
+                common["peripherals_um2"] = per["area_um2"]
+                common["csr_um2"] = f"{float(s['csr_um2']) - float(per['area_um2']):.4f}"
+        split = [c for c in ("csr_um2", "ctrl_um2", "datapath_um2", "glue_um2", "peripherals_um2")
+                 if common.get(c)]
+        if split and abs(sum(float(common[c]) for c in split) - float(s["area_um2"])) > 0.01:
             problems.append(f"{tech} {point}: the split columns do not sum to area_um2")
         if source == "forge" or (p["tier"] == "untiered" and tech == REF_TECH_UNTIERED):
             psize = REF_SIZE
