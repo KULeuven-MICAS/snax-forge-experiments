@@ -395,7 +395,7 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 
 - **Symptom:** a bundle from snax-forge `e8bb93e` has `snax_forge_dot_4_shell_wrapper`, `snax_forge_dot_4_ctrl`, ... where the SYN1 bundles (`f9764d5`) had `snax_forge_shell_wrapper`, `snax_forge_ctrl`; vecadd's `ElementwiseLanes_*` is `SimdLanes_*`. A byte diff of the SV says every file changed.
 - **Cause:** the tag is `<accelerator_slot>_<design name>` (snax-forge's `gen/accelerator.py` `tag`), and the lanes block was renamed; `accelerator.json` also nests groups under `accelerators` (`forge/query.py`'s `flat` reads both forms).
-- **Fix or check:** compare SV with the tag and block names masked (CSYN1 R1: dot_4 and vecadd at W = 4 identical). `syn.py` takes the three modules from `bundle.json` and follows the names; `report/compare.py`'s `PARTS` still names `snax_forge_csr`, `snax_forge_ctrl`, `snax_forge_datapath` and must match by suffix before it reads rows of new bundles.
+- **Fix or check:** compare SV with the tag and block names masked, `forge/sv_diff.py` (CSYN1 R1: dot_4 and vecadd at W = 4 identical; R2: the 41 tier done points at W <= 16 and vsum W = 32 identical, the other six W = 32 points no longer bundle, `connect.xbar_inputs`). `syn.py` takes the three modules from `bundle.json` and follows the names; `report/compare.py`'s `PARTS` still names `snax_forge_csr`, `snax_forge_ctrl`, `snax_forge_datapath` and must match by suffix before it reads rows of new bundles.
 - **Found in:** `results/forge/runs/2026-11-10_csyn1_r1.md` (step 1).
 
 ## snax_cluster's generators (STRM1)
