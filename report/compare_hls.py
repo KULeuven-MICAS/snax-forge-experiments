@@ -4,14 +4,16 @@
   pixi run compare-hls
 
 Reads only results/compare_done.csv and results/compare_untiered.csv (report/compare.py, X45). Writes, for the
-HLS cases Vitis opt, Vitis dace, Bambu and XLS (forge is left out until its accelerator parts are in):
+HLS cases Vitis opt, Vitis dace, Bambu and XLS, and forge's cases of the kernel (forge, forge2 to forge6,
+forge_baked; X61):
 
   results/compare_hls/<tier>_<kernel>.png    area, energy, latency and power against W, one line per case
   results/compare_hls.md                     the generated parts between <!-- gen:NAME --> and <!-- /gen -->
 
 Everything outside the markers is hand-written (the insights) and is kept as it is; a missing file is created
 from a template with every marker in place. Main view: nangate45, int64, a 10 ns clock; tier done at n2048
-(X24), untiered at each kernel's larger task size. Power is P = E_run / (cycles x T_clk), T_clk = 10 ns.
+(X24) and untiered at n2048 too (X55, X61); the nangate15 check compares untiered at each kernel's larger cosim
+size, the only one both technologies have. Power is P = E_run / (cycles x T_clk), T_clk = 10 ns.
 """
 from __future__ import annotations
 
@@ -32,13 +34,20 @@ MD = RESULTS / "compare_hls.md"
 FIGS = RESULTS / "compare_hls"
 TECH, CHECK_TECH = "nangate45", "nangate15"
 T_CLK_NS = 10.0
-CASES = [("vitis", "opt"), ("vitis", "dace"), ("bambu", "bambu"), ("xls", "xls")]
-LABEL = {"opt": "Vitis opt", "dace": "Vitis dace", "bambu": "Bambu", "xls": "XLS"}
+HLS_CASES = [("vitis", "opt"), ("vitis", "dace"), ("bambu", "bambu"), ("xls", "xls")]
+FORGE_CASES = [("forge", c) for c in ("forge", "forge2", "forge3", "forge4", "forge5", "forge6", "forge_baked")]
+CASES = FORGE_CASES + HLS_CASES        # forge first, as compare.py orders the tools
+LABEL = {"opt": "Vitis opt", "dace": "Vitis dace", "bambu": "Bambu", "xls": "XLS", "forge": "forge",
+         **{f"forge{k}": f"forge {k}" for k in range(2, 7)}, "forge_baked": "forge baked"}
 STYLE = {"opt": ("#1f77b4", "o", "-"), "dace": ("#9467bd", "s", "--"), "bambu": ("#d62728", "^", "-"),
-         "xls": ("#2ca02c", "D", "-")}
+         "xls": ("#2ca02c", "D", "-"), "forge": ("#000000", "*", "-"), "forge2": ("#7f7f7f", "v", ":"),
+         "forge3": ("#8c564b", "<", ":"), "forge4": ("#e377c2", ">", ":"), "forge5": ("#bcbd22", "p", ":"),
+         "forge6": ("#17becf", "h", ":"), "forge_baked": ("#7f7f7f", "x", "--")}
 KERNELS = {"done": ["vecadd", "vecmul", "vsum", "dot"], "untiered": ["matadd", "relu", "axpy", "rowsum"]}
-SIZE = {"done": {k: "n2048" for k in KERNELS["done"]},
-        "untiered": {"matadd": "m16_n32", "relu": "n512", "axpy": "n512", "rowsum": "m8_n64"}}
+SIZE = {"done": {k: "n2048" for k in KERNELS["done"]}, "untiered": {k: "n2048" for k in KERNELS["untiered"]}}
+# the nangate15 check: untiered has no n2048 there (X61), so it compares the larger cosim size
+CHECK_SIZE = {"done": SIZE["done"],
+              "untiered": {"matadd": "m16_n32", "relu": "n512", "axpy": "n512", "rowsum": "m8_n64"}}
 WS = [1, 2, 4, 8, 16]
 METRICS = [("area_um2", "Area", "µm²"), ("energy_nj", "Energy per task", "nJ"),
            ("cycles", "Latency per task", "cycles"), ("power_mw", "Power", "mW")]
@@ -46,7 +55,7 @@ METRICS = [("area_um2", "Area", "µm²"), ("energy_nj", "Energy per task", "nJ")
 
 def load(tier: str) -> list[dict]:
     with (RESULTS / f"compare_{tier}.csv").open(newline="") as fh:
-        rows = [r for r in csv.DictReader(fh) if r["tool"] != "forge"]
+        rows = list(csv.DictReader(fh))
     for r in rows:
         if r["status"] == "ok":
             e = float(r["e_run_pj"])
@@ -55,13 +64,13 @@ def load(tier: str) -> list[dict]:
     return rows
 
 
-def pick(rows: list[dict], tech: str, tier: str, kernel: str) -> dict:
+def pick(rows: list[dict], tech: str, tier: str, kernel: str, sizes: dict = SIZE) -> dict:
     """(case, W) -> row at the main size, ok or parked."""
     out = {}
     for r in rows:
         if r["tech"] != tech or r["kernel"] != kernel:
             continue
-        if r["status"] == "ok" and r["size"] != SIZE[tier][kernel]:
+        if r["status"] == "ok" and r["size"] != sizes[tier][kernel]:
             continue
         out[(r["case"], int(r["W"]))] = r
     return out
@@ -123,25 +132,29 @@ def setup(rows: list[dict]) -> list[str]:
     windows = {r["case"]: r["window"] for r in rows if r["window"]}
     lines = ["| Case | Tool version | RTL measured at | Latency window |", "|---|---|---|---|"]
     for _tool, case in CASES:
+        if case not in commit:
+            continue
         lines.append(f"| {LABEL[case]} | {ver.get(case, '')} | {', '.join(sorted(commit[case]))} | "
                      f"{windows.get(case, '')} |")
-    lines += ["", f"Main view: {TECH}, int64, every point synthesized at a 10 ns clock and scheduled at a 10 ns HLS "
-              "clock, W = 1 to 16 lanes per stream. Sizes: tier done at n2048 (2048 elements per input stream, X24); "
-              "untiered at each kernel's larger task size: " +
-              ", ".join(f"{k} {s}" for k, s in SIZE["untiered"].items()) + ". "
-              "Energy is the dynamic energy of one task (PrimePower on simulated activity, X7); power is "
-              "E_run / (cycles x 10 ns). The latency windows differ by a cycle or two by definition."]
+    lines += ["", f"Main view: {TECH}, int64, every point synthesized at a 10 ns clock (the HLS tools scheduled at a "
+              "10 ns HLS clock), W = 1 to 16 lanes per stream. Size: n2048 everywhere, 2048 elements per input "
+              "stream (X24, X55): tier done N = 2048, untiered relu and axpy n = 2048, matadd m32_n64, rowsum "
+              "m16_n128. Energy is the dynamic energy of one task (PrimePower on simulated activity, X7); power is "
+              "E_run / (cycles x 10 ns). The latency windows differ by a cycle or two by definition. forge's cases: "
+              "dot 2 to 6 (forge2 to forge6), axpy with alpha baked to 3 (forge baked), rowsum 2 (forge2)."]
     return lines
 
 
 def tech_check(done: list[dict], untiered: list[dict]) -> list[str]:
     """nangate45 against nangate15: values at W = 8, and how often the order of the cases is the same."""
-    lines = ["Values at W = 8 (nangate45 / nangate15); latency is the same on both:", "",
+    lines = ["Values at W = 8 (nangate45 / nangate15); latency is the same on both. Tier done at n2048, untiered at "
+             "each kernel's larger cosim size (" + ", ".join(f"{k} {s}" for k, s in CHECK_SIZE["untiered"].items())
+             + "): untiered has no n2048 on nangate15, and forge's untiered points are nangate45 only.", "",
              "| Kernel | Case | Area (µm²) | Energy (nJ) | Power (mW) |", "|---|---|---|---|---|"]
     same = total = 0
     for tier, rows in (("done", done), ("untiered", untiered)):
         for kernel in KERNELS[tier]:
-            a, b = pick(rows, TECH, tier, kernel), pick(rows, CHECK_TECH, tier, kernel)
+            a, b = pick(rows, TECH, tier, kernel, CHECK_SIZE), pick(rows, CHECK_TECH, tier, kernel, CHECK_SIZE)
             for _tool, case in CASES:
                 ra, rb = a.get((case, 8)), b.get((case, 8))
                 if ra and rb and ra["status"] == rb["status"] == "ok":
@@ -166,8 +179,7 @@ def tech_check(done: list[dict], untiered: list[dict]) -> list[str]:
 def template() -> str:
     parts = ["# The HLS cases side by side: Vitis opt and dace, Bambu, XLS", "",
              "Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs "
-             "(X45, X46); the text outside the `gen` markers is written by hand. Forge is left out until its "
-             "accelerator parts are in.", "", "## 1. Setup", "", "<!-- gen:setup -->", "<!-- /gen -->", "",
+             "(X45, X46, X61); the text outside the `gen` markers is written by hand.", "", "## 1. Setup", "", "<!-- gen:setup -->", "<!-- /gen -->", "",
              "## 2. Across all kernels", "", "- (to write)", ""]
     n = 3
     for tier in ("done", "untiered"):

@@ -80,6 +80,7 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** those CSVs were committed (SYN2, CHAR1) before X40 added the four `slack_<class>_ns` columns (HSYN1); `syn.py` writes every row with its current columns, so the old rows get the four columns empty and the rerun row gets them filled. The Vitis, Bambu and XLS CSVs already have them.
 - **Fix or check:** compare such CSVs cell by cell on the committed columns, not line by line; rerunning the source's points fills the columns.
 - **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4).
+- **Also:** `syn.py` writes the source's CSV from every run in `syn/runs/<source>/<tech>/`, so a local rerun that was never committed (ARC1's `done/vecadd/forge_w8`, 2026-11-06) comes back with any later run of the source: CSYN1 R1 and R2 each brought back its `date` (and in R1 its X40 slacks, accepted in R2). After a `syn run`, compare the CSV with the last commit by key, for the rows the run did not make (`results/forge/runs/2026-11-10_csyn1_r2.md`).
 
 ## Libraries
 

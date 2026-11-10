@@ -34,13 +34,14 @@ Columns:
              leak_dc_uw (DC's leakage estimate, X7)
   parts      e_dyn_csr_pj, e_dyn_ctrl_pj, e_dyn_datapath_pj, e_dyn_glue_pj (per cycle, forge and bambu
              only), parts_size (the run they come from: tier done the point's default run, forge n2048;
-             untiered n2048 on every row, X55, from X60's rows)
+             untiered on nangate45 n2048, X55, from X60's rows; untiered on nangate15, which has no n2048
+             run, the default run, X61)
   provenance rtl_commit (the tool repo commit the RTL was measured at; forge: snax_forge_commit),
              tool_version, dc_version, syn_date
 
 Checks (any failure: exit 1, nothing written): every listed point has a synthesis row on both technologies
 (an untiered forge point on nangate45 only); every ok point has the same sizes as the other points of its
-kernel, n2048 among them (X24, X55), each with an ok power row; no duplicate key; the split columns sum to the area where they exist; a point with parts has an ok
+kernel, n2048 among them (X24; X55 on nangate45, X61), each with an ok power row; no duplicate key; the split columns sum to the area where they exist; a point with parts has an ok
 run at its default size. A glue energy within 1e-5 of the total (PT's rounding) is written as 0.
 """
 from __future__ import annotations
@@ -80,6 +81,7 @@ PARTS = {
 # m8_n64 task, and forge runs n2048 only. Untiered rows take their parts from n2048 (X55).
 DEFAULT_SIZE = {"rowsum": "m8_n64"}
 REF_SIZE = "n2048"
+REF_TECH_UNTIERED = "nangate45"           # X61: untiered n2048 runs on nangate45 only (CSYN1)
 NANGATE45_ONLY = ("untiered", "forge")    # (tier, tool): CSYN1's forge points, nangate45 only (snax-forge D159)
 POINT = re.compile(r"^(?P<tier>[^/]+)/(?P<kernel>[^/]+)/(?P<case>[a-z]+[0-9]*(?:_[a-z]+)?)_w(?P<w>\d+)$")
 
@@ -187,7 +189,7 @@ def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
         split = [c for c in ("csr_um2", "ctrl_um2", "datapath_um2", "glue_um2") if s.get(c)]
         if split and abs(sum(float(s[c]) for c in split) - float(s["area_um2"])) > 0.01:
             problems.append(f"{tech} {point}: the split columns do not sum to area_um2")
-        if source == "forge" or p["tier"] == "untiered":
+        if source == "forge" or (p["tier"] == "untiered" and tech == REF_TECH_UNTIERED):
             psize = REF_SIZE
         else:
             psize = DEFAULT_SIZE.get(p["kernel"], "b64")
@@ -234,7 +236,8 @@ def check_sizes(rows: list[dict], problems: list[str]) -> None:
         if r["tool"] != "forge":
             want[(r["tech"], r["tier"], r["kernel"])].add(r["size"])
     for r in rows:
-        want[(r["tech"], r["tier"], r["kernel"])].add(REF_SIZE)       # X24 (tier done), X55 (untiered)
+        if r["tier"] == "done" or r["tech"] == REF_TECH_UNTIERED:      # X24 (tier done), X55 and X61 (untiered)
+            want[(r["tech"], r["tier"], r["kernel"])].add(REF_SIZE)
     for (tech, point), have in sorted(sizes.items()):
         tier, kernel = point.split("/")[:2]
         need = {"n2048"} if point.split("/")[-1].startswith("forge") else want[(tech, tier, kernel)]
