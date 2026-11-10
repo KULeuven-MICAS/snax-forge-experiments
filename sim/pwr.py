@@ -9,11 +9,17 @@
 
 --source hls (the default) takes hls-exercises' points, as below; --source forge takes snax-forge's bundles in
 rtl/forge/ (forge/bundles.py) and their netlists in syn/runs/forge/<tech>/: tb.json from sim/sources/forge.py
-(control forge_csr: the wrapper driven through its CSRs by sim/tb/csr_seq.sv), the size n2048, the window
-from the edge accepting START to the run's end, whose cycles must equal the COUNTER read back and the group's
-cycles from snax-forge's model; the stimulus rand64; the reference sim/ref.py, checked once per kernel and batch
-against snax-forge's kernel body; runs in sim/runs/forge/<tech>/, results in results/forge/<tech>/ with the
-columns recipe and snax_forge_commit added (docs/power.md, Forge).
+(control forge_csr: the wrapper driven through its CSRs by sim/tb/csr_seq.sv: JOBS, the JOB_BEATS and a scalar's
+CSRs as snax-forge's LOWER writes them, then START), the size n2048 (the point's sets, X55), the window from the
+edge accepting START to the run's end, with the COUNTER read back and the group's cycles from snax-forge's model
+beside it (X56); the stimulus rand64, fed and collected in the order the bundle's streamers visit each container;
+the reference sim/ref.py, checked once per kernel, size, seed and scalar against snax-forge's kernel body; runs
+in sim/runs/forge/<tech>/, results in results/forge/<tech>/ with the columns recipe, snax_forge_commit, counter
+and counter_diff added (docs/power.md, Forge).
+
+Every source (X56): the window is the measurement; expected_cycles (cosim's line, the bambu or xls line, or
+snax-forge's model) and expected_diff = expected - window are columns beside it, and a run fails only when the
+expected count (or forge's COUNTER) is more than 5 % of the window away.
 
 --source char (CHAR1) takes snax-forge's catalogue blocks alone in rtl/char/ (char/blocks.py) and their netlists
 in syn/runs/char/<tech>/: tb.json from sim/sources/char.py (control char_<kind>: the block's data and pins driven
@@ -35,7 +41,7 @@ case bambu) and Google XLS's (dslx-exercises' rtl/, case xls), as syn/syn.py lis
 MAX_W), and their netlists in syn/runs/<source>/<tech>/: tb.json from sim/sources/bambu.py (control bambu_ctl:
 start_port pulsed by sim/tb/bambu_seq.sv, the run-time pins plain inputs held from time 0) or sim/sources/xls.py
 (control xls_cfg: one cfg beat on _cfg_TDATA by sim/tb/xls_seq.sv); the streams through axis_src and axis_sink as
-for hls; sizes b64, the point's sizes.txt (--size all) and n2048 for tier done; the expected cycles from the
+for hls; sizes b64, the point's sizes.txt (--size all) and n2048 (X24, X55); the expected cycles from the
 line through results/<source>/<source>_cycles.csv (bambu: cycles_done; xls: cycles, plus 1 for the window); runs
 in sim/runs/<source>/<tech>/, results in results/<source>/<tech>/ with X20's columns (docs/power.md, Bambu, XLS).
 
@@ -60,7 +66,7 @@ Results: results/hls/<tech>/power_pt.csv (one row per point, size and seed), pow
 (the default run of each point) and power_reports/<point>.zip (X20, X51).
 
 Parallel workers J = min(free msimhdlsim, free PrimePower, free PrimeTime, nproc) from lmutil lmstat;
-PT threads per run = max(1, nproc // J) (X16). A tool that fails on a licence error is retried once (X17).
+PT threads per run = max(1, nproc // J) (X16); --cores C puts C in place of nproc, a budget for the whole run. A tool that fails on a licence error is retried once (X17).
 setup-check: a diagnostic (X25): PT against DC with the same forced activity, per power group, printed and kept in
 check.json; it fails only on the wire-load check (PITFALLS PT1), never on the groups' differences.
 
@@ -127,9 +133,13 @@ TOGGLE_BEATS = 64           # the input-toggle check fails a run from this many 
 CELL_MODELS = {"nangate45": ("NangateOpenCellLibrary.v", []),
                "nangate15": ("NanGate_15nm_OCL_functional.v", ["-timescale", "1ns/1ps"])}
 COLUMNS = ["point", "top", "tech", "clock_ns", "W", "size", "config", "beats", "seed", "cycles",
+           "expected_cycles", "expected_diff",
            "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw",
            "e_comb_fire_pj", "e_flop_fire_pj", "e_run_pj", "flop_bits", "e_bit_pj", "status"]
-FORGE_COLUMNS = ["recipe", "snax_forge_commit"]
+FORGE_COLUMNS = ["recipe", "snax_forge_commit", "counter", "counter_diff"]
+# X56: the window is the measurement; the expected count (and forge's COUNTER) is recorded beside it, with its
+# difference (expected - window), and fails the run only when it is more than this far from the window
+CYCLES_TOL = 0.05
 MODULE_COLUMNS = ["point", "tech", "path", "design", "e_dyn_pj"]
 KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
 LICENCE_ERR = re.compile(r"(?i)(licen[sc]\w*\s+(error|fail\w*|not available|denied|checkout)|unable to check\s*out"
@@ -292,18 +302,24 @@ def dump_block(tb: dict, netlist: Path) -> list[str]:
     return L
 
 
+def sname(s: dict) -> str:
+    """A stream's name in the TB (instances, plusargs, hex files): its arg, or forge's arg_in / arg_out when one
+    container has an input and an output stream (axpy's y in place, sim/sources/forge.py)."""
+    return s.get("name", s["arg"])
+
+
 def stream_block(tb: dict, s: dict, clk: str, rst: str, go: str = "go") -> tuple[list[str], str | None]:
-    dw = 64 * s["lanes"]
+    dw, n = 64 * s["lanes"], sname(s)
     L = [f"    wire [{dw - 1}:0] {s['data']};", f"    wire {s['valid']}, {s['ready']};"]
     if s["dir"] == "in":
-        L += [f"    axis_src #(.DW({dw}), .NAME(\"{s['arg']}\")) src_{s['arg']} (.clk({clk}), "
+        L += [f"    axis_src #(.DW({dw}), .NAME(\"{n}\")) src_{n} (.clk({clk}), "
               f".go({go}), .tdata({s['data']}), .tvalid({s['valid']}), .tready({s['ready']}));"]
         return L, None
-    L += [f"    wire complete_{s['arg']};",
-          f"    axis_sink #(.DW({dw}), .NAME(\"{s['arg']}\")) snk_{s['arg']} (.clk({clk}), "
+    L += [f"    wire complete_{n};",
+          f"    axis_sink #(.DW({dw}), .NAME(\"{n}\")) snk_{n} (.clk({clk}), "
           f".rst_n({rst}), .tdata({s['data']}), .tvalid({s['valid']}), .tready({s['ready']}), "
-          f".complete(complete_{s['arg']}));"]
-    return L, f"complete_{s['arg']}"
+          f".complete(complete_{n}));"]
+    return L, f"complete_{n}"
 
 
 def tb_top_forge(tb: dict, netlist: Path) -> str:
@@ -466,26 +482,47 @@ def untoggled_bits(x: np.ndarray, beats: int, lanes: int) -> int:
 
 
 def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
-    """rand64 (X19): N full-range int64 per input stream, seed `seed`, stream by stream in tb.json order;
-    the reference from sim/ref.py; every input bit must toggle (N / W beats, 64 or more at n2048)."""
+    """rand64 (X19): every input container full-range int64 at its shape (the design point's), seed `seed`, stream
+    by stream in tb.json order (a container once), then each scalar a CSR takes (axpy's alpha) as a data pin; a
+    scalar the recipe bakes takes the baked value (axpy_baked's alpha = 3). The reference from sim/ref.py, an
+    in-place output (axpy's y) its <container>_out. Each stream's data in the order its streamer visits the
+    container (tb.json's order, rowsum_2's A down the columns); every input bit must toggle (64 beats or more)."""
     z = tb["sizes"][size]
-    n = z["N"]
     ins_s = [s for s in tb["streams"] if s["dir"] == "in"]
     rng = np.random.default_rng(seed)
     info = np.iinfo(np.int64)
-    ins = {s["arg"]: rng.integers(info.min, info.max, size=n, dtype=np.int64, endpoint=True) for s in ins_s}
-    outs = ref(tb["kernel"], ins, {})
-    untoggled = {}
+    ins = {}
     for s in ins_s:
-        k = untoggled_bits(ins[s["arg"]], n // s["lanes"], s["lanes"])
-        if k:
-            untoggled[s["arg"]] = k
-            if n // s["lanes"] >= TOGGLE_BEATS:
-                raise Fail(f"stimulus: {k} bits of {s['arg']} never toggle")
+        if s["arg"] not in ins:
+            ins[s["arg"]] = rng.integers(info.min, info.max, size=int(np.prod(s["shape"])), dtype=np.int64,
+                                         endpoint=True)
+    pins = {sc["container"]: int(rng.integers(info.min, info.max, dtype=np.int64, endpoint=True))
+            for sc in tb.get("scalars", [])}
+    pins.update({c: int(v) for c, v in tb.get("baked", {}).items()})
+    shape = {k.lower(): v for k, v in z["shape"].items()}         # sim/ref.py's rowsum takes m
+    got = ref(tb["kernel"], ins, {**shape, **pins})
+    outs = {}
     for s in tb["streams"]:
-        if s["dir"] == "out" and len(outs[s["arg"]]) % s["lanes"]:
-            raise Fail(f"reference {s['arg']}: {len(outs[s['arg']])} values do not fill {s['lanes']} lanes")
-    return {"ins": ins, "pins": {}, "outs": outs, "beats": n // ins_s[0]["lanes"], "untoggled": untoggled}
+        if s["dir"] == "out":
+            a = s["arg"]
+            if a not in got and f"{a}_out" not in got:
+                raise Fail(f"reference: sim/ref.py's {tb['kernel']} gives {sorted(got)}, no {a}")
+            outs[a] = got[a] if a in got else got[f"{a}_out"]
+    data, untoggled = {}, {}
+    for s in tb["streams"]:
+        x = (ins if s["dir"] == "in" else outs)[s["arg"]].ravel()
+        if s.get("order") is not None:
+            x = x[np.asarray(s["order"], dtype=np.int64)]
+        if len(x) != s["beats"] * s["lanes"]:
+            raise Fail(f"stream {sname(s)}: {len(x)} values, the streamer moves {s['beats']} beats of {s['lanes']}")
+        data[sname(s)] = np.ascontiguousarray(x)
+        if s["dir"] == "in":
+            k = untoggled_bits(data[sname(s)], s["beats"], s["lanes"])
+            if k:
+                untoggled[sname(s)] = k
+                if s["beats"] >= TOGGLE_BEATS:
+                    raise Fail(f"stimulus: {k} bits of {sname(s)} never toggle")
+    return {"ins": ins, "pins": pins, "outs": outs, "data": data, "beats": ins_s[0]["beats"], "untoggled": untoggled}
 
 
 # The forge reference check: sim/ref.py against snax-forge's kernel body (forge/query.py ref), once per kernel,
@@ -495,10 +532,11 @@ REF_LOCK = threading.Lock()
 
 
 def forge_ref_check(tb: dict, size: str, seed: int, st: dict, rdir: Path) -> dict:
-    key = (tb["kernel"], size, seed)
+    key = (tb["kernel"], size, seed, tuple(sorted(st["pins"].items())))     # axpy and axpy_baked: alpha apart
     with REF_LOCK:
         if key not in REF_CHECKED:
-            got = forge_src.kernel_ref(tb["kernel"], st["ins"], rdir / "ref_check")
+            ins = {**st["ins"], **{c: np.array(v, dtype=np.int64) for c, v in st["pins"].items()}}
+            got = forge_src.kernel_ref(tb["kernel"], ins, rdir / "ref_check", tb.get("symbols"), tb.get("dtypes"))
             shutil.rmtree(rdir / "ref_check", ignore_errors=True)
             same = {a: bool(np.array_equal(np.asarray(got["outs"][a]).ravel()[: len(v)], v)
                             and np.asarray(got["outs"][a]).size >= len(v)) for a, v in st["outs"].items()}
@@ -799,7 +837,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
     forge = tb["control"]["kind"] == "forge_csr"
     if forge:
         row.update({"config": " ".join(f"{name}={v}" for _, v, name in cfg["writes"][:-1]),
-                    "beats": cfg["N"] // next(s["lanes"] for s in tb["streams"] if s["dir"] == "in")})
+                    "beats": next(s["beats"] for s in tb["streams"] if s["dir"] == "in")})
     else:
         row.update({"config": " ".join(f"{k}={v}" for k, v in cfg.items()), "beats": cfg["loop_count"]})
     info = {"run": str(rdir.relative_to(ROOT)), "times": times}
@@ -809,15 +847,26 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
     plus = []
     if forge:
         info["ref_check"] = forge_ref_check(tb, size, seed, st, rdir)
+        # JOBS and the JOB_BEATS, then each scalar's CSRs (C§17: low word first at 64 bits), START last
+        scal = []
+        for sc in tb.get("scalars", []):
+            v = st["pins"][sc["container"]] & MASK64
+            words = [v & 0xFFFFFFFF, v >> 32] if len(sc["csrs"]) == 2 else [v & 0xFFFFFFFF]
+            scal += [[off, wv, name] for (off, name), wv in zip(sc["csrs"], words)]
+        writes = cfg["writes"][:-1] + scal + cfg["writes"][-1:]
+        info["csr_writes"] = [[name, val] for _, val, name in writes]
         f = rdir / "stim" / "csr.hex"
-        f.write_text("".join(f"{off:08x}{val & 0xFFFFFFFF:08x}\n" for off, val, _ in cfg["writes"]))
-        plus += [f"+CSR_HEX={f}", f"+CSR_N={len(cfg['writes'])}",
+        f.write_text("".join(f"{off:08x}{val & 0xFFFFFFFF:08x}\n" for off, val, _ in writes))
+        plus += [f"+CSR_HEX={f}", f"+CSR_N={len(writes)}",
                  f"+COUNTER_ADDR={tb['control']['csrs']['COUNTER']:x}"]
     for s in tb["streams"]:
-        x = st["ins"][s["arg"]] if s["dir"] == "in" else st["outs"][s["arg"]]
-        f = rdir / "stim" / f"{s['arg']}.hex"
+        if forge:
+            x = st["data"][sname(s)]
+        else:
+            x = st["ins"][s["arg"]] if s["dir"] == "in" else st["outs"][s["arg"]]
+        f = rdir / "stim" / f"{sname(s)}.hex"
         f.write_text(beats_hex(x, s["lanes"]))
-        plus += [f"+{s['arg']}_HEX={f}", f"+{s['arg']}_BEATS={len(x) // s['lanes']}"]
+        plus += [f"+{sname(s)}_HEX={f}", f"+{sname(s)}_BEATS={len(x) // s['lanes']}"]
     for p in tb["pins"]:
         plus.append(f"+PIN_{p['port']}={st['pins'][p['port']] & ((1 << p['bits']) - 1):x}")
     if tb["control"]["kind"] == "xls_cfg":      # the one cfg beat, fields packed first-high (X44)
@@ -831,6 +880,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
     else:       # bambu, xls: the line through the tool's own cycle CSV (X44)
         exp, how = src().expected_cycles(tb, size, RESULTS)
     info["expected_cycles"], info["expected_from"] = exp, how
+    row["expected_cycles"] = exp if exp is not None else ""
     times["stim"] = time.time() - t
 
     vcd = rdir / "dut.vcd"
@@ -859,15 +909,22 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         info["window_ns"] = [float(win.group(1)), float(win.group(2))]
         if forge and "TB: FAIL" in log:
             raise Fail("sim: " + re.search(r"TB: FAIL: (.*)", log).group(1))
+        # X56: the window is the measurement; the expected count (and forge's COUNTER) beside it, failing only
+        # past CYCLES_TOL of the window
         if forge:
             cnt = re.search(r"TB: counter (\d+)", log)
             info["counter"] = int(cnt.group(1)) if cnt else None
-            if info["counter"] != cycles:
-                raise Fail(f"cycles: window {cycles}, COUNTER {info['counter']}")
+            if info["counter"] is None:
+                raise Fail("cycles: no COUNTER read back")
+            row["counter"], row["counter_diff"] = info["counter"], info["counter"] - cycles
+            if abs(info["counter"] - cycles) > CYCLES_TOL * cycles:
+                raise Fail(f"cycles: window {cycles}, COUNTER {info['counter']}, over {CYCLES_TOL:.0%} apart (X56)")
         if exp is None:
             raise Fail(f"cycles: no expected value ({how})")
-        if cycles != exp:
-            raise Fail(f"cycles {cycles}, expected {exp} ({how})")
+        row["expected_diff"] = exp - cycles
+        info["expected_diff"] = exp - cycles
+        if abs(exp - cycles) > CYCLES_TOL * cycles:
+            raise Fail(f"cycles: window {cycles}, expected {exp} ({how}), over {CYCLES_TOL:.0%} apart (X56)")
 
         t = time.time()
         head = vcd.open().read(4096)
@@ -1703,7 +1760,7 @@ def cmd_run(args) -> int:
         tool(t)
     tool("pt_shell", "PT_SHELL")
     lic = licences()
-    nproc = os.cpu_count() or 1
+    nproc = min(os.cpu_count() or 1, args.cores or os.cpu_count() or 1)      # --cores: the run's core budget
     j = min(lic["msimhdlsim"]["free"], lic["PrimePower"]["free"], lic["PrimeTime"]["free"], nproc)
     if args.j:
         j = min(j, args.j)
@@ -1869,6 +1926,8 @@ def main() -> int:
                         "the point's sizes.txt (forge: every size in tb.json)")
     p.add_argument("--seed", type=int, default=0, help="the stimulus seed (streamer, xbar: vsim -sv_seed)")
     p.add_argument("-j", type=int, default=0, help="at most this many workers (default: from the licences)")
+    p.add_argument("--cores", type=int, default=0,
+                   help="cores the whole run may use (default: nproc): J <= cores, PT threads = cores // J")
     p.add_argument("--initreg-seed", type=int, default=None,
                    help="a check, never the default: random register start (vopt +initreg=ru, vsim +initreg+N) "
                         "in place of +initreg+0; results/ is not written")

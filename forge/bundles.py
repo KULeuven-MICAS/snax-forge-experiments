@@ -307,6 +307,8 @@ def main() -> int:
     with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
         results += list(pool.map(lambda p: run_point(p, args), rest))
     wall = time.monotonic() - t0
+    if RECIPES_TMP.is_dir() and not any(RECIPES_TMP.iterdir()):
+        RECIPES_TMP.rmdir()                                  # the dtypes copies are gone with their points
     made = [r for r in results if r["status"].startswith("made")]
     print(f"\n{len(made)} made, {len(results) - len(made)} not, in {wall:.0f} s "
           f"(sum of points {sum(r['seconds'] for r in results):.0f} s)")
