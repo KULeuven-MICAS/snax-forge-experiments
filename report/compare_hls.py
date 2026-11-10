@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""report/compare_hls.py - results/compare_hls.md: the four HLS cases side by side, per kernel (X46).
+"""report/compare_hls.py - results/compare/: forge and the four HLS cases side by side, one page per kernel (X46, X64).
 
   pixi run compare-hls
 
@@ -7,11 +7,13 @@ Reads only results/compare_done.csv and results/compare_untiered.csv (report/com
 HLS cases Vitis opt, Vitis dace, Bambu and XLS, and forge's cases of the kernel (forge, forge2 to forge6,
 forge_baked; X61):
 
-  results/compare_hls/<tier>_<kernel>.png    area, energy, latency and power against W, one line per case
-  results/compare_hls.md                     the generated parts between <!-- gen:NAME --> and <!-- /gen -->
+  results/compare/README.md                  the setup, the summary across kernels, the index, the nangate15 check
+  results/compare/<tier>/<kernel>.md         one kernel: its figure and table, the insights, the parts at n2048
+  results/compare/<tier>/<kernel>.png        area, energy, latency and power against W, one line per case
 
-Everything outside the markers is hand-written (the insights) and is kept as it is; a missing file is created
-from a template with every marker in place. Main view: nangate45, int64, a 10 ns clock; tier done at n2048
+Only the parts between <!-- gen:NAME --> and <!-- /gen --> are generated. Everything outside the markers is
+hand-written (the summary and the insights) and is kept as it is; a missing page is created from a template
+with every marker in place. Main view: nangate45, int64, a 10 ns clock; tier done at n2048
 (X24) and untiered at n2048 too (X55, X61); the nangate15 check compares untiered at each kernel's larger cosim
 size, the only one both technologies have. Power is P = E_run / (cycles x T_clk), T_clk = 10 ns.
 """
@@ -30,8 +32,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "results"
-MD = RESULTS / "compare_hls.md"
-FIGS = RESULTS / "compare_hls"
+OUT = RESULTS / "compare"
+README = OUT / "README.md"
 TECH, CHECK_TECH = "nangate45", "nangate15"
 T_CLK_NS = 10.0
 HLS_CASES = [("vitis", "opt"), ("vitis", "dace"), ("bambu", "bambu"), ("xls", "xls")]
@@ -101,11 +103,11 @@ def figure(tier: str, kernel: str, pts: dict) -> str:
     axes.flat[0].legend(fontsize=8)
     fig.suptitle(f"{kernel} ({tier}), {SIZE[tier][kernel]}, {TECH}, 10 ns clock", fontsize=11)
     fig.tight_layout()
-    FIGS.mkdir(parents=True, exist_ok=True)
-    path = FIGS / f"{tier}_{kernel}.png"
+    path = OUT / tier / f"{kernel}.png"
+    path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, dpi=130)
     plt.close(fig)
-    return path.relative_to(RESULTS).as_posix()
+    return path.name  # the kernel's page sits beside it
 
 
 def table(tier: str, kernel: str, pts: dict) -> list[str]:
@@ -227,56 +229,66 @@ def parts_table(rows: list[dict], tier: str, kernel: str) -> list[str]:
     return lines
 
 
-def template() -> str:
-    parts = ["# The HLS cases side by side: Vitis opt and dace, Bambu, XLS", "",
+def page(tier: str, kernel: str) -> Path:
+    return OUT / tier / f"{kernel}.md"
+
+
+def index() -> list[str]:
+    lines = ["| Tier | Kernels |", "|---|---|"]
+    for tier in ("done", "untiered"):
+        lines.append(f"| {tier} | " + ", ".join(f"[{k}]({tier}/{k}.md)" for k in KERNELS[tier]) + " |")
+    return lines
+
+
+def template_readme() -> str:
+    parts = ["# forge and the HLS cases side by side: Vitis opt and dace, Bambu, XLS", "",
              "Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs "
-             "(X45, X46, X61); the text outside the `gen` markers is written by hand.", "", "## 1. Setup", "", "<!-- gen:setup -->", "<!-- /gen -->", "",
-             "## 2. Across all kernels", "", "- (to write)", ""]
-    n = 3
-    for tier in ("done", "untiered"):
-        parts += [f"## {n}. Tier {tier}", ""]
-        for kernel in KERNELS[tier]:
-            parts += [f"### {kernel}", "", f"<!-- gen:{tier}/{kernel} -->", "<!-- /gen -->", "",
-                      "**Insights.**", "", "- (to write)", ""]
-        n += 1
-    parts += [f"## {n}. Parts at n2048", ""]
-    for tier in ("done", "untiered"):
-        parts += [f"### Tier {tier}", "", f"<!-- gen:parts/{tier} -->", "<!-- /gen -->", ""]
-    n += 1
-    parts += [f"## {n}. nangate15 check", "", "<!-- gen:tech -->", "<!-- /gen -->", "",
-              f"## {n + 1}. Notes", "", "- Vitis dace_w1 of dot, axpy and rowsum: rebuilt for n2048 with their RAM as an "
-              "SRAM macro (dot, axpy) or flops (rowsum), X62; parked on nangate15.",
-              "- The rows behind every number are in `results/compare_done.csv` and `results/compare_untiered.csv`.",
-              ""]
+             "(X45, X46, X61, X64); the text outside the `gen` markers is written by hand. One page per kernel.", "",
+             "<!-- gen:index -->", "<!-- /gen -->", "", "## 1. Setup", "", "<!-- gen:setup -->", "<!-- /gen -->", "",
+             "## 2. Across all kernels", "", "- (to write)", "", "## 3. Parts at n2048", "",
+             "<!-- gen:parts-basis -->", "<!-- /gen -->", "", "## 4. nangate15 check", "", "<!-- gen:tech -->",
+             "<!-- /gen -->", "", "## 5. Notes", "",
+             "- The rows behind every number are in `results/compare_done.csv` and `results/compare_untiered.csv`.", ""]
     return "\n".join(parts)
 
 
-def fill(text: str, name: str, body: list[str]) -> str:
+def template_page(tier: str, kernel: str) -> str:
+    return "\n".join([f"# {kernel} (tier {tier})", "", "Part of [the comparison](../README.md): setup, summary across "
+                      "kernels and the parts' basis are there.", "", "<!-- gen:main -->", "<!-- /gen -->", "",
+                      "## Insights", "", "- (to write)", "", "## Parts at n2048", "", "<!-- gen:parts -->",
+                      "<!-- /gen -->", ""])
+
+
+def fill(text: str, name: str, body: list[str], where: Path) -> str:
     pat = re.compile(rf"(<!-- gen:{re.escape(name)} -->\n).*?(<!-- /gen -->)", re.S)
     if not pat.search(text):
-        raise SystemExit(f"compare_hls.md: marker gen:{name} is missing")
+        raise SystemExit(f"{where.relative_to(ROOT)}: marker gen:{name} is missing")
     return pat.sub(lambda m: m.group(1) + "\n".join(body) + "\n" + m.group(2), text, count=1)
 
 
 def main() -> int:
     done, untiered = load("done"), load("untiered")
-    text = MD.read_text() if MD.is_file() else template()
-    text = fill(text, "setup", setup(done + untiered))
+    OUT.mkdir(parents=True, exist_ok=True)
+    text = README.read_text() if README.is_file() else template_readme()
+    text = fill(text, "index", index(), README)
+    text = fill(text, "setup", setup(done + untiered), README)
+    text = fill(text, "parts-basis", [PARTS_BASIS], README)
+    text = fill(text, "tech", tech_check(done, untiered), README)
+    README.write_text(text)
+    n = 0
     for tier, rows in (("done", done), ("untiered", untiered)):
         for kernel in KERNELS[tier]:
+            md = page(tier, kernel)
+            md.parent.mkdir(parents=True, exist_ok=True)
+            body = md.read_text() if md.is_file() else template_page(tier, kernel)
             pts = pick(rows, TECH, tier, kernel)
             fig = figure(tier, kernel, pts)
-            body = [f"![{kernel}]({fig})", "", f"{SIZE[tier][kernel]}, {TECH}, int64, 10 ns.", ""]
-            text = fill(text, f"{tier}/{kernel}", body + table(tier, kernel, pts))
-    for tier, rows in (("done", done), ("untiered", untiered)):
-        body = [PARTS_BASIS, ""] if tier == "done" else []
-        for kernel in KERNELS[tier]:
-            body += [f"**{kernel}**", ""] + parts_table(rows, tier, kernel) + [""]
-        text = fill(text, f"parts/{tier}", body[:-1])
-    text = fill(text, "tech", tech_check(done, untiered))
-    MD.write_text(text)
-    print(f"compare-hls: {MD.relative_to(ROOT)} and {len(list(FIGS.glob('*.png')))} figures in "
-          f"{FIGS.relative_to(ROOT)}/")
+            main_part = [f"![{kernel}]({fig})", "", f"{SIZE[tier][kernel]}, {TECH}, int64, 10 ns.", ""]
+            body = fill(body, "main", main_part + table(tier, kernel, pts), md)
+            body = fill(body, "parts", parts_table(rows, tier, kernel), md)
+            md.write_text(body)
+            n += 1
+    print(f"compare-hls: {README.relative_to(ROOT)} and {n} kernel pages with their figures in {OUT.relative_to(ROOT)}/")
     return 0
 
 
