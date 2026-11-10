@@ -109,7 +109,7 @@ def size_tag(size: dict) -> str:
     return "_".join(f"{k}{v}" for k, v in size.items())
 
 
-def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | None = None) -> dict:
+def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | None = None, b64: bool = True) -> dict:
     """{tag: {pin: value}}: the tool's sizes valid at this W, then 'b64' (64 beats) when every config pin equals
     loop_count at those sizes (rowsum's len does not), then EXTRA_SIZES for the tier; values from the config
     expressions. Shared by the HLS tools' adapters (hls, bambu, xls)."""
@@ -118,7 +118,7 @@ def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | 
         if valid and not _eval(valid, size, w):
             continue
         out[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in config.items()}
-    if all(all(v == cfg["loop_count"] for v in cfg.values()) for cfg in out.values()):
+    if b64 and all(all(v == cfg["loop_count"] for v in cfg.values()) for cfg in out.values()):
         out["b64"] = {k: BEATS for k in config}
     for tag, size in extra_sizes(point):
         if valid and not _eval(valid, size, w):
@@ -172,7 +172,9 @@ def build(point: str) -> dict:
     if extra:
         raise ValueError(f"{point}: ports tb.json does not cover: {extra}")
 
-    sizes = sizes_for(point, prm["sizes"], prm["config"], w, prm.get("valid"))
+    # a case with its own sizes (the dace case of dot, axpy and rowsum: the n2048 task only, X62) runs those, no b64
+    own = prm["cases"].get(case, {}).get("sizes")
+    sizes = sizes_for(point, own or prm["sizes"], prm["config"], w, prm.get("valid"), b64=not own)
 
     return {"tb_version": TB_VERSION, "point": point, "kernel": prm["kernel"], "top": top, "case": case, "W": w,
             "clock": {"port": CLK},
@@ -199,7 +201,8 @@ def default_size(tb: dict) -> str:
     which comes after the cosim sizes but is not a cosim size (rowsum has no b64)."""
     if "b64" in tb["sizes"]:
         return "b64"
-    return [z for z in tb["sizes"] if z != REF_TAG][-1]
+    rest = [z for z in tb["sizes"] if z != REF_TAG]
+    return rest[-1] if rest else REF_TAG     # a dace point rebuilt for n2048 only (X62)
 
 
 def data_h(point: str, size: str) -> Path:

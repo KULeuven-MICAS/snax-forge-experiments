@@ -140,6 +140,10 @@ COLUMNS = ["point", "top", "tech", "clock_ns", "W", "size", "config", "beats", "
            "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw",
            "e_comb_fire_pj", "e_flop_fire_pj", "e_run_pj", "flop_bits", "e_bit_pj", "status"]
 FORGE_COLUMNS = ["recipe", "snax_forge_commit", "counter", "counter_diff"]
+# X62: an hls point with a RAM (a Vitis dace buffer): the memory's share of the task, inside e_run_pj. macro: e_ram_pj =
+# ram_reads x e_rd + ram_writes x e_wr (RAMCOUNT and the macro's CACTI numbers, X50), e_ram_pt_pj PT's own averaged
+# figure for the macro cells (PITFALLS PT7, a check, not used); flops: e_ram_pj PT's energy of the RAM instances
+HLS_PWR_COLUMNS = ["ram_kind", "ram_reads", "ram_writes", "e_ram_pj", "e_ram_pt_pj"]
 # X56: the window is the measurement; the expected count (and forge's COUNTER) is recorded beside it, with its
 # difference (expected - window), and fails the run only when it is more than this far from the window
 CYCLES_TOL = 0.05
@@ -177,7 +181,7 @@ def src():
 
 
 def columns() -> list[str]:
-    return COLUMNS + (FORGE_COLUMNS if SOURCE == "forge" else [])
+    return COLUMNS + (FORGE_COLUMNS if SOURCE == "forge" else HLS_PWR_COLUMNS if SOURCE == "hls" else [])
 
 
 def tech_runs(tech: str) -> Path:
@@ -262,6 +266,22 @@ def point_inputs(stack: contextlib.ExitStack, tech: str, point: str) -> tuple[Pa
     d = stack.enter_context(arc.unpacked(z, [nets[0], *(m for m in SYN_MEMBERS if m in have)]))
     bundle = stack.enter_context(arc.unpacked(syn.bundle_zip(point))) if SOURCE in ("forge", "char") else None
     return d, d / nets[0], bundle
+
+
+def ram_inputs(stack: contextlib.ExitStack, syn_d: Path) -> dict | None:
+    """X62: the DC run's RAM plan (tech.json, syn.py): None for a point without one; for macros each macro's .v and
+    .db unpacked into tmp/ (deleted with `stack`) and its CACTI energies."""
+    tj = syn_d / "tech.json"
+    ram = json.loads(tj.read_text()).get("resolved", {}).get("ram") if tj.is_file() else None
+    if not ram:
+        return None
+    out = {"kind": ram["kind"], "modules": ram.get("modules", []), "macros": []}
+    for m in ram.get("macros", []):
+        d = stack.enter_context(arc.unpacked(Path(m["zip"]), [f"{m['cell']}.v", f"{m['cell']}.db", "result.json"]))
+        res = json.loads((d / "result.json").read_text())
+        out["macros"].append({"cell": m["cell"], "v": d / f"{m['cell']}.v", "db": d / f"{m['cell']}.db",
+                              "e_rd_pj": float(res["e_rd_pj"]), "e_wr_pj": float(res["e_wr_pj"])})
+    return out
 
 
 def pack_point(pdir: Path) -> Path:
@@ -628,6 +648,9 @@ def expected_cycles(tb: dict, size: str) -> tuple[int | None, str]:
     cs = cosim(tb)
     if size in cs:
         return cs[size][1], f"cosim {size}"
+    same = [t for t in cs if t in tb["sizes"] and tb["sizes"][t] == tb["sizes"][size]]
+    if same:                    # another tag for the same task (rowsum dace's n2048 is its cosim size m16_n128)
+        return cs[same[0]][1], f"cosim {same[0]} (the same pins)"
     if len(cs) < 2:
         return None, "no cosim line"
     (l1, c1), (l2, c2) = sorted(cs.values())[:2]
@@ -723,12 +746,12 @@ def pt_to_uw(units: Path) -> float:
     return float(m.group(1)) * 1e6
 
 
-def pt_groups(rep: Path) -> dict:
-    """{group: (internal, switching, leakage) in uW} from PT's power.rpt."""
+def pt_groups(rep: Path, groups=None) -> dict:
+    """{group: (internal, switching, leakage) in uW} from PT's power.rpt (syn.POWER_GROUPS by default)."""
     to_uw = pt_to_uw(rep / "units.rpt")
     text = (rep / "power.rpt").read_text()
     out = {}
-    for g in syn.POWER_GROUPS:
+    for g in (groups or syn.POWER_GROUPS):
         m = re.search(rf"^{g}\s+(\S+)\s+(\S+)\s+(\S+)", text, re.M)
         if not m:
             raise Fail(f"pt: no group {g} in power.rpt")
@@ -803,7 +826,7 @@ def run_tag(size: str, stim: str, seed: int) -> str:
     return tag if INITREG_SEED is None else f"{tag}_r{INITREG_SEED}"
 
 
-def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -> None:
+def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path, ram: dict | None = None) -> None:
     logs = pdir / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     (pdir / "tb.sv").write_text(tb_top(tb, netlist))
@@ -822,6 +845,9 @@ def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -
                           *(str(TB_DIR / f) for f in tb_files),
                           str(pdir / "tb.sv")]),
              ("vlog_netlist", [tool("vlog"), "-timescale", "1ns/1ps", "-work", str(work), str(netlist)]),
+             # X62: the SRAM macros' behavioural models (contents, read address and rdata start 0, as Vitis's .dat)
+             *([("vlog_macros", [tool("vlog"), "-sv", "+define+SRAM_INIT_ZERO", "-work", str(work),
+                                 *(str(m["v"]) for m in ram["macros"])])] if ram and ram["macros"] else []),
              ("vopt", [tool("vopt"), "-work", str(work), "-L", str(cells), TB_TOP,
                        "+initreg+0" if INITREG_SEED is None else "+initreg=ru", "+acc=n", "-o", "tb_opt"])]
     for name, cmd in steps:
@@ -832,7 +858,7 @@ def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path) -
 
 
 def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, threads: int, times: dict,
-            row: dict, syn_d: Path) -> dict:
+            row: dict, syn_d: Path, ram: dict | None = None) -> dict:
     """One run; fills `row` as it goes, so a failed run keeps what it got (cycles). Returns its info.
     syn_d: the DC run unpacked (point_inputs), PT's PWR_RUN."""
     rdir = pdir / run_tag(size, stim, seed)
@@ -913,6 +939,12 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         cycles = int(win.group(3))
         row["cycles"] = cycles
         info["window_ns"] = [float(win.group(1)), float(win.group(2))]
+        if ram and ram["macros"]:       # X50, X62: each macro instance's RAMCOUNT line (the whole run: idle outside it)
+            counts = re.findall(r"RAMCOUNT\s+(\S+)\s+(\S+)\s+reads\s+(\d+)\s+writes\s+(\d+)", log)
+            cells = {m["cell"]: m for m in ram["macros"]}
+            if not counts or any(c not in cells for _, c, _, _ in counts):
+                raise Fail(f"ram: RAMCOUNT lines {counts}, macros {sorted(cells)}")
+            info["ramcount"] = [{"inst": i, "cell": c, "reads": int(r), "writes": int(w)} for i, c, r, w in counts]
         if forge and "TB: FAIL" in log:
             raise Fail("sim: " + re.search(r"TB: FAIL: (.*)", log).group(1))
         # X56: the window is the measurement; the expected count (and forge's COUNTER) beside it, failing only
@@ -956,6 +988,8 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
     ptd.mkdir()
     env = {**os.environ, "PWR_RUN": str(syn_d), "PWR_MODE": "saif", "PWR_ACT": str(saif),
            "PWR_STRIP": f"{TB_TOP}/{DUT}", "PWR_OUT": str(ptd), "PWR_THREADS": str(threads)}
+    if ram and ram["macros"]:
+        env["PWR_RAM_DBS"] = " ".join(str(m["db"]) for m in ram["macros"])
     rc = run_tool([tool("pt_shell", "PT_SHELL"), "-no_init", "-f", str(PT_SCRIPT), "-output_log_file",
                    str(ptd / "pt_shell.log")], ptd / "pt_stdout.log", ptd, env, stdin_null=True)
     times["pt"] = time.time() - t
@@ -980,7 +1014,32 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
     info["wire_load"] = wire_load_check(ptd / "wire_load.rpt")
     groups = pt_groups(ptd)
     info["modules"] = pt_hierarchy(ptd)
+    e_ram = None
+    if ram and ram["macros"]:
+        # X62: the macros are PT's black_box group; their internal energy is PT7's averaged figure (kept as a check),
+        # replaced by the counted accesses (X50); their output nets' switching stays the logic's, with the
+        # combinational group (the loads it drives)
+        bb_int, bb_sw, _ = pt_groups(ptd, ["black_box"])["black_box"]
+        i, s_, l = groups["combinational"]
+        groups["combinational"] = (i, s_ + bb_sw, l)
+        cells = {m["cell"]: m for m in ram["macros"]}
+        reads = sum(c["reads"] for c in info["ramcount"])
+        writes = sum(c["writes"] for c in info["ramcount"])
+        e_ram = sum(c["reads"] * cells[c["cell"]]["e_rd_pj"] + c["writes"] * cells[c["cell"]]["e_wr_pj"]
+                    for c in info["ramcount"])
+        row.update({"ram_kind": "macro", "ram_reads": reads, "ram_writes": writes,
+                    "e_ram_pt_pj": bb_int * CLOCK_NS / 1000.0 * cycles})
     energy_row(row, groups, flop_bits_of(tech, tb["point"]))
+    if e_ram is not None:
+        row["e_ram_pj"] = e_ram
+        row["e_run_pj"] = float(row["e_run_pj"]) + e_ram         # the task: the logic's window plus the memory
+    elif ram:                       # flops: the RAM modules' instances, inside PT's total already
+        hits = [m for m in info["modules"] if any(m["design"].startswith(r) for r in ram["modules"])]
+        if not hits:
+            raise Fail(f"ram: no instance of {ram['modules']} in power_hierarchy.rpt")
+        top_depth = min(m["path"].count("/") for m in hits)
+        row.update({"ram_kind": "flops", "e_ram_pj": sum(m["dyn_uw"] for m in hits if m["path"].count("/") == top_depth)
+                    * CLOCK_NS / 1000.0 * cycles})
     row["status"] = "ok"
     return info
 
@@ -1025,6 +1084,11 @@ def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, th
     out = []
     try:
         rams = syn.rams_of(point) if SOURCE in HLS_TOOLS else []
+        ram = None
+        if rams and SOURCE == "hls" and syn_zip(tech, point).is_file():     # X62: a macro or flops, from DC's plan
+            tj = json.loads(arc.read(syn_zip(tech, point), "tech.json"))
+            if tj.get("resolved", {}).get("ram"):
+                rams = []
         if rams:
             row = {c: "" for c in COLUMNS}
             row.update({"point": point, "top": syn.top_of(point), "tech": tech, "clock_ns": _num(CLOCK_NS), "size": "",
@@ -1033,6 +1097,7 @@ def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, th
             return [(row, {})]
         try:
             syn_d, netlist, bundle = point_inputs(stack, tech, point)
+            ram = ram_inputs(stack, syn_d)
             input_err = None
         except Fail as e:       # hls builds tb.json without the netlist: each run fails at compile, as before
             if SOURCE != "hls":
@@ -1056,7 +1121,7 @@ def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, th
         try:
             if input_err:
                 raise Fail(input_err)
-            compile_point(tb, tech, pdir, netlist, RUNS / tech / "_cells")     # the cells: one per technology
+            compile_point(tb, tech, pdir, netlist, RUNS / tech / "_cells", ram)     # the cells: one per technology
             compile_err = None
         except Fail as e:
             compile_err = str(e)
@@ -1083,7 +1148,7 @@ def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, th
                     raise Fail(f"size {size} not in tb.json ({', '.join(tb['sizes'])})")
                 if compile_err:
                     raise Fail(compile_err)
-                info.update(run_one(tb, tech, pdir, size, stim, seed, threads, times, base, syn_d))
+                info.update(run_one(tb, tech, pdir, size, stim, seed, threads, times, base, syn_d, ram))
             except Fail as e:
                 base["status"] = f"failed: {e}"
             except Exception as e:          # noqa: BLE001  a crash fails this run, not the batch
@@ -1121,7 +1186,9 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
     out = RESULTS / tech
     key = lambda r: (r["point"], r["size"], str(r["seed"]))  # noqa: E731
     rows = [r for r, _ in results]
-    _merge(out / "power_pt.csv", columns(), key, rows, {key(r) for r in rows})
+    # a point that ran replaces its parked row (size and seed empty: 'skipped: needs a RAM macro', X62)
+    ran = {r["point"] for r in rows if r.get("size")}
+    _merge(out / "power_pt.csv", columns(), key, rows, {key(r) for r in rows} | {(p, "", "") for p in ran})
     mods, mod_keys = [], set()
     reports: dict[str, dict] = {}       # point -> the members of results/<source>/<tech>/power_reports/<point>.zip
 

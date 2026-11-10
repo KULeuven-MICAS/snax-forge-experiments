@@ -76,6 +76,10 @@ set power_enable_analysis true
 set power_analysis_mode averaged
 set search_path [list . [file dirname $lib_db]]
 set link_library [list * $lib_db]
+# X62: SRAM macros (a Vitis RAM swapped by syn.py), their .db beside the library (PWR_RAM_DBS, space separated)
+if {[info exists ::env(PWR_RAM_DBS)] && $::env(PWR_RAM_DBS) ne ""} {
+    foreach db $::env(PWR_RAM_DBS) { lappend link_library [file normalize $db] }
+}
 set netlist [glob [file join $run out *_mapped.v]]
 read_verilog $netlist
 set top [file rootname [file tail $netlist]]
