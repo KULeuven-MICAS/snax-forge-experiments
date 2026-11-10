@@ -57,6 +57,8 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X52](#x52-the-streamer-reader-and-the-sparse-interconnect-characterized) | STRM1: snax_cluster's reader alone (also a writer's cost) and sparse interconnect, totals only, the reader as the Streamer uses it, the two stimuli, no clock gating, the run settings |
 | [X53](#x53-the-strm-tables-and-their-interpolation) | `results/strm/<tech>/streamer.csv` and `xbar.csv` (`report/strm_table.py`): totals per point; trilinear and bilinear interpolation in the raw values, refused outside the grid; the interconnect's energy above inputs = banks |
 | [X54](#x54-the-interconnects-energy-interpolated-in-1inputs) | The interconnect's energy interpolated linearly in 1/inputs (it goes as a + b/inputs); replaces X53's linear rule for that field only |
+| [X55](#x55-untiered-at-n2048) | Untiered at n2048 for every source (relu and axpy n2048, matadd m32_n64, rowsum m16_n128); forge has only that size; amends X24 and X45 |
+| [X56](#x56-cycles-checked-within-5-) | The start-to-done window is the measurement; expected cycles beside it, a point fails only past 5 %; replaces X19's and X23's exact match |
 
 ## Synthesis
 
@@ -512,3 +514,19 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Decision:** in `report/strm_table.py`'s reference interpolation, the interconnect's `e_access_pj` is interpolated linearly in 1/inputs along the inputs axis (and linearly in banks); its area and every reader field stay linear in the raw values (X53). Inputs > banks still take the value at inputs = banks. No curve fit is used; the worked steps, the reason and the checks are in `docs/cost_tables.md`. This replaces X53's rule for that one field.
 - **Why:** at a fixed bank count the energy per access is $a + b/n$: a per-cycle cost $b$ (the registers, which are not clock-gated, and the bank side, about 0.38 pJ per bank per cycle) shared by the $n$ grants of a conflict-free cycle, plus a cost $a$ per access. Interpolation in 1/inputs reproduces that form exactly between two grid points. Leave-one-out over the 11 interior points: mean 2.49 % and worst +11.32 % (32 inputs, 64 banks, a measured dip; all others within 3.9 %), against 8.98 % and +24.32 % in inputs. Seven fitted forms (power, exponential, second-order polynomials in $n$ and $1/n$, $a + b/n + c\thinspace n$) did no better; the best, $a + b/n + c\thinspace n$, ties at 2.7 % and +10.8 %.
 - **Source:** `results/strm/runs/2026-11-06_strm1_r2.md`, `docs/cost_tables.md`.
+
+## CSYN1: E7's untiered rows
+
+### X55. Untiered at n2048
+
+- **Date:** 2026-11-10 (CSYN1)
+- **Decision:** X24's reference task is extended to the untiered tier. Every untiered point of every source has an `n2048` task, shaped relu and axpy n2048, matadd m32_n64, rowsum m16_n128. The forge points (`relu`, `matadd`, `axpy`, `axpy_baked`, `rowsum`, `rowsum_2` at W = 1, 2, 4, 8, 16) have only this size. Vitis opt and dace, Bambu and XLS have it beside cosim's sizes and `b64`, its pins from `params.json`'s config at those values (`sim/sources/hls.py` `EXTRA_SIZES`, by tier and kernel) and its expected cycles from cosim's line (X19). The dace cases are rebuilt at these sizes, as DaCe sizes its buffers at build time. Energy is compared at n2048: `parts_size` is `n2048` on every untiered row. Amends X24 (untiered included) and X45 (forge has untiered points, and untiered has n2048).
+- **Why:** the same task at every W and for every tool, with at least 128 beats at W = 16, so the toggle check applies everywhere. The shapes keep the ratios of the cosim sizes and let `rowsum_2` (W ≤ M) and `rowsum` (N a multiple of W) run at W = 16.
+- **Source:** agreed 2026-11-10, CSYN1 Part A topics 1 to 3.
+
+### X56. Cycles checked within 5 %
+
+- **Date:** 2026-11-10 (CSYN1)
+- **Decision:** the window is the measurement: each tool's start-to-done window as X12, X13, X23 and X44 define it. The expected cycles are a column beside it with the difference: for forge the COUNTER read back and snax-forge's model, for HLS cosim's line. A point fails only when the window differs from the expected count by more than 5 %. Replaces the exact match in X19 and X23.
+- **Why:** energy is taken per task over the measured window, and a few cycles of fill or drain change it very little; a gap past 5 % means a wrong size, CSR or stimulus, which is what the check is for.
+- **Source:** agreed 2026-11-10, CSYN1 Part A topic 3.
