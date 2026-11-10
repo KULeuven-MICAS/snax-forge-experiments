@@ -62,6 +62,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X57](#x57-forges-untiered-points-at-int64) | forge's relu, matadd, axpy and axpy_baked at int64: snax-forge's recipe with a `dtypes` override from `forge/points.json`, fed to its sandbox from `tmp/` |
 | [X58](#x58-a-forge-points-program-from-snax-forges-lower) | A forge point is bundled at its n2048 shape (its sets, tier done N = 2048 too) and driven with what snax-forge's LOWER writes for it: JOBS, JOB_BEATS, scalar CSRs, each stream's element order |
 | [X59](#x59-at-most-16-cores-and-some-licences-left-free) | Everything a round runs at once uses at most 16 cores and leaves licences free: DC `-j 4 --cores 4`, `pwr run --cores 16 -j 4`, one batch at a time; amends X16 |
+| [X60](#x60-n2048-module-energies-beside-the-default-run) | `power_pt_modules.csv` has a `size` column: the default run's modules and every n2048 run's, per point and size; no default run moves; amends X20 |
 
 ## Synthesis
 
@@ -554,3 +555,10 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Decision:** everything a round runs at the same time (DC, Questa, PT, CACTI) uses at most 16 cores of the host, and never all the free licences: DC `syn.py run -j 4 --cores 4` (4 Design-Compiler and DC-Expert licences); power `pwr run --cores 16 -j 4` (`--cores` added to `sim/pwr.py`: J <= cores, PT threads = cores // J, so 4 workers with 4 PT threads); one batch at a time, not DC beside power or one source's power beside another's. Amends X16 (J and the threads from nproc, DC at `--cores 16`).
 - **Why:** the host and the licences are shared. CSYN1 R1's first probe ran six DC runs at `--cores 16` beside three power batches of 3 workers with 10 PT threads each: load 74 on 32 cores, and six DC runs held 8 of the 10 DC-Expert licences (a multicore DC run can take more than one), so two of them hit SEC-50 (PITFALLS L4). Ryan asked to keep to 16 cores and leave licences free; the batches were stopped, their folders deleted and the runs repeated within the budget.
 - **Source:** `results/forge/runs/2026-11-10_csyn1_r1.md`.
+
+### X60. n2048 module energies beside the default run
+
+- **Date:** 2026-11-10 (CSYN1 R2)
+- **Decision:** `power_pt_modules.csv` (every source with one: forge, hls, bambu, xls; both technologies) gets a `size` column after `tech` and is keyed by point and size. A run writes its module rows when it is the point's default run (as before: b64, rowsum m8_n64, forge n2048) or an `n2048` run with seed 0; a rerun replaces the rows of its point and size only. The default run of an HLS point does not change, so its committed reports stay at the top of its `power_reports` zip. `pixi run pwr modules --source S --tech T` filled the column on the rows written before (each point's default size, from its committed `tb.json` and the source's `default_size`) and added the rows of every n2048 run made before, from the run's `power_hierarchy.rpt` and `units.rpt` kept in its `sim/runs/` zip, each point's top row checked equal to `power_pt.csv`'s `e_dyn_pj`. Amends X20 (one row per hierarchical cell of the default run).
+- **Why:** X55 compares untiered energy at n2048 (`parts_size` n2048), but the parts come from `power_pt_modules.csv`, which held the default run only; making n2048 an HLS point's default run moves its committed reports (CSYN1 R1, rowsum). A size column keeps both, loses no row and needs no rerun: every n2048 run had its hierarchy report kept.
+- **Source:** `results/forge/runs/2026-11-10_csyn1_r2.md`.

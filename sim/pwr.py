@@ -63,7 +63,10 @@ syn/runs/hls/<tech>/<point>.zip (syn/syn.py). Per point, one worker runs, start 
              sim/runs/.../<point>.zip (tb.json, per run tag the SAIF and PT's reports, merged with the zip's
              other runs), test-read and deleted with the rest, and tmp/ is cleaned (X51)
 Results: results/hls/<tech>/power_pt.csv (one row per point, size and seed), power_pt_modules.csv
-(the default run of each point) and power_reports/<point>.zip (X20, X51).
+(per point and size: the default run and every n2048 run, X60) and power_reports/<point>.zip (X20, X51).
+  pixi run pwr modules --source S --tech T   X60's one-off: fills power_pt_modules.csv's size column on old
+                                              rows and adds the n2048 runs' rows from sim/runs/ (their kept
+                                              power_hierarchy.rpt and units.rpt), checked against power_pt.csv
 
 Parallel workers J = min(free msimhdlsim, free PrimePower, free PrimeTime, nproc) from lmutil lmstat;
 PT threads per run = max(1, nproc // J) (X16); --cores C puts C in place of nproc, a budget for the whole run. A tool that fails on a licence error is retried once (X17).
@@ -140,7 +143,10 @@ FORGE_COLUMNS = ["recipe", "snax_forge_commit", "counter", "counter_diff"]
 # X56: the window is the measurement; the expected count (and forge's COUNTER) is recorded beside it, with its
 # difference (expected - window), and fails the run only when it is more than this far from the window
 CYCLES_TOL = 0.05
-MODULE_COLUMNS = ["point", "tech", "path", "design", "e_dyn_pj"]
+MODULE_COLUMNS = ["point", "tech", "size", "path", "design", "e_dyn_pj"]
+# X60: power_pt_modules.csv holds the modules of each point's default run and of every n2048 run (the reference
+# task, X24, X55), one set of rows per point and size; the default run stays where it is (b64, rowsum m8_n64)
+MODULE_SIZES = ("n2048",)
 KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
 LICENCE_ERR = re.compile(r"(?i)(licen[sc]\w*\s+(error|fail\w*|not available|denied|checkout)|unable to check\s*out"
                          r"|could not check\s*out|cannot check\s*out|feature removed|license server)")
@@ -1116,7 +1122,7 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
     key = lambda r: (r["point"], r["size"], str(r["seed"]))  # noqa: E731
     rows = [r for r, _ in results]
     _merge(out / "power_pt.csv", columns(), key, rows, {key(r) for r in rows})
-    mods, mod_points = [], set()
+    mods, mod_keys = [], set()
     reports: dict[str, dict] = {}       # point -> the members of results/<source>/<tech>/power_reports/<point>.zip
 
     def members(point: str) -> dict:
@@ -1124,18 +1130,19 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
             reports[point] = arc.read_all(power_zip(tech, point))
         return reports[point]
     for r, info in results:
-        if not info.get("default"):
+        if info.get("default"):
+            have = members(r["point"])
+            for k in [k for k in have if "/" not in k]:     # the default run's reports and tb.json, at the top
+                del have[k]
+        elif r["size"] not in MODULE_SIZES or str(r["seed"]) != "0" or INITREG_SEED is not None:
             continue
-        mod_points.add(r["point"])
-        have = members(r["point"])
-        for k in [k for k in have if "/" not in k]:     # the default run's reports and tb.json, at the top
-            del have[k]
+        mod_keys.add((r["point"], r["size"]))           # X60: the modules of this point and size are replaced
         if r["status"] != "ok":
             continue
         for mod in info.get("modules", []):
-            mods.append({"point": r["point"], "tech": tech, "path": mod["path"], "design": mod["design"],
-                         "e_dyn_pj": mod["dyn_uw"] * CLOCK_NS / 1000.0})
-    _merge(out / "power_pt_modules.csv", MODULE_COLUMNS, lambda r: r["point"], mods, mod_points)
+            mods.append({"point": r["point"], "tech": tech, "size": r["size"], "path": mod["path"],
+                         "design": mod["design"], "e_dyn_pj": mod["dyn_uw"] * CLOCK_NS / 1000.0})
+    _merge(out / "power_pt_modules.csv", MODULE_COLUMNS, lambda r: (r["point"], r["size"]), mods, mod_keys)
     for r, info in results:
         if r["status"] != "ok":
             continue
@@ -1887,6 +1894,58 @@ def _setup_check(tech: str, point: str, base: Path, run: Path) -> int:
     return 0
 
 
+def cmd_modules(args) -> int:
+    """X60, once per source and technology: power_pt_modules.csv's size column filled on the rows written before it
+    (the point's default size, from its committed tb.json and the source's default_size), and the rows of every
+    n2048 run with seed 0 that has none yet, from the run's kept power_hierarchy.rpt and units.rpt in sim/runs/
+    (pt_hierarchy, as a run writes them). Each added point's top row must equal power_pt.csv's e_dyn_pj."""
+    use_source(args.source)
+    f = RESULTS / args.tech / "power_pt_modules.csv"
+    with f.open(newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    with (RESULTS / args.tech / "power_pt.csv").open(newline="") as fh:
+        power = {(r["point"], r["size"]): r for r in csv.DictReader(fh) if r["seed"] == "0"}
+    filled = 0
+    defaults: dict[str, str] = {}
+    for r in rows:
+        if r.get("size"):
+            continue
+        p = r["point"]
+        if p not in defaults:
+            tb = json.loads(arc.read(power_zip(args.tech, p), "tb.json"))
+            defaults[p] = src().default_size(tb)
+        r["size"] = defaults[p]
+        filled += 1
+    have = {(r["point"], r["size"]) for r in rows}
+    added, missing = [], []
+    for (p, size), pr in sorted(power.items()):
+        if size not in MODULE_SIZES or pr["status"] != "ok" or (p, size) in have:
+            continue
+        z = tech_runs(args.tech) / f"{p}.zip"
+        tag = run_tag(size, "rand64", 0)
+        if not z.is_file() or not arc.has(z, f"{tag}/pt/power_hierarchy.rpt") or not arc.has(z, f"{tag}/pt/units.rpt"):
+            missing.append(p)
+            continue
+        with arc.unpacked(z, [f"{tag}/pt/power_hierarchy.rpt", f"{tag}/pt/units.rpt"]) as d:
+            mods = pt_hierarchy(d / tag / "pt")
+        new = [{"point": p, "tech": args.tech, "size": size, "path": m["path"], "design": m["design"],
+                "e_dyn_pj": _num(m["dyn_uw"] * CLOCK_NS / 1000.0)} for m in mods]
+        top = min(new, key=lambda m: m["path"].count("/"))
+        if abs(float(top["e_dyn_pj"]) - float(pr["e_dyn_pj"])) > 1e-6 * max(1.0, abs(float(pr["e_dyn_pj"]))):
+            sys.exit(f"{p} {size}: top module {top['e_dyn_pj']} pJ, power_pt.csv e_dyn_pj {pr['e_dyn_pj']}")
+        added += new
+        print(f"  {args.tech} {p} {size}: {len(new)} rows, top {top['design']} {top['e_dyn_pj']} pJ")
+    out = rows + added
+    out.sort(key=lambda r: (r["point"], r["size"], r["path"]))
+    with f.open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=MODULE_COLUMNS, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(out)
+    print(f"pwr modules: {args.source} {args.tech}: size filled on {filled} rows, {len(added)} rows added "
+          f"({len({(r['point'], r['size']) for r in added})} runs); no kept hierarchy report: {missing or 'none'}")
+    return 1 if missing else 0
+
+
 def cmd_summary(args) -> int:
     use_source(args.source)
     cols = ["point", "size", "seed", "cycles", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "e_comb_fire_pj",
@@ -1937,6 +1996,10 @@ def main() -> int:
     p.add_argument("--source", choices=list(SOURCES), default="hls")
     p.add_argument("--point", default=None, help=f"default per source: {SETUP_POINTS}")
     p.set_defaults(fn=cmd_setup_check)
+    p = sub.add_parser("modules", help="X60: fill power_pt_modules.csv's size column, add the n2048 runs' modules")
+    p.add_argument("--tech", required=True, choices=syn.tech_names())
+    p.add_argument("--source", choices=["hls", "forge", "bambu", "xls"], default="hls")
+    p.set_defaults(fn=cmd_modules)
     p = sub.add_parser("summary", help="print power_pt.csv")
     p.add_argument("patterns", nargs="*")
     p.add_argument("--tech", choices=syn.tech_names())
