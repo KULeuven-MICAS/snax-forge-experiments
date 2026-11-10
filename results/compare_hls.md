@@ -1,6 +1,6 @@
 # The HLS cases side by side: Vitis opt and dace, Bambu, XLS
 
-Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs (X45, X46, X61); the text outside the `gen` markers is written by hand. forge's cases are in since CSYN1 R2 (X61), and every tier is shown at n2048; the insights below were written in HSYN1 R9 for the HLS cases alone and, for untiered, at the cosim sizes (m16_n32, n512, m8_n64), and have not been reread against the n2048 numbers.
+Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs (X45, X46, X61); the text outside the `gen` markers is written by hand. forge's cases are in since CSYN1 R2 (X61), and every tier is shown at n2048. The insights were written in HSYN1 R9 for the HLS cases and reread against the n2048 numbers in CSYN1 R4, with forge's cases added; section 2 opens with the summary.
 
 ## 1. Setup
 
@@ -24,16 +24,40 @@ Main view: nangate45, int64, every point synthesized at a 10 ns clock (the HLS t
 
 ## 2. Across all kernels
 
-All numbers below are nangate45, int64, at the sizes of the tables (tier done n2048; untiered the larger task size). Flops are DC's `seq_cells`, traced to each tool's RTL in R6 and R7.
+### Summary: forge's ctrl + datapath against the HLS tools
 
-- **Registers per lane decide the gaps wherever the arithmetic is cheap.** Flops added per lane (the slope of the flop count over W): XLS 0; Vitis opt 64 per output stream, since it registers the output beat, and 0 for the reductions; Bambu 64 per stream, inputs and outputs alike (vecadd, vecmul and axpy 192; relu 128; dot about 141; vsum about 68).
+forge without its CSR file, X63's like-for-like basis, against the best HLS case per metric: the lowest of Vitis opt, Vitis dace, Bambu and XLS, taken separately for energy and for area. n2048, nangate45, int64. Each cell is forge's energy per element divided by the best HLS energy per element, then forge's area divided by the smallest HLS area; below 1, forge is better. dot is forge's dot 3 and axpy is forge's α from a CSR (forge baked is not like-for-like). vecadd and matadd are the same hardware for every tool, and so are vsum and rowsum (energies within about 2 %), so they share rows.
+
+| Kernel | W = 1 | W = 2 | W = 4 | W = 8 | W = 16 |
+|---|---|---|---|---|---|
+| dot (forge 3) | 0.98 / 1.07 | 0.96 / 1.03 | 0.97 / 1.01 | 0.97 / 1.00 | 0.97 / 0.99 |
+| vecmul | 0.94 / 1.04 | 0.93 / 1.02 | 0.92 / 0.99 | 0.93 / 0.99 | 0.92 / 0.99 |
+| axpy (α from a CSR) | 0.90 / 0.99 | 0.91 / 0.99 | 0.91 / 0.99 | 0.91 / 0.99 | 0.90 / 0.99 |
+| vecadd, matadd | 0.99 / 1.40 | 0.87 / 1.13 | 0.80 / 0.93 | 0.76 / 0.81 | 0.74 / 0.74 |
+| vsum, rowsum | 1.22 / 1.43 | 1.12 / 1.28 | 1.02 / 1.15 | 0.92 / 1.03 | 0.95 / 0.96 |
+| relu | 1.40 / 2.14 | 1.24 / 1.96 | 1.14 / 1.72 | 1.07 / 1.48 | 1.03 / 1.28 |
+
+- **Energy:** from W = 8, forge has the lowest energy per element on six of the eight kernels: 3 % below the best HLS case on dot, 7 to 8 % on vecmul, 9 to 10 % on axpy, 24 to 26 % on vecadd and matadd, 5 to 8 % on vsum and rowsum. relu stays above XLS at every W (3 % at W = 16).
+- **Area:** within 1 % of the smallest wherever 64-bit multipliers set it (dot, vecmul and axpy, from W = 4); 19 to 26 % smaller on vecadd and matadd at W = 8 and 16; larger at small W on the reductions (15 to 43 % at W ≤ 4) and on relu (28 % to 2.1x).
+- **Why the rows fall with W:** forge's control is fixed, about 711 µm² for an elementwise unit and 1,294 µm² for a fold with JOB_BEATS, at every W, against XLS's 32 to 160 flops in total. It holds the job counter, snax-forge D123's 32-bit busy-cycle COUNTER and the START, busy and done handshake with the CSR file. Where the datapath is a few hundred µm² (relu's 273 µm² at W = 4, a one-lane adder), the control decides; as W grows the datapath takes over.
+- **No flops per lane and no input gating:** forge's datapath is the arithmetic only, so its slope over W is the lowest (vecadd: 270 µm² per lane, against XLS 406, Vitis 679 and Bambu 1622).
+- **Latency:** forge is at par, one cycle per beat. The exceptions are dot 5 and 6 (145 and 146 cycles at W = 16 against 129), from the stall and the holding buffer.
+- **With the CSR file** (the totals in sections 3 and 4), forge adds 850 µm² for an elementwise unit, 1,107 µm² for a fold and 1,375 µm² for axpy (K1_LO and K1_HI), and 0.73 to 1.19 pJ per cycle. Integrating any HLS block into the cluster would need a register interface of its own (X63).
+
+### The HLS cases
+
+All numbers below are nangate45, int64, at n2048 (X24, X55). Flops are DC's `seq_cells`, traced to each tool's RTL in R6 and R7.
+
+- **Registers per lane decide the gaps wherever the arithmetic is cheap.** Flops added per lane (the slope of the flop count over W): forge 0, XLS 0; Vitis opt 64 per output stream, since it registers the output beat, and 0 for the reductions; Bambu 64 per stream, inputs and outputs alike (vecadd, vecmul and axpy 192; relu 128; dot about 141; vsum about 68).
 - **Bambu's registered beats are its most costly trait.** In vecadd they are 53 % of its area and 60 % of its energy, and they are why its area grows 1622 µm² per lane against Vitis's 679 and XLS's 406.
-- **XLS's flops are its proc state only, and they do not grow with W:** 32 (the loop count: vecadd, vecmul, matadd, relu), 96 (axpy: loop count and alpha), 160 (vsum, dot, rowsum). That makes XLS the smallest case in every kernel, with flops at most 3 % of its energy from W = 8.
+- **XLS's flops are its proc state only, and they do not grow with W:** 32 (the loop count: vecadd, vecmul, matadd, relu), 96 (axpy: loop count and alpha), 160 (vsum, dot, rowsum). That makes XLS the smallest HLS case in every kernel, with flops at most 3 % of its energy from W = 8. forge's ctrl + datapath is smaller than XLS on vecadd and matadd from W = 4 and on vsum and rowsum at W = 16 (the summary above).
+- **XLS gates every input bit with its proc state.** In vecadd that is 2 x 64 AND gates per lane: 497 AND2 cells at W = 4 (529 µm², 28 % of its area) and 1,985 at W = 16 (2,112 µm², 31 %). In relu the same gates are the operation itself (253 at W = 4); in the multiplier kernels fewer are left (vecmul W = 16: 1,097 cells, 1 % of the area). forge feeds its datapath straight from the shell's valid-ready ports, so this is where XLS's extra vecadd area goes, and likely its extra energy; the energy share is not measured.
 - **64-bit multipliers set the area wherever they are in the datapath** (vecmul, dot, axpy): about 7.0k to 8.6k µm² per lane for every tool. At W = 16, Vitis opt is within 1 to 10 % of XLS and Bambu 12 to 22 % above it, the difference being registers.
 - **Run-time pins:** Vitis registers its pins (`ap_vld`), XLS keeps them in its proc state, and Bambu reads them as plain wires held for the task, so Bambu pays no pin registers. In axpy, Vitis's 65 extra fixed flops against vecadd are alpha's pin register.
 - **Energy per task falls with W and then levels off:** the fixed part (control, handshakes, reset logic) is paid per cycle, and wider beats need fewer cycles for the same task.
-- **Latency is about one cycle per beat for all four cases.** The differences of 1 or 2 cycles are their windows and pipeline depths (Vitis opt 2 stages at 10 ns, Bambu an iteration latency of 2 or 3, XLS one stage). The one real exception is Bambu's dot at W = 4 and 8, which runs at II = 2.
-- **Control is only visible where the RTL keeps it apart.** Bambu's controller is a module of its own and small (81 µm² in dot at W = 8, 0.1 % of the area). Vitis and XLS mix control and datapath in one flat module, so their control cost cannot be split out after synthesis (X41); their totals hold it.
+- **Latency is about one cycle per beat for all four cases.** The differences of 1 or 2 cycles are their windows and pipeline depths (Vitis opt 2 stages at 10 ns, Bambu an iteration latency of 2 or 3, XLS one stage). The one real exception is Bambu's dot at W = 4 and 8, which runs at II = 2. forge is at par (the summary above); DaCe's two loops take twice as long (next bullet).
+- **Control is only visible where the RTL keeps it apart.** Bambu's controller is a module of its own and small (81 µm² in dot at W = 8, 0.1 % of the area). Vitis and XLS mix control and datapath in one flat module, so their control cost cannot be split out after synthesis (X41); their totals hold it. forge keeps its control in `<tag>_ctrl` and its CSR file in `<tag>_csr` (X22), the only case with both measured apart. The Bambu figure holds after X63's correction of Bambu's parts.
+- **Vitis dace with a RAM** (dot, axpy and rowsum at W = 1, X62): DaCe keeps NPBench's intermediate array, so dot and axpy write 2048 words to a 2048 x 64 macro (49.3k µm²) and read them back in a second loop. That is 4101 cycles, twice the others; 57.7k and 58.2k µm²; 75.5 and 73.5 nJ per task, the macro 85 % of the area and 60 % of the energy. rowsum's 16-word `y_buf` is built from flops (CACTI refuses 16 words, and the buffer has a second read port): 18.8k µm², 2137 cycles, 32.9 nJ. forge's `fuse_map` removes the intermediate array altogether.
 - **Timing:** every point meets 10 ns. XLS, with one combinational stage from its ports, has the least slack (dot at W = 16: 2.38 ns on nangate45, against 3.87 ns for Bambu at W = 8 and 4.17 ns for Vitis at W = 8, R4).
 
 ## 3. Tier done
@@ -79,6 +103,7 @@ n2048, nangate45, int64, 10 ns.
 - At W = 16: XLS 6.8k µm², Vitis opt 11.5k, Vitis dace 11.9k, Bambu 26.7k. Per lane: XLS 406, Vitis 679, Bambu 1622 µm². The gap is registers: Vitis adds 64 flops per lane (the output beat), Bambu 192 (both input beats and the output beat), XLS none.
 - Energy per task barely moves from W = 4 on: XLS 2.2 to 2.7 nJ, Vitis opt 3.1 to 4.0, Bambu 6.4 to 7.4. Flops are 72 to 78 % of Vitis's energy, 60 to 64 % of Bambu's and 1 to 16 % of XLS's.
 - Vitis dace is opt with 30 to 50 more flops and, from W = 4, one more cycle.
+- forge: the datapath is the adders only, 270 µm² per lane and no flops; ctrl 713 µm² and csr 850 µm² at every W. Its ctrl + datapath is 5.0k µm² at W = 16 against XLS's 6.8k, and 0.805 against 1.090 pJ per element. With its CSR file it is still the smallest case at W = 16 (5.9k µm²) and the lowest-energy case from W = 4 (W = 16: 1.74 nJ). XLS's difference is its input gating (2,112 µm² of AND gates at W = 16, section 2).
 
 ### vecmul
 
@@ -120,6 +145,7 @@ n2048, nangate45, int64, 10 ns.
 
 - The 64-bit multiplier is about 7k µm² per lane for every tool, so the areas stay within 18 % (W = 16: XLS 112.9k, Vitis opt 118.0k, Bambu 133.1k).
 - Bambu spends about 20 % more energy per task (30 against 25 nJ); its flops are 18 to 20 % of its energy, against 9 to 12 % for Vitis and 0 to 2 % for XLS. The registered beats are the same as in vecadd.
+- forge's ctrl + datapath is within 1 % of the smallest area from W = 4 and 7 to 8 % lower in energy per element than the best HLS case at every W (W = 16: 11.30 pJ against Vitis opt's 12.30 and XLS's 12.39). Its totals with the CSR file are the lowest-energy case at every W (23.2 to 25.7 nJ).
 
 ### vsum
 
@@ -159,6 +185,7 @@ n2048, nangate45, int64, 10 ns.
 - The fixed part dominates at small W: about 2.1k µm² for Vitis and 2.2k for Bambu against 1.2k for XLS, which has 104 fewer flops than Vitis.
 - Energy per task drops from W = 1 to 16 by 6x for Vitis, 4x for XLS and 3x for Bambu: the fixed per-cycle cost is spread over fewer cycles, but Bambu's input registers grow with W.
 - Vitis dace exists only at W = 1 (1.5k µm², 166 flops), smaller than opt there (2.4k µm², 264 flops).
+- forge (vsum_tree: TreeAccumulate) carries a fold's fixed control, 1,294 µm² with JOB_BEATS, against XLS's 160 flops in total. At W = 1 its ctrl + datapath is 2.1k µm² against 1.5k for Vitis dace and XLS, and 22 % more energy than the best case; the two meet at W = 4 (2 % apart), and from W = 8 forge has the lowest energy (W = 16: 0.513 pJ per element against Vitis opt's 0.540, 6.1k µm² against 6.4k).
 
 ### dot
 
@@ -217,7 +244,9 @@ n2048, nangate45, int64, 10 ns.
 - Bambu runs at II = 2 at W = 4 and 8: 1026 and 514 cycles, twice the others, with the same lanes. Its energy per task rises at W = 4 (32.8 nJ against 31.3 at W = 2), and its power is lower than the others' there.
 - Vitis opt at 10 ns cuts its adder tree with 64-bit partial-sum registers at W = 8 (two) and W = 16 (four), `add_ln21_*_reg` in its Verilog; that is where its flops grow from 264 to 328 and 456.
 - XLS's combinational energy is 5 to 9 % above Vitis opt's at every W, while its flops are fewer (160). XLS gates every input bit with its idle state before the multipliers; how much of the gap that explains is not measured.
-- The areas stay within 12 % (W = 16: XLS 117.4k µm², Vitis opt 118.4k, Bambu 131.7k). Vitis dace_w1 is parked (RAM).
+- The areas stay within 12 % (W = 16: XLS 117.4k µm², Vitis opt 118.4k, Bambu 131.7k).
+- forge's dot 3 (the fused tree) is its best variant at every W, and its ctrl + datapath has the lowest energy of every case at every W (W = 16: 11.41 pJ per element against Vitis opt's 11.82 and XLS's 12.61), with an area within 1 % of the smallest (116.7k µm² against XLS's 117.4k at W = 16). At W = 16, dot 2, 4, 5 and 6 cost 7, 10, 8 and 14 % more area than dot 3, and dot 5 and 6 take 145 and 146 cycles against 129 (the MAC's stall and the holding buffer's drain).
+- Vitis dace_w1 (X62): 57.7k µm², 49.3k of it the 2048 x 64 macro holding DaCe's products; 4101 cycles, its two loops one after the other; 75.5 nJ per task, 45.3 of it the macro's counted 2048 writes and 2051 reads.
 
 ## 4. Tier untiered
 
@@ -259,7 +288,7 @@ n2048, nangate45, int64, 10 ns.
 
 **Insights.**
 
-- Every tool builds the same hardware as for vecadd (identical area and flops at every W): the 2-D loops become one flat run of M x N / W beats, so only the task size (512 elements) separates this table from vecadd's.
+- Every tool builds the same hardware as for vecadd: the 2-D loops become one flat run of M x N / W beats, and forge's streamers carry the 2-D pattern. At n2048 (m32_n64) area, flops, cycles and energy equal vecadd's at every W for every case, forge included, so vecadd's insights hold as they are.
 
 ### relu
 
@@ -296,8 +325,9 @@ n2048, nangate45, int64, 10 ns.
 **Insights.**
 
 - The cheapest operation, so registers decide everything: XLS needs 69 µm² per lane (a sign select), Vitis opt is 59 to 68 % registers (the output beat, 64 flops per lane), and Bambu registers both the input and the output beat (128 per lane, 1002 µm² per lane).
-- Energy per task at W = 8: XLS 0.25 nJ, Vitis 0.58, Bambu 1.00. Flops are 85 to 88 % of Vitis's energy.
+- Energy per task at W = 8: XLS 0.96 nJ, Vitis 2.24, Bambu 3.88. Flops are 86 to 89 % of Vitis's energy, 61 to 67 % of Bambu's, and 3 to 31 % of XLS's.
 - Each lane's sign bit is constant 0 after relu; Vitis's synthesis warns about it (LINT-52, LINT-31). Vitis dace exists only at W = 1.
+- forge: the datapath is the same sign select as XLS's (273 µm² at W = 4, against XLS's 253 AND gates, 269 µm²), so the whole gap is control: forge's ctrl is 711 µm² (351 of them flops) against XLS's 32 flops (145 µm²). Its ctrl + datapath is 28 % (W = 16) to 2.1x (W = 1) XLS's area and 3 to 40 % above its energy. relu is the one kernel where XLS beats forge at every W; an optional COUNTER (D123's busy-cycle counter is a measurement feature) would close part of the gap.
 
 ### axpy
 
@@ -339,8 +369,11 @@ n2048, nangate45, int64, 10 ns.
 **Insights.**
 
 - Multiplier-bound, like vecmul: at W = 16, XLS 112.7k µm², Vitis opt 123.5k, Bambu 138.0k.
-- XLS's 96 flops are its loop count and alpha; Vitis registers alpha as a pin and the output beat (199 fixed flops plus 64 per lane); Bambu reads alpha as a held wire but registers x, y and the output beat (192 flops per lane).
-- Energy per task: XLS 5.3 to 5.5 nJ, Vitis 5.7 to 6.1, Bambu 6.5 to 6.7, so Bambu is about 20 % above XLS at every W. Vitis dace_w1 is parked (RAM).
+- XLS's 96 flops are its loop count and alpha; Vitis registers alpha as a pin and the output beat (135 fixed flops plus 64 per lane, 199 at W = 1); Bambu reads alpha as a held wire but registers x, y and the output beat (192 flops per lane).
+- Energy per task: XLS 21.5 to 22.7 nJ, Vitis 22.9 to 24.8, Bambu 26.2 to 27.2, so Bambu is 20 to 22 % above XLS at every W.
+- forge with α in a CSR (K1_LO and K1_HI): its ctrl + datapath is within 1 % of XLS's area at every W and 9 to 10 % lower in energy (W = 16: 9.57 against 10.58 pJ per element). Its CSR file is the largest of the kernels, 1,375 µm², for α's two words.
+- forge baked bakes α = 3 into a shift and an add per lane: 9.3k µm² and 1.17 pJ per element at W = 16, 12x less area and 9x less energy than the best run-time α case (XLS). It is not like-for-like; it shows what the design-time choice is worth.
+- Vitis dace_w1 (X62): 58.2k µm², 49.3k of it the macro holding DaCe's α·x; 4101 cycles; 73.5 nJ per task, 45.3 of it the macro.
 
 ### rowsum
 
@@ -381,8 +414,9 @@ n2048, nangate45, int64, 10 ns.
 
 **Insights.**
 
-- Every tool builds the same hardware as for vsum (identical area and flops): restarting the sum every `len` beats costs nothing synthesis can see, so only the task size and Bambu's one extra cycle at W = 16 (35 against 34) differ from vsum.
-- Vitis dace_w1 is parked (RAM).
+- Every tool builds the same hardware as for vsum (identical area, flops and cycles at n2048): restarting the sum every `len` beats costs nothing synthesis can see, and the energies differ from vsum's by at most about 2 %.
+- forge's rowsum (the tree, TreeAccumulate, JOB_BEATS = N / W) follows vsum's ratios. rowsum 2 (LaneAccumulate, W lanes across rows) has the same cycles but W 64-bit sums switching every cycle: its datapath is 2.0x rowsum's at W = 4 (3.4k against 1.6k µm²) and 2.8x at W = 16 (13.5k against 4.8k), and its ctrl + datapath energy per element 2.1x and 3.8x. It is measured with ideal feed, so the bank conflicts of its column walk are not in these numbers. At W = 1 both build one adder and one register and come out identical.
+- Vitis dace_w1 (X62): `y_buf` (16 x 64) built from flops, 9.2k of its 18.8k µm²; 2137 cycles; 32.9 nJ per task.
 
 ## 5. Parts at n2048
 
