@@ -20,7 +20,7 @@ tb.json for the generated TB top (sim/pwr.py), as sources/hls.py's with:
           (axpy): plain inputs, no ap_vld; driven from time 0, before reset is released, and held for the
           whole run (Bambu reads them on every iteration, hls-exercises tb/bambu.svh); alpha drawn as a rand64
           data pin after the streams (X19)
-  sizes   as sources/hls.py's: the cosim sizes, b64 when every config pin equals loop_count, n2048 for tier done
+  sizes   as sources/hls.py's: the cosim sizes, b64 when every config pin equals loop_count, n2048 (X24, X55)
 Expected cycles: the line a x loop_count + b through cycles_done at the point's sizes in
 results/bambu/bambu_cycles.csv (status ok rows; cycles_done is start_port's cycle to done_port's, as the
 window counts), integer and exact at those sizes.
