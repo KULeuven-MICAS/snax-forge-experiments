@@ -82,6 +82,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4).
 - **Also:** `syn.py` writes the source's CSV from every run in `syn/runs/<source>/<tech>/`, so a local rerun that was never committed (ARC1's `done/vecadd/forge_w8`, 2026-11-06) comes back with any later run of the source: CSYN1 R1 and R2 each brought back its `date` (and in R1 its X40 slacks, accepted in R2). After a `syn run`, compare the CSV with the last commit by key, for the rows the run did not make (`results/forge/runs/2026-11-10_csyn1_r2.md`).
 
+### DC12. An SRAM macro is DC's and PT's black box: its power is outside the four groups
+
+- **Symptom:** a dace point with an SRAM macro (X62) synthesizes, and `syn.py` fails the row: `failed: power groups do not sum to the total dynamic power` (`done/dot/dace_w1` at DC's default activity: clock, register, sequential and combinational sum to 953.9 µW of the 1015.6 µW total; the black box holds the other 61.6).
+- **Cause:** the macro's `.lib` cell has no function (PITFALLS LIB6), so DC and PT book it in the `black_box` group: its internal energy (at DC's default activity, or PT's averaged mode, PT7), its leakage (CACTI's, 8.5 mW for 2048 x 64), and the switching of the nets it drives.
+- **Fix or check:** `syn.py` leaves the black box out of the sum check for a macro row; `sim/pwr.py` replaces its internal energy with the counted accesses (X50) and adds its output-net switching to the combinational group (X62). A row with a black box that is not a macro is still a failure.
+- **Found in:** `results/hls/runs/2026-11-10_csyn1_r3.md`.
+
 ## Libraries
 
 ### LIB1. nangate15's flops all have async reset or set
@@ -391,6 +398,7 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** snax-forge's kernels `relu`, `matadd` and `axpy` are int32 (its D113, two per 64-bit word); a recipe keeps the kernel's dtypes unless its `dtypes` field says otherwise, and these recipes have none.
 - **Fix or check:** X57: `forge/points.json` gives these points `dtypes` int64 and `forge/bundles.py` feeds the sandbox snax-forge's recipe with that field. Check `accelerator.json`'s port dtypes (and a scalar's `K1_LO`, `K1_HI`) before measuring a new recipe; `sim/sources/forge.py` refuses any port that is not int64.
 - **Found in:** `results/forge/runs/2026-11-10_csyn1_r1.md` (step 1).
+- **Also in hls-exercises' DaCe sources:** `bench/gen/gen_dace.py` builds DaCe's SDFG from snax-forge's kernel, so regenerating axpy's dace case on today's snax-forge turned every `int64_t` of `axpy_0_0.cpp` into `int` (CSYN1 R3). `gen_dace.py` now builds every container at `params.json`'s `dtype` (`KernelSpec.with_dtypes`); diff a regenerated dace source before running Vitis on it.
 
 ### E5. snax-forge's module names carry the design's name since D157
 
@@ -398,6 +406,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** the tag is `<accelerator_slot>_<design name>` (snax-forge's `gen/accelerator.py` `tag`), and the lanes block was renamed; `accelerator.json` also nests groups under `accelerators` (`forge/query.py`'s `flat` reads both forms).
 - **Fix or check:** compare SV with the tag and block names masked, `forge/sv_diff.py` (CSYN1 R1: dot_4 and vecadd at W = 4 identical; R2: the 41 tier done points at W <= 16 and vsum W = 32 identical, the other six W = 32 points no longer bundle, `connect.xbar_inputs`). `syn.py` takes the three modules from `bundle.json` and follows the names; `report/compare.py`'s `PARTS` still names `snax_forge_csr`, `snax_forge_ctrl`, `snax_forge_datapath` and must match by suffix before it reads rows of new bundles.
 - **Found in:** `results/forge/runs/2026-11-10_csyn1_r1.md` (step 1).
+
+### E6. hls-exercises' CSVs have CRLF line ends, and `Path.read_text` hides them
+
+- **Symptom:** removing six rows from `results/hls/hls_cycles.csv` with a script made git show every one of its 121 lines changed.
+- **Cause:** `bench.py` writes the CSVs with `csv.writer`, whose line end is `\r\n`; `Path.read_text()` translates it to `\n`, so a test for `"\r\n"` in the text is false and the file was written back with `\n`.
+- **Fix or check:** edit such files as bytes (or keep `newline=""` and `csv.writer`'s default), and check `git diff --stat` before committing.
+- **Found in:** `results/hls/runs/2026-11-10_csyn1_r3.md`.
 
 ## snax_cluster's generators (STRM1)
 
