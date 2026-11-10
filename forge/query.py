@@ -6,7 +6,7 @@ calls it as forge/bundles.py calls snax-forge's tasks: `pixi run --manifest-path
 PIXI_* and CONDA_* removed). It prints one JSON object on stdout.
 
   python forge/query.py point BUNDLE_DIR
-      kernel: the recipe's kernel (recipes/<recipe>.json, point.json's recipe)
+      kernel: the recipe's kernel (point.json's recipe, found under recipes/**/ by forge/bundles.py's find_recipe)
       ports:  per outer port of accelerator.json (inputs, then outputs, in its order) the container
               the design point's graph binds it to, as snax-forge's gen/rtl.py `vectors` finds it
 
@@ -27,6 +27,9 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from bundles import find_recipe  # noqa: E402  one resolver for both (recipes/**/<name>.json, custom/ left out)
 
 
 def _bundle(d: str) -> tuple[Path, dict, dict, dict]:
@@ -58,7 +61,7 @@ def cmd_point(bundle_dir: str) -> dict:
                 raise SystemExit(f"{end}: BRM port direction {bp.direction}, accelerator.json lists it as {side}")
             m = (node.inputs if side == "in" else node.outputs)[bp.name]
             ports.append({"end": end, "dir": side, "container": m.data})
-    recipe = Recipe.load(Path("recipes") / f"{point['recipe']}.json")
+    recipe = Recipe.load(find_recipe(point["recipe"], Path.cwd()))
     return {"kernel": recipe.kernel, "recipe": point["recipe"], "ports": ports}
 
 
