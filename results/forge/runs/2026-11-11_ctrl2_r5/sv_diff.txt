@@ -1,0 +1,76 @@
+done/dot/forge2_w1: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge2_w16: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge2_w2: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge2_w4: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge2_w8: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge3_w1: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge3_w16: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge3_w2: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge3_w4: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge3_w8: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge4_w1: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge4_w16: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge4_w2: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge4_w4: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge4_w8: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge5_w1: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge5_w16: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge5_w2: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge5_w4: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge5_w8: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge6_w1: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge6_w16: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge6_w2: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge6_w4: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/dot/forge6_w8: 5 SV differ: snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vecadd/forge_w1: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vecadd/forge_w16: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vecadd/forge_w2: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vecadd/forge_w4: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vecadd/forge_w8: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vecmul/forge_w1: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vecmul/forge_w16: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vecmul/forge_w2: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vecmul/forge_w4: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vecmul/forge_w8: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vsum/forge_w1: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vsum/forge_w16: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vsum/forge_w2: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vsum/forge_w4: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+done/vsum/forge_w8: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/axpy/forge_baked_w1: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/axpy/forge_baked_w16: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/axpy/forge_baked_w2: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/axpy/forge_baked_w4: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/axpy/forge_baked_w8: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/axpy/forge_w1: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/axpy/forge_w16: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/axpy/forge_w2: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/axpy/forge_w4: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/axpy/forge_w8: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/matadd/forge_w1: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/matadd/forge_w16: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/matadd/forge_w2: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/matadd/forge_w4: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/matadd/forge_w8: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/relu/forge_w1: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/relu/forge_w16: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/relu/forge_w2: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/relu/forge_w4: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/relu/forge_w8: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/rowsum/forge2_w1: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/rowsum/forge2_w16: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/rowsum/forge2_w2: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/rowsum/forge2_w4: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/rowsum/forge2_w8: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/rowsum/forge_w1: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/rowsum/forge_w16: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/rowsum/forge_w2: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/rowsum/forge_w4: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+untiered/rowsum/forge_w8: 5 SV differ: snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper; lists 2
+
+by set of differing modules:
+   45  snax_forge_acc_ctrl, snax_forge_csr, snax_forge_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper
+   25  snax_forge_csr, snax_forge_ctrl, snax_forge_dot_ctrl, snax_forge_peripherals (new), snax_forge_shell_wrapper
+unexpected: none
+dirty: none

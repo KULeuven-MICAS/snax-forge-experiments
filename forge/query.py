@@ -29,6 +29,11 @@ PIXI_* and CONDA_* removed). It prints one JSON object on stdout.
       estimate/cycles.py's `group_cycles`, every input valid and the output ready), with JOBS and each
       unit's T its JOB_BEATS (BEATS_JSON: {unit: value}) or its fixed T, as the program writes them
 
+  python forge/query.py ctrl_bits ACCELERATOR_JSON
+      per control unit <tag>_<group>_ctrl of the accelerator.json (a file, or a bundle folder holding one), the
+      registers firtool keeps and their bits, from snax-forge's estimate/bits.py (`accelerator_registers`, as
+      hw/chisel's CtrlRegistersSpec reads them): {module: {"registers": [[name, bits], ...], "bits": n}}
+
   python forge/query.py ref KERNEL IN_NPZ OUT_NPZ [SYMBOLS_JSON [DTYPES_JSON]]
       the kernel's NumPy body (kernels/<...>/<KERNEL>.py, SPEC.func) on the arrays in IN_NPZ (a scalar
       container, axpy's alpha, as a 0-d array cast to its descriptor's dtype); the kernel's inout arrays
@@ -166,6 +171,15 @@ def cmd_cycles(bundle_dir: str, jobs: str, beats: str) -> dict:
     return {"cycles": value, "working": working}
 
 
+def cmd_ctrl_bits(path: str) -> dict:
+    from snax_forge.estimate.bits import accelerator_registers
+
+    f = Path(path)
+    acc = json.loads((f / "accelerator.json" if f.is_dir() else f).read_text())
+    return {m: {"registers": [list(r) for r in regs], "bits": sum(b for _, b in regs)}
+            for m, regs in accelerator_registers(acc).items()}
+
+
 def cmd_ref(kernel: str, in_npz: str, out_npz: str, symbols: str = "", dtypes: str = "") -> dict:
     import numpy as np
 
@@ -200,7 +214,8 @@ def cmd_ref(kernel: str, in_npz: str, out_npz: str, symbols: str = "", dtypes: s
 
 def main() -> int:
     cmd, *args = sys.argv[1:]
-    fn = {"point": cmd_point, "program": cmd_program, "cycles": cmd_cycles, "ref": cmd_ref}[cmd]
+    fn = {"point": cmd_point, "program": cmd_program, "cycles": cmd_cycles, "ctrl_bits": cmd_ctrl_bits,
+          "ref": cmd_ref}[cmd]
     print(json.dumps(fn(*args)))
     return 0
 
