@@ -119,10 +119,16 @@ reports/<tier>/<kernel>/<point>[_c<clock>].zip (KEPT_REPORTS: area, power,
 reference, qor, path classes, tech.json, lib_info.txt).
 
 A point whose filelist.f has '# ram:' lines holds a memory Vitis built (e.g.
-DaCe's dot buffer). Neither library has RAM cells, and DC would build it from
-flops, which takes hours and gives no fair area, so `run` parks it: no DC run,
-and a summary row with status "skipped: needs a RAM macro (...)". --with-ram
-runs it anyway (for when a macro or a black-box stub is in place).
+DaCe's dot buffer). Neither library has RAM cells. On nangate45 (hls source) each
+such RAM is swapped for an SRAM macro (X62, ram/vitis_ram.py): the macro of the
+instance's AddressRange x DataWidth (pixi run ram lib, made when missing), a
+wrapper with Vitis's module name and ports in the run folder, the run's own
+filelist.f, and the macro's .db linked beside the library (SYN_RAM_DBS); the row's
+ram_um2 is the macros' area and ram_kind "macro". Where no macro can be made
+(another technology, a size CACTI refuses such as 16 words) `run` parks the
+point: no DC run, and a row "skipped: needs a RAM macro (...)". --with-ram runs it
+instead with Vitis's RAM as written, built from flops: ram_kind "flops", ram_um2
+the RAM modules' area.
 
 Environment, all optional:
   DC_SHELL            dc_shell                 (Design Compiler)
@@ -168,6 +174,8 @@ SYN = Path(__file__).resolve().parent
 ROOT = SYN.parent
 sys.path.insert(0, str(ROOT / "arc"))
 import arc  # noqa: E402  arc/arc.py: every output is one zip per point (X51)
+sys.path.insert(0, str(ROOT / "ram"))
+import vitis_ram  # noqa: E402  ram/vitis_ram.py: a Vitis RAM swapped for an SRAM macro (X62)
 
 TECH_DIR = SYN / "tech"
 # Per source: the points' folder, the HDL format, the clock and reset ports (dc_syn.tcl's defaults
@@ -218,7 +226,7 @@ KEPT_REPORTS = ("area.rpt", "area_hierarchy.rpt", "reference.rpt", "power.rpt", 
 # (sim/pwr.py and pt_power.tcl read it), KEPT_REPORTS (tech.json at the top, the rest in reports/) and the two DC
 # logs (errors and licence lines). The rest (WORK/, alib-*/, the .sdf, default.svf, the other reports, command logs,
 # a forge or char point's filelist.f into the unpacked bundle) is scratch, deleted with the folder.
-KEEP_RUN = ("out/*_mapped.v", "tech.json", "logs/dc_shell.log", "logs/dc_stdout.log",
+KEEP_RUN = ("out/*_mapped.v", "tech.json", "logs/dc_shell.log", "logs/dc_stdout.log", "ram/*.v",
             *(f"reports/{r}" for r in KEPT_REPORTS if r != "tech.json"))
 # dc_syn.tcl's path classes (X40), in reports/path_classes.rpt and the slack_<class>_ns columns
 PATH_CLASSES = ("in2reg", "reg2reg", "reg2out", "in2out")
@@ -233,6 +241,8 @@ FORGE_COLUMNS = ["recipe", "W", "snax_forge_commit",   # after COLUMNS, forge ro
                  "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2"]
 CHAR_COLUMNS = ["datapath", "lanes", "depth", "op", "form", "snax_forge_commit"]  # after COLUMNS, char rows only
 BAMBU_COLUMNS = ["ctrl_um2", "datapath_um2", "glue_um2"]  # after COLUMNS, bambu rows only (X41)
+HLS_COLUMNS = ["ram_um2", "ram_kind"]   # after COLUMNS, hls rows only (X62): a RAM's area, inside area_um2
+RAM_TECH = "nangate45"                  # the macros are CACTI's 45 nm (X47)
 # after COLUMNS, streamer and xbar rows (X52): the grid's params, then the flop check's numbers
 STRM_COLUMNS = {"streamer": ["depth", "loops", "channels", "rtl_flop_bits", "opt1207", "snax_cluster_commit"],
                 "xbar": ["inputs", "banks", "rtl_flop_bits", "opt1207", "snax_cluster_commit"]}
@@ -325,7 +335,8 @@ def all_points() -> list[str]:
 
 
 def columns() -> list[str]:
-    return COLUMNS + {"forge": FORGE_COLUMNS, "char": CHAR_COLUMNS, "bambu": BAMBU_COLUMNS, **STRM_COLUMNS}.get(SOURCE, [])
+    return COLUMNS + {"forge": FORGE_COLUMNS, "char": CHAR_COLUMNS, "bambu": BAMBU_COLUMNS, "hls": HLS_COLUMNS,
+                      **STRM_COLUMNS}.get(SOURCE, [])
 
 
 def bundle_zip(point: str) -> Path:
@@ -499,6 +510,12 @@ def top_of(point: str) -> str:
     return m.group(1) if m else ""
 
 
+def point_files(point: str) -> list[str]:
+    """The Verilog files of an HLS point's filelist.f, as written (relative to its folder)."""
+    return [ln.strip() for ln in (RTL / point / "filelist.f").read_text().splitlines()
+            if ln.strip() and not ln.lstrip().startswith("#")]
+
+
 def rams_of(point: str) -> list[str]:
     if SOURCE in BUNDLED:
         return []
@@ -583,13 +600,13 @@ def lib_info(get) -> dict:
     return dict(ln.split(": ", 1) for ln in text.splitlines() if ": " in ln)
 
 
-def power_groups(power: str) -> dict:
-    """Per group: (internal, switching, leakage) in uW, from power.rpt's group table."""
+def power_groups(power: str, groups=None) -> dict:
+    """Per group: (internal, switching, leakage) in uW, from power.rpt's group table (POWER_GROUPS by default)."""
     dyn, leak = _power_unit(power, "Dynamic Power Units"), _power_unit(power, "Leakage Power Units")
     out = {}
     if dyn is None or leak is None:
         return out
-    for g in POWER_GROUPS:
+    for g in (groups or POWER_GROUPS):
         m = re.search(rf"^{g}\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)", power, re.M)
         if m:
             out[g] = (float(m.group(1)) * dyn, float(m.group(2)) * dyn, float(m.group(3)) * leak)
@@ -637,6 +654,8 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row.update(char_extra(point))
     if SOURCE in STRM:
         row.update(strm_extra(point, row["top"], log_text))
+    if SOURCE == "hls" and tj is not None:
+        row.update(ram_area(json.loads(tj), get, tech, point, clock))
     split_error = ""
     if SOURCE == "bambu":
         split, split_error = bambu_split(tech, point, clock, row["area_um2"])
@@ -669,6 +688,10 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row["e_total_pj"] = _num(e_total)
         if dyn is not None:
             e_dyn = dyn * clock_ns / 1000.0
+            # X62: an SRAM macro is a black box to DC (its default-activity power is in that group, not in the four)
+            if row.get("ram_kind") == "macro":
+                bb = power_groups(power, ["black_box"]).get("black_box", (0.0, 0.0, 0.0))
+                e_dyn -= (bb[0] + bb[1]) * clock_ns / 1000.0
             energy_ok = abs(e_total - e_dyn) <= 1e-3 * max(abs(e_dyn), 1e-9) + 1e-6
     lic = licence_error(get)
     if not row["area_um2"] or float(row["area_um2"]) == 0 or lic:
@@ -693,6 +716,25 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
     else:
         row["status"] = "ok"
     return row
+
+
+def ram_area(tj: dict, get, tech: dict, point: str, clock: str) -> dict:
+    """X62: ram_um2 and ram_kind of an hls row: the area of the RAM modules' top-level instances (area_hierarchy.rpt,
+    by design name: Vitis's RAM, or its wrapper around the macro); for a macro it must equal the macros' area (a
+    black box, the CACTI area of X49). '' for a point without a RAM."""
+    ram = tj.get("resolved", {}).get("ram")
+    if not ram:
+        return {"ram_um2": "", "ram_kind": ""}
+    mods = [r for r in read_modules(tech, point, clock)
+            if any(r["design"].startswith(m) for m in ram["modules"]) and r["path"].count("/") == 0]
+    if not mods:
+        return {"ram_um2": "", "ram_kind": f"{ram['kind']}: no RAM instance in area_hierarchy.rpt"}
+    area = sum(float(r["area_um2"]) for r in mods)
+    if ram["kind"] == "macro":
+        want = sum(float(m["area_um2"]) * len(m["instances"]) for m in ram["macros"])
+        if abs(area - want) > 0.01:
+            return {"ram_um2": _num(area), "ram_kind": f"macro: instances {area} um2, macros {want} um2"}
+    return {"ram_um2": _num(area), "ram_kind": ram["kind"]}
 
 
 def licence_error(get) -> str:
@@ -918,11 +960,23 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
         print(f"fail {point}: {guard.removeprefix('failed: ')}; DC not run", flush=True)
         return None if args.dry_run else no_run_row(name, point, args.clock, guard)
     rams = rams_of(point)
-    if rams and not args.with_ram:
-        print(f"park {point}: it holds a RAM ({', '.join(rams)}); --with-ram runs it anyway", flush=True)
-        return None if args.dry_run else parked_row(name, point, args.clock, rams)
     rdir = run_dir(name, point, args.clock)
     syn_env = dc_env(tech, res, point, args)
+    ram_plan, ram_info = None, None
+    if rams and args.with_ram:          # Vitis's RAM as written: DC builds it from flops
+        ram_info = {"kind": "flops", "modules": [Path(f).stem for f in rams]}
+    elif rams:                          # X62: the macro swap, where a macro can be made
+        why = f"{name} has no macros (CACTI at 45 nm, X47)" if name != RAM_TECH or SOURCE != "hls" else ""
+        if not why:
+            ram_plan = vitis_ram.plan(RTL / point, point_files(point), rams, make=not args.dry_run)
+            why = "" if ram_plan["ok"] else ram_plan["why"]
+        if why:
+            print(f"park {point}: it holds a RAM ({', '.join(rams)}) and no macro: {why}; --with-ram builds it "
+                  "from flops", flush=True)
+            return None if args.dry_run else no_run_row(
+                name, point, args.clock, f"skipped: needs a RAM macro ({', '.join(rams)}): {why}")
+        ram_info = {"kind": "macro", "macros": ram_plan["macros"], "modules": [Path(f).stem for f in rams]}
+        syn_env["SYN_FILELIST"] = str(rdir / "filelist.f")
     cmd = [dc, "-f", str(SCRIPT), "-output_log_file", "logs/dc_shell.log"]
     if args.dry_run:
         print(f"\n# {point} on {name}")
@@ -940,6 +994,12 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
     with contextlib.ExitStack() as stack:     # a forge or char bundle, unpacked for DC, deleted after (X51)
         bundle = (stack.enter_context(arc.unpacked(bundle_zip(point))) if SOURCE in BUNDLED
                   else None)
+        if ram_plan:                          # the macros' .db for DC's link_library, unpacked, deleted after
+            dbs = []
+            for m in ram_plan["macros"]:
+                d = stack.enter_context(arc.unpacked(Path(m["zip"]), [f"{m['cell']}.db"]))
+                dbs.append(str(d / f"{m['cell']}.db"))
+            syn_env["SYN_RAM_DBS"] = " ".join(dbs)
         for attempt in (1, 2):
             if rdir.exists():
                 shutil.rmtree(rdir)
@@ -947,6 +1007,13 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
             if bundle is not None:
                 Path(syn_env["SYN_FILELIST"]).write_text(
                     f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in point_filelist(point, bundle)))
+            if ram_plan:                      # the wrappers in ram/, the point's other files by absolute path
+                (rdir / "ram").mkdir()
+                for fname, text in ram_plan["wrappers"].items():
+                    (rdir / "ram" / fname).write_text(text)
+                lines = [str(rdir / "ram" / f) if f in ram_plan["wrappers"] else str((RTL / point / f).resolve())
+                         for f in ram_plan["files"]]
+                Path(syn_env["SYN_FILELIST"]).write_text(f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in lines))
             print(f"run  {point} on {name} at {args.clock} ns in {rdir.relative_to(ROOT)}"
                   + (" (licence retry)" if attempt == 2 else ""), flush=True)
             with (rdir / "logs" / "dc_stdout.log").open("w") as fh:
@@ -962,7 +1029,7 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
         "tech_file": str((TECH_DIR / f"{name}.json").relative_to(ROOT)),
         "tech": tech,
         "resolved": {**res, "clock_ns": args.clock, "cores": args.cores,
-                     "dc_env": syn_env, "dc_returncode": rc},
+                     "dc_env": syn_env, "dc_returncode": rc, "ram": ram_info},
         "dc_lib_info": lib_info(folder_reader(rdir)),
     }, indent=2) + "\n")
     pack_run(rdir)

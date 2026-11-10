@@ -25,6 +25,7 @@
 #                      its blocks)
 #   SYN_CLK_PORT       the clock port: ap_clk (default, Vitis), clock (Bambu; a snax-forge block),
 #                      clk (XLS) or clk_i (snax-forge)
+#   SYN_RAM_DBS        optional: SRAM macro .db files linked beside the library (X62, a Vitis RAM swapped)
 #   SYN_RST_PORT       the reset port, kept ideal: ap_rst_n (default, Vitis, synchronous, active low),
 #                      reset (Bambu, mostly synchronous, active low), rst (XLS, synchronous, active
 #                      high), rst_ni (snax-forge, asynchronous, active low) or reset (a snax-forge
@@ -154,6 +155,16 @@ puts $fh "power_default_toggle_rate: $power_default_toggle_rate"
 puts $fh "power_default_static_probability: $power_default_static_probability"
 close $fh
 puts "dc_syn.tcl: $read_name ($read_time, $read_cap), $oc_name $oc_volt V $oc_temp C"
+
+#-----------------------------
+# SRAM macros (X62): a Vitis RAM swapped for a generated macro; its .db is linked beside the library, after the
+# library check above, which counts the libraries loaded so far (syn.py sets SYN_RAM_DBS, space separated)
+#-----------------------------
+set ram_dbs [env_or SYN_RAM_DBS ""]
+if {$ram_dbs ne ""} {
+    foreach db $ram_dbs { lappend link_library [file normalize $db] }
+    puts "dc_syn.tcl: SRAM macros linked: $ram_dbs"
+}
 
 #-----------------------------
 # Wire load. off: the library has wire-load models, none applies to this design.

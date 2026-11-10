@@ -9,10 +9,8 @@ done,dot,opt,n512,2,10,dot,BEAT,256,256,2,1,1,256,yes
 done,dot,opt,n512,4,10,dot,BEAT,128,128,2,1,1,128,yes
 done,dot,opt,n512,8,10,dot,BEAT,64,64,2,1,1,64,yes
 done,dot,opt,n512,16,10,dot,BEAT,32,32,2,1,1,32,yes
-done,dot,dace,n64,1,10,dot_dace_Pipeline_VITIS_LOOP_37_1,VITIS_LOOP_37_1,1,1023,2,1,1,1 ~ 1023,yes
-done,dot,dace,n64,1,10,dot_dace_Pipeline_VITIS_LOOP_62_1,VITIS_LOOP_62_1,1,?,1,1,1,1 ~ ?,yes
-done,dot,dace,n512,1,10,dot_dace_Pipeline_VITIS_LOOP_37_1,VITIS_LOOP_37_1,1,1023,2,1,1,1 ~ 1023,yes
-done,dot,dace,n512,1,10,dot_dace_Pipeline_VITIS_LOOP_62_1,VITIS_LOOP_62_1,1,?,1,1,1,1 ~ ?,yes
+done,dot,dace,n2048,1,10,dot_dace_Pipeline_VITIS_LOOP_37_1,VITIS_LOOP_37_1,1,4095,2,1,1,1 ~ 4095,yes
+done,dot,dace,n2048,1,10,dot_dace_Pipeline_VITIS_LOOP_62_1,VITIS_LOOP_62_1,1,?,1,1,1,1 ~ ?,yes
 done,vecadd,opt,n64,1,10,vecadd,BEAT,64,64,2,1,1,64,yes
 done,vecadd,opt,n64,2,10,vecadd,BEAT,32,32,2,1,1,32,yes
 done,vecadd,opt,n64,4,10,vecadd,BEAT,16,16,2,1,1,16,yes
@@ -75,10 +73,8 @@ untiered,axpy,opt,n512,2,10,axpy,BEAT,256,256,2,1,1,256,yes
 untiered,axpy,opt,n512,4,10,axpy,BEAT,128,128,2,1,1,128,yes
 untiered,axpy,opt,n512,8,10,axpy,BEAT,64,64,2,1,1,64,yes
 untiered,axpy,opt,n512,16,10,axpy,BEAT,32,32,2,1,1,32,yes
-untiered,axpy,dace,n64,1,10,axpy_dace_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,1,?,1,1,1,1 ~ ?,yes
-untiered,axpy,dace,n64,1,10,axpy_dace_Pipeline_VITIS_LOOP_37_2,VITIS_LOOP_37_2,1,1023,2,1,1,1 ~ 1023,yes
-untiered,axpy,dace,n512,1,10,axpy_dace_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,1,?,1,1,1,1 ~ ?,yes
-untiered,axpy,dace,n512,1,10,axpy_dace_Pipeline_VITIS_LOOP_37_2,VITIS_LOOP_37_2,1,1023,2,1,1,1 ~ 1023,yes
+untiered,axpy,dace,n2048,1,10,axpy_dace_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,1,?,1,1,1,1 ~ ?,yes
+untiered,axpy,dace,n2048,1,10,axpy_dace_Pipeline_VITIS_LOOP_37_2,VITIS_LOOP_37_2,1,4095,2,1,1,1 ~ 4095,yes
 untiered,matadd,opt,m8_n16,1,10,matadd,BEAT,128,128,2,1,1,128,yes
 untiered,matadd,opt,m8_n16,2,10,matadd,BEAT,64,64,2,1,1,64,yes
 untiered,matadd,opt,m8_n16,4,10,matadd,BEAT,32,32,2,1,1,32,yes
@@ -121,9 +117,6 @@ untiered,rowsum,opt,m8_n64,2,10,rowsum,BEAT,256,256,2,1,1,256,yes
 untiered,rowsum,opt,m8_n64,4,10,rowsum,BEAT,128,128,2,1,1,128,yes
 untiered,rowsum,opt,m8_n64,8,10,rowsum,BEAT,64,64,2,1,1,64,yes
 untiered,rowsum,opt,m8_n64,16,10,rowsum,BEAT,32,32,2,1,1,32,yes
-untiered,rowsum,dace,m4_n16,1,10,rowsum_dace,OUT_y,2,30,2,-,-,1 ~ 15,no
-untiered,rowsum,dace,m4_n16,1,10,rowsum_dace_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,1,?,1,1,1,1 ~ ?,yes
-untiered,rowsum,dace,m4_n16,1,10,rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3,VITIS_LOOP_38_2_VITIS_LOOP_39_3,?,?,2,1,1,?,yes
-untiered,rowsum,dace,m8_n64,1,10,rowsum_dace,OUT_y,2,30,2,-,-,1 ~ 15,no
-untiered,rowsum,dace,m8_n64,1,10,rowsum_dace_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,1,?,1,1,1,1 ~ ?,yes
-untiered,rowsum,dace,m8_n64,1,10,rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3,VITIS_LOOP_38_2_VITIS_LOOP_39_3,?,?,2,1,1,?,yes
+untiered,rowsum,dace,m16_n128,1,10,rowsum_dace,OUT_y,2,62,2,-,-,1 ~ 31,no
+untiered,rowsum,dace,m16_n128,1,10,rowsum_dace_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,1,?,1,1,1,1 ~ ?,yes
+untiered,rowsum,dace,m16_n128,1,10,rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3,VITIS_LOOP_38_2_VITIS_LOOP_39_3,?,?,2,1,1,?,yes

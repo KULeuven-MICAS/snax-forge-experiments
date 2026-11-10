@@ -2,7 +2,8 @@
 
 ref(kernel, ins, pins) -> {output arg: int64 array}
   ins   {input stream arg: int64 array, flat, lane 0 first}
-  pins  {pin: int}: the config pins (loop_count, len) and the data pins (axpy's alpha)
+  pins  {pin: int}: the config pins (loop_count, len) and the data pins (axpy's alpha); forge's runs give the
+        shape instead (rowsum's m, sim/sources/forge.py)
 """
 from __future__ import annotations
 
@@ -10,7 +11,7 @@ import numpy as np
 
 
 def _rows(a, pins):
-    m = pins["loop_count"] // pins["len"]          # rows
+    m = pins["m"] if "m" in pins else pins["loop_count"] // pins["len"]     # rows: forge's shape, or HLS's pins
     return a.reshape(m, a.size // m)
 
 

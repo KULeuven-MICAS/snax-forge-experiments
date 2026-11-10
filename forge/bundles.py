@@ -12,7 +12,7 @@ those names.
 Per point, in the snax-forge checkout (SNAX_FORGE, default ../snax-forge from
 the repo root), each through `pixi run --manifest-path $SNAX_FORGE/pixi.toml`:
 
-  1. sandbox recipes/<r>.json --set W=<w> [--set K=V ...] --out out/sandbox/syn1/<r>_w<w>[_<K><V>...]
+  1. sandbox recipes/<folder>/<r>.json --set W=<w> [--set K=V ...] --out out/sandbox/syn1/<r>_w<w>[_<K><V>...]
   2. design <the last .snaxdfg of that folder> --platform platforms/snax_forge.json
             --out out/design/syn1/<r>_w<w>[_<K><V>...]
   3. bundle out/design/syn1/<...>/design_point.json --out <DIR>/<point>/
@@ -33,8 +33,23 @@ the inner CONDA_PREFIX is under $SNAX_FORGE/.pixi/envs/.
 
 The first point runs alone when hw/chisel's Emit classpath
 (hw/chisel/target/emit-classpath.txt) is not there yet: the first Emit exports
-it through sbt, and parallel first calls would race. --set adds to the sandbox
-step (e.g. --set N=2048) and to the sandbox and design folder names.
+it through sbt, and parallel first calls would race. A point's own `sets`
+(points.json, e.g. ["M=16", "N=128"]) and then the global --set values (e.g.
+--set N=2048) go to the sandbox step after W, and tag the sandbox and design
+folder names in that order; point.json records them as `sets`.
+
+A recipe is found by its name in any folder under $SNAX_FORGE/recipes/ but
+recipes/custom/ (the editor's), as snax-forge keeps them by category
+(recipes/reduce/rowsum_2.json); a name found in no folder or in several is
+refused (find_recipe, also used by forge/query.py).
+
+A point's `dtypes` (points.json, e.g. {"A": "int64", "B": "int64"}; X57) are the
+recipe's `dtypes` field (snax-forge's recipe.py, D113): the driver writes the
+recipe it found with that field set into tmp/forge_recipes/<work name>.json,
+gives the sandbox that file, and deletes it when the point ends. snax-forge's
+relu, matadd and axpy kernels are int32, the HLS points int64; the dtypes make
+forge's points int64 too. The work name ends _<dtype> then, and point.json
+records `dtypes` and `recipe_file` (the recipe in snax-forge it was made from).
 Standard library and arc/arc.py only.
 """
 
@@ -111,9 +126,51 @@ def check_env() -> str:
     return prefix
 
 
+def find_recipe(name: str, forge: Path = FORGE) -> Path:
+    """The recipe file of `name`, relative to the snax-forge checkout: recipes/**/<name>.json, recipes/custom/
+    left out. Refuses a missing or an ambiguous name."""
+    root = forge / "recipes"
+    found = sorted(f for f in root.rglob(f"{name}.json")
+                   if f.is_file() and not f.relative_to(root).parts[0] == "custom" and len(f.relative_to(root).parts) > 1)
+    if not found:
+        raise ValueError(f"no recipe {name!r} under {root} (recipes/custom/ left out)")
+    if len(found) > 1:
+        raise ValueError(f"recipe {name!r} is ambiguous under {root}: {[str(f.relative_to(root)) for f in found]}")
+    return found[0].relative_to(forge)
+
+
+def point_sets(p: dict, sets: list[str]) -> list[str]:
+    """The point's own sets (points.json), then the global --set values."""
+    own = p.get("sets", [])
+    if not isinstance(own, list) or not all(isinstance(x, str) and "=" in x for x in own):
+        raise ValueError(f"{p['point']}: sets must be a list of 'K=V' strings, got {own!r}")
+    return [*own, *sets]
+
+
 def work_name(p: dict, sets: list[str]) -> str:
     extra = "".join("_" + re.sub(r"[^A-Za-z0-9]", "", s) for s in sets)
+    extra += "".join(f"_{d}" for d in sorted(set(p.get("dtypes", {}).values())))
     return f"{p['recipe']}_w{p['W']}{extra}"
+
+
+RECIPES_TMP = ROOT / "tmp" / "forge_recipes"
+
+
+def recipe_arg(p: dict, name: str) -> str:
+    """The sandbox's recipe: snax-forge's file (relative to the checkout), or with the point's `dtypes` a copy
+    of it with that field set, tmp/forge_recipes/<name>.json (absolute; run_point deletes it)."""
+    rel = find_recipe(p["recipe"])
+    dts = p.get("dtypes")
+    if not dts:
+        return str(rel)
+    if not isinstance(dts, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in dts.items()):
+        raise ValueError(f"{p['point']}: dtypes must map container names to dtype names, got {dts!r}")
+    r = json.loads((FORGE / rel).read_text())
+    r["dtypes"] = {**r.get("dtypes", {}), **dts}
+    RECIPES_TMP.mkdir(parents=True, exist_ok=True)
+    f = RECIPES_TMP / f"{name}.json"
+    f.write_text(json.dumps(r, indent=1) + "\n")
+    return str(f)
 
 
 def last_snaxdfg(folder: Path) -> Path:
@@ -126,10 +183,11 @@ def last_snaxdfg(folder: Path) -> Path:
 
 
 def steps(p: dict, sets: list[str], out: Path) -> tuple[list[str], list[str], list[str]]:
+    sets = point_sets(p, sets)
     name = work_name(p, sets)
     sandbox = f"out/sandbox/syn1/{name}"
     design = f"out/design/syn1/{name}"
-    s1 = ["recipes/" + p["recipe"] + ".json", "--set", f"W={p['W']}"]
+    s1 = [recipe_arg(p, name), "--set", f"W={p['W']}"]
     for s in sets:
         s1 += ["--set", s]
     s1 += ["--out", sandbox]
@@ -141,7 +199,12 @@ def steps(p: dict, sets: list[str], out: Path) -> tuple[list[str], list[str], li
 def run_point(p: dict, args) -> dict:
     t0 = time.monotonic()
     dest = args.out / p["point"]
-    s1, s2, s3 = steps(p, args.set, args.out)
+    try:
+        s1, s2, s3 = steps(p, args.set, args.out)
+    except ValueError as e:
+        print(f"failed: recipe  {p['point']}: {e}", flush=True)
+        return {"point": p["point"], "status": f"failed: recipe ({e})", "seconds": 0.0, "commit": "", "dirty": "",
+                "error": str(e)}
     sandbox, design = Path(FORGE / s1[-1]), Path(FORGE / s2[-1])
     res = {"point": p["point"], "status": "", "seconds": 0.0, "commit": "", "dirty": "", "error": ""}
     if dest.exists():
@@ -179,13 +242,16 @@ def run_point(p: dict, args) -> dict:
                     (dest / "point.json").write_text(json.dumps({
                         "point": p["point"], "recipe": p["recipe"], "W": p["W"],
                         "snax_forge_commit": b["snax_forge_commit"], "dirty": b["dirty"],
-                        "sets": args.set, "date": dt.datetime.now().isoformat(timespec="seconds"),
+                        "sets": point_sets(p, args.set), "dtypes": p.get("dtypes", {}),
+                        "recipe_file": str(find_recipe(p["recipe"])), "date": dt.datetime.now().isoformat(timespec="seconds"),
                     }, indent=2) + "\n")
                     res["status"] = "made" + (" (dirty, allowed)" if b["dirty"] else "")
     except Exception as e:  # noqa: BLE001 - reported per point
         res["status"], res["error"] = "failed: driver", repr(e)
     finally:
         log.close()
+        if s1[0].startswith(str(RECIPES_TMP)):
+            Path(s1[0]).unlink(missing_ok=True)
     if not res["status"].startswith("made"):
         for f in dest.iterdir():
             if f.name != LOG:
@@ -216,7 +282,7 @@ def main() -> int:
         sys.exit("no point matches (--list shows them)")
     if args.list:
         for p in pts:
-            print(f"{p['point']}  recipe {p['recipe']}  W {p['W']}")
+            print(f"{p['point']}  recipe {p['recipe']}  W {p['W']}  sets {point_sets(p, args.set)}")
         return 0
     if args.dry_run:
         print(f"# snax-forge {FORGE}; env without PIXI_*/CONDA_* and {ROOT / '.pixi'} on PATH")
@@ -225,6 +291,7 @@ def main() -> int:
             print(f"\n# {p['point']}")
             for name, argv in (("sandbox", s1), ("design", s2), ("bundle", s3)):
                 print(" ".join(forge_cmd(name, *argv)))
+        shutil.rmtree(RECIPES_TMP, ignore_errors=True)     # the dtypes copies written for the listing
         return 0
     if not (FORGE / "pixi.toml").is_file():
         sys.exit(f"no snax-forge checkout at {FORGE} (set SNAX_FORGE)")
@@ -240,6 +307,8 @@ def main() -> int:
     with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
         results += list(pool.map(lambda p: run_point(p, args), rest))
     wall = time.monotonic() - t0
+    if RECIPES_TMP.is_dir() and not any(RECIPES_TMP.iterdir()):
+        RECIPES_TMP.rmdir()                                  # the dtypes copies are gone with their points
     made = [r for r in results if r["status"].startswith("made")]
     print(f"\n{len(made)} made, {len(results) - len(made)} not, in {wall:.0f} s "
           f"(sum of points {sum(r['seconds'] for r in results):.0f} s)")

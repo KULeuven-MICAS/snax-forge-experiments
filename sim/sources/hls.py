@@ -15,8 +15,10 @@ tb.json describes the DUT's ports for the generated TB top (sim/pwr.py):
   pins    [{port, bits, vld, from: "config" | "data:<arg>"}]
   sizes   {tag: {pin: value}}  cosim's sizes valid at this W, and 'b64' (64 beats) when every config
                                pin equals loop_count at cosim's sizes (rowsum's len does not, so it
-                               has no b64 and runs at a cosim size), then SYN1's sizes for the tier
-                               (EXTRA_SIZES: n2048 for tier done), from params.json's config expressions
+                               has no b64 and runs at a cosim size), then the reference task n2048
+                               (EXTRA_SIZES, X24 and X55: tier done N = 2048; untiered relu and axpy
+                               n = 2048, matadd m32_n64, rowsum m16_n128), from params.json's config
+                               expressions at those values
 """
 from __future__ import annotations
 
@@ -36,11 +38,24 @@ BEATS = 64
 # control kinds: only ap_ctrl_hs is built; the forge kinds are reserved for sim/sources/forge.py (SYN1)
 CONTROL_KINDS = {"ap_ctrl_hs"}
 RESERVED_KINDS = {"forge_csr", "forge_datapath"}
-# SYN1's comparison size per tier, beyond cosim's: one task of N = 2048 elements, the size every forge row
-# runs (sim/sources/forge.py SIZES); its pins from params.json's config expressions at n = 2048 and its
-# expected cycles from cosim's line (sim/pwr.py expected_cycles, X19). The untiered points have no forge
-# counterpart of their own (matadd and rowsum are vecadd's and vsum's Verilog, PITFALLS DC3).
-EXTRA_SIZES = {"done": [{"n": 2048}]}
+# The reference task n2048 beyond cosim's sizes (X24, X55): 2048 elements, the size every forge row runs
+# (sim/sources/forge.py takes the same shapes from its points' sets), by tier and kernel ("*": every kernel of
+# the tier); its pins from params.json's config expressions at these values and its expected cycles from
+# cosim's line (sim/pwr.py expected_cycles, X19; the bambu and xls lines alike). Tagged n2048 whatever the
+# shape, so every source's reference task has one name.
+REF_TAG = "n2048"
+EXTRA_SIZES = {
+    "done": {"*": {"n": 2048}},
+    "untiered": {"relu": {"n": 2048}, "axpy": {"n": 2048}, "matadd": {"m": 32, "n": 64}, "rowsum": {"m": 16, "n": 128}},
+}
+
+
+def extra_sizes(point: str) -> list[tuple[str, dict]]:
+    """[(tag, size)] of the point's reference task: EXTRA_SIZES by tier and kernel."""
+    tier, kernel = point.split("/")[:2]
+    by_kernel = EXTRA_SIZES.get(tier, {})
+    size = by_kernel.get(kernel, by_kernel.get("*"))
+    return [(REF_TAG, size)] if size else []
 
 
 def filelist(point: str) -> dict:
@@ -94,7 +109,7 @@ def size_tag(size: dict) -> str:
     return "_".join(f"{k}{v}" for k, v in size.items())
 
 
-def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | None = None) -> dict:
+def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | None = None, b64: bool = True) -> dict:
     """{tag: {pin: value}}: the tool's sizes valid at this W, then 'b64' (64 beats) when every config pin equals
     loop_count at those sizes (rowsum's len does not), then EXTRA_SIZES for the tier; values from the config
     expressions. Shared by the HLS tools' adapters (hls, bambu, xls)."""
@@ -103,14 +118,17 @@ def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | 
         if valid and not _eval(valid, size, w):
             continue
         out[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in config.items()}
-    if all(all(v == cfg["loop_count"] for v in cfg.values()) for cfg in out.values()):
+    if b64 and all(all(v == cfg["loop_count"] for v in cfg.values()) for cfg in out.values()):
         out["b64"] = {k: BEATS for k in config}
-    for size in EXTRA_SIZES.get(point.split("/")[0], []):
+    for tag, size in extra_sizes(point):
         if valid and not _eval(valid, size, w):
             continue
-        if any(v % w for v in size.values()):
-            raise ValueError(f"{point}: size {size_tag(size)} is not a multiple of W {w}")
-        out[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in config.items()}
+        elems = 1
+        for v in size.values():
+            elems *= v
+        if elems % w:
+            raise ValueError(f"{point}: size {size_tag(size)} ({elems} elements) is not a multiple of W {w}")
+        out[tag] = {k: int(_eval(e, size, w)) for k, e in config.items()}
     return out
 
 
@@ -154,7 +172,9 @@ def build(point: str) -> dict:
     if extra:
         raise ValueError(f"{point}: ports tb.json does not cover: {extra}")
 
-    sizes = sizes_for(point, prm["sizes"], prm["config"], w, prm.get("valid"))
+    # a case with its own sizes (the dace case of dot, axpy and rowsum: the n2048 task only, X62) runs those, no b64
+    own = prm["cases"].get(case, {}).get("sizes")
+    sizes = sizes_for(point, own or prm["sizes"], prm["config"], w, prm.get("valid"), b64=not own)
 
     return {"tb_version": TB_VERSION, "point": point, "kernel": prm["kernel"], "top": top, "case": case, "W": w,
             "clock": {"port": CLK},
@@ -177,8 +197,12 @@ def check(tb: dict) -> None:
 
 
 def default_size(tb: dict) -> str:
-    """b64, else the last (largest) cosim size: rowsum runs m8_n64 as is."""
-    return "b64" if "b64" in tb["sizes"] else list(tb["sizes"])[-1]
+    """b64, else the last (largest) cosim size: rowsum runs m8_n64 as is. Never the reference task n2048 (EXTRA_SIZES),
+    which comes after the cosim sizes but is not a cosim size (rowsum has no b64)."""
+    if "b64" in tb["sizes"]:
+        return "b64"
+    rest = [z for z in tb["sizes"] if z != REF_TAG]
+    return rest[-1] if rest else REF_TAG     # a dace point rebuilt for n2048 only (X62)
 
 
 def data_h(point: str, size: str) -> Path:
