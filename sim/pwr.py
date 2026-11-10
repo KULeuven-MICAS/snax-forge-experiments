@@ -11,7 +11,7 @@
 rtl/forge/ (forge/bundles.py) and their netlists in syn/runs/forge/<tech>/: tb.json from sim/sources/forge.py
 (control forge_csr: the wrapper driven through its CSRs by sim/tb/csr_seq.sv: JOBS, the JOB_BEATS and a scalar's
 CSRs as snax-forge's LOWER writes them, then START), the size n2048 (the point's sets, X55), the window from the
-edge accepting START to the run's end, with the COUNTER read back and the group's cycles from snax-forge's model
+edge accepting START to the run's end, with BUSY_COUNTER read back and the group's cycles from snax-forge's model
 beside it (X56); the stimulus rand64, fed and collected in the order the bundle's streamers visit each container;
 the reference sim/ref.py, checked once per kernel, size, seed and scalar against snax-forge's kernel body; runs
 in sim/runs/forge/<tech>/, results in results/forge/<tech>/ with the columns recipe, snax_forge_commit, counter
@@ -19,7 +19,7 @@ and counter_diff added (docs/power.md, Forge).
 
 Every source (X56): the window is the measurement; expected_cycles (cosim's line, the bambu or xls line, or
 snax-forge's model) and expected_diff = expected - window are columns beside it, and a run fails only when the
-expected count (or forge's COUNTER) is more than 5 % of the window away.
+expected count (or forge's BUSY_COUNTER) is more than 5 % of the window away.
 
 --source char (CHAR1) takes snax-forge's catalogue blocks alone in rtl/char/ (char/blocks.py) and their netlists
 in syn/runs/char/<tech>/: tb.json from sim/sources/char.py (control char_<kind>: the block's data and pins driven
@@ -144,7 +144,7 @@ FORGE_COLUMNS = ["recipe", "snax_forge_commit", "counter", "counter_diff"]
 # ram_reads x e_rd + ram_writes x e_wr (RAMCOUNT and the macro's CACTI numbers, X50), e_ram_pt_pj PT's own averaged
 # figure for the macro cells (PITFALLS PT7, a check, not used); flops: e_ram_pj PT's energy of the RAM instances
 HLS_PWR_COLUMNS = ["ram_kind", "ram_reads", "ram_writes", "e_ram_pj", "e_ram_pt_pj"]
-# X56: the window is the measurement; the expected count (and forge's COUNTER) is recorded beside it, with its
+# X56: the window is the measurement; the expected count (and forge's BUSY_COUNTER) is recorded beside it, with its
 # difference (expected - window), and fails the run only when it is more than this far from the window
 CYCLES_TOL = 0.05
 MODULE_COLUMNS = ["point", "tech", "size", "path", "design", "e_dyn_pj"]
@@ -890,7 +890,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         f = rdir / "stim" / "csr.hex"
         f.write_text("".join(f"{off:08x}{val & 0xFFFFFFFF:08x}\n" for off, val, _ in writes))
         plus += [f"+CSR_HEX={f}", f"+CSR_N={len(writes)}",
-                 f"+COUNTER_ADDR={tb['control']['csrs']['COUNTER']:x}"]
+                 f"+BUSY_COUNTER_ADDR={tb['control']['csrs']['BUSY_COUNTER']:x}"]
     for s in tb["streams"]:
         if forge:
             x = st["data"][sname(s)]
@@ -947,16 +947,16 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
             info["ramcount"] = [{"inst": i, "cell": c, "reads": int(r), "writes": int(w)} for i, c, r, w in counts]
         if forge and "TB: FAIL" in log:
             raise Fail("sim: " + re.search(r"TB: FAIL: (.*)", log).group(1))
-        # X56: the window is the measurement; the expected count (and forge's COUNTER) beside it, failing only
+        # X56: the window is the measurement; the expected count (and forge's BUSY_COUNTER) beside it, failing only
         # past CYCLES_TOL of the window
         if forge:
-            cnt = re.search(r"TB: counter (\d+)", log)
+            cnt = re.search(r"TB: busy_counter (\d+)", log)
             info["counter"] = int(cnt.group(1)) if cnt else None
             if info["counter"] is None:
-                raise Fail("cycles: no COUNTER read back")
+                raise Fail("cycles: no BUSY_COUNTER read back")
             row["counter"], row["counter_diff"] = info["counter"], info["counter"] - cycles
             if abs(info["counter"] - cycles) > CYCLES_TOL * cycles:
-                raise Fail(f"cycles: window {cycles}, COUNTER {info['counter']}, over {CYCLES_TOL:.0%} apart (X56)")
+                raise Fail(f"cycles: window {cycles}, BUSY_COUNTER {info['counter']}, over {CYCLES_TOL:.0%} apart (X56)")
         if exp is None:
             raise Fail(f"cycles: no expected value ({how})")
         row["expected_diff"] = exp - cycles

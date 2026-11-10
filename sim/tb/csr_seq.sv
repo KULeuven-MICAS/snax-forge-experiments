@@ -11,17 +11,17 @@
 //   go       rises with the START write: the sources present beat 0 from the next edge, the first busy cycle
 //   window   DUT outputs are sampled at falling edges, where nothing toggles. START is accepted in cycle a
 //            (the edge e_a ending it takes it); the group is busy in a + 1 .. E and <group>_done_o is high in
-//            E + 1, so COUNTER = E - a (C§17). The window opens at the falling edge before e_a (it samples
+//            E + 1, so BUSY_COUNTER = E - a (C§17). The window opens at the falling edge before e_a (it samples
 //            START valid and ready) and closes at the falling edge before e_E, one cycle before the first
 //            falling edge that samples done = 1: cycles = rising edges inside it = e_a .. e_{E-1} = E - a
 //            (as docs/DECISIONS.md X12 counts an HLS run). Dumping runs from the edge that offers START
 //            ($dumpon) to the edge after done is seen ($dumpoff), half a cycle or more around the window
 //            (docs/PITFALLS.md Q6); vcd2saif -time cuts the window. $dumpvars is in the generated top.
-//   counter  once the window has closed and every sink is complete, COUNTER (+COUNTER_ADDR=<hex>) is read over
+//   counter  once the window has closed and every sink is complete, BUSY_COUNTER (+BUSY_COUNTER_ADDR=<hex>) is read over
 //            the CSR port and printed beside the window's cycles
 //   end      $finish
 // +TIMEOUT=<cycles> (default 10000) fails a run that does not end.
-// Prints 'TB: window t0_ns <t0> t1_ns <t1> cycles <n>' and 'TB: counter <c>' for sim/pwr.py.
+// Prints 'TB: window t0_ns <t0> t1_ns <t1> cycles <n>' and 'TB: busy_counter <c>' for sim/pwr.py.
 `timescale 1ns/1ps
 
 module csr_seq #(
@@ -56,7 +56,7 @@ module csr_seq #(
     initial begin
         if (!$value$plusargs("CSR_HEX=%s", file)) $fatal(1, "csr_seq: +CSR_HEX=<file> missing");
         if (!$value$plusargs("CSR_N=%d", n_writes) || n_writes < 1) $fatal(1, "csr_seq: +CSR_N=<n> missing");
-        if (!$value$plusargs("COUNTER_ADDR=%h", counter_addr)) $fatal(1, "csr_seq: +COUNTER_ADDR=<hex> missing");
+        if (!$value$plusargs("BUSY_COUNTER_ADDR=%h", counter_addr)) $fatal(1, "csr_seq: +BUSY_COUNTER_ADDR=<hex> missing");
         void'($value$plusargs("TIMEOUT=%d", timeout));
         writes = new[n_writes];
         $readmemh(file, writes);
@@ -106,13 +106,13 @@ module csr_seq #(
         @(posedge clk);
         req_addr <= counter_addr; req_data <= '0; req_write <= 1'b0; req_valid <= 1'b1;
         do @(negedge clk); while (req_ready !== 1'b1);
-        if (rsp_valid !== 1'b1) $display("TB: FAIL: COUNTER read taken without a response at %0t", $realtime);
+        if (rsp_valid !== 1'b1) $display("TB: FAIL: BUSY_COUNTER read taken without a response at %0t", $realtime);
         counter = rsp_data;
         @(posedge clk);
         req_valid <= 1'b0;
         @(negedge clk);
         $display("TB: window t0_ns %0.3f t1_ns %0.3f cycles %0d", t_open, t_close, n_close - n_open);
-        $display("TB: counter %0d", counter);
+        $display("TB: busy_counter %0d", counter);
         $finish;
     end
 
