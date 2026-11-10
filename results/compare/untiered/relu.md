@@ -37,7 +37,7 @@ n2048, nangate45, int64, 10 ns.
 - The cheapest operation, so registers decide everything: XLS needs 69 µm² per lane (a sign select), Vitis opt is 59 to 68 % registers (the output beat, 64 flops per lane), and Bambu registers both the input and the output beat (128 per lane, 1002 µm² per lane).
 - Energy per task at W = 8: XLS 0.96 nJ, Vitis 2.24, Bambu 3.88. Flops are 86 to 89 % of Vitis's energy, 61 to 67 % of Bambu's, and 3 to 31 % of XLS's.
 - Each lane's sign bit is constant 0 after relu; Vitis's synthesis warns about it (LINT-52, LINT-31). Vitis dace exists only at W = 1.
-- forge: the datapath is the same sign select as XLS's (273 µm² at W = 4, against XLS's 253 AND gates, 269 µm²), so the whole gap is control: forge's ctrl is 711 µm² (351 of them flops) against XLS's 32 flops (145 µm²). Its ctrl + datapath is 28 % (W = 16) to 2.1x (W = 1) XLS's area and 3 to 40 % above its energy. relu is the one kernel where XLS beats forge at every W; an optional COUNTER (D123's busy-cycle counter is a measurement feature) would close part of the gap.
+- forge: the datapath is the same sign select as XLS's (273 µm² at W = 4, against XLS's 253 AND gates, 269 µm²), so the whole gap is control: forge's ctrl is 711 µm² (351 of them flops) against XLS's 32 flops (145 µm²). Its ctrl + datapath is 28 % (W = 16) to 2.1x (W = 1) XLS's area and 3 to 40 % above its energy. relu is the one kernel where XLS beats forge at every W. forge's ctrl keeps a 32-bit copy of JOBS and a 32-bit jobs counter compared with it; counting the copy down instead would drop one register and the comparator, the larger part of the gap (not measured).
 
 ## Parts at n2048
 
