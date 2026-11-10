@@ -176,6 +176,57 @@ def tech_check(done: list[dict], untiered: list[dict]) -> list[str]:
     return lines
 
 
+PARTS_BASIS = (
+    "Every point at n2048 on nangate45 (2048 elements per input stream), per kernel and W. A part's energy per task "
+    "is its energy per cycle (PT's hierarchical report of that run, `power_pt_modules.csv`, X60) times the window's "
+    "cycles; pJ per element divides it by 2048. forge: csr, ctrl and datapath (the wrapper's three instances), the "
+    "total (glue included), and the total without csr. Bambu: ctrl and datapath (X41), the total (glue included). "
+    "Vitis dace with a RAM: the RAM apart (X62: the macro's area and its counted accesses x CACTI's energies, or its "
+    "flops' area and PT energy) and the logic without it. Vitis opt and XLS: totals only. **Basis (X63):** the HLS "
+    "tools take their sizes on plain pins (`loop_count`, `len`, axpy's `alpha`) and have no CSR file, while forge "
+    "holds them in `<tag>_csr`, its interface to the cluster; so forge's total without csr is the like-for-like "
+    "figure against an HLS total. Integrating any HLS block into the cluster would need a register interface of its "
+    "own, which none of these totals contains.")
+
+
+def parts_table(rows: list[dict], tier: str, kernel: str) -> list[str]:
+    """X63: the parts at n2048 of every tool and case of one kernel, W by W."""
+    pts = [r for r in rows if r["tech"] == TECH and r["kernel"] == kernel and r["status"] == "ok"
+           and r["size"] == "n2048"]
+    order = {c: i for i, (_t, c) in enumerate(CASES)}
+    lines = ["| W | Case | Part | Area (µm²) | Energy (nJ) | pJ per element |", "|---|---|---|---|---|---|"]
+
+    def add(w, case, part, area, e_pj):
+        lines.append(f"| {w} | {LABEL[case]} | {part} | {fmt(area) if area is not None else ''} | "
+                     f"{fmt(e_pj / 1000.0) if e_pj is not None else ''} | {fmt(e_pj / 2048.0) if e_pj is not None else ''} |")
+
+    for r in sorted(pts, key=lambda r: (int(r["W"]), order.get(r["case"], 99))):
+        w, case, cyc = int(r["W"]), r["case"], int(r["cycles"])
+        area, e_run = float(r["area_um2"]), float(r["e_run_pj"])
+        num = lambda k: float(r[k]) if r.get(k) not in (None, "") else None  # noqa: E731
+        if r["tool"] == "forge":
+            parts = {k: (num(f"{k}_um2"), num(f"e_dyn_{k}_pj")) for k in ("csr", "ctrl", "datapath")}
+            for k, (a, e) in parts.items():
+                add(w, case, k, a, e * cyc if e is not None else None)
+            add(w, case, "total", area, e_run)
+            a_csr, e_csr = parts["csr"]
+            add(w, case, "total without csr", area - a_csr if a_csr is not None else None,
+                e_run - e_csr * cyc if e_csr is not None else None)
+        elif r["tool"] == "bambu":
+            for k in ("ctrl", "datapath"):
+                e = num(f"e_dyn_{k}_pj")
+                add(w, case, k, num(f"{k}_um2"), e * cyc if e is not None else None)
+            add(w, case, "total", area, e_run)
+        elif case == "dace" and r.get("ram_kind"):
+            a_ram, e_ram = num("ram_um2"), num("e_ram_pj")
+            add(w, case, f"RAM ({r['ram_kind']})", a_ram, e_ram)
+            add(w, case, "logic without the RAM", area - a_ram, e_run - e_ram)
+            add(w, case, "total", area, e_run)
+        else:
+            add(w, case, "total", area, e_run)
+    return lines
+
+
 def template() -> str:
     parts = ["# The HLS cases side by side: Vitis opt and dace, Bambu, XLS", "",
              "Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs "
@@ -188,8 +239,13 @@ def template() -> str:
             parts += [f"### {kernel}", "", f"<!-- gen:{tier}/{kernel} -->", "<!-- /gen -->", "",
                       "**Insights.**", "", "- (to write)", ""]
         n += 1
+    parts += [f"## {n}. Parts at n2048", ""]
+    for tier in ("done", "untiered"):
+        parts += [f"### Tier {tier}", "", f"<!-- gen:parts/{tier} -->", "<!-- /gen -->", ""]
+    n += 1
     parts += [f"## {n}. nangate15 check", "", "<!-- gen:tech -->", "<!-- /gen -->", "",
-              f"## {n + 1}. Notes", "", "- Parked points (a RAM macro, X15): Vitis dace_w1 of dot, axpy and rowsum.",
+              f"## {n + 1}. Notes", "", "- Vitis dace_w1 of dot, axpy and rowsum: rebuilt for n2048 with their RAM as an "
+              "SRAM macro (dot, axpy) or flops (rowsum), X62; parked on nangate15.",
               "- The rows behind every number are in `results/compare_done.csv` and `results/compare_untiered.csv`.",
               ""]
     return "\n".join(parts)
@@ -212,6 +268,11 @@ def main() -> int:
             fig = figure(tier, kernel, pts)
             body = [f"![{kernel}]({fig})", "", f"{SIZE[tier][kernel]}, {TECH}, int64, 10 ns.", ""]
             text = fill(text, f"{tier}/{kernel}", body + table(tier, kernel, pts))
+    for tier, rows in (("done", done), ("untiered", untiered)):
+        body = [PARTS_BASIS, ""] if tier == "done" else []
+        for kernel in KERNELS[tier]:
+            body += [f"**{kernel}**", ""] + parts_table(rows, tier, kernel) + [""]
+        text = fill(text, f"parts/{tier}", body[:-1])
     text = fill(text, "tech", tech_check(done, untiered))
     MD.write_text(text)
     print(f"compare-hls: {MD.relative_to(ROOT)} and {len(list(FIGS.glob('*.png')))} figures in "

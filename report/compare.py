@@ -26,16 +26,18 @@ Columns:
              window is defined for the tool: X12, X44)
   area       area_um2, comb_area_um2, seq_area_um2, buf_inv_area_um2, cells, seq_cells, and the split where
              the RTL declares it as hierarchy (X41): csr_um2 (forge), ctrl_um2, datapath_um2, glue_um2
-             (forge, bambu); empty for vitis and xls
+             (forge, bambu); empty for vitis and xls; ram_kind and ram_um2 for a Vitis point with a RAM (X62:
+             an SRAM macro or flops, inside area_um2)
   timing     crit_path_ns, slack_ns, fmax_mhz, slack_in2reg_ns, slack_reg2reg_ns, slack_reg2out_ns,
              slack_in2out_ns (X40; empty on forge rows, synthesized before X40)
   energy     e_clk_pj, e_reg_pj, e_seq_pj, e_comb_pj, e_flop_pj, e_dyn_pj (per cycle of the window),
              p_dyn_uw, e_run_pj (the task), pj_per_elem (e_run_pj / elements), flop_bits, e_bit_pj,
-             leak_dc_uw (DC's leakage estimate, X7)
+             leak_dc_uw (DC's leakage estimate, X7); ram_reads, ram_writes, e_ram_pj (the RAM's share of
+             e_run_pj, X62: counted accesses x CACTI's energies for a macro, X50; PT's for flops)
   parts      e_dyn_csr_pj, e_dyn_ctrl_pj, e_dyn_datapath_pj, e_dyn_glue_pj (per cycle, forge and bambu
-             only), parts_size (the run they come from: tier done the point's default run, forge n2048;
-             untiered on nangate45 n2048, X55, from X60's rows; untiered on nangate15, which has no n2048
-             run, the default run, X61)
+             only), parts_size (the run they come from: the row's own run where power_pt_modules.csv has it
+             (X60: every n2048 run; X63), else the point's default run: tier done b64 (rowsum m8_n64), forge
+             n2048, untiered on nangate45 n2048 (X55), on nangate15 the default run (X61))
   provenance rtl_commit (the tool repo commit the RTL was measured at; forge: snax_forge_commit),
              tool_version, dc_version, syn_date
 
@@ -82,17 +84,19 @@ PARTS = {
 DEFAULT_SIZE = {"rowsum": "m8_n64"}
 REF_SIZE = "n2048"
 REF_TECH_UNTIERED = "nangate45"           # X61: untiered n2048 runs on nangate45 only (CSYN1)
-NANGATE45_ONLY = ("untiered", "forge")    # (tier, tool): CSYN1's forge points, nangate45 only (snax-forge D159)
+NANGATE45_ONLY = ("untiered", "forge")
+# X62: Vitis dace cases rebuilt for the n2048 task only (hls-exercises' params.json gives the case its own sizes)
+N2048_ONLY = {("done", "dot", "dace"), ("untiered", "axpy", "dace"), ("untiered", "rowsum", "dace")}    # (tier, tool): CSYN1's forge points, nangate45 only (snax-forge D159)
 POINT = re.compile(r"^(?P<tier>[^/]+)/(?P<kernel>[^/]+)/(?P<case>[a-z]+[0-9]*(?:_[a-z]+)?)_w(?P<w>\d+)$")
 
 KEY = ["tech", "tier", "kernel", "W", "tool", "case", "point", "size", "status"]
 TASK = ["beats", "elements", "cycles", "window"]
 AREA = ["area_um2", "comb_area_um2", "seq_area_um2", "buf_inv_area_um2", "cells", "seq_cells",
-        "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2"]
+        "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2", "ram_kind", "ram_um2"]
 TIMING = ["crit_path_ns", "slack_ns", "fmax_mhz", "slack_in2reg_ns", "slack_reg2reg_ns", "slack_reg2out_ns",
           "slack_in2out_ns"]
 ENERGY = ["e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw", "e_run_pj",
-          "pj_per_elem", "flop_bits", "e_bit_pj", "leak_dc_uw"]
+          "pj_per_elem", "flop_bits", "e_bit_pj", "leak_dc_uw", "ram_reads", "ram_writes", "e_ram_pj"]
 PART_E = ["e_dyn_csr_pj", "e_dyn_ctrl_pj", "e_dyn_datapath_pj", "e_dyn_glue_pj", "parts_size"]
 PROV = ["rtl_commit", "tool_version", "dc_version", "syn_date"]
 COLUMNS = KEY + TASK + AREA + TIMING + ENERGY + PART_E + PROV
@@ -211,7 +215,8 @@ def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
             row = dict(common)
             row.update({c: r.get(c, "") for c in ("size", "beats", "cycles", "e_clk_pj", "e_reg_pj", "e_seq_pj",
                                                     "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw", "e_run_pj",
-                                                    "flop_bits", "e_bit_pj")})
+                                                    "flop_bits", "e_bit_pj", "ram_reads", "ram_writes",
+                                                    "e_ram_pj")})
             row["status"] = "ok" if r["status"] == "ok" else f"pwr: {r['status']}"
             if r.get("beats"):
                 row["elements"] = str(int(r["beats"]) * int(p["w"]))
@@ -219,6 +224,12 @@ def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
                 row["pj_per_elem"] = f"{float(r['e_run_pj']) / int(row['elements']):.6g}"
             if row["status"] == "ok":
                 row.update(parts)
+                # X63: a row whose own size has module rows (X60: every n2048 run) takes its parts from them
+                if source in PARTS and r["size"] != psize and (point, r["size"]) in mods:
+                    try:
+                        row.update(part_energy(source, mods[(point, r["size"])]), parts_size=r["size"])
+                    except ValueError as e:
+                        problems.append(f"{tech} {e}")
             else:
                 problems.append(f"{tech} {point} {r['size']}: {row['status']}")
             out.append(row)
@@ -240,7 +251,9 @@ def check_sizes(rows: list[dict], problems: list[str]) -> None:
             want[(r["tech"], r["tier"], r["kernel"])].add(REF_SIZE)
     for (tech, point), have in sorted(sizes.items()):
         tier, kernel = point.split("/")[:2]
-        need = {"n2048"} if point.split("/")[-1].startswith("forge") else want[(tech, tier, kernel)]
+        case = point.split("/")[-1].rsplit("_w", 1)[0]
+        only = point.split("/")[-1].startswith("forge") or (tier, kernel, case) in N2048_ONLY
+        need = {"n2048"} if only else want[(tech, tier, kernel)]
         if have != need:
             problems.append(f"{tech} {point}: sizes {sorted(have)}, expected {sorted(need)}")
 
