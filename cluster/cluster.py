@@ -787,6 +787,7 @@ def gls(p: dict, images: dict, args) -> int:
     if rtl_res.get("status") != "PASS":
         sys.exit(f"step 1 of {point} is {rtl_res.get('status')} ({step1.relative_to(ROOT)}), not PASS")
     rtl_run = arc.read_text(step1, "rtl/macro/snax-forge-vsim.txt")
+    synpy.use_source("cluster")     # run_zip's folder is the source's
     synz = synpy.run_zip(TECH, point, synpy.DEFAULT_CLOCK)
     if not arc.has(synz, NETLIST):
         sys.exit(f"no {NETLIST} in {synz.relative_to(ROOT)}: run pixi run cluster syn {point} first")
