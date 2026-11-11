@@ -179,7 +179,7 @@ def tech_check(done: list[dict], untiered: list[dict]) -> list[str]:
 
 
 # X65: the line on top of the README and of every kernel page (hand-written text, outside the markers)
-PERIPHERALS_LINE = "csr excludes `<tag>_peripherals` (BUSY_COUNTER), snax-forge D168."
+PERIPHERALS_LINE = "forge's figures exclude `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168): it is in neither the csr nor the total without csr."
 PARTS_BASIS = (
     "Every point at n2048 on nangate45 (2048 elements per input stream), per kernel and W. A part's energy per task "
     "is its energy per cycle (PT's hierarchical report of that run, `power_pt_modules.csv`, X60) times the window's "

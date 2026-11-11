@@ -1,6 +1,6 @@
 # relu (tier untiered)
 
-csr excludes `<tag>_peripherals` (BUSY_COUNTER), snax-forge D168.
+forge's figures exclude `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168): it is in neither the csr nor the total without csr.
 
 Part of [the comparison](../README.md): setup, summary across kernels and the parts' basis are there.
 
@@ -39,8 +39,8 @@ n2048, nangate45, int64, 10 ns.
 - The cheapest operation, so registers decide everything: XLS needs 69 µm² per lane (a sign select), Vitis opt is 59 to 68 % registers (the output beat, 64 flops per lane), and Bambu registers both the input and the output beat (128 per lane, 1002 µm² per lane).
 - Energy per task at W = 8: XLS 0.96 nJ, Vitis 2.24, Bambu 3.88. Flops are 86 to 89 % of Vitis's energy, 61 to 67 % of Bambu's, and 3 to 31 % of XLS's.
 - Each lane's sign bit is constant 0 after relu; Vitis's synthesis warns about it (LINT-52, LINT-31). Vitis dace exists only at W = 1.
-- forge: the datapath is the same sign select as XLS's (273 µm² at W = 4, against XLS's 253 AND gates, 269 µm²), so the whole gap is control and the busy counter. Since CTRL2 (snax-forge D168) forge's ctrl reads JOBS live from the csr and keeps 34 flops (busy, the 32-bit jobs counter, done): 438 µm², 181 of them flops, against XLS's 32 flops (145 µm²); its `<tag>_peripherals` holds BUSY_COUNTER, 279 µm² and 0.24 pJ per cycle.
-- Without its csr (X63, the peripherals in, X65) forge is 29 % (W = 16) to 2.2x (W = 1) XLS's area and 3 to 39 % above its energy, about as before CTRL2: the JOBS copy left the ctrl (711 to 438 µm²) and BUSY_COUNTER, outside the csr now, entered this total (279 µm²). relu is still the one kernel where XLS beats forge at every W. Its ctrl + datapath alone is 9 % (W = 16) to 39 % (W = 1) above XLS's area and within 4 % of its energy, level from W = 8: the 32-bit busy counter is what keeps forge's like-for-like total above XLS's on energy at W ≥ 8.
+- forge: the datapath is the same sign select as XLS's (273 µm² at W = 4, against XLS's 253 AND gates, 269 µm²), so the whole gap is control. Since CTRL2 (snax-forge D168) forge's ctrl reads JOBS live from the csr and keeps 34 flops (busy, the 32-bit jobs counter, done): 438 µm², 181 of them flops, against XLS's 32 flops (145 µm²); its `<tag>_peripherals` holds BUSY_COUNTER, 279 µm² and 0.24 pJ per cycle.
+- Without its csr (X63; the peripherals in no figure, X65) forge is 9 % (W = 16) to 39 % (W = 1) above XLS's area (508 against 364 µm² at W = 1) and 4 % above its energy at W = 1, 1 % at W = 4, level from W = 8 (W = 16: 0.452 against 0.453 pJ per element). Before CTRL2 it was 29 % to 2.1x and 3 to 40 %: the JOBS copy left the ctrl (711 to 438 µm²). relu is the one kernel where XLS has the smaller area at every W.
 
 ## Parts at n2048
 
@@ -51,7 +51,7 @@ n2048, nangate45, int64, 10 ns.
 | 1 | forge | ctrl | 438.1 | 0.5435 | 0.2654 |
 | 1 | forge | datapath | 68.36 | 0.9181 | 0.4483 |
 | 1 | forge | total | 1,335 | 2.912 | 1.422 |
-| 1 | forge | total without csr | 786.8 | 1.943 | 0.9488 |
+| 1 | forge | total without csr | 507.5 | 1.462 | 0.7137 |
 | 1 | Vitis opt | total | 1,028 | 3.186 | 1.556 |
 | 1 | Vitis dace | total | 1,145 | 3.576 | 1.746 |
 | 1 | Bambu | ctrl | 54 | 0.04337 | 0.02118 |
@@ -62,7 +62,7 @@ n2048, nangate45, int64, 10 ns.
 | 2 | forge | ctrl | 438.1 | 0.2755 | 0.1345 |
 | 2 | forge | datapath | 136.7 | 0.9045 | 0.4416 |
 | 2 | forge | total | 1,403 | 1.909 | 0.9321 |
-| 2 | forge | total without csr | 855.2 | 1.424 | 0.6955 |
+| 2 | forge | total without csr | 575.9 | 1.18 | 0.5761 |
 | 2 | Vitis opt | total | 1,434 | 2.647 | 1.292 |
 | 2 | Bambu | ctrl | 54 | 0.02204 | 0.01076 |
 | 2 | Bambu | datapath | 2,706 | 4.288 | 2.094 |
@@ -72,7 +72,7 @@ n2048, nangate45, int64, 10 ns.
 | 4 | forge | ctrl | 438.1 | 0.1396 | 0.06815 |
 | 4 | forge | datapath | 273.4 | 0.891 | 0.4351 |
 | 4 | forge | total | 1,540 | 1.397 | 0.6821 |
-| 4 | forge | total without csr | 991.9 | 1.155 | 0.5638 |
+| 4 | forge | total without csr | 712.6 | 1.031 | 0.5032 |
 | 4 | Vitis opt | total | 2,246 | 2.367 | 1.156 |
 | 4 | Bambu | ctrl | 54 | 0.01138 | 0.005557 |
 | 4 | Bambu | datapath | 4,709 | 4.004 | 1.955 |
@@ -82,7 +82,7 @@ n2048, nangate45, int64, 10 ns.
 | 8 | forge | ctrl | 438.1 | 0.07074 | 0.03454 |
 | 8 | forge | datapath | 546.9 | 0.8891 | 0.4341 |
 | 8 | forge | total | 1,813 | 1.144 | 0.5586 |
-| 8 | forge | total without csr | 1,265 | 1.023 | 0.4994 |
+| 8 | forge | total without csr | 986.1 | 0.9598 | 0.4687 |
 | 8 | Vitis opt | total | 3,871 | 2.237 | 1.092 |
 | 8 | Bambu | ctrl | 54.53 | 0.006046 | 0.002952 |
 | 8 | Bambu | datapath | 8,716 | 3.872 | 1.89 |
@@ -92,7 +92,7 @@ n2048, nangate45, int64, 10 ns.
 | 16 | forge | ctrl | 438.1 | 0.03585 | 0.01751 |
 | 16 | forge | datapath | 1,094 | 0.8904 | 0.4347 |
 | 16 | forge | total | 2,360 | 1.019 | 0.4975 |
-| 16 | forge | total without csr | 1,812 | 0.9581 | 0.4678 |
+| 16 | forge | total without csr | 1,533 | 0.9262 | 0.4523 |
 | 16 | Vitis opt | total | 7,121 | 2.183 | 1.066 |
 | 16 | Bambu | ctrl | 55.33 | 0.003399 | 0.00166 |
 | 16 | Bambu | datapath | 16,729 | 3.826 | 1.868 |

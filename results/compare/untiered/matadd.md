@@ -1,6 +1,6 @@
 # matadd (tier untiered)
 
-csr excludes `<tag>_peripherals` (BUSY_COUNTER), snax-forge D168.
+forge's figures exclude `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168): it is in neither the csr nor the total without csr.
 
 Part of [the comparison](../README.md): setup, summary across kernels and the parts' basis are there.
 
@@ -51,7 +51,7 @@ n2048, nangate45, int64, 10 ns.
 | 1 | forge | ctrl | 438.4 | 0.5435 | 0.2654 |
 | 1 | forge | datapath | 269.7 | 1.585 | 0.7739 |
 | 1 | forge | total | 1,536 | 3.579 | 1.748 |
-| 1 | forge | total without csr | 988.5 | 2.61 | 1.274 |
+| 1 | forge | total without csr | 709.2 | 2.129 | 1.039 |
 | 1 | Vitis opt | total | 1,301 | 4.018 | 1.962 |
 | 1 | Vitis dace | total | 1,420 | 4.409 | 2.153 |
 | 1 | Bambu | ctrl | 57.99 | 0.04348 | 0.02123 |
@@ -62,7 +62,7 @@ n2048, nangate45, int64, 10 ns.
 | 2 | forge | ctrl | 438.4 | 0.2755 | 0.1345 |
 | 2 | forge | datapath | 539.4 | 1.584 | 0.7736 |
 | 2 | forge | total | 1,806 | 2.589 | 1.264 |
-| 2 | forge | total without csr | 1,258 | 2.104 | 1.027 |
+| 2 | forge | total without csr | 978.9 | 1.86 | 0.9081 |
 | 2 | Vitis opt | total | 1,980 | 3.502 | 1.71 |
 | 2 | Vitis dace | total | 2,424 | 3.922 | 1.915 |
 | 2 | Bambu | ctrl | 57.99 | 0.02216 | 0.01082 |
@@ -73,7 +73,7 @@ n2048, nangate45, int64, 10 ns.
 | 4 | forge | ctrl | 438.4 | 0.1396 | 0.06815 |
 | 4 | forge | datapath | 1,079 | 1.583 | 0.773 |
 | 4 | forge | total | 2,345 | 2.089 | 1.02 |
-| 4 | forge | total without csr | 1,798 | 1.847 | 0.9017 |
+| 4 | forge | total without csr | 1,518 | 1.723 | 0.8411 |
 | 4 | Vitis opt | total | 3,340 | 3.241 | 1.583 |
 | 4 | Vitis dace | total | 3,780 | 3.448 | 1.684 |
 | 4 | Bambu | ctrl | 57.99 | 0.01149 | 0.005609 |
@@ -84,7 +84,7 @@ n2048, nangate45, int64, 10 ns.
 | 8 | forge | ctrl | 438.4 | 0.07074 | 0.03454 |
 | 8 | forge | datapath | 2,158 | 1.589 | 0.7758 |
 | 8 | forge | total | 3,424 | 1.844 | 0.9003 |
-| 8 | forge | total without csr | 2,877 | 1.722 | 0.841 |
+| 8 | forge | total without csr | 2,597 | 1.66 | 0.8103 |
 | 8 | Vitis opt | total | 6,057 | 3.124 | 1.525 |
 | 8 | Vitis dace | total | 6,459 | 3.221 | 1.573 |
 | 8 | Bambu | ctrl | 58.52 | 0.006156 | 0.003006 |
@@ -95,7 +95,7 @@ n2048, nangate45, int64, 10 ns.
 | 16 | forge | ctrl | 438.4 | 0.03585 | 0.01751 |
 | 16 | forge | datapath | 4,316 | 1.582 | 0.7723 |
 | 16 | forge | total | 5,582 | 1.71 | 0.835 |
-| 16 | forge | total without csr | 5,034 | 1.649 | 0.8054 |
+| 16 | forge | total without csr | 4,755 | 1.618 | 0.7898 |
 | 16 | Vitis opt | total | 11,489 | 3.058 | 1.493 |
 | 16 | Vitis dace | total | 11,864 | 3.099 | 1.513 |
 | 16 | Bambu | ctrl | 59.05 | 0.003498 | 0.001708 |
