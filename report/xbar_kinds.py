@@ -136,7 +136,7 @@ def build(tech: str) -> dict:
         checks.append({"what": name, "inputs": n, "banks": b, "ro": ro, "wo": wo, "area_um2": area,
                        "a_table_um2": a_tab, "factor_um2": pf, "factor_err_pct": (pf / area - 1) * 100,
                        "crosspoint_um2": pc, "crosspoint_err_pct": (pc / area - 1) * 100})
-    r4 = lambda v: round(v, 4)  # noqa: E731
+    r6 = lambda v: round(v, 6)  # noqa: E731  # enough digits that the worked examples' sums hold to 1 um2
     return {
         "_doc": "The sparse interconnect's read-only and write-only inputs (X71, report/xbar_kinds.py). factor is "
                 "the default: A = A_table(n, b) * (1 - f_ro * n_ro / n - f_wo * n_wo / n), A_table from xbar.csv. "
@@ -144,11 +144,11 @@ def build(tech: str) -> dict:
                 "n = n_rw + n_ro + n_wo inputs, b banks; a reader's channel is read-only, a writer's write-only, the "
                 "cores and the AXI port read-write. Areas in um2.",
         "tech": tech,
-        "factor": {"f_ro": r4(f["f_ro"]), "f_wo": r4(f["f_wo"]), "f_ro_range": list(map(r4, f["f_ro_range"])),
-                   "f_wo_range": list(map(r4, f["f_wo_range"])), "pairs": len(f["pairs"]),
+        "factor": {"f_ro": r6(f["f_ro"]), "f_wo": r6(f["f_wo"]), "f_ro_range": list(map(r6, f["f_ro_range"])),
+                   "f_wo_range": list(map(r6, f["f_wo_range"])), "pairs": len(f["pairs"]),
                    "method": "mean over the (inputs, banks) pairs of 1 - A(all read-only or all write-only) / "
                              "A(all read-write), both from xbar_mix"},
-        "crosspoint": {**{k: round(cp[k], 2) for k in COEF}, "points": cp["points"],
+        "crosspoint": {**{k: round(cp[k], 4) for k in COEF}, "points": cp["points"],
                        "max_residual_pct": round(cp["max_residual_pct"], 2),
                        "method": "ordinary least squares (numpy.linalg.lstsq), unweighted, the i36_b32 points held "
                                  "out", "grid": {"inputs": sorted({r["n"] for r in rs if r["point"] not in held}),

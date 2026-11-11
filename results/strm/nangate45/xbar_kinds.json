@@ -2,26 +2,26 @@
  "_doc": "The sparse interconnect's read-only and write-only inputs (X71, report/xbar_kinds.py). factor is the default: A = A_table(n, b) * (1 - f_ro * n_ro / n - f_wo * n_wo / n), A_table from xbar.csv. crosspoint is the option: A = b * (c_rw * n_rw + c_ro * n_ro + c_wo * n_wo) + d * n + e * b + g. n = n_rw + n_ro + n_wo inputs, b banks; a reader's channel is read-only, a writer's write-only, the cores and the AXI port read-write. Areas in um2.",
  "tech": "nangate45",
  "factor": {
-  "f_ro": 0.3965,
-  "f_wo": 0.4108,
+  "f_ro": 0.396496,
+  "f_wo": 0.41077,
   "f_ro_range": [
-   0.389,
-   0.4065
+   0.388964,
+   0.406456
   ],
   "f_wo_range": [
-   0.4066,
-   0.4145
+   0.406639,
+   0.414456
   ],
   "pairs": 9,
   "method": "mean over the (inputs, banks) pairs of 1 - A(all read-only or all write-only) / A(all read-write), both from xbar_mix"
  },
  "crosspoint": {
-  "c_rw": 159.34,
-  "c_ro": 95.06,
-  "c_wo": 93.65,
-  "d": 26.3,
-  "e": -19.43,
-  "g": -201.01,
+  "c_rw": 159.3358,
+  "c_ro": 95.0644,
+  "c_wo": 93.6514,
+  "d": 26.3019,
+  "e": -19.4338,
+  "g": -201.0074,
   "points": 27,
   "max_residual_pct": 2.9,
   "method": "ordinary least squares (numpy.linalg.lstsq), unweighted, the i36_b32 points held out",
