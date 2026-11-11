@@ -4,7 +4,7 @@ snax-forge is not changed for this: the adapter reads its bundle, rtl/forge/<poi
 and asks snax-forge's own code for the rest (forge/query.py, run in snax-forge's pixi environment):
   - point.json          recipe, W, snax_forge_commit
   - bundle.json         top, the design point (for the containers, through forge/query.py point)
-  - accelerator.json    its one group's CSRs by offset (START, JOBS, a unit's JOB_BEATS, STATUS, COUNTER),
+  - accelerator.json    its one group's CSRs by offset (START, JOBS, a unit's JOB_BEATS, STATUS, BUSY_COUNTER),
                         its outer ports in order (inputs, then outputs) with lanes and dtype
   - <tag>_streamer_<accelerator>.hjson (<tag>_streamer.hjson in SYN1's bundles)  each mover's num_channel
   - the netlist's port list  every port must be covered (snax-forge docs/CONTRACTS.md section 17, The wrapper)
@@ -35,7 +35,7 @@ tb.json for the generated TB top (sim/pwr.py), as sources/hls.py's with:
           them for that design point (forge/query.py program: lower/derive.py's task list, lower/c.py's
           job_writes), then START; sim/pwr.py adds the scalar writes before START. expected_cycles: the group's
           busy cycles from snax-forge's model (forge/query.py cycles: gen/rtl.py's group_counter) with those
-          values; the TB's window is the measurement, the COUNTER it reads back and this count are recorded
+          values; the TB's window is the measurement, the BUSY_COUNTER it reads back and this count are recorded
           beside it, each within 5 % of it (X56).
 
 One group only (dot 1 is not in SYN1). Every read-write CSR is START, JOBS, a unit's JOB_BEATS or a scalar's.
@@ -113,6 +113,10 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
     if len(acc["groups"]) != 1:
         raise ValueError(f"{point}: {len(acc['groups'])} groups; one is supported (dot 1 is not in SYN1)")
     (g,) = acc["groups"]
+    # snax-forge D168 (CTRL2) renamed the busy-cycle CSR; its forge/query.py refuses a bundle made before it
+    if "BUSY_COUNTER" not in {c["name"] for c in g["csrs"]}:
+        raise ValueError(f"{point}: no BUSY_COUNTER CSR (a bundle made before snax-forge D168 names it COUNTER): "
+                         "rebundle (pixi run forge-rtl)")
     ports = hls.ports_of(netlist, top)
 
     # the size: the point's sets are X55's n2048 shape (the design point was made at it, forge/bundles.py)
@@ -129,7 +133,7 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
             raise ValueError(f"{point}: the design point has {k} = {prog['symbols'].get(k)}, the sets {k} = {v}")
 
     csrs = {c["name"]: c["offset"] for c in g["csrs"]}
-    for need in ("START", "JOBS", "STATUS", "COUNTER"):
+    for need in ("START", "JOBS", "STATUS", "BUSY_COUNTER"):
         if need not in csrs:
             raise ValueError(f"{point}: group {g['name']} has no {need} CSR")
     scal_csr = {(sc["unit"], c) for sc in prog["scalars"] for c in sc["csrs"]}

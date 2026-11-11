@@ -1,0 +1,632 @@
+{
+ "done/vecadd/forge_w1": {
+  "top": "snax_forge_vecadd_shell_wrapper",
+  "ctrl": "snax_forge_vecadd_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vecadd_acc_ctrl": 34
+  }
+ },
+ "done/vecadd/forge_w2": {
+  "top": "snax_forge_vecadd_shell_wrapper",
+  "ctrl": "snax_forge_vecadd_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vecadd_acc_ctrl": 34
+  }
+ },
+ "done/vecadd/forge_w4": {
+  "top": "snax_forge_vecadd_shell_wrapper",
+  "ctrl": "snax_forge_vecadd_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vecadd_acc_ctrl": 34
+  }
+ },
+ "done/vecadd/forge_w8": {
+  "top": "snax_forge_vecadd_shell_wrapper",
+  "ctrl": "snax_forge_vecadd_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vecadd_acc_ctrl": 34
+  }
+ },
+ "done/vecadd/forge_w16": {
+  "top": "snax_forge_vecadd_shell_wrapper",
+  "ctrl": "snax_forge_vecadd_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vecadd_acc_ctrl": 34
+  }
+ },
+ "done/vecmul/forge_w1": {
+  "top": "snax_forge_vecmul_shell_wrapper",
+  "ctrl": "snax_forge_vecmul_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vecmul_acc_ctrl": 34
+  }
+ },
+ "done/vecmul/forge_w2": {
+  "top": "snax_forge_vecmul_shell_wrapper",
+  "ctrl": "snax_forge_vecmul_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vecmul_acc_ctrl": 34
+  }
+ },
+ "done/vecmul/forge_w4": {
+  "top": "snax_forge_vecmul_shell_wrapper",
+  "ctrl": "snax_forge_vecmul_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vecmul_acc_ctrl": 34
+  }
+ },
+ "done/vecmul/forge_w8": {
+  "top": "snax_forge_vecmul_shell_wrapper",
+  "ctrl": "snax_forge_vecmul_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vecmul_acc_ctrl": 34
+  }
+ },
+ "done/vecmul/forge_w16": {
+  "top": "snax_forge_vecmul_shell_wrapper",
+  "ctrl": "snax_forge_vecmul_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vecmul_acc_ctrl": 34
+  }
+ },
+ "done/vsum/forge_w1": {
+  "top": "snax_forge_vsum_tree_shell_wrapper",
+  "ctrl": "snax_forge_vsum_tree_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vsum_tree_acc_ctrl": 67
+  }
+ },
+ "done/vsum/forge_w2": {
+  "top": "snax_forge_vsum_tree_shell_wrapper",
+  "ctrl": "snax_forge_vsum_tree_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vsum_tree_acc_ctrl": 67
+  }
+ },
+ "done/vsum/forge_w4": {
+  "top": "snax_forge_vsum_tree_shell_wrapper",
+  "ctrl": "snax_forge_vsum_tree_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vsum_tree_acc_ctrl": 67
+  }
+ },
+ "done/vsum/forge_w8": {
+  "top": "snax_forge_vsum_tree_shell_wrapper",
+  "ctrl": "snax_forge_vsum_tree_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vsum_tree_acc_ctrl": 67
+  }
+ },
+ "done/vsum/forge_w16": {
+  "top": "snax_forge_vsum_tree_shell_wrapper",
+  "ctrl": "snax_forge_vsum_tree_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_vsum_tree_acc_ctrl": 67
+  }
+ },
+ "done/dot/forge2_w1": {
+  "top": "snax_forge_dot_2_shell_wrapper",
+  "ctrl": "snax_forge_dot_2_ctrl",
+  "flops": 132,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_2_dot_ctrl": 132
+  }
+ },
+ "done/dot/forge2_w2": {
+  "top": "snax_forge_dot_2_shell_wrapper",
+  "ctrl": "snax_forge_dot_2_ctrl",
+  "flops": 132,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_2_dot_ctrl": 132
+  }
+ },
+ "done/dot/forge2_w4": {
+  "top": "snax_forge_dot_2_shell_wrapper",
+  "ctrl": "snax_forge_dot_2_ctrl",
+  "flops": 132,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_2_dot_ctrl": 132
+  }
+ },
+ "done/dot/forge2_w8": {
+  "top": "snax_forge_dot_2_shell_wrapper",
+  "ctrl": "snax_forge_dot_2_ctrl",
+  "flops": 132,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_2_dot_ctrl": 132
+  }
+ },
+ "done/dot/forge2_w16": {
+  "top": "snax_forge_dot_2_shell_wrapper",
+  "ctrl": "snax_forge_dot_2_ctrl",
+  "flops": 132,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_2_dot_ctrl": 132
+  }
+ },
+ "done/dot/forge3_w1": {
+  "top": "snax_forge_dot_3_shell_wrapper",
+  "ctrl": "snax_forge_dot_3_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_3_dot_ctrl": 67
+  }
+ },
+ "done/dot/forge3_w2": {
+  "top": "snax_forge_dot_3_shell_wrapper",
+  "ctrl": "snax_forge_dot_3_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_3_dot_ctrl": 67
+  }
+ },
+ "done/dot/forge3_w4": {
+  "top": "snax_forge_dot_3_shell_wrapper",
+  "ctrl": "snax_forge_dot_3_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_3_dot_ctrl": 67
+  }
+ },
+ "done/dot/forge3_w8": {
+  "top": "snax_forge_dot_3_shell_wrapper",
+  "ctrl": "snax_forge_dot_3_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_3_dot_ctrl": 67
+  }
+ },
+ "done/dot/forge3_w16": {
+  "top": "snax_forge_dot_3_shell_wrapper",
+  "ctrl": "snax_forge_dot_3_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_3_dot_ctrl": 67
+  }
+ },
+ "done/dot/forge4_w1": {
+  "top": "snax_forge_dot_4_shell_wrapper",
+  "ctrl": "snax_forge_dot_4_ctrl",
+  "flops": 100,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_4_dot_ctrl": 100
+  }
+ },
+ "done/dot/forge4_w2": {
+  "top": "snax_forge_dot_4_shell_wrapper",
+  "ctrl": "snax_forge_dot_4_ctrl",
+  "flops": 100,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_4_dot_ctrl": 100
+  }
+ },
+ "done/dot/forge4_w4": {
+  "top": "snax_forge_dot_4_shell_wrapper",
+  "ctrl": "snax_forge_dot_4_ctrl",
+  "flops": 100,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_4_dot_ctrl": 100
+  }
+ },
+ "done/dot/forge4_w8": {
+  "top": "snax_forge_dot_4_shell_wrapper",
+  "ctrl": "snax_forge_dot_4_ctrl",
+  "flops": 100,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_4_dot_ctrl": 100
+  }
+ },
+ "done/dot/forge4_w16": {
+  "top": "snax_forge_dot_4_shell_wrapper",
+  "ctrl": "snax_forge_dot_4_ctrl",
+  "flops": 100,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_4_dot_ctrl": 100
+  }
+ },
+ "done/dot/forge5_w1": {
+  "top": "snax_forge_dot_5_shell_wrapper",
+  "ctrl": "snax_forge_dot_5_ctrl",
+  "flops": 100,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_5_dot_ctrl": 100
+  }
+ },
+ "done/dot/forge5_w2": {
+  "top": "snax_forge_dot_5_shell_wrapper",
+  "ctrl": "snax_forge_dot_5_ctrl",
+  "flops": 101,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_5_dot_ctrl": 101
+  }
+ },
+ "done/dot/forge5_w4": {
+  "top": "snax_forge_dot_5_shell_wrapper",
+  "ctrl": "snax_forge_dot_5_ctrl",
+  "flops": 102,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_5_dot_ctrl": 102
+  }
+ },
+ "done/dot/forge5_w8": {
+  "top": "snax_forge_dot_5_shell_wrapper",
+  "ctrl": "snax_forge_dot_5_ctrl",
+  "flops": 103,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_5_dot_ctrl": 103
+  }
+ },
+ "done/dot/forge5_w16": {
+  "top": "snax_forge_dot_5_shell_wrapper",
+  "ctrl": "snax_forge_dot_5_ctrl",
+  "flops": 104,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_5_dot_ctrl": 104
+  }
+ },
+ "done/dot/forge6_w1": {
+  "top": "snax_forge_dot_6_shell_wrapper",
+  "ctrl": "snax_forge_dot_6_ctrl",
+  "flops": 101,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_6_dot_ctrl": 101
+  }
+ },
+ "done/dot/forge6_w2": {
+  "top": "snax_forge_dot_6_shell_wrapper",
+  "ctrl": "snax_forge_dot_6_ctrl",
+  "flops": 102,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_6_dot_ctrl": 102
+  }
+ },
+ "done/dot/forge6_w4": {
+  "top": "snax_forge_dot_6_shell_wrapper",
+  "ctrl": "snax_forge_dot_6_ctrl",
+  "flops": 103,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_6_dot_ctrl": 103
+  }
+ },
+ "done/dot/forge6_w8": {
+  "top": "snax_forge_dot_6_shell_wrapper",
+  "ctrl": "snax_forge_dot_6_ctrl",
+  "flops": 104,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_6_dot_ctrl": 104
+  }
+ },
+ "done/dot/forge6_w16": {
+  "top": "snax_forge_dot_6_shell_wrapper",
+  "ctrl": "snax_forge_dot_6_ctrl",
+  "flops": 105,
+  "latches": 0,
+  "groups": {
+   "snax_forge_dot_6_dot_ctrl": 105
+  }
+ },
+ "untiered/relu/forge_w1": {
+  "top": "snax_forge_relu_shell_wrapper",
+  "ctrl": "snax_forge_relu_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_relu_acc_ctrl": 34
+  }
+ },
+ "untiered/relu/forge_w2": {
+  "top": "snax_forge_relu_shell_wrapper",
+  "ctrl": "snax_forge_relu_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_relu_acc_ctrl": 34
+  }
+ },
+ "untiered/relu/forge_w4": {
+  "top": "snax_forge_relu_shell_wrapper",
+  "ctrl": "snax_forge_relu_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_relu_acc_ctrl": 34
+  }
+ },
+ "untiered/relu/forge_w8": {
+  "top": "snax_forge_relu_shell_wrapper",
+  "ctrl": "snax_forge_relu_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_relu_acc_ctrl": 34
+  }
+ },
+ "untiered/relu/forge_w16": {
+  "top": "snax_forge_relu_shell_wrapper",
+  "ctrl": "snax_forge_relu_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_relu_acc_ctrl": 34
+  }
+ },
+ "untiered/matadd/forge_w1": {
+  "top": "snax_forge_matadd_shell_wrapper",
+  "ctrl": "snax_forge_matadd_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_matadd_acc_ctrl": 34
+  }
+ },
+ "untiered/matadd/forge_w2": {
+  "top": "snax_forge_matadd_shell_wrapper",
+  "ctrl": "snax_forge_matadd_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_matadd_acc_ctrl": 34
+  }
+ },
+ "untiered/matadd/forge_w4": {
+  "top": "snax_forge_matadd_shell_wrapper",
+  "ctrl": "snax_forge_matadd_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_matadd_acc_ctrl": 34
+  }
+ },
+ "untiered/matadd/forge_w8": {
+  "top": "snax_forge_matadd_shell_wrapper",
+  "ctrl": "snax_forge_matadd_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_matadd_acc_ctrl": 34
+  }
+ },
+ "untiered/matadd/forge_w16": {
+  "top": "snax_forge_matadd_shell_wrapper",
+  "ctrl": "snax_forge_matadd_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_matadd_acc_ctrl": 34
+  }
+ },
+ "untiered/axpy/forge_w1": {
+  "top": "snax_forge_axpy_shell_wrapper",
+  "ctrl": "snax_forge_axpy_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_axpy_acc_ctrl": 34
+  }
+ },
+ "untiered/axpy/forge_w2": {
+  "top": "snax_forge_axpy_shell_wrapper",
+  "ctrl": "snax_forge_axpy_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_axpy_acc_ctrl": 34
+  }
+ },
+ "untiered/axpy/forge_w4": {
+  "top": "snax_forge_axpy_shell_wrapper",
+  "ctrl": "snax_forge_axpy_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_axpy_acc_ctrl": 34
+  }
+ },
+ "untiered/axpy/forge_w8": {
+  "top": "snax_forge_axpy_shell_wrapper",
+  "ctrl": "snax_forge_axpy_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_axpy_acc_ctrl": 34
+  }
+ },
+ "untiered/axpy/forge_w16": {
+  "top": "snax_forge_axpy_shell_wrapper",
+  "ctrl": "snax_forge_axpy_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_axpy_acc_ctrl": 34
+  }
+ },
+ "untiered/axpy/forge_baked_w1": {
+  "top": "snax_forge_axpy_baked_shell_wrapper",
+  "ctrl": "snax_forge_axpy_baked_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_axpy_baked_acc_ctrl": 34
+  }
+ },
+ "untiered/axpy/forge_baked_w2": {
+  "top": "snax_forge_axpy_baked_shell_wrapper",
+  "ctrl": "snax_forge_axpy_baked_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_axpy_baked_acc_ctrl": 34
+  }
+ },
+ "untiered/axpy/forge_baked_w4": {
+  "top": "snax_forge_axpy_baked_shell_wrapper",
+  "ctrl": "snax_forge_axpy_baked_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_axpy_baked_acc_ctrl": 34
+  }
+ },
+ "untiered/axpy/forge_baked_w8": {
+  "top": "snax_forge_axpy_baked_shell_wrapper",
+  "ctrl": "snax_forge_axpy_baked_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_axpy_baked_acc_ctrl": 34
+  }
+ },
+ "untiered/axpy/forge_baked_w16": {
+  "top": "snax_forge_axpy_baked_shell_wrapper",
+  "ctrl": "snax_forge_axpy_baked_ctrl",
+  "flops": 34,
+  "latches": 0,
+  "groups": {
+   "snax_forge_axpy_baked_acc_ctrl": 34
+  }
+ },
+ "untiered/rowsum/forge_w1": {
+  "top": "snax_forge_rowsum_shell_wrapper",
+  "ctrl": "snax_forge_rowsum_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_rowsum_acc_ctrl": 67
+  }
+ },
+ "untiered/rowsum/forge_w2": {
+  "top": "snax_forge_rowsum_shell_wrapper",
+  "ctrl": "snax_forge_rowsum_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_rowsum_acc_ctrl": 67
+  }
+ },
+ "untiered/rowsum/forge_w4": {
+  "top": "snax_forge_rowsum_shell_wrapper",
+  "ctrl": "snax_forge_rowsum_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_rowsum_acc_ctrl": 67
+  }
+ },
+ "untiered/rowsum/forge_w8": {
+  "top": "snax_forge_rowsum_shell_wrapper",
+  "ctrl": "snax_forge_rowsum_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_rowsum_acc_ctrl": 67
+  }
+ },
+ "untiered/rowsum/forge_w16": {
+  "top": "snax_forge_rowsum_shell_wrapper",
+  "ctrl": "snax_forge_rowsum_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_rowsum_acc_ctrl": 67
+  }
+ },
+ "untiered/rowsum/forge2_w1": {
+  "top": "snax_forge_rowsum_2_shell_wrapper",
+  "ctrl": "snax_forge_rowsum_2_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_rowsum_2_acc_ctrl": 67
+  }
+ },
+ "untiered/rowsum/forge2_w2": {
+  "top": "snax_forge_rowsum_2_shell_wrapper",
+  "ctrl": "snax_forge_rowsum_2_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_rowsum_2_acc_ctrl": 67
+  }
+ },
+ "untiered/rowsum/forge2_w4": {
+  "top": "snax_forge_rowsum_2_shell_wrapper",
+  "ctrl": "snax_forge_rowsum_2_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_rowsum_2_acc_ctrl": 67
+  }
+ },
+ "untiered/rowsum/forge2_w8": {
+  "top": "snax_forge_rowsum_2_shell_wrapper",
+  "ctrl": "snax_forge_rowsum_2_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_rowsum_2_acc_ctrl": 67
+  }
+ },
+ "untiered/rowsum/forge2_w16": {
+  "top": "snax_forge_rowsum_2_shell_wrapper",
+  "ctrl": "snax_forge_rowsum_2_ctrl",
+  "flops": 67,
+  "latches": 0,
+  "groups": {
+   "snax_forge_rowsum_2_acc_ctrl": 67
+  }
+ }
+}
