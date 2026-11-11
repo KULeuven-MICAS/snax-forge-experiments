@@ -50,7 +50,7 @@ syn (X67 step 2, X68), from the same bundle zip, in tmp/cluster/<point>/:
      tc_sram_impl.sv, and the macros' .db (from ram/runs/lib/<name>.zip) for SYN_RAM_DBS; dc_syn.tcl sources
      the list (SYN_FLIST_TCL), elaborates snax_forge_cluster_wrapper (SYN_TOP), adds cluster.sdc after
      constraints.sdc (SYN_EXTRA_SDC) and runs cluster/cluster_check.tcl after the reports (SYN_POST_TCL);
-     no SDF (X69). DC's stdout goes to logs/dc_stdout.log as it runs; its path is printed first.
+     no SDF (X69); SYN_IGNORE_LOAD=1, so DC keeps --cores under a loaded host (UIO-231). DC's stdout goes to logs/dc_stdout.log as it runs; its path is printed first.
   4. tree.txt (cluster/tree.py, area_hierarchy.rpt to depth 4) beside the reports; the run zip
      syn/runs/cluster/nangate45/<point>.zip keeps syn.py's KEEP_RUN and the cluster's files; a row in
      results/cluster/nangate45/synth_dc.csv and the report zip results/cluster/nangate45/reports/<point>.zip.
@@ -520,7 +520,8 @@ def syn(p: dict, images: dict, args) -> int:
         dbs = [rdir / "macros" / f"{m}.db" for m in macros]
         syn_env.update({"SYN_FLIST_TCL": str(rdir / "syn_flist.tcl"), "SYN_TOP": synpy.SOURCES["cluster"]["top"],
                         "SYN_EXTRA_SDC": str(rdir / "cluster.sdc"), "SYN_POST_TCL": str(CHECK_TCL),
-                        "SYN_RAM_DBS": " ".join(str(d) for d in dbs)})
+                        "SYN_RAM_DBS": " ".join(str(d) for d in dbs),
+                        "SYN_IGNORE_LOAD": "1"})   # X68: the cores asked for, whatever the host's load (UIO-231)
 
         def prepare() -> None:
             (rdir / "syn_flist.tcl").write_text(flist)

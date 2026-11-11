@@ -166,8 +166,8 @@ SYN_CLK_PORT (ap_clk; bambu clock; xls clk; forge clk_i; char, streamer and
 xbar clock) and SYN_RST_PORT (ap_rst_n; bambu reset; xls rst; forge rst_ni;
 char, streamer and xbar reset); with --sdf, SYN_WRITE_SDF=1 (dc_syn.tcl
 writes the SDF only then, X69). The cluster source also sets SYN_FLIST_TCL,
-SYN_TOP, SYN_EXTRA_SDC, SYN_POST_TCL and SYN_RAM_DBS in place of SYN_FILELIST
-(dc_syn.tcl's optional hooks).
+SYN_TOP, SYN_EXTRA_SDC, SYN_POST_TCL and SYN_RAM_DBS in place of SYN_FILELIST,
+and SYN_IGNORE_LOAD=1 (dc_syn.tcl's optional hooks).
 Standard library and arc/arc.py only.
 """
 

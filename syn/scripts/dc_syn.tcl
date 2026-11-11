@@ -40,6 +40,8 @@
 #   SYN_EXTRA_SDC      a file sourced right after constraints.sdc (it sees the same variables)
 #   SYN_POST_TCL       a file sourced after the reports, before the outputs
 #   SYN_WRITE_SDF      1: write the SDF beside the netlist (syn.py --sdf); otherwise none (X69)
+#   SYN_IGNORE_LOAD    1: take SYN_CORES whatever the host's load (disable_multicore_resource_checks set before
+#                      set_host_options); otherwise DC lowers the cores under load once, at the start (UIO-231)
 #
 # The constraints are physical (ns, fF) and scaled to the library's units here; the
 # library's own name and units are checked against the tech file before any RTL is read.
@@ -71,6 +73,10 @@ set rst_port     [env_or SYN_RST_PORT ap_rst_n]
 #-----------------------------
 # Setting up multiple cores
 #-----------------------------
+
+# SYN_IGNORE_LOAD=1 (the cluster source, X68): the load check is off before the cores are set, so DC keeps
+# SYN_CORES; otherwise set_host_options cuts them by the load at this moment (UIO-231) for the whole run
+if {[env_or SYN_IGNORE_LOAD 0] eq "1"} { set disable_multicore_resource_checks true }
 
 # This sets the max number of cores to be used
 set_host_options -max_cores $::env(SYN_CORES)
