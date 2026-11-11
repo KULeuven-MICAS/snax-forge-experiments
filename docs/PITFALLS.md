@@ -225,6 +225,20 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** seed through `vsim -sv_seed <seed>`, as `sim/pwr.py --source streamer|xbar` does with `--seed`; check that two seeds give different SAIFs.
 - **Found in:** `results/strm/runs/2026-11-06_strm1_r1.md`.
 
+### Q12. RAM1's macro models are SystemVerilog in `.v` files: vlog reads them as Verilog-2001
+
+- **Symptom:** the cluster's macro build (`snax-forge-sim` with `SRAM_MODELS`) stops with `(vlog-13069) .../sram_d128_w39.v(10): near "clk_i": syntax error, unexpected IDENTIFIER, expecting ')'` and `(vlog-13036) ... near "++": Operator only allowed in SystemVerilog`, 5 errors in the three models.
+- **Cause:** `ram/ram.py`'s `gen_v` writes `input logic` ports, `always_ff`, `'{default: '0}` and `int b++` loops into `<macro>.v`; vlog takes a `.v` file as Verilog-2001 unless `-sv` is given, and snax_cluster compiles `SRAM_MODELS` with `vlog -f <file>` and no `-sv`. Verilator reads `.v` as SystemVerilog, so R2a's equivalence bench did not show it.
+- **Fix or check:** `cluster/mem.py` writes `-sv` as the first line of `sram_models.f` (vlog takes options from a `-f` file; snax_cluster's `SRAM_MODELS_FILES` skips lines starting with `-` or `+`); `cluster/test_mem.py` checks it. A netlist run that compiles the models (R4) needs `-sv` too.
+- **Found in:** `results/cluster/runs/2026-11-11_csyn1_r2.md` (step 3).
+
+### Q13. vsim's prints and the program's output share the log through separate buffers: a line can be cut by the other's
+
+- **Symptom:** the cluster's macro run counted 35 `[tc_sram_impl]` prints for 36 instances; in `logs/snax-forge-vsim.txt` one print reads `# [tc_sram_impl] tb_bin....i_snitch_data_memforge cycles: 828`, the program's four `forge` lines follow, then the print's end, `.gen_banks[28].i_data_mem.gen_sram_d512_w64_m8: sram_d512_w64_m8`. The time-0 prints come out near the end of the run, beside the program's lines.
+- **Cause:** `snax-forge-run` pipes vsim's stdout through `tee`; vsim's transcript lines and the testbench's C++ output of the program are written by separate buffers, each flushed when full or at exit, so the two interleave at buffer boundaries, not at line ends.
+- **Fix or check:** read the log as a stream, not as whole lines: `cluster/check.py` counts the prints by their start (`[tc_sram_impl] `) and takes each one's macro from its end (`.gen_<macro>: <macro>`), and finds the `forge` lines with a search inside each line (`test_check.py` has R2's split). A `forge` line cut in two would fail D123 (a false FAIL, never a false PASS).
+- **Found in:** `results/cluster/runs/2026-11-11_csyn1_r2.md` (step 3).
+
 ## vcd2saif
 
 ### VS1. `vcd2saif -time t0 t1` on a shared VCD adds a phantom toggle before the window
