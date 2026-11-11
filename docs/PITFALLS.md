@@ -110,6 +110,20 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** `cluster_check.tcl` writes them as `constant` lines and leaves them out of the reference, library and black-box lines.
 - **Found in:** `results/cluster/runs/2026-11-11_csyn1_r3.md` (step 1's smoke test).
 
+### DC16. The cluster's interconnect has two levels in `area_hierarchy.rpt`
+
+- **Symptom:** the cluster's interconnect area quoted as `sparse_interconnect_i`'s, 107,878 um2, is the level above it.
+- **Cause:** `i_cluster/gen_yes_snax_tcdm_interconnect.gen_sparse_interconnect.i_tcdm_interconnect` is `sparse_interconnect_wrapper` (107,877.9 um2), whose own logic (192.85 um2 of combinational cells) sits beside its child `sparse_interconnect_i`, the `SparseInterconnect` (107,685.0 um2). A row's columns are the instance, absolute total, percent, then the instance's own combinational, noncombinational and black-box area, then the design.
+- **Fix or check:** compare a lone `SparseInterconnect` (xbar, xbar_mix) with `sparse_interconnect_i`, and say which level a number is. Sum a subtree's own columns for its comb and seq split (for `dot3_w16`: 105,722.5 and 1,962.5 um2).
+- **Found in:** `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`.
+
+### DC17. `syn.py run --dry-run -j N` interleaves its points' lines
+
+- **Symptom:** a before-and-after `--dry-run` comparison of a whole source differs although nothing changed: points' blocks swap and lines of two points mix.
+- **Cause:** `run` maps the points over a thread pool of `-j` workers, also with `--dry-run`, and each worker prints its point's lines as it goes.
+- **Fix or check:** compare dry runs at `-j 1`, where the order is fixed (R3c: `xbar` 594 lines and `streamer` 3,696 lines, byte for byte).
+- **Found in:** `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`.
+
 ## Libraries
 
 ### LIB1. nangate15's flops all have async reset or set
