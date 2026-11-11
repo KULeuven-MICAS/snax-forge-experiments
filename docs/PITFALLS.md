@@ -281,6 +281,20 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** `cluster/check.py`'s `ram_compare` allows exactly one more write on an instance of the netlist run, with reads equal on every instance; each such instance is listed in `gls/check.json` (`ram_extra_writes`: macro, reads, RTL and netlist writes) and named in the summary line (`writes equal but 4 macros +1 at reset (PITFALLS Q8)`). Two or more extra writes, any read difference, or an instance missing or added still fail (`test_check.py`). RAM1's models (`ram/ram.py`) were not changed to skip the time-0 edge: the model text is part of the macro cache key, so a change would rebuild every macro.
 - **Found in:** `results/cluster/runs/2026-11-11_csyn1_r4.md`.
 
+### Q15. A DC netlist's instance paths hold escaped identifiers that end in a space
+
+- **Symptom:** the cluster netlist run (CSYN1 R4) printed all 36 RAMCOUNT lines, but `cluster/check.py` read none: `RAMCOUNT (\S+) (\w+) reads ...` found no match. A vsim `when` on a macro port by its path stops with `vsim-3561 No objects found`.
+- **Cause:** DC (no `change_names`, X69) names flattened generate blocks as escaped identifiers, `\gen_banks[0].i_data_mem` and `\gen_sram_d512_w64_m8.i_macro`, and an escaped identifier ends at a space, so `%m` prints `...i_snitch_data_mem.\gen_banks[0].i_data_mem .\gen_sram_d512_w64_m8.i_macro  sram_d512_w64_m8 reads 139 writes 139`: spaces inside the path and two before the macro. In vsim the path is `/.../\gen_banks[0].i_data_mem /...`; `find instances` prints the same instance as `{/.../gen_banks[0].i_data_mem} /...`, without the backslash.
+- **Fix or check:** parse a path as everything up to the last whitespace before the next field (`RAMCOUNT (\S.*?)\s+(\w+) reads`; `test_check.py` holds two of R4's real lines). In vsim, `examine {/.../\gen_banks[0].i_data_mem /i_macro}/addr_i` works with the path in braces; a `when` condition does not take such a path, so trigger on a port with a plain path (the wrapper's `clk_i`) and `examine` the escaped one inside the handler. Compare RTL and netlist runs without paths, or with backslashes and spaces removed and `/` for `.`.
+- **Found in:** `results/cluster/runs/2026-11-11_csyn1_r4.md`.
+
+### Q16. Under `vopt +acc=n` a testbench's variables are not visible to vsim's commands
+
+- **Symptom:** in the cluster netlist run, `when {/tb_bin/clk_i == 1'b1} {...}` stops with `vsim-3561 No objects found matching 'clk_i'`; the same `when` works on the RTL build, which is optimized with `+acc`.
+- **Cause:** `+acc=n` keeps nets visible and nothing else; `tb_bin`'s `clk_i` and `rst_ni` are `logic` variables. Ports are nets, so the wrapper's `clk_i` and `rst_ni` stay visible.
+- **Fix or check:** in a gate-level run, refer to the DUT's ports (`/tb_bin/i_dut/i_snax_forge_cluster/clk_i`), or add the testbench's scope to the access option for a debugging build only; `cluster gls` keeps `+acc=n` (Q2).
+- **Found in:** `results/cluster/runs/2026-11-11_csyn1_r4.md`.
+
 ## vcd2saif
 
 ### VS1. `vcd2saif -time t0 t1` on a shared VCD adds a phantom toggle before the window
