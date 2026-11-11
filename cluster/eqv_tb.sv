@@ -8,6 +8,9 @@
 // Result: compared 19486 / 19867 / 19870 cycles; mismatches tcdm 0, icache data 0, icache tag 0 (EQUIV PASS).
 // The tag's reference uses ByteWidth 39 (one enable, tied high as the icache ties it): with ByteWidth 8 its last
 // byte slice, bits 32..39 of a 39-bit word, runs past the word and Verilator drops bit 38 of every write.
+// snax_cluster's Bender.lock resolves tech_cells_generic 0.2.14 (Bender.yml asks 0.2.11): from 0.2.11 to 0.2.14
+// tc_sram_impl.sv is unchanged and tc_sram.sv changes only its "random" SimInit fill and adds FPGAImplKey; the
+// read and write logic, and SimInit "none" (X), are the same, so the result holds for 0.2.14.
 
 // The generated tc_sram_impl (RAM1 models) against tech_cells_generic's, same random traffic, per size.
 module pair #(parameter int unsigned W = 64, D = 512, RefBw = 8, bit RandBe = 1) (input logic clk, rst_n, output int errs);
