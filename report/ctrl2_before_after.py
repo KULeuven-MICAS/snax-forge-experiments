@@ -23,6 +23,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "report"))
+from compare_hls import forge_csr_cell  # noqa: E402
 OUT = ROOT / "results" / "compare" / "ctrl2_before_after.md"
 TECH, SIZE = "nangate45", "n2048"
 KERNELS = [("done", "vecadd"), ("done", "vecmul"), ("done", "vsum"), ("done", "dot"),
@@ -47,10 +49,11 @@ def f(r: dict, k: str) -> float:
 
 def figures(r: dict) -> dict:
     cyc, el = int(r["cycles"]), int(r["elements"])
-    e_ctrl, e_dp, e_csr = f(r, "e_dyn_ctrl_pj"), f(r, "e_dyn_datapath_pj"), f(r, "e_dyn_csr_pj")
+    e_ctrl, e_dp = f(r, "e_dyn_ctrl_pj"), f(r, "e_dyn_datapath_pj")
+    a_cell, e_csr = forge_csr_cell(r)       # X65: the whole csr cell, so before and after share one basis
     return {"csr": f(r, "csr_um2"), "ctrl": f(r, "ctrl_um2"), "ctrl_pj": e_ctrl, "dp": f(r, "datapath_um2"),
             "cd_area": f(r, "ctrl_um2") + f(r, "datapath_um2"), "cd_pj": (e_ctrl + e_dp) * cyc / el,
-            "nocsr_area": f(r, "area_um2") - f(r, "csr_um2"), "nocsr_pj": (f(r, "e_run_pj") - e_csr * cyc) / el}
+            "nocsr_area": f(r, "area_um2") - a_cell, "nocsr_pj": (f(r, "e_run_pj") - e_csr * cyc) / el}
 
 
 def verdict(fg: dict, hls: dict, key_f: str, key_h) -> str:

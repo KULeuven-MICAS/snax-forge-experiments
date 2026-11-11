@@ -28,7 +28,8 @@ Columns:
              the RTL declares it as hierarchy (X41): csr_um2 (forge), ctrl_um2, datapath_um2, glue_um2
              (forge, bambu); empty for vitis and xls; forge's csr_um2 is the csr cell without its child
              <tag>_peripherals (BUSY_COUNTER, snax-forge D168; X65), whose area is peripherals_um2 (for the
-             record, empty where the bundle has none: every point before CTRL2 R5); ram_kind and ram_um2 for a Vitis point with a RAM (X62:
+             record, in no figure: forge's total without csr is area_um2 - csr_um2 - peripherals_um2; empty
+             where the bundle has none: every point before CTRL2 R5); ram_kind and ram_um2 for a Vitis point with a RAM (X62:
              an SRAM macro or flops, inside area_um2)
   timing     crit_path_ns, slack_ns, fmax_mhz, slack_in2reg_ns, slack_reg2reg_ns, slack_reg2out_ns,
              slack_in2out_ns (X40; empty on forge rows, synthesized before X40)
@@ -37,7 +38,7 @@ Columns:
              leak_dc_uw (DC's leakage estimate, X7); ram_reads, ram_writes, e_ram_pj (the RAM's share of
              e_run_pj, X62: counted accesses x CACTI's energies for a macro, X50; PT's for flops)
   parts      e_dyn_csr_pj, e_dyn_ctrl_pj, e_dyn_datapath_pj, e_dyn_glue_pj (per cycle, forge and bambu
-             only; forge's csr without its _peripherals child, whose energy is e_dyn_peripherals_pj, X65), parts_size (the run they come from: the row's own run where power_pt_modules.csv has it
+             only; forge's csr without its _peripherals child, whose energy is e_dyn_peripherals_pj, for the record, X65), parts_size (the run they come from: the row's own run where power_pt_modules.csv has it
              (X60: every n2048 run; X63), else the point's default run: tier done b64 (rowsum m8_n64), forge
              n2048, untiered on nangate45 n2048 (X55), on nangate15 the default run (X61))
   provenance rtl_commit (the tool repo commit the RTL was measured at; forge: snax_forge_commit),
@@ -45,7 +46,7 @@ Columns:
 
 Checks (any failure: exit 1, nothing written): every listed point has a synthesis row on both technologies
 (an untiered forge point on nangate45 only); every ok point has the same sizes as the other points of its
-kernel, n2048 among them (X24; X55 on nangate45, X61), each with an ok power row; no duplicate key; the split columns (peripherals included) sum to the area where they exist; a point with parts has an ok
+kernel, n2048 among them (X24; X55 on nangate45, X61), each with an ok power row; no duplicate key; the split columns (csr, ctrl, datapath, glue and, for forge since CTRL2 R5, peripherals) sum to the area where they exist; a point with parts has an ok
 run at its default size. A glue energy within 1e-5 of the total (PT's rounding) is written as 0.
 """
 from __future__ import annotations
@@ -81,9 +82,10 @@ PARTS = {
               "datapath": r"snax_forge_(?:\w+_)?datapath"},
     "bambu": {"ctrl": r"(?i)controller_.*", "datapath": r"(?i)datapath_.*"},
 }
-# X65: forge's csr holds <tag>_peripherals (BUSY_COUNTER, snax-forge D168), neither interface nor control: the csr
-# part is the csr cell minus this child (one level below it), kept apart for the record; a bundle without it
-# (every point before CTRL2 R5) subtracts nothing
+# X65: forge's csr holds <tag>_peripherals (BUSY_COUNTER, snax-forge D168), neither interface nor control and in no
+# figure: the csr part is the csr cell minus this child (one level below it), kept apart for the record, and the
+# total without csr (compare_hls.py) subtracts the whole csr cell, as in Part A; a bundle without it (every point
+# before CTRL2 R5) subtracts nothing
 PERIPHERALS = r"snax_forge_(?:\w+_)?peripherals"
 # The size of a point's default run (power_pt_modules.csv has it, X60): b64 (X19), but rowsum's default is its
 # m8_n64 task, and forge runs n2048 only. Untiered rows take their parts from n2048 (X55).

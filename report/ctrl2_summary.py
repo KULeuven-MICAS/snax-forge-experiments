@@ -4,12 +4,14 @@
   pixi run python report/ctrl2_summary.py [REV]
 
 forge's energy per element and area against the lowest HLS case (Vitis opt, Vitis dace, Bambu, XLS), each metric apart,
-nangate45, n2048. Two bases: forge's total without csr (X63, X65: the peripherals in) and forge's ctrl + datapath. REV
+nangate45, n2048. Two bases: forge's total without csr (X63, X65: the total minus the whole csr cell, peripherals in no figure) and forge's ctrl + datapath. REV
 reads that commit's compare CSVs (git show); without it, the working tree's.
 """
 import csv, io, subprocess, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "report"))
+from compare_hls import forge_csr_cell  # noqa: E402
 ROWS = [("dot (forge 3)", "dot", "forge3"), ("vecmul", "vecmul", "forge"), ("axpy (α from a CSR)", "axpy", "forge"),
         ("vecadd", "vecadd", "forge"), ("matadd", "matadd", "forge"), ("vsum", "vsum", "forge"),
         ("rowsum", "rowsum", "forge"), ("relu", "relu", "forge")]
@@ -35,8 +37,9 @@ def main():
         for w in (1, 2, 4, 8, 16):
             r = d[(k, c, w)]
             cyc, el = int(r["cycles"]), int(r["elements"])
-            e_nocsr = (f(r, "e_run_pj") - f(r, "e_dyn_csr_pj") * cyc) / el
-            a_nocsr = f(r, "area_um2") - f(r, "csr_um2")
+            a_cell, e_cell = forge_csr_cell(r)     # X65: the whole csr cell, peripherals in no figure
+            e_nocsr = (f(r, "e_run_pj") - e_cell * cyc) / el
+            a_nocsr = f(r, "area_um2") - a_cell
             e_cd = (f(r, "e_dyn_ctrl_pj") + f(r, "e_dyn_datapath_pj")) * cyc / el
             a_cd = f(r, "ctrl_um2") + f(r, "datapath_um2")
             hl = [d[(k, h, w)] for h in HLS if (k, h, w) in d]

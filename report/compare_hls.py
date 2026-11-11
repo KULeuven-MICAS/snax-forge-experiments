@@ -184,14 +184,26 @@ PARTS_BASIS = (
     "Every point at n2048 on nangate45 (2048 elements per input stream), per kernel and W. A part's energy per task "
     "is its energy per cycle (PT's hierarchical report of that run, `power_pt_modules.csv`, X60) times the window's "
     "cycles; pJ per element divides it by 2048. forge: csr, ctrl and datapath (the wrapper's three instances), the "
-    "total (glue included), and the total without csr; the csr is the csr cell without its `<tag>_peripherals` "
-    "child (BUSY_COUNTER, snax-forge D168, X65), which the totals hold. Bambu: ctrl and datapath (X41), the total (glue included). "
+    "total (glue included), and the total without csr (ctrl, datapath and glue); the csr is the csr cell without "
+    "its `<tag>_peripherals` child (BUSY_COUNTER, snax-forge D168, X65), and the total without csr is the total "
+    "minus the whole csr cell, so the peripherals are in neither (only in the total). Bambu: ctrl and datapath (X41), the total (glue included). "
     "Vitis dace with a RAM: the RAM apart (X62: the macro's area and its counted accesses x CACTI's energies, or its "
     "flops' area and PT energy) and the logic without it. Vitis opt and XLS: totals only. **Basis (X63):** the HLS "
     "tools take their sizes on plain pins (`loop_count`, `len`, axpy's `alpha`) and have no CSR file, while forge "
     "holds them in `<tag>_csr`, its interface to the cluster; so forge's total without csr is the like-for-like "
     "figure against an HLS total. Integrating any HLS block into the cluster would need a register interface of its "
     "own, which none of these totals contains.")
+
+
+def forge_csr_cell(r: dict) -> tuple[float | None, float | None]:
+    """X65: forge's whole csr cell (the csr part plus its <tag>_peripherals child), area and pJ per cycle: what X63's
+    total without csr subtracts, so the peripherals are in no figure (0 where the bundle has none, before CTRL2)."""
+    def get(k):
+        return float(r[k]) if r.get(k) not in (None, "") else None
+    a, e = get("csr_um2"), get("e_dyn_csr_pj")
+    a = a + (get("peripherals_um2") or 0.0) if a is not None else None
+    e = e + (get("e_dyn_peripherals_pj") or 0.0) if e is not None else None
+    return a, e
 
 
 def parts_table(rows: list[dict], tier: str, kernel: str) -> list[str]:
@@ -214,7 +226,7 @@ def parts_table(rows: list[dict], tier: str, kernel: str) -> list[str]:
             for k, (a, e) in parts.items():
                 add(w, case, k, a, e * cyc if e is not None else None)
             add(w, case, "total", area, e_run)
-            a_csr, e_csr = parts["csr"]
+            a_csr, e_csr = forge_csr_cell(r)
             add(w, case, "total without csr", area - a_csr if a_csr is not None else None,
                 e_run - e_csr * cyc if e_csr is not None else None)
         elif r["tool"] == "bambu":
