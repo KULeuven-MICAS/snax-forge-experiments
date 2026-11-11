@@ -30,7 +30,7 @@ snax_forge.hjson), from snax_cluster's target/snitch_cluster:
   4. the macro run: the same three calls with SRAM_IMPL=mem/tc_sram_impl.sv SRAM_MODELS=mem/sram_models.f
      (the vsim stamp rebuilds work-vsim/; no second rtl-gen)
   5. the checks (cluster/check.py): D123 on both runs against forge_expected.txt, equal forge cycles, the
-     [tc_sram_impl] lines against the point's srams, the macro run's vlog.log (tc_sram_impl.sv and every
+     [tc_sram_impl] prints (their number, and the macro at each one's end) against the point's srams, the macro run's vlog.log (tc_sram_impl.sv and every
      macro compiled, nothing of tech_cells_generic's tc_sram), [SUCCESS] in both runs
   6. sim/runs/cluster/nangate45/<point>.zip, under rtl/ (other members kept): memories.json, mem.json,
      tc_sram_impl.sv, sram_models.f, plain/ and macro/ (each run's snax-forge-vsim.txt; the macro run's
@@ -282,9 +282,11 @@ def run_checks(work: Path, p: dict, ms: list[str]) -> dict:
     c["cycles"] = {"status": "PASS" if cyc.get("plain") is not None and cyc.get("plain") == cyc.get("macro")
                    else "FAIL", "plain": cyc.get("plain"), "macro": cyc.get("macro")}
     got = check.sram_counts(runs.get("macro", ""))
+    lines = check.sram_lines(runs.get("macro", ""))
     want_srams = dict(sorted(p["srams"].items()))
-    c["srams"] = {"status": "PASS" if got == want_srams else "FAIL", "want": want_srams, "got": got,
-                  "lines": sum(got.values()), "plain_lines": sum(check.sram_counts(runs.get("plain", "")).values())}
+    c["srams"] = {"status": "PASS" if got == want_srams and lines == sum(want_srams.values()) else "FAIL",
+                  "want": want_srams, "got": got, "lines": lines,
+                  "plain_lines": check.sram_lines(runs.get("plain", ""))}
     vlog = work / "macro" / "vlog.log"
     v = vlog_check(vlog.read_text(errors="replace") if vlog.is_file() else "", work / "mem" / "tc_sram_impl.sv", ms)
     v["status"] = "PASS" if v["tc_sram_impl_sv"] and all(v["macros_compiled"].values()) and \

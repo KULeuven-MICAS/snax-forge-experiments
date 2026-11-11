@@ -7,7 +7,7 @@ equals the expected one; its `forge counter <task>: <c>` lines, in order, name t
 count within that task's `forge fill <task>: <n>` of the expected count (the group's streamer fill: the
 counter counts the streamer's head start before START, which SNAX-GVSoC does not model); a file without
 fill lines asks for equal counts. Also reads the run's `forge cycles:` and its `[tc_sram_impl] <path>: <macro>`
-lines (cluster/mem.py's print, one per instance at time 0). Standard library only.
+prints (cluster/mem.py's, one per instance at time 0, `<path>.gen_<macro>: <macro>`). Standard library only.
 """
 
 from __future__ import annotations
@@ -21,7 +21,8 @@ COUNTER = re.compile(r"forge counter (.+?): (-?\d+)")
 FILL = re.compile(r"forge fill (.+?): (-?\d+)")
 DATA = re.compile(r"forge data: .*")
 CYCLES = re.compile(r"forge cycles: (\d+)")
-SRAM = re.compile(r"\[tc_sram_impl\] (\S+): (\w+)")
+SRAM_MARK = "[tc_sram_impl] "
+SRAM_END = re.compile(r"\.gen_(\w+): (\w+)[ \t]*$", re.M)
 SUCCESS = "[SUCCESS] Program finished successfully"
 
 
@@ -69,13 +70,16 @@ def compare(want_text: str, got_text: str) -> tuple[bool, list[str]]:
     return ok, notes
 
 
-def srams(text: str) -> dict[str, str]:
-    """{instance path: macro} from the run's [tc_sram_impl] lines."""
-    return {m.group(1): m.group(2) for m in SRAM.finditer(text)}
+def sram_lines(text: str) -> int:
+    """The number of [tc_sram_impl] prints (their start)."""
+    return text.count(SRAM_MARK)
 
 
 def sram_counts(text: str) -> dict[str, int]:
-    return dict(sorted(Counter(srams(text).values()).items()))
+    """{macro: instances} from the ends of the [tc_sram_impl] prints, `<path>.gen_<macro>: <macro>`. Read from
+    the end, not as whole lines: vsim's prints and the program's output reach the log through separate
+    buffers, and the program's lines can land inside a print (PITFALLS Q13)."""
+    return dict(sorted(Counter(m.group(2) for m in SRAM_END.finditer(text) if m.group(1) == m.group(2)).items()))
 
 
 def success(text: str) -> bool:

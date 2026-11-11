@@ -62,7 +62,21 @@ def test_cycles_srams_success():
     text = RUN.format(c=132)
     assert check.parse(text)["cycles"] == 828
     assert check.sram_counts(text) == {"sram_d128_w39": 1, "sram_d512_w64_m8": 2}
+    assert check.sram_lines(text) == 3
     assert check.success(text) and not check.success("forge cycles: 1\n")
+
+
+def test_print_split_by_program_output():
+    # R2's macro run: the program's lines landed inside one [tc_sram_impl] print (separate buffers)
+    text = ("# [tc_sram_impl] tb_bin.x.gen_banks[27].m.gen_sram_d512_w64_m8: sram_d512_w64_m8\n"
+            "# [tc_sram_impl] tb_bin.x.i_snitch_data_memforge cycles: 828\n"
+            "forge data: 0 errors (1 words)\nforge counter mult_dot: 132\nforge errors: 0\n"
+            ".gen_banks[28].m.gen_sram_d512_w64_m8: sram_d512_w64_m8\n"
+            "# RAMCOUNT tb_bin.x.gen_sram_d512_w64_m8.i_macro sram_d512_w64_m8 reads 1 writes 1\n")
+    assert check.sram_lines(text) == 2
+    assert check.sram_counts(text) == {"sram_d512_w64_m8": 2}
+    assert check.parse(text)["cycles"] == 828
+    assert check.compare(WANT, text)[0]
 
 
 if __name__ == "__main__":
