@@ -73,8 +73,9 @@ work-vsim/gls, and vopt takes -Lf work-vsim/gls, +initreg+0, +acc=n; vsim +nospe
      elapsed times are read from vlog.log (the netlist's vlog), vopt.log and the run's output.
   4. the checks: D123; forge cycles equal step 1's; the swap (vopt loaded snax_forge_cluster_wrapper and Nangate
      cells from work-vsim/gls, its command has +initreg+0 and +acc=n; the run prints no [tc_sram_impl]); RAMCOUNT
-     (one line per instance of points.json's srams, the sorted (macro, reads, writes) list equal to step 1's macro
-     run's); [SUCCESS] in both runs
+     (one line per instance of points.json's srams; against step 1's macro run, without the paths: reads equal on
+     every instance, writes equal but for at most one more on an instance, the netlist's write at time 0 under
+     +initreg+0, listed as ram_extra_writes; PITFALLS Q14); [SUCCESS] in both runs
   5. under gls/ of sim/runs/cluster/nangate45/<point>.zip (other members kept): snax-forge-vsim.txt, vlog.log,
      vopt.log, logs/, check.json; then tmp/cluster/<point>/ deleted and make clean-vsim clean-generated in
      snax_cluster, also on a failure. One line at the end.
@@ -265,9 +266,10 @@ class Steps:
 class Peak(threading.Thread):
     """The Questa processes under a step's command, sampled from /proc every PEAK_EVERY s: per label, the peak
     resident memory and when it was first and last seen. A process's label is the first of `labels`
-    ((text in its command line, label)) that matches, else its program's name (vlog, vopt, vsimk, ...)."""
+    ((its program's name starts with, text in its command line, label)) that matches, else its program's name
+    (vlog, vopt, vsimk, ...): vopt's command line holds `-o tb_bin_opt` too, so a label names its program."""
 
-    def __init__(self, root: int, labels: list[tuple[str, str]], t0: float):
+    def __init__(self, root: int, labels: list[tuple[str, str, str]], t0: float):
         super().__init__(daemon=True)
         self.root, self.labels, self.t0 = root, labels, t0
         self.seen: dict[str, dict] = {}
@@ -307,7 +309,7 @@ class Peak(threading.Thread):
             if not QUESTA_EXE.match(exe):
                 continue
             text = " ".join(cmd)
-            label = next((lab for sub, lab in self.labels if sub in text), exe)
+            label = next((lab for pre, sub, lab in self.labels if exe.startswith(pre) and sub in text), exe)
             r = self.seen.setdefault(label, {"peak_kb": 0, "first": now, "last": now})
             r["peak_kb"], r["last"] = max(r["peak_kb"], rss), now
         self.tree_kb = max(self.tree_kb, total)
@@ -765,9 +767,9 @@ def gls_checks(work: Path, p: dict, rtl_res: dict, rtl_run: str, netlist: Path, 
     got = check.parse(run)["cycles"]
     c["cycles"] = {"status": "PASS" if got is not None and got == want else "FAIL", "gls": got, "rtl": want}
     c["swap"] = swap_check(vopt, vlog, run, netlist, cell_names)
-    ok, notes = check.ram_compare(rtl_run, run, p["srams"])
+    ok, notes, extra = check.ram_compare(rtl_run, run, p["srams"])
     c["ramcount"] = {"status": "PASS" if ok else "FAIL", "notes": notes, "lines": len(check.ramcounts(run)),
-                     "gls": check.ramcounts(run), "rtl": check.ramcounts(rtl_run)}
+                     "extra_writes": extra, "gls": check.ramcounts(run), "rtl": check.ramcounts(rtl_run)}
     succ = {"gls": check.success(run), "rtl": check.success(rtl_run)}
     c["success"] = {"status": "PASS" if all(succ.values()) else "FAIL", **succ}
     return c
@@ -844,8 +846,8 @@ def gls(p: dict, images: dict, args) -> int:
             f"{m['name']} ({'cached' if m.get('cached') else 'made'})" for m in made["macros"]), flush=True)
         opts = (f" SRAM_IMPL={q(str(impl))} SRAM_MODELS={q(str(work / 'mem' / 'sram_models.f'))}"
                 f" SIM_TYPE=gate_level_sim GLS_NETLIST={q(str(netlist))} GLS_CELLS={q(str(cells))}")
-        watch = [(str(netlist), "vlog netlist"), (str(cells), "vlog cells"), ("compile.vsim.tcl", "vsim compile"),
-                 ("tb_bin_opt", "vsim run")]
+        watch = [("vlog", str(netlist), "vlog netlist"), ("vlog", str(cells), "vlog cells"),
+                 ("vsim", "compile.vsim.tcl", "vsim compile"), ("vsim", "tb_bin_opt", "vsim run")]
         (work / "gls").mkdir()
         (TB_DIR / RUN_LOG).unlink(missing_ok=True)
         try:
@@ -867,6 +869,8 @@ def gls(p: dict, images: dict, args) -> int:
                 "vopt": elapsed(_text(work / "gls" / "vopt.log")),
                 "run": elapsed(_text(work / "gls" / "snax-forge-vsim.txt"))}
         res["checks"] = gls_checks(work, p, rtl_res, rtl_run, netlist, cell_names)
+        # the netlist's one write at time 0 per macro, allowed by the check (PITFALLS Q8, Q14)
+        res["ram_extra_writes"] = res["checks"]["ramcount"]["extra_writes"]
         bad = [k for k, v in res["checks"].items() if v["status"] != "PASS"]
         res["status"] = "PASS" if not bad else "FAIL"
         res["failed"] = ", ".join(bad) or None
@@ -934,8 +938,8 @@ def gls_summary(point: str, res: dict) -> None:
     c = res.get("checks", {})
     cyc, sw, rc = c.get("cycles", {}), c.get("swap", {}), c.get("ramcount", {})
     line = (f"cluster gls {point}: {res['status']}, {cyc.get('gls')} cycles (rtl {cyc.get('rtl')}), netlist swap "
-            f"{'ok' if sw.get('status') == 'PASS' else 'FAIL'}, RAMCOUNT {rc.get('lines', 0)} "
-            f"{'equal' if rc.get('status') == 'PASS' else 'differ'}")
+            f"{'ok' if sw.get('status') == 'PASS' else 'FAIL'}, "
+            + check.ram_summary(rc.get("lines", 0), rc.get("status") == "PASS", rc.get("extra_writes", [])))
     if res["status"] != "PASS":
         line += f"; failed: {res['failed']}"
     print(line, flush=True)
