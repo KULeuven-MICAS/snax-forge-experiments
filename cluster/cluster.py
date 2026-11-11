@@ -3,7 +3,7 @@
 
   pixi run cluster rtl <point> [--allow-branch]    step 1: the RTL with every memory as a RAM1 macro
   pixi run cluster syn <point> [--cores N] [--allow-branch]   step 2: DC on the whole cluster
-  pixi run cluster gls <point>                     step 3 (R4)
+  pixi run cluster gls <point> [--allow-branch]    step 3: the netlist in the same testbench (R4)
 
 A point is an entry of cluster/points.json (point, recipe, W, sets, and srams: the macro instances the
 cluster holds, per macro); the file also names the two images. snax_cluster is read from SNAX_CLUSTER
@@ -55,11 +55,35 @@ syn (X67 step 2, X68), from the same bundle zip, in tmp/cluster/<point>/:
      syn/runs/cluster/nangate45/<point>.zip keeps syn.py's KEEP_RUN and the cluster's files; a row in
      results/cluster/nangate45/synth_dc.csv and the report zip results/cluster/nangate45/reports/<point>.zip.
   5. after DC ends, also on a failure: tmp/cluster/<point>/ deleted, make clean-syn clean-generated in snax_cluster.
+
+gls (X67 step 3): step 2's netlist (out/snax_forge_cluster_wrapper_mapped.v of syn/runs/cluster/nangate45/<point>.zip)
+in step 1's testbench, with step 1's ELF and check; zero delay, functional. snax_cluster's hook SIM_TYPE=gate_level_sim
+(GLS_NETLIST, GLS_CELLS, with SRAM_IMPL and SRAM_MODELS) compiles the cells, the macro models and the netlist into
+work-vsim/gls, and vopt takes -Lf work-vsim/gls, +initreg+0, +acc=n; vsim +nospecify +notimingchecks.
+  1. checks before anything runs: the repos as rtl and syn; step 1 PASS, step 2's netlist there; the bundle zip's
+     ELF the one both steps used (the bundle is reused, never made again: the netlist is of it); no file changed
+     under hw/, util/, target/snitch_cluster/cfg/ or Bender.yml between the netlist's snax_cluster commit and HEAD
+     but Makefiles, .mk and docs (RTL_CHANGE)
+  2. in tmp/cluster/<point>/: the bundle and the netlist unpacked; image: make clean-generated clean-vsim, rtl-gen;
+     clustergen --memories; cluster/mem.py, whose tc_sram_impl.sv must equal step 1's; the cell models as sim/pwr.py
+     finds them (pwr.cell_model)
+  3. vsim_preparation in the image, snax-forge-sim SIM=vsim and snax-forge-run SIM=vsim ELF=<elf> outside it, all
+     three with the same SRAM_IMPL, SRAM_MODELS, SIM_TYPE, GLS_NETLIST, GLS_CELLS. The two host steps' Questa
+     processes are sampled from /proc every PEAK_EVERY s (peak resident memory, first and last seen); Questa's own
+     elapsed times are read from vlog.log (the netlist's vlog), vopt.log and the run's output.
+  4. the checks: D123; forge cycles equal step 1's; the swap (vopt loaded snax_forge_cluster_wrapper and Nangate
+     cells from work-vsim/gls, its command has +initreg+0 and +acc=n; the run prints no [tc_sram_impl]); RAMCOUNT
+     (one line per instance of points.json's srams, the sorted (macro, reads, writes) list equal to step 1's macro
+     run's); [SUCCESS] in both runs
+  5. under gls/ of sim/runs/cluster/nangate45/<point>.zip (other members kept): snax-forge-vsim.txt, vlog.log,
+     vopt.log, logs/, check.json; then tmp/cluster/<point>/ deleted and make clean-vsim clean-generated in
+     snax_cluster, also on a failure. One line at the end.
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
 import hashlib
 import json
@@ -70,13 +94,14 @@ import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parent.parent
 HERE = ROOT / "cluster"
-for d in ("arc", "forge", "strm", "cluster", "syn", "ram"):
+for d in ("arc", "forge", "strm", "cluster", "syn", "ram", "sim"):
     sys.path.insert(0, str(ROOT / d))
 import arc  # noqa: E402  arc/arc.py (X51)
 import bundles  # noqa: E402  forge/bundles.py: find_recipe, inner_env
@@ -105,6 +130,12 @@ TREE_DEPTH = 4
 RUN_LOG = "logs/snax-forge-vsim.txt"          # snax_forge.mk's SNAX_FORGE_LOG for SIM=vsim, under TB_DIR
 SUCCESS = check.SUCCESS
 GENERIC_SRAM = "tech_cells_generic/src/rtl/tc_sram"
+NETLIST = "out/snax_forge_cluster_wrapper_mapped.v"     # step 2's netlist in its run zip (X69)
+GLS_TIMEOUT = {"gls_vsim_preparation": 1800, "gls_snax-forge-sim": 4 * 3600, "gls_snax-forge-run": 8 * 3600}
+RTL_PATHS = ("hw", "util", "target/snitch_cluster/cfg", "Bender.yml")
+NOT_RTL = re.compile(r"(^|/)(Makefile[^/]*|[^/]*\.mk|[^/]*\.md|README[^/]*)$")
+PEAK_EVERY = 2.0
+QUESTA_EXE = re.compile(r"^v(log|opt|sim|ish|lib)\w*$")
 
 
 class StepFailed(Exception):
@@ -183,25 +214,40 @@ class Steps:
         self.scripts = work / "scripts"
         self.logs.mkdir(parents=True, exist_ok=True)
         self.scripts.mkdir(exist_ok=True)
-        self.k, self.times = 0, {}
+        self.k, self.times, self.peaks = 0, {}, {}
 
     def _run(self, name: str, kind: str, argv: list[str], cwd: Path | None, env: dict | None,
-             timeout: int) -> Path:
+             timeout: int, watch: list[tuple[str, str]] | None = None) -> Path:
         self.k += 1
         log = self.logs / f"{self.k:02d}_{name}.log"
         print(f"  {name:<28s} ({kind}) log {log}", flush=True)
         t0 = time.monotonic()
+        peak = None
         with log.open("w") as f:
+            proc = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=f,
+                                    stderr=subprocess.STDOUT, start_new_session=True)
+            if watch is not None:
+                peak = Peak(proc.pid, watch, t0)
+                peak.start()
             try:
-                rc = subprocess.run(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=f,
-                                    stderr=subprocess.STDOUT, timeout=timeout, check=False).returncode
+                rc = proc.wait(timeout=timeout)
             except subprocess.TimeoutExpired:
                 rc = f"timeout after {timeout} s"
+            finally:
+                if proc.poll() is None:      # a timeout, or a TERM in the driver: stop the whole tree
+                    with contextlib.suppress(ProcessLookupError):
+                        os.killpg(proc.pid, signal.SIGKILL)
+                    proc.wait()
+                if peak is not None:
+                    self.peaks[name] = peak.finish()
         s = time.monotonic() - t0
         self.times[name] = round(s, 1)
         with log.open("a") as f:
             f.write(f"\n[cluster] exit {rc}, {s:.1f} s\n")
-        print(f"  {name:<28s} exit {rc}, {s:.0f} s", flush=True)
+        mem_note = ""
+        if peak is not None:
+            mem_note = "; peak " + ", ".join(f"{k} {v['peak_mb']:.0f} MB" for k, v in self.peaks[name]["tools"].items())
+        print(f"  {name:<28s} exit {rc}, {s:.0f} s{mem_note}", flush=True)
         if rc != 0:
             raise StepFailed(name, log, f"exit {rc}")
         return log
@@ -212,8 +258,66 @@ class Steps:
         argv = strm_gen.podman_cmd(self.images[which], script, self.mount)
         return self._run(name, f"image {self.images[which]}", argv, None, None, timeout)
 
-    def host(self, name: str, cwd: Path, cmd: str, timeout: int) -> Path:
-        return self._run(name, "host", ["bash", "-c", f"set -x; {cmd}"], cwd, host_env(), timeout)
+    def host(self, name: str, cwd: Path, cmd: str, timeout: int, watch: list[tuple[str, str]] | None = None) -> Path:
+        return self._run(name, "host", ["bash", "-c", f"set -x; {cmd}"], cwd, host_env(), timeout, watch)
+
+
+class Peak(threading.Thread):
+    """The Questa processes under a step's command, sampled from /proc every PEAK_EVERY s: per label, the peak
+    resident memory and when it was first and last seen. A process's label is the first of `labels`
+    ((text in its command line, label)) that matches, else its program's name (vlog, vopt, vsimk, ...)."""
+
+    def __init__(self, root: int, labels: list[tuple[str, str]], t0: float):
+        super().__init__(daemon=True)
+        self.root, self.labels, self.t0 = root, labels, t0
+        self.seen: dict[str, dict] = {}
+        self.tree_kb = 0
+        self.halt = threading.Event()
+
+    def run(self) -> None:
+        while True:
+            self.sample()
+            if self.halt.wait(PEAK_EVERY):
+                return
+
+    def sample(self) -> None:
+        now = time.monotonic()
+        kids: dict[int, list[int]] = {}
+        for d in os.listdir("/proc"):
+            if d.isdigit():
+                try:
+                    stat = Path(f"/proc/{d}/stat").read_text()
+                except OSError:
+                    continue
+                kids.setdefault(int(stat.rsplit(")", 1)[1].split()[1]), []).append(int(d))
+        todo, total = [self.root], 0
+        while todo:
+            pid = todo.pop()
+            todo += kids.get(pid, [])
+            try:
+                cmd = [c.decode(errors="replace") for c in Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0") if c]
+                rss = next(int(ln.split()[1]) for ln in Path(f"/proc/{pid}/status").read_text().splitlines()
+                           if ln.startswith("VmRSS:"))
+            except (OSError, StopIteration, ValueError, IndexError):
+                continue
+            total += rss
+            exe = os.path.basename(cmd[0]) if cmd else ""
+            if exe in ("sh", "bash") and len(cmd) > 1:     # Questa's wrapper scripts
+                exe = os.path.basename(cmd[1])
+            if not QUESTA_EXE.match(exe):
+                continue
+            text = " ".join(cmd)
+            label = next((lab for sub, lab in self.labels if sub in text), exe)
+            r = self.seen.setdefault(label, {"peak_kb": 0, "first": now, "last": now})
+            r["peak_kb"], r["last"] = max(r["peak_kb"], rss), now
+        self.tree_kb = max(self.tree_kb, total)
+
+    def finish(self) -> dict:
+        self.halt.set()
+        self.join()
+        return {"every_s": PEAK_EVERY, "tree_peak_mb": round(self.tree_kb / 1024, 1),
+                "tools": {k: {"peak_mb": round(v["peak_kb"] / 1024, 1), "first_s": round(v["first"] - self.t0, 1),
+                              "last_s": round(v["last"] - self.t0, 1)} for k, v in self.seen.items()}}
 
 
 # ---------------------------------------------------------------- the bundle
@@ -606,6 +710,242 @@ def ram_zip(name: str) -> Path:
     return ram.macro_zip(name)
 
 
+# ---------------------------------------------------------------- gls (X67 step 3)
+def rtl_changes(old: str) -> list[str]:
+    """The files changed between the netlist's snax_cluster commit and HEAD that can change the RTL (RTL_PATHS,
+    all but Makefiles, .mk and docs)."""
+    done = git(SC, "diff", "--name-only", old, "HEAD", "--", *RTL_PATHS)
+    if done.returncode:
+        sys.exit(f"git diff {old[:12]} HEAD in {SC}: {done.stderr.strip()}")
+    return [f for f in done.stdout.split() if not NOT_RTL.search(f)]
+
+
+ELAPSED = re.compile(r"Elapsed time: (\d+):(\d+):(\d+)")
+
+
+def elapsed(text: str, needle: str | None = None) -> int | None:
+    """Questa's `Elapsed time: h:mm:ss` in seconds: of the tool call whose text holds `needle` (vlog.log holds one
+    call per Start time), or the last one."""
+    calls = text.split("Start time:")
+    if needle is not None:
+        calls = [c for c in calls if needle in c]
+    for c in reversed(calls):
+        if (m := ELAPSED.search(c)):
+            return int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
+    return None
+
+
+def swap_check(vopt: str, vlog: str, run: str, netlist: Path, cell_names: set[str]) -> dict:
+    """The netlist took the RTL's place: vopt loaded snax_forge_cluster_wrapper and cells from the gls library with
+    +initreg+0 and +acc=n, vlog compiled the netlist, the run printed no [tc_sram_impl] (the RTL tc_sram_impl gone)."""
+    loaded = re.findall(r"^-- Loading module (?:(\S+)\.)?(\w+)\s*$", vopt, re.M)
+    wrapper = sorted({lib or "(work)" for lib, m in loaded if m == "snax_forge_cluster_wrapper"})
+    from_gls = {m for lib, m in loaded if lib and lib.endswith("gls")}
+    cmd = next((ln.strip() for ln in vopt.splitlines() if ln.lstrip().startswith("vopt ")), "")
+    c = {"wrapper_from": wrapper, "cells_loaded": len(from_gls & cell_names),
+         "netlist_modules_loaded": len(from_gls - cell_names), "vopt_command": cmd,
+         "initreg0": "+initreg+0" in cmd, "acc_n": "+acc=n" in cmd,
+         "netlist_compiled": str(netlist) in vlog, "tc_sram_impl_prints": check.sram_lines(run)}
+    c["status"] = "PASS" if (len(wrapper) == 1 and wrapper[0].endswith("gls") and c["cells_loaded"] > 0
+                             and c["initreg0"] and c["acc_n"] and c["netlist_compiled"]
+                             and c["tc_sram_impl_prints"] == 0) else "FAIL"
+    return c
+
+
+def gls_checks(work: Path, p: dict, rtl_res: dict, rtl_run: str, netlist: Path, cell_names: set[str]) -> dict:
+    g = work / "gls"
+    run = (g / "snax-forge-vsim.txt").read_text(errors="replace") if (g / "snax-forge-vsim.txt").is_file() else ""
+    vopt = (g / "vopt.log").read_text(errors="replace") if (g / "vopt.log").is_file() else ""
+    vlog = (g / "vlog.log").read_text(errors="replace") if (g / "vlog.log").is_file() else ""
+    c = {}
+    ok, notes = check.compare((work / "bundle" / "forge_expected.txt").read_text(), run) if run else \
+        (False, ["no run output"])
+    c["d123"] = {"status": "PASS" if ok else "FAIL", "notes": notes}
+    want = rtl_res["checks"]["cycles"]["macro"]
+    got = check.parse(run)["cycles"]
+    c["cycles"] = {"status": "PASS" if got is not None and got == want else "FAIL", "gls": got, "rtl": want}
+    c["swap"] = swap_check(vopt, vlog, run, netlist, cell_names)
+    ok, notes = check.ram_compare(rtl_run, run, p["srams"])
+    c["ramcount"] = {"status": "PASS" if ok else "FAIL", "notes": notes, "lines": len(check.ramcounts(run)),
+                     "gls": check.ramcounts(run), "rtl": check.ramcounts(rtl_run)}
+    succ = {"gls": check.success(run), "rtl": check.success(rtl_run)}
+    c["success"] = {"status": "PASS" if all(succ.values()) else "FAIL", **succ}
+    return c
+
+
+def gls(p: dict, images: dict, args) -> int:
+    signal.signal(signal.SIGTERM, _sigterm)
+    repos = check_repos(args.allow_branch)
+    images = {**images, "snax_forge_id": image_id(images["snax_forge"]),
+              "snax_cluster_id": image_id(images["snax_cluster"])}
+    point = p["point"]
+    step1 = RUN_ZIPS / f"{point}.zip"
+    for m in ("rtl/check.json", "rtl/tc_sram_impl.sv", "rtl/macro/snax-forge-vsim.txt"):
+        if not arc.has(step1, m):
+            sys.exit(f"no {m} in {step1.relative_to(ROOT)}: run pixi run cluster rtl {point} first")
+    rtl_res = json.loads(arc.read(step1, "rtl/check.json"))
+    if rtl_res.get("status") != "PASS":
+        sys.exit(f"step 1 of {point} is {rtl_res.get('status')} ({step1.relative_to(ROOT)}), not PASS")
+    rtl_run = arc.read_text(step1, "rtl/macro/snax-forge-vsim.txt")
+    synz = synpy.run_zip(TECH, point, synpy.DEFAULT_CLOCK)
+    if not arc.has(synz, NETLIST):
+        sys.exit(f"no {NETLIST} in {synz.relative_to(ROOT)}: run pixi run cluster syn {point} first")
+    dc = json.loads(arc.read(synz, "tech.json"))["resolved"]["cluster"]
+    z = RTL_ZIPS / f"{point}.zip"
+    prov = json.loads(arc.read(z, "provenance.json"))
+    shas = {"bundle": prov["elf_sha256"], "step 1": rtl_res["bundle"]["elf_sha256"], "step 2": dc["elf_sha256"]}
+    if len(set(shas.values())) != 1:
+        sys.exit(f"the ELF differs between the bundle zip and the steps: {shas}")
+    changed = rtl_changes(dc["snax_cluster_commit"])
+    if changed:
+        sys.exit(f"snax_cluster changed RTL between the netlist's commit {dc['snax_cluster_commit'][:12]} and HEAD "
+                 f"{repos['snax_cluster'][:12]}; the netlist is not of the testbench's RTL:\n  " + "\n  ".join(changed))
+    import pwr  # noqa: PLC0415  sim/pwr.py: the cell models' rule (CELL_MODELS beside the .db)
+    cells = pwr.cell_model(TECH)
+    if not cells.is_file():
+        sys.exit(f"no cell models at {cells}")
+    cell_names = set(re.findall(r"^\s*module\s+(\w+)", cells.read_text(errors="replace"), re.M))
+    work = TMP / point
+    shutil.rmtree(work, ignore_errors=True)
+    work.mkdir(parents=True)
+    print(f"cluster gls {point}: snax_cluster {repos['snax_cluster'][:12]} ({repos['snax_cluster_branch']}), netlist "
+          f"of {dc['snax_cluster_commit'][:12]} (no RTL change between), snax-forge {repos['snax_forge'][:12]} "
+          f"(bundle of {prov['snax_forge_commit'][:12]}, reused); work {work}", flush=True)
+    steps = Steps(work, images)
+    t0 = time.monotonic()
+    res = {"point": point, "tech": TECH, "status": "FAIL", "failed": None,
+           "snax_cluster_commit": repos["snax_cluster"], "snax_cluster_branch": repos["snax_cluster_branch"],
+           "snax_cluster_on_main": repos["snax_cluster_on_main"],
+           "netlist_snax_cluster_commit": dc["snax_cluster_commit"],
+           "snax_forge_commit": repos["snax_forge"], "bundle_snax_forge_commit": prov["snax_forge_commit"],
+           "netlist": {"zip": str(synz.relative_to(ROOT)), "member": NETLIST,
+                       "sha256": hashlib.sha256(arc.read(synz, NETLIST)).hexdigest()},
+           "cells": str(cells), "elf_sha256": prov["elf_sha256"],
+           "rtl_check": f"{step1.relative_to(ROOT)}:rtl/check.json",
+           "images": {k: images[k] for k in ("snax_cluster", "snax_cluster_id")}}
+    try:
+        unpack(z, work)
+        netlist = work / "netlist" / Path(NETLIST).name
+        netlist.parent.mkdir()
+        netlist.write_bytes(arc.read(synz, NETLIST))
+        cfg, elf = work / "bundle" / "snax_forge.hjson", work / "sw" / "forge.elf"
+        q = shlex.quote
+        steps.image("rtl-gen", "snax_cluster", TB_DIR,
+                    f"make clean-generated clean-vsim\nmake rtl-gen CFG_OVERRIDE={q(str(cfg))}", TIMEOUT["rtl-gen"])
+        steps.image("clustergen", "snax_cluster", TB_DIR,
+                    f"python3 {q(str(SC / 'util' / 'clustergen.py'))} -c {q(str(cfg))} -o {q(str(work))} --memories",
+                    TIMEOUT["clustergen"])
+        made = mem.make(work / "memories.json", work / "mem")
+        impl = work / "mem" / "tc_sram_impl.sv"
+        if impl.read_bytes() != arc.read(step1, "rtl/tc_sram_impl.sv"):
+            raise Stop(f"{impl} differs from step 1's rtl/tc_sram_impl.sv in {step1.relative_to(ROOT)}")
+        print("  tc_sram_impl.sv               equals step 1's; " + "; ".join(
+            f"{m['name']} ({'cached' if m.get('cached') else 'made'})" for m in made["macros"]), flush=True)
+        opts = (f" SRAM_IMPL={q(str(impl))} SRAM_MODELS={q(str(work / 'mem' / 'sram_models.f'))}"
+                f" SIM_TYPE=gate_level_sim GLS_NETLIST={q(str(netlist))} GLS_CELLS={q(str(cells))}")
+        watch = [(str(netlist), "vlog netlist"), (str(cells), "vlog cells"), ("compile.vsim.tcl", "vsim compile"),
+                 ("tb_bin_opt", "vsim run")]
+        (work / "gls").mkdir()
+        (TB_DIR / RUN_LOG).unlink(missing_ok=True)
+        try:
+            steps.image("gls_vsim_preparation", "snax_cluster", TB_DIR,
+                        f"make vsim_preparation CFG_OVERRIDE={q(str(cfg))}{opts}", GLS_TIMEOUT["gls_vsim_preparation"])
+            steps.host("gls_snax-forge-sim", TB_DIR, f"make snax-forge-sim SIM=vsim CFG_OVERRIDE={q(str(cfg))}{opts}",
+                       GLS_TIMEOUT["gls_snax-forge-sim"], watch)
+            steps.host("gls_snax-forge-run", TB_DIR,
+                       f"make snax-forge-run SIM=vsim CFG_OVERRIDE={q(str(cfg))} ELF={q(str(elf))}{opts}",
+                       GLS_TIMEOUT["gls_snax-forge-run"], watch)
+        finally:
+            if (TB_DIR / RUN_LOG).is_file():
+                shutil.copy(TB_DIR / RUN_LOG, work / "gls" / "snax-forge-vsim.txt")
+            for f in ("vlog.log", "vopt.log"):
+                if (TB_DIR / "work-vsim" / f).is_file():
+                    shutil.copy(TB_DIR / "work-vsim" / f, work / "gls" / f)
+            res["questa_elapsed_s"] = {
+                "vlog_netlist": elapsed(_text(work / "gls" / "vlog.log"), str(netlist)),
+                "vopt": elapsed(_text(work / "gls" / "vopt.log")),
+                "run": elapsed(_text(work / "gls" / "snax-forge-vsim.txt"))}
+        res["checks"] = gls_checks(work, p, rtl_res, rtl_run, netlist, cell_names)
+        bad = [k for k, v in res["checks"].items() if v["status"] != "PASS"]
+        res["status"] = "PASS" if not bad else "FAIL"
+        res["failed"] = ", ".join(bad) or None
+        if bad:
+            log = work / "gls" / ("vopt.log" if bad[0] == "swap" and not res["checks"]["swap"]["wrapper_from"]
+                                  else "snax-forge-vsim.txt")
+            res["failed_log"], res["failed_tail"] = str(log.relative_to(work)), tail(log)
+    except StepFailed as e:
+        res["failed"] = f"step {e.step} ({e.why})"
+        res["failed_log"] = str(e.log.relative_to(work))
+        print(f"cluster gls {point}: FAIL at {e.step} ({e.why}); last {TAIL} lines of {e.log}:\n{tail(e.log)}",
+              flush=True)
+        if (work / "gls" / "snax-forge-vsim.txt").is_file():
+            res["checks"] = gls_checks(work, p, rtl_res, rtl_run, work / "netlist" / Path(NETLIST).name, cell_names)
+    except Stop as e:
+        res["failed"] = str(e)
+        print(f"cluster gls {point}: FAIL: {e}", flush=True)
+    except Exception as e:  # noqa: BLE001 - recorded as the run's failure, the zip and the clean still done
+        res["failed"] = f"driver: {e!r}"
+        print(f"cluster gls {point}: FAIL in the driver: {e!r}", flush=True)
+    finally:
+        res["questa"] = questa_version()
+        res["seconds"] = {**steps.times, "total": round(time.monotonic() - t0, 1)}
+        res["memory"] = steps.peaks
+        res["date"] = dt.datetime.now().isoformat(timespec="seconds")
+        try:
+            pack_gls(work, point, res)
+        except Exception as e:  # noqa: BLE001
+            print(f"  could not pack gls/ of {step1.relative_to(ROOT)}: {e!r}", flush=True)
+        shutil.rmtree(work, ignore_errors=True)
+        try:
+            clean = subprocess.run(["bash", "-c", "make clean-vsim clean-generated"], cwd=TB_DIR, env=host_env(),
+                                   stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                                   timeout=TIMEOUT["clean"], check=False)
+            st = git(SC, "status", "--porcelain").stdout.strip()
+            print(f"  cleaned: {work} deleted; snax_cluster make clean-vsim clean-generated exit {clean.returncode}"
+                  + (f"; snax_cluster not clean after it:\n{st}" if st else "; snax_cluster clean"), flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"  snax_cluster's clean failed: {e!r}", flush=True)
+        if TMP.is_dir() and not any(TMP.iterdir()):
+            TMP.rmdir()
+    gls_summary(point, res)
+    return 0 if res["status"] == "PASS" else 1
+
+
+def _text(f: Path) -> str:
+    return f.read_text(errors="replace") if f.is_file() else ""
+
+
+def pack_gls(work: Path, point: str, res: dict) -> None:
+    """Under gls/ of sim/runs/cluster/nangate45/<point>.zip; the zip's other members (rtl/) kept."""
+    z = RUN_ZIPS / f"{point}.zip"
+    new = {f"gls/{f}": (work / "gls" / f).read_bytes() for f in ("snax-forge-vsim.txt", "vlog.log", "vopt.log")
+           if (work / "gls" / f).is_file()}
+    if (work / "logs").is_dir():
+        new.update({f"gls/logs/{k}": v.read_bytes() for k, v in arc.files_of(work / "logs").items()})
+    new["gls/check.json"] = (json.dumps(res, indent=2) + "\n").encode()
+    old = {k: v for k, v in arc.read_all(z).items() if not k.startswith("gls/")}
+    arc.write(z, {**old, **new})
+    res["zip"] = str(z.relative_to(ROOT))
+    print(f"  packed {res['zip']} ({len(new)} members under gls/)", flush=True)
+
+
+def gls_summary(point: str, res: dict) -> None:
+    c = res.get("checks", {})
+    cyc, sw, rc = c.get("cycles", {}), c.get("swap", {}), c.get("ramcount", {})
+    line = (f"cluster gls {point}: {res['status']}, {cyc.get('gls')} cycles (rtl {cyc.get('rtl')}), netlist swap "
+            f"{'ok' if sw.get('status') == 'PASS' else 'FAIL'}, RAMCOUNT {rc.get('lines', 0)} "
+            f"{'equal' if rc.get('status') == 'PASS' else 'differ'}")
+    if res["status"] != "PASS":
+        line += f"; failed: {res['failed']}"
+    print(line, flush=True)
+    if res.get("failed_tail"):
+        print(f"  last {TAIL} lines of {res['failed_log']}:\n{res['failed_tail']}", flush=True)
+    for k, v in c.items():
+        if v.get("status") != "PASS":
+            skip = {"status"} | ({"gls", "rtl"} if k == "ramcount" else set())
+            print(f"  {k}: {json.dumps({x: y for x, y in v.items() if x not in skip})}", flush=True)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -616,13 +956,12 @@ def main() -> int:
     s.add_argument("point")
     s.add_argument("--cores", type=int, default=16, help="DC's cores (default 16, X68)")
     s.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
-    g = sub.add_parser("gls", help="step 3 (not yet)")
-    g.add_argument("point", nargs="?")
+    g = sub.add_parser("gls", help="step 3: step 2's netlist in step 1's testbench (X67)")
+    g.add_argument("point")
+    g.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
     a = ap.parse_args()
-    if a.cmd == "gls":
-        sys.exit("not yet: R4")
     images, p = load(a.point)
-    return syn(p, images, a) if a.cmd == "syn" else rtl(p, images, a)
+    return {"rtl": rtl, "syn": syn, "gls": gls}[a.cmd](p, images, a)
 
 
 if __name__ == "__main__":

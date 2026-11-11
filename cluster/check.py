@@ -7,7 +7,9 @@ equals the expected one; its `forge counter <task>: <c>` lines, in order, name t
 count within that task's `forge fill <task>: <n>` of the expected count (the group's streamer fill: the
 counter counts the streamer's head start before START, which SNAX-GVSoC does not model); a file without
 fill lines asks for equal counts. Also reads the run's `forge cycles:` and its `[tc_sram_impl] <path>: <macro>`
-prints (cluster/mem.py's, one per instance at time 0, `<path>.gen_<macro>: <macro>`). Standard library only.
+prints (cluster/mem.py's, one per instance at time 0, `<path>.gen_<macro>: <macro>`), and the macro models'
+`RAMCOUNT <path> <macro> reads N writes M` lines (ram/ram.py's final block): the netlist run (R4) and the RTL macro
+run must give the same (macro, reads, writes) list, compared without the paths, which differ. Standard library only.
 """
 
 from __future__ import annotations
@@ -24,6 +26,7 @@ CYCLES = re.compile(r"forge cycles: (\d+)")
 SRAM_MARK = "[tc_sram_impl] "
 SRAM_END = re.compile(r"\.gen_(\w+): (\w+)[ \t]*$", re.M)
 SUCCESS = "[SUCCESS] Program finished successfully"
+RAMCOUNT = re.compile(r"RAMCOUNT (\S+) (\w+) reads (\d+) writes (\d+)")
 
 
 def parse(text: str) -> dict:
@@ -80,6 +83,24 @@ def sram_counts(text: str) -> dict[str, int]:
     the end, not as whole lines: vsim's prints and the program's output reach the log through separate
     buffers, and the program's lines can land inside a print (PITFALLS Q13)."""
     return dict(sorted(Counter(m.group(2) for m in SRAM_END.finditer(text) if m.group(1) == m.group(2)).items()))
+
+
+def ramcounts(text: str) -> list[tuple[str, int, int]]:
+    """The RAMCOUNT lines as (macro, reads, writes), sorted: the instance paths left out (RTL and netlist differ)."""
+    return sorted((m.group(2), int(m.group(3)), int(m.group(4))) for m in RAMCOUNT.finditer(text))
+
+
+def ram_compare(want_text: str, got_text: str, srams: dict[str, int]) -> tuple[bool, list[str]]:
+    """The run's RAMCOUNT list against the reference run's, and its instances per macro against `srams`."""
+    want, got = ramcounts(want_text), ramcounts(got_text)
+    per = dict(sorted(Counter(m for m, _r, _w in got).items()))
+    notes = []
+    if per != dict(sorted(srams.items())):
+        notes.append(f"instances {per}, want {dict(sorted(srams.items()))}")
+    if got != want:
+        notes.append(f"{len(got)} lines against {len(want)}; only in the run {sorted(set(got) - set(want))[:5]}, "
+                     f"only in the reference {sorted(set(want) - set(got))[:5]}")
+    return not notes, notes
 
 
 def success(text: str) -> bool:

@@ -79,6 +79,31 @@ def test_print_split_by_program_output():
     assert check.compare(WANT, text)[0]
 
 
+RC = "# RAMCOUNT tb_bin.{p}.gen_{m}.i_macro {m} reads {r} writes {w}\n"
+
+
+def test_ramcounts_without_paths():
+    rtl = RC.format(p="i_dut.a", m="sram_d512_w64_m8", r=139, w=139) + \
+        RC.format(p="i_dut.b", m="sram_d128_w39", r=487, w=237)
+    gls = "x" + RC.format(p="i_dut.i_cluster_b", m="sram_d128_w39", r=487, w=237) + \
+        RC.format(p="i_dut.i_cluster_a_0", m="sram_d512_w64_m8", r=139, w=139)
+    assert check.ramcounts(rtl) == [("sram_d128_w39", 487, 237), ("sram_d512_w64_m8", 139, 139)]
+    srams = {"sram_d512_w64_m8": 1, "sram_d128_w39": 1}
+    assert check.ram_compare(rtl, gls, srams) == (True, [])
+
+
+def test_ramcounts_differ():
+    rtl = RC.format(p="a", m="sram_d512_w64_m8", r=139, w=139) + RC.format(p="b", m="sram_d512_w64_m8", r=129, w=128)
+    srams = {"sram_d512_w64_m8": 2}
+    ok, notes = check.ram_compare(rtl, RC.format(p="a", m="sram_d512_w64_m8", r=139, w=139) +
+                                  RC.format(p="b", m="sram_d512_w64_m8", r=129, w=129), srams)
+    assert not ok and "only in the run [('sram_d512_w64_m8', 129, 129)]" in notes[0], notes
+    ok, notes = check.ram_compare(rtl, RC.format(p="a", m="sram_d512_w64_m8", r=139, w=139), srams)
+    assert not ok and notes[0].startswith("instances {'sram_d512_w64_m8': 1}"), notes
+    ok, notes = check.ram_compare(rtl, "", srams)
+    assert not ok and len(notes) == 2, notes
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
