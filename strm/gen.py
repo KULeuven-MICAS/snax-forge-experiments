@@ -302,9 +302,11 @@ def run_script(src: Path, pts: list[tuple[dict, dict, Path]], mem: int) -> str:
             f"sbt -batch -mem {mem} " + " ".join(shlex.quote(c) for c in cmds) + "\n")
 
 
-def podman_cmd(image: str, script: Path) -> list[str]:
+def podman_cmd(image: str, script: Path, mount: Path = ROOT) -> list[str]:
+    """`podman run --rm` of `bash script` in the image, `mount` mounted at its own path (default this repo;
+    cluster/cluster.py mounts the parent of the sibling repos) and the home folder's Scala caches at /root (SC6)."""
     home = Path.home()
-    cmd = ["podman", "run", "--rm", "-v", f"{ROOT}:{ROOT}"]
+    cmd = ["podman", "run", "--rm", "-v", f"{mount}:{mount}"]
     for c in CACHES:
         (home / c).mkdir(parents=True, exist_ok=True)
         cmd += ["-v", f"{home / c}:/root/{c}"]
