@@ -89,6 +89,27 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** `syn.py` leaves the black box out of the sum check for a macro row; `sim/pwr.py` replaces its internal energy with the counted accesses (X50) and adds its output-net switching to the combinational group (X62). A row with a black box that is not a macro is still a failure.
 - **Found in:** `results/hls/runs/2026-11-10_csyn1_r3.md`.
 
+### DC13. On a loaded host DC runs on fewer cores than asked, for the whole run
+
+- **Symptom:** the cluster run asked for 16 cores and DC printed `You requested 16 cores. However, load on host micas-lapserv1... is 25.10. Tool will ignore the request and use 7 cores. (UIO-231)`, then `Running optimization using a maximum of 7 cores. (OPT-1500)` at compile.
+- **Cause:** `set_host_options -max_cores` checks the host's load once, when it runs, and lowers the cores for the rest of the run. `disable_multicore_resource_checks true` turns that check off, but `dc_syn.tcl` set it on the line after `set_host_options`, where it changes nothing.
+- **Fix or check:** `SYN_IGNORE_LOAD=1` sets `disable_multicore_resource_checks true` before `set_host_options` (`dc_syn.tcl`); `cluster/cluster.py` sets it (X68), the other sources do not (their runs are unchanged). Check `OPT-1500`'s core count in `dc_stdout.log`: the cluster's rerun at load 31 used 16.
+- **Found in:** `results/cluster/runs/2026-11-11_csyn1_r3.md`.
+
+### DC14. A stopped DC leaves its multicore child running, which holds the run's logs open
+
+- **Symptom:** after `kill` of the cluster's DC (`common_shell_exec`), deleting the run folder failed with `OSError: [Errno 16] Device or resource busy: '.nfs0000...'` and `[Errno 39] Directory not empty: 'logs'`; a second `common_shell_exec`, a child of the first, was still running.
+- **Cause:** a multicore DC runs a child process; killing the parent does not stop it, and on NFS a file it still holds open becomes an `.nfs` stub that cannot be removed until it exits.
+- **Fix or check:** stop every `common_shell_exec` of the run (`pgrep -u $USER common_shell_ex`) and wait until none is left before cleaning up. `cluster/cluster.py`'s cleanup no longer packs over the zip `finish_run` wrote (the first stop lost its DC log that way) and runs each step even after one fails.
+- **Found in:** `results/cluster/runs/2026-11-11_csyn1_r3.md`.
+
+### DC15. DC's tied-constant pseudo-cells look like unresolved black boxes
+
+- **Symptom:** on a small cluster-like test design `cluster_check.tcl` reported `**logic_0**` as a leaf reference with no library cell and `is_black_box` true, so the unresolved and black-box gates failed.
+- **Cause:** DC represents a net tied to 0 or 1 by a `**logic_0**` or `**logic_1**` pseudo-cell; it has no library cell and no area, and `report_reference` does not list it.
+- **Fix or check:** `cluster_check.tcl` writes them as `constant` lines and leaves them out of the reference, library and black-box lines.
+- **Found in:** `results/cluster/runs/2026-11-11_csyn1_r3.md` (step 1's smoke test).
+
 ## Libraries
 
 ### LIB1. nangate15's flops all have async reset or set
@@ -493,6 +514,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** `io_aguCfg_temporalStrides_<k>` is `addressWidth` (17) bits, but `ProgrammableCounter`'s `step` input is `width - 1` (16) bits, so a stride of 2^16 B becomes 0: loop k never moves. With 1,024 beats over 6 or 7 loops and the larger bounds innermost, the outermost bound is 2 and its stride 8 x 16 x 512 = 65,536 B.
 - **Fix or check:** the largest stride a reader takes is 65,535 B. `sim/sources/strm.py` puts the larger bounds outermost (the outermost stride is then at most 32,768 B on the grid) and refuses a stride over the step's range before simulating; the TB checks every request address.
 - **Found in:** `results/strm/runs/2026-11-06_strm1_r1.md`.
+
+### SC10. snax_cluster's synthesis list had no iDMA
+
+- **Symptom:** DC on the whole cluster: `Unable to resolve reference 'idma_inst64_top' in 'snitch_cc_...'. (LINK-5)`, and the netlist would hold no DMA engine; `syn_flist.tcl` had iDMA's include paths and none of its files.
+- **Cause:** iDMA's `Bender.yml` puts every source (`idma_inst64_top`, the midends, the backends, `target/rtl/idma_generated.sv`) under bender target `rtl`; vsim and vcs pass `-t rtl`, `gen-syn`'s `SYN_BENDER` passed only `-t synthesis`.
+- **Fix or check:** snax_cluster #693 (main `7c14681c`) adds `-t rtl` to `SYN_BENDER`; it adds exactly iDMA's 34 files. `cluster_check.tcl` and syn.py's LINK-5 count fail a cluster row with an unresolved reference.
+- **Found in:** `results/cluster/runs/2026-11-11_csyn1_r3.md`.
 
 ### E7. A snax-forge submodule off main's pin marks every bundle dirty
 
