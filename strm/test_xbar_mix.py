@@ -93,6 +93,9 @@ def test_ties():
 def test_rw_and_limits():
     t = xbar_mix.wrapper(stub(4, 4), ro=0, wo=0)
     assert "no read-only input, no write-only input, 0..3 read-write" in t
+    assert "0..3 read-only, no write-only input, no read-write input" in xbar_mix.wrapper(stub(4, 4), 4, 0)
+    assert "no read-only input, 0..3 write-only, no read-write input" in xbar_mix.wrapper(stub(4, 4), 0, 4)
+    assert "0..2 read-only, 3..3 write-only, 4..5 read-write" in xbar_mix.wrapper(stub(6, 4), 3, 1)
     for bad in ((5, 0), (2, 3), (-1, 0)):
         try:
             xbar_mix.wrapper(stub(4, 4), *bad)

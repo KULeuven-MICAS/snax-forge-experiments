@@ -75,6 +75,14 @@ differs from rtl_flop_bits is "failed: flop check (...)". run starts the
 largest points first (xbar by inputs x banks, streamer by channels x depth,
 then loops).
 
+Or xbar_mix (CSYN1 R3c, docs X70): an xbar point's SparseInterconnect inside
+strm/xbar_mix.py's wrapper, top xbar_mix, with read-only and write-only inputs
+(rtl/xbar_mix/i<inputs>_b<banks>_r<ro>_w<wo>.zip, strm/gen.py --set xbar_mix),
+run as xbar is. Its rows add inputs, banks, ro, wo, rtl_flop_bits (the
+SparseInterconnect's: the wrapper adds none), flops_removed (rtl_flop_bits minus
+DC's flops), opt1207 and snax_cluster_commit. Flops DC removes are reported per
+point, not failed; a row with more flops than the RTL declares fails.
+
 Or cluster (CSYN1 Part B, docs X67): a snax-forge design in snax_cluster's whole
 cluster, top snax_forge_cluster_wrapper (clock clk_i, reset rst_ni, asynchronous).
 Its DC run is driven by cluster/cluster.py (pixi run cluster syn <point>), which
@@ -154,6 +162,7 @@ Environment, all optional:
   SYN_RTL_CHAR        rtl/char                 (the char points' zips)
   SYN_RTL_STREAMER    rtl/streamer             (the streamer points' zips)
   SYN_RTL_XBAR        rtl/xbar                 (the xbar points' zips)
+  SYN_RTL_XBAR_MIX    rtl/xbar_mix             (the xbar_mix points' zips)
   SYN_RTL_CLUSTER     rtl/cluster              (the cluster points' bundle zips, cluster/cluster.py)
   SYN_LIB_NANGATE45   the nangate45 .db, instead of the tech file's lib_default
   SYN_LIB_NANGATE15   the nangate15 .db, instead of the tech file's lib_default
@@ -161,10 +170,10 @@ Environment, all optional:
 syn.py passes DC: SYN_FILELIST, SYN_LIB_DB, SYN_LIB_NAME, SYN_TIME_UNIT,
 SYN_CAP_UNIT, SYN_T_SCALE, SYN_C_SCALE, SYN_DRIVE_CELL, SYN_OUT_LOAD_FF,
 SYN_MAX_TRANS_NS, SYN_WIRE_LOAD, SYN_CLOCK_NS, SYN_CORES, and from the
-source SYN_FORMAT (verilog; forge, char, streamer and xbar sverilog),
-SYN_CLK_PORT (ap_clk; bambu clock; xls clk; forge clk_i; char, streamer and
-xbar clock) and SYN_RST_PORT (ap_rst_n; bambu reset; xls rst; forge rst_ni;
-char, streamer and xbar reset); with --sdf, SYN_WRITE_SDF=1 (dc_syn.tcl
+source SYN_FORMAT (verilog; forge, char, streamer, xbar and xbar_mix sverilog),
+SYN_CLK_PORT (ap_clk; bambu clock; xls clk; forge clk_i; char, streamer, xbar
+and xbar_mix clock) and SYN_RST_PORT (ap_rst_n; bambu reset; xls rst; forge
+rst_ni; char, streamer, xbar and xbar_mix reset); with --sdf, SYN_WRITE_SDF=1 (dc_syn.tcl
 writes the SDF only then, X69). The cluster source also sets SYN_FLIST_TCL,
 SYN_TOP, SYN_EXTRA_SDC, SYN_POST_TCL and SYN_RAM_DBS in place of SYN_FILELIST,
 and SYN_IGNORE_LOAD=1 (dc_syn.tcl's optional hooks).
@@ -215,13 +224,16 @@ SOURCES = {
                  "format": "sverilog", "clk": "clock", "rst": "reset"},
     "xbar": {"rtl": Path(os.environ.get("SYN_RTL_XBAR", ROOT / "rtl" / "xbar")),
              "format": "sverilog", "clk": "clock", "rst": "reset"},
+    # CSYN1 R3c (X70): an xbar point's SparseInterconnect in strm/xbar_mix.py's wrapper, top xbar_mix
+    "xbar_mix": {"rtl": Path(os.environ.get("SYN_RTL_XBAR_MIX", ROOT / "rtl" / "xbar_mix")),
+                 "format": "sverilog", "clk": "clock", "rst": "reset"},
     # CSYN1 Part B (X67): driven by cluster/cluster.py, not by `syn run`; the point's bundle zip names it
     "cluster": {"rtl": Path(os.environ.get("SYN_RTL_CLUSTER", ROOT / "rtl" / "cluster")),
                 "format": "sverilog", "clk": "clk_i", "rst": "rst_ni", "top": "snax_forge_cluster_wrapper"},
 }
 # The sources whose points are bundle zips in rtl/<source>/ (unpacked into tmp/ for DC); STRM: strm/gen.py's
-BUNDLED = ("forge", "char", "streamer", "xbar")
-STRM = ("streamer", "xbar")
+BUNDLED = ("forge", "char", "streamer", "xbar", "xbar_mix")
+STRM = ("streamer", "xbar", "xbar_mix")
 # The results/<source>/<tech>/ CSVs: synth_dc.csv and synth_dc_modules.csv, but for char
 RESULT_CSVS = {"char": ("char_synth.csv", "char_synth_modules.csv")}
 # X38: at most 16 64-bit channels per stream, so W <= 16 for every HLS case; W = 32 is retired
@@ -289,9 +301,12 @@ HLS_COLUMNS = ["ram_um2", "ram_kind"]   # after COLUMNS, hls rows only (X62): a 
 RAM_TECH = "nangate45"                  # the macros are CACTI's 45 nm (X47)
 # after COLUMNS, streamer and xbar rows (X52): the grid's params, then the flop check's numbers
 STRM_COLUMNS = {"streamer": ["depth", "loops", "channels", "rtl_flop_bits", "opt1207", "snax_cluster_commit"],
-                "xbar": ["inputs", "banks", "rtl_flop_bits", "opt1207", "snax_cluster_commit"]}
+                "xbar": ["inputs", "banks", "rtl_flop_bits", "opt1207", "snax_cluster_commit"],
+                "xbar_mix": ["inputs", "banks", "ro", "wo", "rtl_flop_bits", "flops_removed", "opt1207",
+                             "snax_cluster_commit"]}
 STRM_PARAMS = {"streamer": {"depth": "fifo_depth", "loops": "temporal_dim", "channels": "num_channel"},
-               "xbar": {"inputs": "inputs", "banks": "banks"}}
+               "xbar": {"inputs": "inputs", "banks": "banks"},
+               "xbar_mix": {"inputs": "inputs", "banks": "banks", "ro": "ro", "wo": "wo"}}
 GLUE_MAX = 0.01   # a glue share above this (or below 0) is reported, not failed
 # A licence failure, as DC prints it (PITFALLS L1): 'Error: Design-Compiler Internal licensing error
 # number -92 ...', 'Unable to obtain feature ...', 'Fatal: Design Compiler is not enabled. (DCSH-1)'.
@@ -415,8 +430,9 @@ def strm_members(point: str) -> list[str]:
 
 
 def strm_extra(point: str, top: str, log: str) -> dict:
-    """A streamer or xbar row's STRM_COLUMNS: the grid's params (config.json), the bits the RTL declares under the
-    top (strm/gen.py's flop_bits), DC's unique OPT-1207 lines and the snax_cluster commit."""
+    """A streamer, xbar or xbar_mix row's STRM_COLUMNS: the grid's params (config.json), the bits the RTL declares
+    under the top (strm/gen.py's flop_bits; for xbar_mix over both files, so the SparseInterconnect's), DC's unique
+    OPT-1207 lines and the snax_cluster commit."""
     sys.path.insert(0, str(ROOT / "strm"))
     import gen as strm_gen  # noqa: PLC0415  strm/gen.py, only for these two sources
     z = bundle_zip(point)
@@ -424,7 +440,9 @@ def strm_extra(point: str, top: str, log: str) -> dict:
     params = cfg.get("params", {})
     out = {k: params.get(v, "") for k, v in STRM_PARAMS[SOURCE].items()}
     try:
-        out["rtl_flop_bits"] = strm_gen.flop_bits(arc.read_text(z, f"{top}.sv"), top)
+        text = ("".join(arc.read_text(z, m) for m in strm_members(point)) if SOURCE == "xbar_mix"
+                else arc.read_text(z, f"{top}.sv"))
+        out["rtl_flop_bits"] = strm_gen.flop_bits(text, top)
     except (KeyError, ValueError) as e:
         out["rtl_flop_bits"] = ""
         print(f"flop check {point}: no RTL count ({e})", flush=True)
@@ -437,7 +455,7 @@ def strm_extra(point: str, top: str, log: str) -> dict:
 def strm_size(point: str) -> tuple:
     """The order run starts streamer and xbar points in, largest first: inputs x banks; channels x depth, loops."""
     p = forge_json(point, "config.json").get("params", {})
-    if SOURCE == "xbar":
+    if SOURCE in ("xbar", "xbar_mix"):
         return (p.get("inputs", 0) * p.get("banks", 0), p.get("banks", 0))
     return (p.get("num_channel", 0) * p.get("fifo_depth", 0), p.get("num_channel", 0), p.get("temporal_dim", 0))
 
@@ -702,6 +720,8 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row.update(char_extra(point))
     if SOURCE in STRM:
         row.update(strm_extra(point, row["top"], log_text))
+    if SOURCE == "xbar_mix":
+        row["flops_removed"] = flops_removed(row)
     if SOURCE == "hls" and tj is not None:
         row.update(ram_area(json.loads(tj), get, tech, point, clock))
     cluster_gate = ""
@@ -762,7 +782,10 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row["status"] = "failed: power groups do not sum to the total dynamic power"
     elif split_error:
         row["status"] = f"failed: Bambu split ({split_error})"
-    elif SOURCE in STRM and str(row["rtl_flop_bits"]) != row["seq_cells"]:
+    elif SOURCE == "xbar_mix" and (row["flops_removed"] == "" or row["flops_removed"] < 0):
+        row["status"] = (f"failed: flop check (DC {row['seq_cells'] or '?'} flops, more than the RTL's "
+                         f"{row['rtl_flop_bits'] or '?'} bits, or no count)")
+    elif SOURCE in STRM and SOURCE != "xbar_mix" and str(row["rtl_flop_bits"]) != row["seq_cells"]:
         # STRM1 R0: every register the RTL declares is a flop after compile (no OPT-1207, no OPT-1206)
         row["status"] = (f"failed: flop check (DC {row['seq_cells'] or '?'} flops, RTL {row['rtl_flop_bits'] or '?'} "
                          f"bits, {row['opt1207']} OPT-1207)")
@@ -771,6 +794,15 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
     else:
         row["status"] = "ok"
     return row
+
+
+def flops_removed(row: dict) -> int | str:
+    """An xbar_mix row's rtl_flop_bits minus DC's flops ('' without both): the flops DC removed, which the ties may
+    make dead (reported per point, X70)."""
+    try:
+        return int(row["rtl_flop_bits"]) - int(row["seq_cells"])
+    except (TypeError, ValueError):
+        return ""
 
 
 LINK5 = re.compile(r"\(LINK-5\)|Unable to resolve reference", re.I)
@@ -1166,6 +1198,9 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
 
         rc = run_dc(point, name, rdir, cmd, syn_env, args.clock, prepare)
     row = finish_run(point, rdir, tech, res, args, syn_env, rc, {"ram": ram_info})
+    if SOURCE == "xbar_mix" and isinstance(row["flops_removed"], int) and row["flops_removed"] > 0:
+        print(f"flops {point} on {name}: DC removed {row['flops_removed']} of the RTL's {row['rtl_flop_bits']} bits "
+              f"({row['opt1207']} OPT-1207 lines)", flush=True)
     glue = row.get("glue_um2", "")
     if SOURCE == "forge" and row["area_um2"] and not glue:
         gone = [k for k in ("csr_um2", "ctrl_um2", "datapath_um2") if not row[k]]
@@ -1238,7 +1273,7 @@ def main() -> int:
                        help="hls (Vitis, hls-exercises' rtl/, the default), bambu (the same rtl/), xls "
                             "(dslx-exercises' rtl/), forge (rtl/forge/, pixi run forge-rtl) "
                             "char (rtl/char/, pixi run char-rtl), streamer or xbar (rtl/streamer/, rtl/xbar/, "
-                            "pixi run strm-rtl), cluster (results and summary; runs through pixi run cluster syn)")
+                            "pixi run strm-rtl), xbar_mix (rtl/xbar_mix/, strm-rtl --set xbar_mix), cluster (results and summary; runs through pixi run cluster syn)")
         if name == "check-ports":
             continue
         if name == "run":

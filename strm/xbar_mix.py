@@ -96,12 +96,9 @@ def wrapper(sv_text: str, ro: int, wo: int, top: str = "xbar_mix", module: str =
             conns.append(f"    .{name}({name})")
         else:
             conns.append(f"    .{name}({t})")
-    head = (f"// {top}: {module} with inputs 0..{ro - 1} read-only, {ro}..{ro + wo - 1} write-only, "
-            f"{ro + wo}..{n - 1} read-write, and snax_cluster's sparse_interconnect_wrapper ties\n"
+    kinds = ", ".join(f"{a}..{b - 1} {k}" if b > a else f"no {k} input"
+                      for a, b, k in ((0, ro, "read-only"), (ro, ro + wo, "write-only"), (ro + wo, n, "read-write")))
+    head = (f"// {top}: {module} with {kinds}, and snax_cluster's sparse_interconnect_wrapper ties\n"
             f"// (strm/xbar_mix.py, CSYN1 R3c). Generated; never edited by hand.\n")
-    if ro == 0:
-        head = head.replace("inputs 0..-1 read-only, ", "no read-only input, ")
-    if wo == 0:
-        head = head.replace(f"{ro}..{ro - 1} write-only, ", "no write-only input, ")
     return (head + f"module {top} (\n" + ",\n".join(kept) + "\n);\n"
             f"  {module} i_xbar (\n" + ",\n".join(conns) + "\n  );\nendmodule\n")
