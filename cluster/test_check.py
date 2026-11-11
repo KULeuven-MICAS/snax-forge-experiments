@@ -89,19 +89,67 @@ def test_ramcounts_without_paths():
         RC.format(p="i_dut.i_cluster_a_0", m="sram_d512_w64_m8", r=139, w=139)
     assert check.ramcounts(rtl) == [("sram_d128_w39", 487, 237), ("sram_d512_w64_m8", 139, 139)]
     srams = {"sram_d512_w64_m8": 1, "sram_d128_w39": 1}
-    assert check.ram_compare(rtl, gls, srams) == (True, [])
+    assert check.ram_compare(rtl, gls, srams) == (True, [], [])
 
 
-def test_ramcounts_differ():
-    rtl = RC.format(p="a", m="sram_d512_w64_m8", r=139, w=139) + RC.format(p="b", m="sram_d512_w64_m8", r=129, w=128)
-    srams = {"sram_d512_w64_m8": 2}
-    ok, notes = check.ram_compare(rtl, RC.format(p="a", m="sram_d512_w64_m8", r=139, w=139) +
-                                  RC.format(p="b", m="sram_d512_w64_m8", r=129, w=129), srams)
-    assert not ok and "only in the run [('sram_d512_w64_m8', 129, 129)]" in notes[0], notes
-    ok, notes = check.ram_compare(rtl, RC.format(p="a", m="sram_d512_w64_m8", r=139, w=139), srams)
-    assert not ok and notes[0].startswith("instances {'sram_d512_w64_m8': 1}"), notes
-    ok, notes = check.ram_compare(rtl, "", srams)
+# R4's netlist run: the paths hold escaped identifiers, each ending in a space
+GLS_LINES = (
+    "# RAMCOUNT tb_bin.i_dut.i_snax_forge_cluster.i_cluster.i_snitch_data_mem.\\gen_banks[0].i_data_mem "
+    ".\\gen_sram_d512_w64_m8.i_macro  sram_d512_w64_m8 reads 139 writes 139\n"
+    "# RAMCOUNT tb_bin.i_dut.i_snax_forge_cluster.i_cluster.\\gen_hive[0].i_snitch_hive .i_snitch_icache.i_lookup."
+    "i_snitch_icache_tag.\\g_cache_tag_sets[0].i_tag .\\gen_sram_d128_w39.i_macro  sram_d128_w39 reads 487 writes 238\n")
+RTL_LINES = (
+    "# RAMCOUNT tb_bin.i_dut.i_snax_forge_cluster.i_cluster.i_snitch_data_mem.gen_banks[0].i_data_mem."
+    "gen_sram_d512_w64_m8.i_macro sram_d512_w64_m8 reads 139 writes 139\n"
+    "# RAMCOUNT tb_bin.i_dut.i_snax_forge_cluster.i_cluster.gen_hive[0].i_snitch_hive.i_snitch_icache.i_lookup."
+    "i_snitch_icache_tag.g_cache_tag_sets[0].i_tag.gen_sram_d128_w39.i_macro sram_d128_w39 reads 487 writes 237\n")
+SRAMS1 = {"sram_d512_w64_m8": 1, "sram_d128_w39": 1}
+
+
+def test_ramcounts_escaped_paths():
+    assert check.ramcounts(GLS_LINES) == [("sram_d128_w39", 487, 238), ("sram_d512_w64_m8", 139, 139)]
+    assert check.ramcounts(RTL_LINES) == [("sram_d128_w39", 487, 237), ("sram_d512_w64_m8", 139, 139)]
+
+
+def test_ram_one_extra_write_allowed():
+    ok, notes, extra = check.ram_compare(RTL_LINES, GLS_LINES, SRAMS1)
+    assert ok and notes == [], notes
+    assert extra == [{"macro": "sram_d128_w39", "reads": 487, "rtl_writes": 237, "gls_writes": 238}]
+    assert check.ram_summary(2, ok, extra) == "RAMCOUNT 2: reads equal, writes equal but 1 macros +1 at reset (PITFALLS Q8)"
+    assert check.ram_summary(2, True, []) == "RAMCOUNT 2: reads equal, writes equal"
+
+
+def test_ram_two_extra_writes_fail():
+    ok, notes, _ = check.ram_compare(RTL_LINES, GLS_LINES.replace("writes 238", "writes 239"), SRAMS1)
+    assert not ok and "unmatched in the run [('sram_d128_w39', 487, 239)]" in notes[0], notes
+
+
+def test_ram_fewer_writes_fail():
+    ok, notes, _ = check.ram_compare(RTL_LINES, GLS_LINES.replace("writes 238", "writes 236"), SRAMS1)
+    assert not ok, notes
+
+
+def test_ram_read_difference_fail():
+    ok, notes, _ = check.ram_compare(RTL_LINES, GLS_LINES.replace("reads 139", "reads 140"), SRAMS1)
+    assert not ok and "('sram_d512_w64_m8', 140, 139)" in notes[0], notes
+
+
+def test_ram_missing_or_extra_macro_fail():
+    one = GLS_LINES.splitlines(keepends=True)
+    ok, notes, _ = check.ram_compare(RTL_LINES, one[1], SRAMS1)            # an instance missing
+    assert not ok and notes[0].startswith("instances {'sram_d128_w39': 1}"), notes
+    ok, notes, _ = check.ram_compare(RTL_LINES, GLS_LINES + one[0], SRAMS1)  # an instance added
     assert not ok and len(notes) == 2, notes
+    ok, notes, _ = check.ram_compare(RTL_LINES, "", SRAMS1)
+    assert not ok and len(notes) == 2, notes
+
+
+def test_ram_pairing_without_paths():
+    # two instances of one macro, the netlist's +1 on the one with fewer writes: matched by counts, not order
+    rtl = "RAMCOUNT a m reads 5 writes 3\nRAMCOUNT b m reads 5 writes 4\n"
+    gls = "RAMCOUNT x m reads 5 writes 4\nRAMCOUNT y m reads 5 writes 4\n"
+    ok, notes, extra = check.ram_compare(rtl, gls, {"m": 2})
+    assert ok and extra == [{"macro": "m", "reads": 5, "rtl_writes": 3, "gls_writes": 4}], (notes, extra)
 
 
 if __name__ == "__main__":

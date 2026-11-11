@@ -9,7 +9,9 @@ counter counts the streamer's head start before START, which SNAX-GVSoC does not
 fill lines asks for equal counts. Also reads the run's `forge cycles:` and its `[tc_sram_impl] <path>: <macro>`
 prints (cluster/mem.py's, one per instance at time 0, `<path>.gen_<macro>: <macro>`), and the macro models'
 `RAMCOUNT <path> <macro> reads N writes M` lines (ram/ram.py's final block): the netlist run (R4) and the RTL macro
-run must give the same (macro, reads, writes) list, compared without the paths, which differ. Standard library only.
+run, compared without the paths (they differ; the netlist's hold escaped identifiers with spaces), must give the same
+reads on every instance and the same writes, but for one more write allowed on an instance of the netlist run: the
+write at time 0 under +initreg+0 (PITFALLS Q8, Q14). Standard library only.
 """
 
 from __future__ import annotations
@@ -26,7 +28,8 @@ CYCLES = re.compile(r"forge cycles: (\d+)")
 SRAM_MARK = "[tc_sram_impl] "
 SRAM_END = re.compile(r"\.gen_(\w+): (\w+)[ \t]*$", re.M)
 SUCCESS = "[SUCCESS] Program finished successfully"
-RAMCOUNT = re.compile(r"RAMCOUNT (\S+) (\w+) reads (\d+) writes (\d+)")
+# the path may hold spaces: a netlist's escaped identifiers end in one (`\gen_banks[0].i_data_mem .\gen_...`)
+RAMCOUNT = re.compile(r"RAMCOUNT (\S.*?)\s+(\w+) reads (\d+) writes (\d+)")
 
 
 def parse(text: str) -> dict:
@@ -90,17 +93,40 @@ def ramcounts(text: str) -> list[tuple[str, int, int]]:
     return sorted((m.group(2), int(m.group(3)), int(m.group(4))) for m in RAMCOUNT.finditer(text))
 
 
-def ram_compare(want_text: str, got_text: str, srams: dict[str, int]) -> tuple[bool, list[str]]:
-    """The run's RAMCOUNT list against the reference run's, and its instances per macro against `srams`."""
+def ram_compare(want_text: str, got_text: str, srams: dict[str, int]) -> tuple[bool, list[str], list[dict]]:
+    """The run's RAMCOUNT lines against the reference run's: (pass, notes, extra writes). Per macro, the instances
+    are matched by their counts (the paths differ): equal (reads, writes) first, then the run's (r, w) to the
+    reference's (r, w - 1), each such one an extra write ({macro, reads, rtl_writes, gls_writes}). Anything left
+    unmatched (a read difference, more than one extra write, an instance missing or added) fails, as does a run
+    whose instances per macro are not `srams`."""
     want, got = ramcounts(want_text), ramcounts(got_text)
+    notes: list[str] = []
     per = dict(sorted(Counter(m for m, _r, _w in got).items()))
-    notes = []
     if per != dict(sorted(srams.items())):
         notes.append(f"instances {per}, want {dict(sorted(srams.items()))}")
-    if got != want:
-        notes.append(f"{len(got)} lines against {len(want)}; only in the run {sorted(set(got) - set(want))[:5]}, "
-                     f"only in the reference {sorted(set(want) - set(got))[:5]}")
-    return not notes, notes
+    left_w, left_g = Counter(want), Counter(got)
+    same = left_w & left_g
+    left_w, left_g = left_w - same, left_g - same
+    extra = []
+    for (m, r, w), n in sorted(left_g.items()):
+        k = min(n, left_w[(m, r, w - 1)])
+        if k:
+            left_w[(m, r, w - 1)] -= k
+            left_g[(m, r, w)] -= k
+            extra += [{"macro": m, "reads": r, "rtl_writes": w - 1, "gls_writes": w}] * k
+    only_g, only_w = sorted((+left_g).elements()), sorted((+left_w).elements())
+    if only_g or only_w:
+        notes.append(f"{len(got)} lines against {len(want)}; unmatched in the run {only_g[:5]}, "
+                     f"unmatched in the reference {only_w[:5]}")
+    return not notes, notes, extra
+
+
+def ram_summary(lines: int, ok: bool, extra: list[dict]) -> str:
+    """The summary's RAMCOUNT part."""
+    if not ok:
+        return f"RAMCOUNT {lines} differ"
+    more = f" but {len(extra)} macros +1 at reset (PITFALLS Q8)" if extra else ""
+    return f"RAMCOUNT {lines}: reads equal, writes equal{more}"
 
 
 def success(text: str) -> bool:

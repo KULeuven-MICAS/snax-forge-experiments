@@ -33,3 +33,7 @@ xbar-kinds = "python report/xbar_kinds.py"
 xbar-kinds-test = "python report/test_xbar_kinds.py"
 # CSYN1 Part B: a snax-forge design in snax_cluster's whole cluster (X66, X67): rtl (R2), syn (R3), gls (R4)
 cluster = "python cluster/cluster.py"
+# CSYN1 Part B R3b: snax-forge's HWCOST for a cluster point, and the cluster's area in groups against it (X72)
+cluster-hwcost = "python cluster/hwcost.py"
+cluster-breakdown = "python report/cluster_breakdown.py"
+cluster-breakdown-test = "python report/test_cluster_breakdown.py"

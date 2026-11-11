@@ -73,11 +73,13 @@ work-vsim/gls, and vopt takes -Lf work-vsim/gls, +initreg+0, +acc=n; vsim +nospe
      elapsed times are read from vlog.log (the netlist's vlog), vopt.log and the run's output.
   4. the checks: D123; forge cycles equal step 1's; the swap (vopt loaded snax_forge_cluster_wrapper and Nangate
      cells from work-vsim/gls, its command has +initreg+0 and +acc=n; the run prints no [tc_sram_impl]); RAMCOUNT
-     (one line per instance of points.json's srams, the sorted (macro, reads, writes) list equal to step 1's macro
-     run's); [SUCCESS] in both runs
+     (one line per instance of points.json's srams; against step 1's macro run, without the paths: reads equal on
+     every instance, writes equal but for at most one more on an instance, the netlist's write at time 0 under
+     +initreg+0, listed as ram_extra_writes; PITFALLS Q14); [SUCCESS] in both runs
   5. under gls/ of sim/runs/cluster/nangate45/<point>.zip (other members kept): snax-forge-vsim.txt, vlog.log,
-     vopt.log, logs/, check.json; then tmp/cluster/<point>/ deleted and make clean-vsim clean-generated in
-     snax_cluster, also on a failure. One line at the end.
+     vopt.log, logs/, check.json; then vsim.wlf (VSIM_FLAGS' `log -r /*`) deleted with its size in check.json,
+     tmp/cluster/<point>/ deleted and make clean-vsim clean-generated in snax_cluster, also on a failure. One line
+     at the end.
 """
 
 from __future__ import annotations
@@ -136,6 +138,9 @@ RTL_PATHS = ("hw", "util", "target/snitch_cluster/cfg", "Bender.yml")
 NOT_RTL = re.compile(r"(^|/)(Makefile[^/]*|[^/]*\.mk|[^/]*\.md|README[^/]*)$")
 PEAK_EVERY = 2.0
 QUESTA_EXE = re.compile(r"^v(log|opt|sim|ish|lib)\w*$")
+# Questa's programs by tool: vsim runs as vish (the Tcl shell, also of `vsim -c -do`) and vsimk (the kernel), vopt as
+# vopt and voptk2
+QUESTA_TOOL = (("vish", "vsim"), ("vsim", "vsim"), ("vopt", "vopt"), ("vlog", "vlog"), ("vlib", "vlib"))
 
 
 class StepFailed(Exception):
@@ -263,11 +268,13 @@ class Steps:
 
 
 class Peak(threading.Thread):
-    """The Questa processes under a step's command, sampled from /proc every PEAK_EVERY s: per label, the peak
-    resident memory and when it was first and last seen. A process's label is the first of `labels`
-    ((text in its command line, label)) that matches, else its program's name (vlog, vopt, vsimk, ...)."""
+    """The Questa processes under a step's command, sampled from /proc every PEAK_EVERY s: per label, the peak of
+    the resident memory its processes hold together, and when it was first and last seen. A process's tool is its
+    program's (QUESTA_TOOL: vish and vsimk are vsim, voptk2 is vopt); its label the first of `labels` ((tool, text
+    in its command line, label)) that matches, else the tool. A label names its tool, since vopt's command line
+    holds `-o tb_bin_opt` as the run's does."""
 
-    def __init__(self, root: int, labels: list[tuple[str, str]], t0: float):
+    def __init__(self, root: int, labels: list[tuple[str, str, str]], t0: float):
         super().__init__(daemon=True)
         self.root, self.labels, self.t0 = root, labels, t0
         self.seen: dict[str, dict] = {}
@@ -290,7 +297,7 @@ class Peak(threading.Thread):
                 except OSError:
                     continue
                 kids.setdefault(int(stat.rsplit(")", 1)[1].split()[1]), []).append(int(d))
-        todo, total = [self.root], 0
+        todo, total, now_kb = [self.root], 0, {}
         while todo:
             pid = todo.pop()
             todo += kids.get(pid, [])
@@ -306,10 +313,13 @@ class Peak(threading.Thread):
                 exe = os.path.basename(cmd[1])
             if not QUESTA_EXE.match(exe):
                 continue
+            tool = next(t for pre, t in QUESTA_TOOL if exe.startswith(pre))
             text = " ".join(cmd)
-            label = next((lab for sub, lab in self.labels if sub in text), exe)
+            label = next((lab for tl, sub, lab in self.labels if tl == tool and sub in text), tool)
+            now_kb[label] = now_kb.get(label, 0) + rss
+        for label, kb in now_kb.items():
             r = self.seen.setdefault(label, {"peak_kb": 0, "first": now, "last": now})
-            r["peak_kb"], r["last"] = max(r["peak_kb"], rss), now
+            r["peak_kb"], r["last"] = max(r["peak_kb"], kb), now
         self.tree_kb = max(self.tree_kb, total)
 
     def finish(self) -> dict:
@@ -507,6 +517,10 @@ def rtl(p: dict, images: dict, args) -> int:
         res["questa"] = questa_version()
         res["seconds"] = {**steps.times, "total": round(time.monotonic() - t0, 1)}
         res["date"] = dt.datetime.now().isoformat(timespec="seconds")
+        try:
+            drop_wlf(res)
+        except OSError as e:
+            print(f"  could not delete vsim.wlf: {e!r}", flush=True)
         try:
             pack_run(work, p, res)
         finally:
@@ -765,9 +779,9 @@ def gls_checks(work: Path, p: dict, rtl_res: dict, rtl_run: str, netlist: Path, 
     got = check.parse(run)["cycles"]
     c["cycles"] = {"status": "PASS" if got is not None and got == want else "FAIL", "gls": got, "rtl": want}
     c["swap"] = swap_check(vopt, vlog, run, netlist, cell_names)
-    ok, notes = check.ram_compare(rtl_run, run, p["srams"])
+    ok, notes, extra = check.ram_compare(rtl_run, run, p["srams"])
     c["ramcount"] = {"status": "PASS" if ok else "FAIL", "notes": notes, "lines": len(check.ramcounts(run)),
-                     "gls": check.ramcounts(run), "rtl": check.ramcounts(rtl_run)}
+                     "extra_writes": extra, "gls": check.ramcounts(run), "rtl": check.ramcounts(rtl_run)}
     succ = {"gls": check.success(run), "rtl": check.success(rtl_run)}
     c["success"] = {"status": "PASS" if all(succ.values()) else "FAIL", **succ}
     return c
@@ -844,8 +858,8 @@ def gls(p: dict, images: dict, args) -> int:
             f"{m['name']} ({'cached' if m.get('cached') else 'made'})" for m in made["macros"]), flush=True)
         opts = (f" SRAM_IMPL={q(str(impl))} SRAM_MODELS={q(str(work / 'mem' / 'sram_models.f'))}"
                 f" SIM_TYPE=gate_level_sim GLS_NETLIST={q(str(netlist))} GLS_CELLS={q(str(cells))}")
-        watch = [(str(netlist), "vlog netlist"), (str(cells), "vlog cells"), ("compile.vsim.tcl", "vsim compile"),
-                 ("tb_bin_opt", "vsim run")]
+        watch = [("vlog", str(netlist), "vlog netlist"), ("vlog", str(cells), "vlog cells"),  # vopt: its tool
+                 ("vsim", "compile.vsim.tcl", "vsim compile"), ("vsim", "tb_bin_opt", "vsim run")]
         (work / "gls").mkdir()
         (TB_DIR / RUN_LOG).unlink(missing_ok=True)
         try:
@@ -867,6 +881,8 @@ def gls(p: dict, images: dict, args) -> int:
                 "vopt": elapsed(_text(work / "gls" / "vopt.log")),
                 "run": elapsed(_text(work / "gls" / "snax-forge-vsim.txt"))}
         res["checks"] = gls_checks(work, p, rtl_res, rtl_run, netlist, cell_names)
+        # the netlist's one write at time 0 per macro, allowed by the check (PITFALLS Q8, Q14)
+        res["ram_extra_writes"] = res["checks"]["ramcount"]["extra_writes"]
         bad = [k for k, v in res["checks"].items() if v["status"] != "PASS"]
         res["status"] = "PASS" if not bad else "FAIL"
         res["failed"] = ", ".join(bad) or None
@@ -893,6 +909,10 @@ def gls(p: dict, images: dict, args) -> int:
         res["memory"] = steps.peaks
         res["date"] = dt.datetime.now().isoformat(timespec="seconds")
         try:
+            drop_wlf(res)
+        except OSError as e:
+            print(f"  could not delete vsim.wlf: {e!r}", flush=True)
+        try:
             pack_gls(work, point, res)
         except Exception as e:  # noqa: BLE001
             print(f"  could not pack gls/ of {step1.relative_to(ROOT)}: {e!r}", flush=True)
@@ -910,6 +930,16 @@ def gls(p: dict, images: dict, args) -> int:
             TMP.rmdir()
     gls_summary(point, res)
     return 0 if res["status"] == "PASS" else 1
+
+
+def drop_wlf(res: dict) -> None:
+    """VSIM_FLAGS' `log -r /*` writes vsim.wlf beside snax_cluster's Makefile: scratch (X51), its size recorded in
+    the run's check.json, then deleted (clean-vsim deletes it too; this does not rest on that)."""
+    f = TB_DIR / "vsim.wlf"
+    if f.is_file():
+        res["wlf_bytes"] = f.stat().st_size
+        f.unlink()
+        print(f"  deleted {f} ({res['wlf_bytes'] / 1e6:.1f} MB)", flush=True)
 
 
 def _text(f: Path) -> str:
@@ -934,8 +964,8 @@ def gls_summary(point: str, res: dict) -> None:
     c = res.get("checks", {})
     cyc, sw, rc = c.get("cycles", {}), c.get("swap", {}), c.get("ramcount", {})
     line = (f"cluster gls {point}: {res['status']}, {cyc.get('gls')} cycles (rtl {cyc.get('rtl')}), netlist swap "
-            f"{'ok' if sw.get('status') == 'PASS' else 'FAIL'}, RAMCOUNT {rc.get('lines', 0)} "
-            f"{'equal' if rc.get('status') == 'PASS' else 'differ'}")
+            f"{'ok' if sw.get('status') == 'PASS' else 'FAIL'}, "
+            + check.ram_summary(rc.get("lines", 0), rc.get("status") == "PASS", rc.get("extra_writes", [])))
     if res["status"] != "PASS":
         line += f"; failed: {res['failed']}"
     print(line, flush=True)
