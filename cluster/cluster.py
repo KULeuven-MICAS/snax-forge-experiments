@@ -488,7 +488,7 @@ def syn(p: dict, images: dict, args) -> int:
           f"snax-forge {repos['snax_forge'][:12]}, --cores {args.cores}; work {work}", flush=True)
     steps = Steps(work, images)
     t0 = time.monotonic()
-    row, failed = None, None
+    row, failed, dc_start = None, None, None
     try:
         z, prov = make_bundle(p, images, repos, steps)
         unpack(z, work)
@@ -538,7 +538,7 @@ def syn(p: dict, images: dict, args) -> int:
 
         cmd = [dc, "-f", str(synpy.SCRIPT), "-output_log_file", "logs/dc_shell.log"]
         print(f"  DC: {rdir.relative_to(ROOT)}, follow with: tail -f {rdir / 'logs' / 'dc_stdout.log'}", flush=True)
-        t_dc = time.monotonic()
+        t_dc, dc_start = time.monotonic(), time.time()
         rc = synpy.run_dc(point, TECH, rdir, cmd, syn_env, sargs.clock, prepare)
         steps.times["dc"] = round(time.monotonic() - t_dc, 1)
         cluster_info = {"point": point, "recipe": p["recipe"], "W": p["W"], "sets": p.get("sets", []),
@@ -556,18 +556,25 @@ def syn(p: dict, images: dict, args) -> int:
     except Stop as e:
         failed = str(e)
         print(f"cluster syn {point}: FAIL: {e}", flush=True)
+    except Exception as e:  # noqa: BLE001 - recorded as the run's failure; the cleanup below still runs
+        failed = f"driver: {e!r}"
+        print(f"cluster syn {point}: FAIL in the driver: {e!r}", flush=True)
     finally:
-        if rdir.is_dir():                    # DC stopped before finish_run: keep its logs in the zip (X51)
-            synpy.pack_run(rdir)
-            print(f"  packed the unfinished run into {synpy.run_zip(TECH, point, sargs.clock).relative_to(ROOT)}",
-                  flush=True)
+        # Each step on its own, so one that fails does not skip the rest (CSYN1 R3's stopped run).
+        try:
+            unfinished(rdir, synpy.run_zip(TECH, point, sargs.clock), dc_start)
+        except Exception as e:  # noqa: BLE001
+            print(f"  could not pack or remove {rdir}: {e!r}", flush=True)
         shutil.rmtree(work, ignore_errors=True)
-        clean = subprocess.run(["bash", "-c", "make clean-syn clean-generated"], cwd=TB_DIR, env=host_env(),
-                               stdin=subprocess.DEVNULL, capture_output=True, text=True,
-                               timeout=TIMEOUT["clean"], check=False)
-        st = git(SC, "status", "--porcelain").stdout.strip()
-        print(f"  cleaned: {work} deleted; snax_cluster make clean-syn clean-generated exit {clean.returncode}"
-              + (f"; snax_cluster not clean after it:\n{st}" if st else "; snax_cluster clean"), flush=True)
+        try:
+            clean = subprocess.run(["bash", "-c", "make clean-syn clean-generated"], cwd=TB_DIR, env=host_env(),
+                                   stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                                   timeout=TIMEOUT["clean"], check=False)
+            st = git(SC, "status", "--porcelain").stdout.strip()
+            print(f"  cleaned: {work} deleted; snax_cluster make clean-syn clean-generated exit {clean.returncode}"
+                  + (f"; snax_cluster not clean after it:\n{st}" if st else "; snax_cluster clean"), flush=True)
+        except Exception as e:  # noqa: BLE001
+            print(f"  snax_cluster's clean failed: {e!r}", flush=True)
         if TMP.is_dir() and not any(TMP.iterdir()):
             TMP.rmdir()
     total = time.monotonic() - t0
@@ -578,6 +585,19 @@ def syn(p: dict, images: dict, args) -> int:
           f"{row['macros']}), slack {row['slack_ns']} ns, errors {row['errors']}; DC {steps.times.get('dc', 0):.0f} s, "
           f"total {total:.0f} s", flush=True)
     return 0 if row["status"].startswith("ok") else 1
+
+
+def unfinished(rdir: Path, z: Path, dc_start: float | None) -> None:
+    """A run folder left after the step: pack it (its DC logs kept, X51) when finish_run did not write the zip
+    after DC started; otherwise finish_run's zip is the run's and only the folder's remnants go."""
+    if not rdir.is_dir():
+        return
+    if dc_start is not None and z.is_file() and z.stat().st_mtime >= dc_start:
+        shutil.rmtree(rdir)
+        print(f"  removed what was left of {rdir.relative_to(ROOT)} ({z.relative_to(ROOT)} written by the run)", flush=True)
+        return
+    synpy.pack_run(rdir)
+    print(f"  packed the unfinished run into {z.relative_to(ROOT)}", flush=True)
 
 
 def ram_zip(name: str) -> Path:
