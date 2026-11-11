@@ -108,6 +108,13 @@ def tables(old: list[dict], new: list[dict], fl_old: dict, fl_new: dict) -> tupl
                     stats["changes"].append((pt, lab, fo[key], fn[key]))
                 if ev[0] != ev[1] or av[0] != av[1]:
                     stats.setdefault("flips", []).append((pt, ev, av))
+                for cc, lab in HLS:     # one verdict per HLS case and metric: which way it turned
+                    if cc not in hls or cc not in hls_o:
+                        continue
+                    for m, kf, kh in (("energy", "nocsr_pj", ppe), ("area", "nocsr_area", lambda r: f(r, "area_um2"))):
+                        b, a = fo[kf] < kh(hls_o[cc]), fn[kf] < kh(hls[cc])
+                        if a != b:
+                            stats.setdefault("turns", []).append((pt, m, lab, "toward forge" if a else "against forge"))
         out.append("")
     return out, stats
 
@@ -134,6 +141,11 @@ def main() -> int:
     for lab, xs in by_lab.items():
         rs = [(b - a) / a * 100 for _r, _pt, a, b in xs if a]
         print(f"  {lab:32} change {min(rs):+7.2f} % to {max(rs):+7.2f} %; largest {xs[0][1]} {xs[0][2]:.4g} -> {xs[0][3]:.4g}")
+    turns = stats.get("turns", [])
+    print(f"  verdicts turned: {len(turns)}, toward forge {sum(x[3] == 'toward forge' for x in turns)}, "
+          f"against {sum(x[3] == 'against forge' for x in turns)}")
+    for x in turns:
+        print("  turn", *x)
     for pt, ev, av in stats.get("flips", []):
         print(f"  flip {pt}: energy {ev[0]!r} -> {ev[1]!r}; area {av[0]!r} -> {av[1]!r}")
     return 0
