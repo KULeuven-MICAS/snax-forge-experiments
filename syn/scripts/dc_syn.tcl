@@ -32,12 +32,29 @@
 #                      block alone, CHAR1: asynchronous, active high)
 #                      syn.py checks both ports are on the top before it starts DC (port guard)
 #
+# Optional hooks (CSYN1 Part B, the cluster source; unset, the run is as before):
+#   SYN_FLIST_TCL      a Tcl file list in bender's synopsys form (snax_cluster's gen-syn syn_flist.tcl:
+#                      analyze groups, each 'if {0 == [analyze ...]} {return 1}'), sourced in place of
+#                      SYN_FILELIST; a failed group stops the run (exit 2). Needs SYN_TOP.
+#   SYN_TOP            the module elaborated after SYN_FLIST_TCL
+#   SYN_EXTRA_SDC      a file sourced right after constraints.sdc (it sees the same variables)
+#   SYN_POST_TCL       a file sourced after the reports, before the outputs
+#   SYN_WRITE_SDF      1: write the SDF beside the netlist (syn.py --sdf); otherwise none (X69)
+#   SYN_IGNORE_LOAD    1: take SYN_CORES whatever the host's load (disable_multicore_resource_checks set before
+#                      set_host_options); otherwise DC lowers the cores under load once, at the start (UIO-231)
+#
 # The constraints are physical (ns, fF) and scaled to the library's units here; the
 # library's own name and units are checked against the tech file before any RTL is read.
 #-----------------------------
 
 set script_dir   [file dirname [file normalize [info script]]]
-set filelist     [file normalize $::env(SYN_FILELIST)]
+# Optional, the hls values by default (constraints.sdc reads $clk_port and $rst_port)
+proc env_or {name default} {
+    if {[info exists ::env($name)]} { return $::env($name) }
+    return $default
+}
+set flist_tcl    [env_or SYN_FLIST_TCL ""]
+if {$flist_tcl eq ""} { set filelist [file normalize $::env(SYN_FILELIST)] }
 set lib_db       [file normalize $::env(SYN_LIB_DB)]
 set lib_name     $::env(SYN_LIB_NAME)
 set time_unit    $::env(SYN_TIME_UNIT)
@@ -49,11 +66,6 @@ set out_load_ff  $::env(SYN_OUT_LOAD_FF)
 set max_trans_ns $::env(SYN_MAX_TRANS_NS)
 set wire_load    $::env(SYN_WIRE_LOAD)
 set clock_ns     $::env(SYN_CLOCK_NS)
-# Optional, the hls values by default (constraints.sdc reads $clk_port and $rst_port)
-proc env_or {name default} {
-    if {[info exists ::env($name)]} { return $::env($name) }
-    return $default
-}
 set hdl_format   [env_or SYN_FORMAT verilog]
 set clk_port     [env_or SYN_CLK_PORT ap_clk]
 set rst_port     [env_or SYN_RST_PORT ap_rst_n]
@@ -61,6 +73,10 @@ set rst_port     [env_or SYN_RST_PORT ap_rst_n]
 #-----------------------------
 # Setting up multiple cores
 #-----------------------------
+
+# SYN_IGNORE_LOAD=1 (the cluster source, X68): the load check is off before the cores are set, so DC keeps
+# SYN_CORES; otherwise set_host_options cuts them by the load at this moment (UIO-231) for the whole run
+if {[env_or SYN_IGNORE_LOAD 0] eq "1"} { set disable_multicore_resource_checks true }
 
 # This sets the max number of cores to be used
 set_host_options -max_cores $::env(SYN_CORES)
@@ -71,24 +87,34 @@ set disable_multicore_resource_checks true
 set dcnxt_adaptive_multithreading true
 
 #-----------------------------
-# The point: top module and Verilog files, from its filelist
+# The point: top module and Verilog files, from its filelist, or (SYN_FLIST_TCL) a Tcl list and SYN_TOP
 #-----------------------------
-set rtl_dir [file dirname $filelist]
-set target_design ""
-set rtl_files {}
-set fh [open $filelist r]
-while {[gets $fh line] >= 0} {
-    set line [string trim $line]
-    if {[regexp {^#\s*top:\s*(\S+)} $line -> name]} { set target_design $name; continue }
-    if {$line eq "" || [string index $line 0] eq "#"} { continue }
-    lappend rtl_files [file join $rtl_dir $line]
+if {$flist_tcl ne ""} {
+    set flist_tcl [file normalize $flist_tcl]
+    set target_design [env_or SYN_TOP ""]
+    if {$target_design eq ""} {
+        puts "dc_syn.tcl: SYN_FLIST_TCL is set but SYN_TOP is not"
+        exit 2
+    }
+    puts "dc_syn.tcl: $target_design from $flist_tcl (sourced), clock $clock_ns ns on $clk_port, reset $rst_port"
+} else {
+    set rtl_dir [file dirname $filelist]
+    set target_design ""
+    set rtl_files {}
+    set fh [open $filelist r]
+    while {[gets $fh line] >= 0} {
+        set line [string trim $line]
+        if {[regexp {^#\s*top:\s*(\S+)} $line -> name]} { set target_design $name; continue }
+        if {$line eq "" || [string index $line 0] eq "#"} { continue }
+        lappend rtl_files [file join $rtl_dir $line]
+    }
+    close $fh
+    if {$target_design eq ""} {
+        puts "dc_syn.tcl: no '# top:' line in $filelist"
+        exit 2
+    }
+    puts "dc_syn.tcl: $target_design from $filelist ([llength $rtl_files] files, $hdl_format), clock $clock_ns ns on $clk_port, reset $rst_port"
 }
-close $fh
-if {$target_design eq ""} {
-    puts "dc_syn.tcl: no '# top:' line in $filelist"
-    exit 2
-}
-puts "dc_syn.tcl: $target_design from $filelist ([llength $rtl_files] files, $hdl_format), clock $clock_ns ns on $clk_port, reset $rst_port"
 
 #-----------------------------
 # Work, log, report and output folders, inside the run folder
@@ -186,7 +212,15 @@ if {$wire_load eq "off"} {
 #-----------------------------
 # Read the design
 #-----------------------------
-analyze -format $hdl_format $rtl_files
+if {$flist_tcl ne ""} {
+    # bender's groups end in 'return 1' when an analyze fails, which source returns
+    if {[catch {source $flist_tcl} r] || $r eq "1"} {
+        puts "dc_syn.tcl: sourcing $flist_tcl failed: $r"
+        exit 2
+    }
+} else {
+    analyze -format $hdl_format $rtl_files
+}
 elaborate $target_design
 current_design $target_design
 link
@@ -198,6 +232,11 @@ check_design > logs/check_design.log
 # Add constraints (reads $clock_ns, $t_scale, $c_scale and the tech values above)
 #-----------------------------
 source [file join $script_dir constraints.sdc]
+set extra_sdc [env_or SYN_EXTRA_SDC ""]
+if {$extra_sdc ne ""} {
+    puts "dc_syn.tcl: extra constraints from $extra_sdc"
+    source [file normalize $extra_sdc]
+}
 
 #-----------------------------
 # Compile
@@ -281,9 +320,18 @@ foreach {cls from to} [list in2reg $pc_in $pc_rdat reg2reg $pc_rclk $pc_rdat \
 close $fh
 
 #-----------------------------
-# Outputs
+# A source's own checks and reports (SYN_POST_TCL), after the reports and before the outputs
+#-----------------------------
+set post_tcl [env_or SYN_POST_TCL ""]
+if {$post_tcl ne ""} {
+    puts "dc_syn.tcl: post script $post_tcl"
+    source [file normalize $post_tcl]
+}
+
+#-----------------------------
+# Outputs: the netlist; the SDF only with SYN_WRITE_SDF=1 (syn.py --sdf, X69): nothing reads it
 #-----------------------------
 write_file -format verilog -hierarchy -output out/${target_design}_mapped.v
-write_sdf out/${target_design}_mapped.sdf
+if {[env_or SYN_WRITE_SDF 0] eq "1"} { write_sdf out/${target_design}_mapped.sdf }
 
 exit

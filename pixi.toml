@@ -29,3 +29,7 @@ strm-rtl = "python strm/gen.py"
 # STRM1 R1: the reader and interconnect tables and their reference interpolation (X53), and its tests
 strm-table = "python report/strm_table.py"
 strm-table-test = "python report/test_strm_table.py"
+xbar-kinds = "python report/xbar_kinds.py"
+xbar-kinds-test = "python report/test_xbar_kinds.py"
+# CSYN1 Part B: a snax-forge design in snax_cluster's whole cluster (X66, X67): rtl (R2), syn (R3), gls (R4)
+cluster = "python cluster/cluster.py"

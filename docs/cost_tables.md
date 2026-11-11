@@ -9,6 +9,7 @@ snax-forge's HW cost model (HWCOST) prices a design from three tables made in th
 | `ram_table.csv` | one SRAM bank, one read-write port | depth 32–4096 words (step 32) × width 8–256 bits (step 8): 4,095 points | µm² | pJ per read, pJ per write |
 | `streamer.csv` | one reader (also used for a writer) | FIFO depth {2, 4, 8, 16} × loops 1–7 × channels {1, 2, 4, 6, 8, 16}: 168 points | µm² | pJ per beat |
 | `xbar.csv` | the sparse interconnect, 64-bit ports | inputs {4, 8, …, 64} × banks {16, 32, 64}: 27 points | µm² | pJ per access (17 points, inputs ≤ banks) |
+| `xbar_kinds.json` | the interconnect's read-only and write-only inputs (X71) | inputs {16, 32, 64} × banks {16, 32, 64}, each all read-write, all read-only and all write-only: 27 points | a factor on `xbar.csv`'s area (default) or a cost per crosspoint (option) | — (energy stays `xbar.csv`'s) |
 
 Only dynamic energy is used; leakage is recorded where a tool gives it but never enters a cost (X50). The costs are first-order and meant for comparing design variants against each other, not for absolute sign-off.
 
@@ -188,10 +189,43 @@ Fitted forms were tried for the interconnect's energy too, each fitted per bank 
 
 The 16-bank row has three measured points, so every three-parameter form passes through them exactly and cannot be checked there; the table claims nothing beyond its points. The SRAM table needs no such check: every bank size is a row, and fits of it were rejected for the same reason (X48: the best still 6 % off on average for energy, up to 30 % at its worst point).
 
+## Read-only and write-only inputs on the interconnect
+
+`xbar.csv` prices every input as a full read-write port. In a cluster most inputs are streamer channels that only read or only write: a reader drives its write bit and write data as 0, a writer drives the write bit as 1 and never reads its response data, no streamer drives the atomic-operation field, and the cluster's interconnect wrapper ties every response ready and every bank response valid to 1. Synthesis removes what those constants make dead. X70 measured it (set `xbar_mix`), and `xbar_kinds.json` (X71, `report/xbar_kinds.py`) gives it in two forms. With $n$ inputs, $b$ banks and $n = n_{rw} + n_{ro} + n_{wo}$ (read-write, read-only and write-only inputs):
+
+$$\textbf{factor (default):} \quad A = A_{table}(n, b)\thinspace\Big(1 - f_{ro}\frac{n_{ro}}{n} - f_{wo}\frac{n_{wo}}{n}\Big), \qquad f_{ro} = 0.3965, \quad f_{wo} = 0.4108$$
+
+$$\textbf{crosspoint (option):} \quad A = b\thinspace(c_{rw}\thinspace n_{rw} + c_{ro}\thinspace n_{ro} + c_{wo}\thinspace n_{wo}) + d\thinspace n + e\thinspace b + g$$
+
+with $c_{rw}$ = 159.34, $c_{ro}$ = 95.06, $c_{wo}$ = 93.65, $d$ = 26.30, $e$ = −19.43, $g$ = −201.0 µm².
+
+**How the numbers are found.** $f_{ro}$ is the mean, over the 9 (inputs, banks) pairs, of $1 - A(\text{all read-only}) / A(\text{all read-write})$ at the same pair; $f_{wo}$ likewise with all write-only. They vary little (0.389–0.407 and 0.407–0.415), so the averaging hardly matters. The crosspoint coefficients are an ordinary least-squares fit (unweighted squared error in µm²) over the 27 grid points, with the two 36-input points held out as checks; the worst residual on the grid is 2.9 %. The two forms agree: $1 - c_{ro}/c_{rw}$ = 0.403 ≈ $f_{ro}$ and $1 - c_{wo}/c_{rw}$ = 0.412 ≈ $f_{wo}$.
+
+**Why $n_{ro}/n$.** Each bank chooses among $n$ requests and each input chooses its response among $b$ banks, so both sides grow as $n\thinspace b$ and every input owns $b$ crosspoints of about the same size ($A_{table}(n, b) \approx c_{rw}\thinspace b\thinspace n$: 156.7–166.1 µm² per crosspoint over all of `xbar.csv`). A read-only input keeps its crosspoints but each loses its write side, a share $f_{ro}$; a write-only input loses its response side, $f_{wo}$. Then
+
+$$A = c_{rw}\thinspace b\thinspace\big[n_{rw} + (1 - f_{ro})\thinspace n_{ro} + (1 - f_{wo})\thinspace n_{wo}\big] = c_{rw}\thinspace b\thinspace n\thinspace\Big(1 - f_{ro}\frac{n_{ro}}{n} - f_{wo}\frac{n_{wo}}{n}\Big)$$
+
+so $n_{ro}/n$ is the share of the crosspoints that shrink, and the factor multiplies the table's all read-write area.
+
+### Example 5: the cluster's interconnect (36 inputs, 32 banks; 32 read-only, 1 write-only, 3 read-write)
+
+Factor form. $A_{table}(36, 32)$, linear between `i32_b32` and `i40_b32`: $164{,}650.3 + \frac{36 - 32}{40 - 32}(210{,}443.8 - 164{,}650.3) = 187{,}547.0$ µm². The factor: $1 - 0.3965 \cdot \frac{32}{36} - 0.4108 \cdot \frac{1}{36} = 1 - 0.3524 - 0.0114 = 0.6361$. So $A = 187{,}547.0 \times 0.6361 = 119{,}308$ µm².
+
+Crosspoint form. $159.34 \cdot 32 \cdot 3 + 95.06 \cdot 32 \cdot 32 + 93.65 \cdot 32 \cdot 1 + 26.30 \cdot 36 - 19.43 \cdot 32 - 201.0 = 15{,}296 + 97{,}346 + 2{,}997 + 947 - 622 - 201 = 115{,}763$ µm².
+
+Synthesized with the same ties: 118,952 µm² (factor +0.3 %, crosspoint −2.7 %). In the synthesized cluster: 107,685 µm² (factor +10.8 %, crosspoint +7.5 %; every input read-write would give +74 %).
+
+### Example 6: 16 inputs, 16 banks, all read-only
+
+Factor form: `xbar.csv`'s 41,886.0 µm² × (1 − 0.3965) = 25,278 µm². Crosspoint form: $95.06 \cdot 16 \cdot 16 + 26.30 \cdot 16 - 19.43 \cdot 16 - 201.0 = 24{,}336 + 421 - 311 - 201 = 24{,}245$ µm². Synthesized: 24,970 µm² (factor +1.2 %, crosspoint −2.9 %). The factor form's +1.2 % is mostly the template's ties: $f$ is measured with them on both points, while `xbar.csv` was synthesized without them and is about 2 % larger.
+
+**Range.** Both forms were checked for 16–64 inputs and 16–64 banks. Beyond 64 inputs both extrapolate linearly (the factor form through `xbar.csv`'s own extrapolation); the cost per crosspoint drifts up by about 3 % from 40 inputs on (each bank's arbiter), so a 128-input interconnect may come out a few percent above the line. Not synthesized.
+
 ## What the numbers assume
 
 - **Full-rate stimuli.** A reader is never stalled, and every interconnect input is granted every cycle. An interconnect whose inputs are mostly idle still pays the per-cycle part $b$ over fewer accesses, so its real energy per access is higher than the table's for its input count; conflicts, which add arbitration per access, are not in the table either.
 - **A reader stands for a writer**, which has no response path: slightly pessimistic for writers.
+- **Input kinds on the interconnect** come from the design (a reader's channels read-only, a writer's write-only, the cores and AXI read-write); the factor and crosspoint forms leave out the further constants a whole cluster has (priority, user and strobe bits on streamer ports, bank outputs nothing reads), which left the cluster's interconnect about 10 % under the factor form (X70, X71).
 - **No clock gating** anywhere, as in the RTL: every register's clock pin toggles every cycle.
 - **Two models side by side.** Logic is synthesized on the Nangate cell library; the SRAM banks come from CACTI's 45 nm model, whose cells are denser than FreePDK45's (about 0.41 µm² per bit with periphery at 512 × 64), close to a foundry 45 nm SRAM. Memory-against-logic ratios inherit that difference; comparisons between designs on the same memories do not.
 - **Averaged PrimeTime** for logic, **counted accesses** for memories: averaged PrimeTime sees each pin's probability, not which pins were high together, and charged a memory macro 12.5 % low on a probe (PITFALLS PT7), so memory energy is counted instead (X50).
@@ -199,6 +233,6 @@ The 16-bank row has three measured points, so every three-parameter form passes 
 
 ## Sources
 
-- Decisions: X1–X4, X7–X9, X22, X25, X30 (the flows); X47–X50 (the SRAM banks); X52–X54 (the streamer and interconnect).
-- Run notes: `results/ram/runs/2026-11-05_ram1_r0.md`, `2026-11-05_ram1_r1.md`, `2026-11-06_ram1_r2.md`, `2026-11-06_ram1_r3.md`; `results/strm/runs/2026-11-06_strm1_r0.md`, `2026-11-06_strm1_r1.md`, `2026-11-06_strm1_r2.md`.
-- Code: `ram/ram.py`, `strm/gen.py`, `syn/syn.py`, `sim/pwr.py` with `sim/sources/strm.py`, `report/strm_table.py`.
+- Decisions: X1–X4, X7–X9, X22, X25, X30 (the flows); X47–X50 (the SRAM banks); X52–X54 (the streamer and interconnect); X70, X71 (read-only and write-only inputs).
+- Run notes: `results/ram/runs/2026-11-05_ram1_r0.md`, `2026-11-05_ram1_r1.md`, `2026-11-06_ram1_r2.md`, `2026-11-06_ram1_r3.md`; `results/strm/runs/2026-11-06_strm1_r0.md`, `2026-11-06_strm1_r1.md`, `2026-11-06_strm1_r2.md`; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`, `2026-11-11_csyn1_r3d.md`.
+- Code: `ram/ram.py`, `strm/gen.py`, `syn/syn.py`, `sim/pwr.py` with `sim/sources/strm.py`, `report/strm_table.py`, `strm/xbar_mix.py`, `report/xbar_kinds.py`.

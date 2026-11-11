@@ -1,0 +1,7 @@
+{
+  "images": {"snax_forge": "ghcr.io/kuleuven-micas/snax-forge:main", "snax_cluster": "c5db84ad7bce"},
+  "points": [
+    {"point": "dot3_w16", "recipe": "dot_3", "W": 16, "sets": ["N=2048"],
+     "srams": {"sram_d512_w64_m8": 32, "sram_d128_w256_m8": 2, "sram_d128_w39": 2}}
+  ]
+}

@@ -66,6 +66,7 @@ No wire-load model applies on either library. On nangate45, whose library sets `
 | `char` | `SYN_RTL_CHAR`, default `rtl/char` | every zip with an `emitted.json` | SystemVerilog | `clock` | `reset` | `datapath`, `lanes`, `depth`, `op`, `form`, `snax_forge_commit` |
 | `streamer` | `SYN_RTL_STREAMER`, default `rtl/streamer` | every zip with a `config.json` | SystemVerilog | `clock` | `reset` | `depth`, `loops`, `channels`, `rtl_flop_bits`, `opt1207`, `snax_cluster_commit` ([the streamer and xbar sources](#the-streamer-and-xbar-sources)) |
 | `xbar` | `SYN_RTL_XBAR`, default `rtl/xbar` | every zip with a `config.json` | SystemVerilog | `clock` | `reset` | `inputs`, `banks`, `rtl_flop_bits`, `opt1207`, `snax_cluster_commit` |
+| `xbar_mix` | `SYN_RTL_XBAR_MIX`, default `rtl/xbar_mix` | every zip with a `config.json` | SystemVerilog | `clock` | `reset` | `inputs`, `banks`, `ro`, `wo`, `rtl_flop_bits`, `flops_removed`, `opt1207`, `snax_cluster_commit` ([the xbar_mix source](#the-xbar_mix-source)) |
 
 **Case filters and `MAX_W`.** For the three HLS sources a point is a `*/*/*/filelist.f` folder named `<case>_w<W>`, with `<case>` in the source's cases and W <= `MAX_W` (16, a constant at the top of `syn.py`; docs X38: at most 16 64-bit channels per stream). Any other folder is not listed: Vitis's retired `unopt_w*`, every `*_w32`, a per-size folder such as `opt_n512_w8`, a clock variant such as `opt_w8_c10`, and, for `hls`, Bambu's `bambu_w*` that share its root (docs X39). With today's checkouts: `hls` 60 points (opt 40; dace 15 for vecadd, vecmul and matadd at W 1 to 16, plus `dace_w1` for vsum, dot, relu, axpy and rowsum), `bambu` 40, `xls` 40.
 
@@ -124,7 +125,7 @@ syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/
   reports/         qor, area, area_hierarchy, reference, timing, constraint_setup, clock, port,
                    design_rules, power, power_hierarchy, power_verbose_hierarchy, path_classes
                    (.rpt), lib_info.txt
-  out/             <top>_mapped.v, .sdf
+  out/             <top>_mapped.v (and .sdf with --sdf, X69)
   tech.json        the tech file, the resolved values (.db path, its md5, T_SCALE, C_SCALE,
                    the DC environment) and what DC read into lib_info.txt
 ```
@@ -141,7 +142,7 @@ results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>].zip
                                            skipped.txt
 ```
 
-Only those nine files are committed per run (`KEPT_REPORTS` at the top of `syn.py`): they are what the area and energy model reads (area and power in total, per level of hierarchy and per cell type in `reference.rpt`), the QoR summary, the path-class slacks, and what the run ran on (`tech.json`, `lib_info.txt`). The run's zip keeps those plus the netlist and the two DC logs; everything else is scratch, deleted with the run folder: `timing.rpt` (the largest, about 30 kB a point), `constraint_setup.rpt`, `clock.rpt`, `port.rpt`, `design_rules.rpt`, `power_verbose_hierarchy.rpt`, `check_design.log`, the sdf, `default.svf`, `WORK/` and `alib-52/` (X51). Those check a run (the clock, the loads, the paths) rather than feed the model, and a rerun rebuilds them. Each committed report zip is deterministic (X51): a rerun with the same reports gives the same bytes, so it changes in git only when a report does (DC's `Date` line and `qor.rpt`'s CPU times are enough, PITFALLS Z1).
+Only those nine files are committed per run (`KEPT_REPORTS` at the top of `syn.py`): they are what the area and energy model reads (area and power in total, per level of hierarchy and per cell type in `reference.rpt`), the QoR summary, the path-class slacks, and what the run ran on (`tech.json`, `lib_info.txt`). The run's zip keeps those plus the netlist and the two DC logs; everything else is scratch, deleted with the run folder: `timing.rpt` (the largest, about 30 kB a point), `constraint_setup.rpt`, `clock.rpt`, `port.rpt`, `design_rules.rpt`, `power_verbose_hierarchy.rpt`, `check_design.log`, the sdf (written only with `--sdf`, X69), `default.svf`, `WORK/` and `alib-52/` (X51). Those check a run (the clock, the loads, the paths) rather than feed the model, and a rerun rebuilds them. Each committed report zip is deterministic (X51): a rerun with the same reports gives the same bytes, so it changes in git only when a report does (DC's `Date` line and `qor.rpt`'s CPU times are enough, PITFALLS Z1).
 
 `port.rpt` covers a sample of ports (clock, reset, the first and last data input and output): the full report runs to hundreds of kB on the wide AXI-stream tops. `design_rules.rpt` holds the design's max transition and max fanout in library units and a tally of every output's max pin load.
 
@@ -243,4 +244,14 @@ pixi run syn summary --source forge                                        # eve
 pixi run syn list --source streamer
 pixi run syn run '*' --source xbar --tech nangate45 -j 4 --cores 4          # STRM1 R1: with the streamer run beside it
 pixi run syn run 'd8_*' --source streamer --tech nangate45 -j 4 --cores 4
+```
+
+`rtl/xbar/` also holds `i36_b32` (`strm/grid.json`'s `extra`, the base of xbar_mix's cluster points) since CSYN1 R3c, so `syn run '*' --source xbar` would synthesize it too; it is not one of STRM1's 27 points and not in `results/xbar/`.
+
+## The xbar_mix source
+
+`--source xbar_mix` (CSYN1 R3c, X70) synthesizes an xbar point's `SparseInterconnect` inside `strm/xbar_mix.py`'s wrapper, top `xbar_mix`: inputs `0..ro-1` read-only (`bits_write`, `bits_data`, `bits_amo` tied 0), `ro..ro+wo-1` write-only (`bits_write` 1, `bits_amo` 0, response data open), the rest read-write, and on every point the ties of snax_cluster's `sparse_interconnect_wrapper.sv.tpl` (every `io_tcdmRsps_*_ready` and `io_memRsps_*_valid` 1, `io_memRsps_*_ready` and `io_memReqs_*_bits_priority` open). The zips are `rtl/xbar_mix/i<inputs>_b<banks>_r<ro>_w<wo>.zip` (`pixi run strm-rtl --set xbar_mix`, `strm/README.md`); `run` treats them as the xbar points, two files in the run's `filelist.f`, largest first by inputs x banks. A row adds `ro` and `wo`; `rtl_flop_bits` is the SparseInterconnect's (the wrapper declares no register), and `flops_removed` is `rtl_flop_bits` minus DC's flops: DC may remove the registers the ties make dead, so a removed flop is printed per point (`flops <point>: DC removed ...`) and does not fail the row. A row with more flops than the RTL declares, or with no count, is `failed: flop check (...)`.
+
+```bash
+pixi run syn run '*' --source xbar_mix --tech nangate45 -j 4 --cores 4      # CSYN1 R3c
 ```

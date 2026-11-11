@@ -804,14 +804,18 @@ def flop_bits_of(tech: str, point: str) -> int | None:
 
 
 # ---------------------------------------------------------------- one point
+def cell_model(tech: str) -> Path:
+    """The technology's Questa cell models: CELL_MODELS' file next to the .db syn.py resolves (also cluster gls)."""
+    return Path(syn.resolve(syn.load_tech(tech))["lib_db"]).parent / CELL_MODELS[tech][0]
+
+
 def cells_lib(tech: str) -> Path:
     """The cell models compiled once per technology into sim/runs/<tech>/_cells."""
     lib = RUNS / tech / "_cells"
     if (lib / "_info").is_file():
         return lib
-    res = syn.resolve(syn.load_tech(tech))
-    model, opts = CELL_MODELS[tech]
-    src = Path(res["lib_db"]).parent / model
+    _model, opts = CELL_MODELS[tech]
+    src = cell_model(tech)
     lib.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run([tool("vlib"), str(lib)], check=True, capture_output=True)
     log = RUNS / tech / "_cells.vlog.log"

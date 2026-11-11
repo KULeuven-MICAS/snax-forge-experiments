@@ -29,6 +29,8 @@
       "banks": [16, 32, 64]
     },
     "power_where": "inputs <= banks",
+    "extra": [{"inputs": 36, "banks": 32}],
+    "extra_doc": "CSYN1 R3c: points after the axes' product. i36_b32 is the cluster's interconnect (32 streamer channels, 2 cores, the AXI port; 32 banks), the base of xbar_mix's i36_b32 points; not in STRM1's table (report/strm_table.py reads results/xbar/, where it is not synthesized)",
     "fixed": {
       "_doc": "snaxgen.py (Generating Sparse Interconnect) for a 128 KiB TCDM of 64-bit words: tcdmAddrWidth = log2(128 KiB) = 17; memAddrWidth = log2(128 KiB / banks / 8 B); priorityWidth 1 (a literal there); userWidth = core_id_width + 2 = 3 for snax_forge_cluster's 2 cores (the platform's user_width 3); strbWidth = dataWidth / 8; sparseConfig [[NumInp, 1]]",
       "tcdm_size_kib": 128,
@@ -38,5 +40,15 @@
       "priorityWidth": 1,
       "userWidth": 3
     }
+  },
+  "xbar_mix": {
+    "_doc": "CSYN1 R3c (docs X70): the xbar point's SparseInterconnect inside strm/xbar_mix.py's wrapper, which ties inputs 0..ro-1 read-only (write, data, amo 0) and ro..ro+wo-1 write-only (write 1, amo 0, response data open), and every point as snax_cluster's sparse_interconnect_wrapper.sv.tpl does (response ready 1, bank response valid 1, bank response ready and request priority open). No sbt: the SV is rtl/xbar/i<inputs>_b<banks>.zip's. mixes per inputs x banks: rw = r0_w0 (every input read-write), ro = r<inputs>_w0 (every input read-only), wo = r0_w<inputs> (every input write-only); then the extra points: i36_b32 all read-write and the cluster's mix (32 reader channels, 1 writer, 2 cores and the AXI port read-write)",
+    "name": "i{inputs}_b{banks}_r{ro}_w{wo}",
+    "axes": {
+      "inputs": [16, 32, 64],
+      "banks": [16, 32, 64]
+    },
+    "mixes": ["rw", "ro", "wo"],
+    "extra": [{"inputs": 36, "banks": 32, "ro": 0, "wo": 0}, {"inputs": 36, "banks": 32, "ro": 32, "wo": 1}]
   }
 }
