@@ -12,7 +12,9 @@ OUT_DIR gets:
     tc_sram_impl.sv   snax_cluster's tc_sram_impl (parameters and ports of tech_cells_generic's), one
                       branch per macro, read through snax_cluster's SRAM_IMPL
     models/<name>.v   the macros' behavioural models, out of ram/runs/lib/<name>.zip
-    sram_models.f     the models' absolute paths, read through snax_cluster's SRAM_MODELS (vsim only)
+    sram_models.f     -sv, then the models' absolute paths, read through snax_cluster's SRAM_MODELS (vsim
+                      only); the models are SystemVerilog in .v files, which vlog reads as Verilog-2001
+                      without -sv (PITFALLS Q12); snax_cluster's list of SRAM_MODELS files skips option lines
     mem.json          the macros and the list entries they come from
 
 None of it is committed (X49); a run zips OUT_DIR's files with its outputs (X51).
@@ -145,6 +147,11 @@ def impl_text(ms: list[dict]) -> str:
     return HEADER + "\n" + MODULE_TOP + "".join(branch(m) for m in ms) + MODULE_END
 
 
+def models_f(ms: list[dict], out: Path) -> str:
+    """sram_models.f: -sv (the models are SystemVerilog in .v files, PITFALLS Q12), then each model's absolute path."""
+    return "-sv\n" + "".join(f"{(out / 'models' / (m['name'] + '.v')).resolve()}\n" for m in ms)
+
+
 def make(memories_json: Path, out: Path, text_only: bool = False) -> dict:
     """Write OUT_DIR's files (module docstring); with text_only, tc_sram_impl.sv and mem.json alone."""
     ms = macros(load(memories_json))
@@ -165,8 +172,7 @@ def make(memories_json: Path, out: Path, text_only: bool = False) -> dict:
             (out / "models" / f"{m['name']}.v").write_bytes(arc.read(ram.macro_zip(m["name"]), f"{m['name']}.v"))
         if bad:
             raise SystemExit("macros that failed: " + "; ".join(bad))
-        (out / "sram_models.f").write_text("".join(f"{(out / 'models' / (m['name'] + '.v')).resolve()}\n"
-                                                   for m in ms))
+        (out / "sram_models.f").write_text(models_f(ms, out))
     (out / "mem.json").write_text(json.dumps(res, indent=2) + "\n")
     return res
 

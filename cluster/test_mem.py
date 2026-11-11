@@ -37,6 +37,12 @@ def test_macros():
     assert ms[2]["memories"] == ["tcdm"]
 
 
+def test_models_f():
+    f = mem.models_f(mem.macros(LIST), Path("/x/mem")).splitlines()
+    assert f[0] == "-sv"                                     # SystemVerilog models in .v files (PITFALLS Q12)
+    assert f[1:] == [f"/x/mem/models/{n}.v" for n in ("sram_d128_w39", "sram_d128_w256_m8", "sram_d512_w64_m8")]
+
+
 def test_refused():
     assert "2 ports" in raises(mem.macros, [{**LIST[0], "ports": 2}])
     assert "latency 2" in raises(mem.macros, [{**LIST[0], "latency": 2}])
