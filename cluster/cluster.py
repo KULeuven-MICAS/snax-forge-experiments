@@ -2,7 +2,7 @@
 """cluster/cluster.py - a snax-forge design built into snax_cluster's whole cluster (CSYN1 Part B, X66, X67).
 
   pixi run cluster rtl <point> [--allow-branch]    step 1: the RTL with every memory as a RAM1 macro
-  pixi run cluster syn <point>                     step 2 (R3)
+  pixi run cluster syn <point> [--cores N] [--allow-branch]   step 2: DC on the whole cluster
   pixi run cluster gls <point>                     step 3 (R4)
 
 A point is an entry of cluster/points.json (point, recipe, W, sets, and srams: the macro instances the
@@ -39,6 +39,22 @@ snax_forge.hjson), from snax_cluster's target/snitch_cluster:
      also on a failure.
 Each step's log path is printed when it starts. One line at the end: PASS or FAIL with the cycles and the
 instances; a failure names the check or step and prints at most 30 lines of its log.
+
+syn (X67 step 2, X68), from the same bundle zip, in tmp/cluster/<point>/:
+  1. image: make clean-generated clean-syn, make rtl-gen CFG_OVERRIDE=<cluster file>; clustergen --memories;
+     cluster/mem.py --text-only: its tc_sram_impl.sv must equal step 1's (rtl/tc_sram_impl.sv in
+     sim/runs/cluster/nangate45/<point>.zip), or the run stops
+  2. image: make gen-syn CFG_OVERRIDE=<cluster file> SRAM_IMPL=<that file> (work-syn/syn_flist.tcl)
+  3. DC through syn/syn.py's source `cluster` (dc_env, run_dc with its licence retry, finish_run, write_summary):
+     the run folder syn/runs/cluster/nangate45/<point>/ gets syn_flist.tcl, cluster/cluster.sdc and
+     tc_sram_impl.sv, and the macros' .db (from ram/runs/lib/<name>.zip) for SYN_RAM_DBS; dc_syn.tcl sources
+     the list (SYN_FLIST_TCL), elaborates snax_forge_cluster_wrapper (SYN_TOP), adds cluster.sdc after
+     constraints.sdc (SYN_EXTRA_SDC) and runs cluster/cluster_check.tcl after the reports (SYN_POST_TCL);
+     no SDF (X69). DC's stdout goes to logs/dc_stdout.log as it runs; its path is printed first.
+  4. tree.txt (cluster/tree.py, area_hierarchy.rpt to depth 4) beside the reports; the run zip
+     syn/runs/cluster/nangate45/<point>.zip keeps syn.py's KEEP_RUN and the cluster's files; a row in
+     results/cluster/nangate45/synth_dc.csv and the report zip results/cluster/nangate45/reports/<point>.zip.
+  5. after DC ends, also on a failure: tmp/cluster/<point>/ deleted, make clean-syn clean-generated in snax_cluster.
 """
 
 from __future__ import annotations
@@ -51,20 +67,24 @@ import os
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parent.parent
 HERE = ROOT / "cluster"
-for d in ("arc", "forge", "strm", "cluster"):
+for d in ("arc", "forge", "strm", "cluster", "syn", "ram"):
     sys.path.insert(0, str(ROOT / d))
 import arc  # noqa: E402  arc/arc.py (X51)
 import bundles  # noqa: E402  forge/bundles.py: find_recipe, inner_env
 import check  # noqa: E402  cluster/check.py
 import gen as strm_gen  # noqa: E402  strm/gen.py: podman_cmd with the Scala caches (SC6)
 import mem  # noqa: E402  cluster/mem.py (X66)
+import syn as synpy  # noqa: E402  syn/syn.py: the cluster source's DC run (X67 step 2)
+import tree  # noqa: E402  cluster/tree.py
 
 POINTS = HERE / "points.json"
 SC = Path(os.environ.get("SNAX_CLUSTER", ROOT.parent / "snax_cluster")).resolve()
@@ -77,7 +97,11 @@ RUN_ZIPS = ROOT / "sim" / "runs" / "cluster" / TECH
 TMP = ROOT / "tmp" / "cluster"
 TAIL = 30
 TIMEOUT = {"forge": 3600, "rtl-gen": 3600, "clustergen": 600, "vsim_preparation": 1800,
-           "snax-forge-sim": 3600, "snax-forge-run": 3600, "clean": 600}
+           "snax-forge-sim": 3600, "snax-forge-run": 3600, "clean": 600, "gen-syn": 1800}
+SYN_FLIST = TB_DIR / "work-syn" / "syn_flist.tcl"        # snax_cluster's gen-syn output
+SDC = HERE / "cluster.sdc"
+CHECK_TCL = HERE / "cluster_check.tcl"
+TREE_DEPTH = 4
 RUN_LOG = "logs/snax-forge-vsim.txt"          # snax_forge.mk's SNAX_FORGE_LOG for SIM=vsim, under TB_DIR
 SUCCESS = check.SUCCESS
 GENERIC_SRAM = "tech_cells_generic/src/rtl/tc_sram"
@@ -429,22 +453,155 @@ def summary(p: dict, res: dict) -> None:
             print(f"  {k}: {json.dumps({x: y for x, y in v.items() if x != 'status'})}", flush=True)
 
 
+class Stop(Exception):
+    """The syn step stops before DC (a check failed); the message says why."""
+
+
+def _sigterm(signum, frame):   # a watchdog's TERM still runs the cleanup (finally blocks)
+    raise SystemExit(f"terminated by signal {signum}")
+
+
+def syn(p: dict, images: dict, args) -> int:
+    signal.signal(signal.SIGTERM, _sigterm)
+    repos = check_repos(args.allow_branch)
+    images = {**images, "snax_forge_id": image_id(images["snax_forge"]),
+              "snax_cluster_id": image_id(images["snax_cluster"])}
+    step1 = RUN_ZIPS / f"{p['point']}.zip"
+    if not arc.has(step1, "rtl/tc_sram_impl.sv"):
+        sys.exit(f"no rtl/tc_sram_impl.sv in {step1.relative_to(ROOT)}: run pixi run cluster rtl {p['point']} first")
+    synpy.use_source("cluster")
+    tech = synpy.load_tech(TECH)
+    res = synpy.resolve(tech)
+    dc = os.environ.get("DC_SHELL", "dc_shell")
+    if shutil.which(dc) is None:
+        sys.exit(f"'{dc}' not found: load Design Compiler or set DC_SHELL")
+    if not Path(res["lib_db"]).is_file():
+        sys.exit(f"no library at {res['lib_db']}")
+    res["lib_md5"] = synpy.md5_of(Path(res["lib_db"]))
+    sargs = SimpleNamespace(clock=synpy.DEFAULT_CLOCK, cores=args.cores, sdf=False)
+    point = p["point"]
+    rdir = synpy.run_dir(TECH, point, sargs.clock)
+    work = TMP / point
+    shutil.rmtree(work, ignore_errors=True)
+    work.mkdir(parents=True)
+    print(f"cluster syn {point}: snax_cluster {repos['snax_cluster'][:12]} ({repos['snax_cluster_branch']}), "
+          f"snax-forge {repos['snax_forge'][:12]}, --cores {args.cores}; work {work}", flush=True)
+    steps = Steps(work, images)
+    t0 = time.monotonic()
+    row, failed = None, None
+    try:
+        z, prov = make_bundle(p, images, repos, steps)
+        unpack(z, work)
+        cfg = work / "bundle" / "snax_forge.hjson"
+        q = shlex.quote
+        steps.image("rtl-gen", "snax_cluster", TB_DIR,
+                    f"make clean-generated clean-syn\nmake rtl-gen CFG_OVERRIDE={q(str(cfg))}", TIMEOUT["rtl-gen"])
+        steps.image("clustergen", "snax_cluster", TB_DIR,
+                    f"python3 {q(str(SC / 'util' / 'clustergen.py'))} -c {q(str(cfg))} -o {q(str(work))} --memories",
+                    TIMEOUT["clustergen"])
+        made = mem.make(work / "memories.json", work / "mem", text_only=True)
+        impl = work / "mem" / "tc_sram_impl.sv"
+        if impl.read_bytes() != arc.read(step1, "rtl/tc_sram_impl.sv"):
+            raise Stop(f"{impl} differs from step 1's rtl/tc_sram_impl.sv in {step1.relative_to(ROOT)}")
+        print("  tc_sram_impl.sv               equals step 1's", flush=True)
+        macros = [m["name"] for m in made["macros"]]
+        if sorted(macros) != sorted(p["srams"]):
+            raise Stop(f"the list's macros {macros} are not points.json's srams {sorted(p['srams'])}")
+        steps.image("gen-syn", "snax_cluster", TB_DIR,
+                    f"make gen-syn CFG_OVERRIDE={q(str(cfg))} SRAM_IMPL={q(str(impl))}", TIMEOUT["gen-syn"])
+        if not SYN_FLIST.is_file():
+            raise Stop(f"gen-syn wrote no {SYN_FLIST}")
+        flist = SYN_FLIST.read_text()
+        if str(impl) not in flist:
+            raise Stop(f"{SYN_FLIST} does not read {impl}")
+
+        syn_env = synpy.dc_env(tech, res, point, sargs)
+        syn_env.pop("SYN_FILELIST")
+        dbs = [rdir / "macros" / f"{m}.db" for m in macros]
+        syn_env.update({"SYN_FLIST_TCL": str(rdir / "syn_flist.tcl"), "SYN_TOP": synpy.SOURCES["cluster"]["top"],
+                        "SYN_EXTRA_SDC": str(rdir / "cluster.sdc"), "SYN_POST_TCL": str(CHECK_TCL),
+                        "SYN_RAM_DBS": " ".join(str(d) for d in dbs)})
+
+        def prepare() -> None:
+            (rdir / "syn_flist.tcl").write_text(flist)
+            shutil.copy(SDC, rdir / "cluster.sdc")
+            shutil.copy(impl, rdir / "tc_sram_impl.sv")
+            (rdir / "macros").mkdir()
+            for m, d in zip(macros, dbs):
+                d.write_bytes(arc.read(Path(ram_zip(m)), f"{m}.db"))
+
+        def write_tree() -> None:
+            rpt = rdir / "reports" / "area_hierarchy.rpt"
+            if rpt.is_file():
+                lines = tree.tree(tree.parse(rpt.read_text(errors="replace")), TREE_DEPTH)
+                (rdir / "tree.txt").write_text("".join(f"{ln}\n" for ln in lines))
+
+        cmd = [dc, "-f", str(synpy.SCRIPT), "-output_log_file", "logs/dc_shell.log"]
+        print(f"  DC: {rdir.relative_to(ROOT)}, follow with: tail -f {rdir / 'logs' / 'dc_stdout.log'}", flush=True)
+        t_dc = time.monotonic()
+        rc = synpy.run_dc(point, TECH, rdir, cmd, syn_env, sargs.clock, prepare)
+        steps.times["dc"] = round(time.monotonic() - t_dc, 1)
+        cluster_info = {"point": point, "recipe": p["recipe"], "W": p["W"], "sets": p.get("sets", []),
+                        "snax_forge_commit": repos["snax_forge"], "snax_cluster_commit": repos["snax_cluster"],
+                        "snax_cluster_on_main": repos["snax_cluster_on_main"], "images": images,
+                        "bundle_zip": str(z.relative_to(ROOT)), "elf_sha256": prov["elf_sha256"],
+                        "srams": p["srams"], "macros": macros, "step_seconds": steps.times}
+        row = synpy.finish_run(point, rdir, tech, res, sargs, syn_env, rc, {"ram": None, "cluster": cluster_info},
+                               before_pack=write_tree)
+        synpy.write_summary(tech, [row])
+    except StepFailed as e:
+        failed = f"step {e.step} ({e.why})"
+        print(f"cluster syn {point}: FAIL at {e.step} ({e.why}); last {TAIL} lines of {e.log}:\n{tail(e.log)}",
+              flush=True)
+    except Stop as e:
+        failed = str(e)
+        print(f"cluster syn {point}: FAIL: {e}", flush=True)
+    finally:
+        if rdir.is_dir():                    # DC stopped before finish_run: keep its logs in the zip (X51)
+            synpy.pack_run(rdir)
+            print(f"  packed the unfinished run into {synpy.run_zip(TECH, point, sargs.clock).relative_to(ROOT)}",
+                  flush=True)
+        shutil.rmtree(work, ignore_errors=True)
+        clean = subprocess.run(["bash", "-c", "make clean-syn clean-generated"], cwd=TB_DIR, env=host_env(),
+                               stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                               timeout=TIMEOUT["clean"], check=False)
+        st = git(SC, "status", "--porcelain").stdout.strip()
+        print(f"  cleaned: {work} deleted; snax_cluster make clean-syn clean-generated exit {clean.returncode}"
+              + (f"; snax_cluster not clean after it:\n{st}" if st else "; snax_cluster clean"), flush=True)
+        if TMP.is_dir() and not any(TMP.iterdir()):
+            TMP.rmdir()
+    total = time.monotonic() - t0
+    if row is None:
+        print(f"cluster syn {point}: FAIL: {failed or 'stopped'} ({total:.0f} s)", flush=True)
+        return 1
+    print(f"cluster syn {point}: {row['status']}, area {row['area_um2']} um2 (macros {row['macro_um2']} um2: "
+          f"{row['macros']}), slack {row['slack_ns']} ns, errors {row['errors']}; DC {steps.times.get('dc', 0):.0f} s, "
+          f"total {total:.0f} s", flush=True)
+    return 0 if row["status"].startswith("ok") else 1
+
+
+def ram_zip(name: str) -> Path:
+    import ram  # noqa: PLC0415  ram/ram.py: the macros' zips (X49)
+    return ram.macro_zip(name)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("rtl", help="step 1: RTL with the memory macros, against the plain RTL (X66, X67)")
     r.add_argument("point")
     r.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
-    for name in ("syn", "gls"):
-        s = sub.add_parser(name, help=f"step {2 if name == 'syn' else 3} (not yet)")
-        s.add_argument("point", nargs="?")
+    s = sub.add_parser("syn", help="step 2: DC on the whole cluster (X67, X68)")
+    s.add_argument("point")
+    s.add_argument("--cores", type=int, default=16, help="DC's cores (default 16, X68)")
+    s.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
+    g = sub.add_parser("gls", help="step 3 (not yet)")
+    g.add_argument("point", nargs="?")
     a = ap.parse_args()
-    if a.cmd == "syn":
-        sys.exit("not yet: R3")
     if a.cmd == "gls":
         sys.exit("not yet: R4")
     images, p = load(a.point)
-    return rtl(p, images, a)
+    return syn(p, images, a) if a.cmd == "syn" else rtl(p, images, a)
 
 
 if __name__ == "__main__":

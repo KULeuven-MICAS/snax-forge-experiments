@@ -124,7 +124,7 @@ syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/
   reports/         qor, area, area_hierarchy, reference, timing, constraint_setup, clock, port,
                    design_rules, power, power_hierarchy, power_verbose_hierarchy, path_classes
                    (.rpt), lib_info.txt
-  out/             <top>_mapped.v, .sdf
+  out/             <top>_mapped.v (and .sdf with --sdf, X69)
   tech.json        the tech file, the resolved values (.db path, its md5, T_SCALE, C_SCALE,
                    the DC environment) and what DC read into lib_info.txt
 ```
@@ -141,7 +141,7 @@ results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>].zip
                                            skipped.txt
 ```
 
-Only those nine files are committed per run (`KEPT_REPORTS` at the top of `syn.py`): they are what the area and energy model reads (area and power in total, per level of hierarchy and per cell type in `reference.rpt`), the QoR summary, the path-class slacks, and what the run ran on (`tech.json`, `lib_info.txt`). The run's zip keeps those plus the netlist and the two DC logs; everything else is scratch, deleted with the run folder: `timing.rpt` (the largest, about 30 kB a point), `constraint_setup.rpt`, `clock.rpt`, `port.rpt`, `design_rules.rpt`, `power_verbose_hierarchy.rpt`, `check_design.log`, the sdf, `default.svf`, `WORK/` and `alib-52/` (X51). Those check a run (the clock, the loads, the paths) rather than feed the model, and a rerun rebuilds them. Each committed report zip is deterministic (X51): a rerun with the same reports gives the same bytes, so it changes in git only when a report does (DC's `Date` line and `qor.rpt`'s CPU times are enough, PITFALLS Z1).
+Only those nine files are committed per run (`KEPT_REPORTS` at the top of `syn.py`): they are what the area and energy model reads (area and power in total, per level of hierarchy and per cell type in `reference.rpt`), the QoR summary, the path-class slacks, and what the run ran on (`tech.json`, `lib_info.txt`). The run's zip keeps those plus the netlist and the two DC logs; everything else is scratch, deleted with the run folder: `timing.rpt` (the largest, about 30 kB a point), `constraint_setup.rpt`, `clock.rpt`, `port.rpt`, `design_rules.rpt`, `power_verbose_hierarchy.rpt`, `check_design.log`, the sdf (written only with `--sdf`, X69), `default.svf`, `WORK/` and `alib-52/` (X51). Those check a run (the clock, the loads, the paths) rather than feed the model, and a rerun rebuilds them. Each committed report zip is deterministic (X51): a rerun with the same reports gives the same bytes, so it changes in git only when a report does (DC's `Date` line and `qor.rpt`'s CPU times are enough, PITFALLS Z1).
 
 `port.rpt` covers a sample of ports (clock, reset, the first and last data input and output): the full report runs to hundreds of kB on the wide AXI-stream tops. `design_rules.rpt` holds the design's max transition and max fanout in library units and a tally of every output's max pin load.
 

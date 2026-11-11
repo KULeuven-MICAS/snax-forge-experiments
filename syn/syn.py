@@ -6,7 +6,7 @@ hardware point: case and W, every size runs on it) holding an HLS tool's Verilog
 filelist.f ('# top: <module>', then the files). Patterns are shell globs over those names.
 
   pixi run syn list         [PATTERN ...] [--tech T] [--source S]
-  pixi run syn run          PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run] [--source S]
+  pixi run syn run          PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run] [--sdf] [--source S]
   pixi run syn summary      [PATTERN ...] [--tech T] [--source S]
   pixi run syn check-ports  [PATTERN ...] [--source S]
 
@@ -75,6 +75,22 @@ differs from rtl_flop_bits is "failed: flop check (...)". run starts the
 largest points first (xbar by inputs x banks, streamer by channels x depth,
 then loops).
 
+Or cluster (CSYN1 Part B, docs X67): a snax-forge design in snax_cluster's whole
+cluster, top snax_forge_cluster_wrapper (clock clk_i, reset rst_ni, asynchronous).
+Its DC run is driven by cluster/cluster.py (pixi run cluster syn <point>), which
+builds the cluster's file list with snax_cluster's gen-syn and calls this
+module's dc_env, run_dc, finish_run and write_summary; `syn run --source cluster`
+refuses and points there, list and summary work as for the others. Runs go to
+syn/runs/cluster/<tech>/<point>, results to results/cluster/<tech>/synth_dc.csv
+(no modules CSV), and a row adds recipe, W, snax_forge_commit,
+snax_cluster_commit, macro_um2 (the black boxes' area) and macros (instances per
+macro). Its gates fail the row: an unresolved reference (cluster_check.rpt or a
+LINK-5 line in the log), a black box that is not one of the point's macros, a
+macro count other than points.json's srams, a cell from a library other than the
+technology's and the macros'. Its zip and report zip keep cluster_check.rpt,
+cluster_ports.rpt and tree.txt as well, and the report zip keeps
+area_hierarchy.rpt and power_hierarchy.rpt whatever their size.
+
 Before DC starts, the port guard reads the top's port list from the point's Verilog
 files and checks that the source's clock and reset ports are on it; if not, the row is
 "failed: no clock port <name> on <top>" (or reset) and DC is not run. check-ports runs
@@ -105,7 +121,7 @@ any RTL if the library's own name or units differ from the tech file.
 
 Each run works in syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/ (the
 clock tag only for a clock other than the default): WORK/, logs/, reports/,
-out/ (the mapped netlist and sdf) and tech.json (the tech file, the resolved
+out/ (the mapped netlist; the sdf only with --sdf, docs X69) and tech.json (the tech file, the resolved
 values, the .db's md5 and what DC read from the library). When DC ends, the
 folder is packed into <point>[_c<clock>].zip next to it (KEEP_RUN: the mapped
 netlist, KEPT_REPORTS, dc_shell.log and dc_stdout.log; docs X51), the zip is
@@ -138,6 +154,7 @@ Environment, all optional:
   SYN_RTL_CHAR        rtl/char                 (the char points' zips)
   SYN_RTL_STREAMER    rtl/streamer             (the streamer points' zips)
   SYN_RTL_XBAR        rtl/xbar                 (the xbar points' zips)
+  SYN_RTL_CLUSTER     rtl/cluster              (the cluster points' bundle zips, cluster/cluster.py)
   SYN_LIB_NANGATE45   the nangate45 .db, instead of the tech file's lib_default
   SYN_LIB_NANGATE15   the nangate15 .db, instead of the tech file's lib_default
                       (in general: the tech file's lib_env)
@@ -147,7 +164,10 @@ SYN_MAX_TRANS_NS, SYN_WIRE_LOAD, SYN_CLOCK_NS, SYN_CORES, and from the
 source SYN_FORMAT (verilog; forge, char, streamer and xbar sverilog),
 SYN_CLK_PORT (ap_clk; bambu clock; xls clk; forge clk_i; char, streamer and
 xbar clock) and SYN_RST_PORT (ap_rst_n; bambu reset; xls rst; forge rst_ni;
-char, streamer and xbar reset).
+char, streamer and xbar reset); with --sdf, SYN_WRITE_SDF=1 (dc_syn.tcl
+writes the SDF only then, X69). The cluster source also sets SYN_FLIST_TCL,
+SYN_TOP, SYN_EXTRA_SDC, SYN_POST_TCL and SYN_RAM_DBS in place of SYN_FILELIST
+(dc_syn.tcl's optional hooks).
 Standard library and arc/arc.py only.
 """
 
@@ -195,6 +215,9 @@ SOURCES = {
                  "format": "sverilog", "clk": "clock", "rst": "reset"},
     "xbar": {"rtl": Path(os.environ.get("SYN_RTL_XBAR", ROOT / "rtl" / "xbar")),
              "format": "sverilog", "clk": "clock", "rst": "reset"},
+    # CSYN1 Part B (X67): driven by cluster/cluster.py, not by `syn run`; the point's bundle zip names it
+    "cluster": {"rtl": Path(os.environ.get("SYN_RTL_CLUSTER", ROOT / "rtl" / "cluster")),
+                "format": "sverilog", "clk": "clk_i", "rst": "rst_ni", "top": "snax_forge_cluster_wrapper"},
 }
 # The sources whose points are bundle zips in rtl/<source>/ (unpacked into tmp/ for DC); STRM: strm/gen.py's
 BUNDLED = ("forge", "char", "streamer", "xbar")
@@ -224,10 +247,30 @@ KEPT_REPORTS = ("area.rpt", "area_hierarchy.rpt", "reference.rpt", "power.rpt", 
                 "qor.rpt", "path_classes.rpt", "tech.json", "lib_info.txt")
 # What a run's zip, syn/runs/<source>/<tech>/<point>[_c<clock>].zip, keeps of its folder (X51): the mapped netlist
 # (sim/pwr.py and pt_power.tcl read it), KEPT_REPORTS (tech.json at the top, the rest in reports/) and the two DC
-# logs (errors and licence lines). The rest (WORK/, alib-*/, the .sdf, default.svf, the other reports, command logs,
+# logs (errors and licence lines). The rest (WORK/, alib-*/, the .sdf if --sdf wrote one, default.svf, the other reports, command logs,
 # a forge or char point's filelist.f into the unpacked bundle) is scratch, deleted with the folder.
 KEEP_RUN = ("out/*_mapped.v", "tech.json", "logs/dc_shell.log", "logs/dc_stdout.log", "ram/*.v",
             *(f"reports/{r}" for r in KEPT_REPORTS if r != "tech.json"))
+# The cluster source keeps more (X67): its gate and port reports, the area tree, and in the run zip what it ran
+# from; its report zip keeps the hierarchical area and power reports whatever their size (CSYN1 R3b reads them)
+CLUSTER_REPORTS = ("cluster_check.rpt", "cluster_ports.rpt")
+CLUSTER_RUN_FILES = ("syn_flist.tcl", "cluster.sdc", "tc_sram_impl.sv", "tree.txt")
+UNLIMITED_REPORTS = {"cluster": ("area_hierarchy.rpt", "power_hierarchy.rpt")}
+TOP_MEMBERS = ("tech.json", "tree.txt")   # report zip members at the run zip's top, not in reports/
+
+
+def kept_reports() -> tuple:
+    """KEPT_REPORTS, and for the cluster source its reports and tree.txt too."""
+    return KEPT_REPORTS + ((*CLUSTER_REPORTS, "tree.txt") if SOURCE == "cluster" else ())
+
+
+def keep_run() -> tuple:
+    """KEEP_RUN, and for the cluster source its reports and the files it ran from too."""
+    if SOURCE != "cluster":
+        return KEEP_RUN
+    return KEEP_RUN + CLUSTER_RUN_FILES + tuple(f"reports/{r}" for r in CLUSTER_REPORTS)
+
+
 # dc_syn.tcl's path classes (X40), in reports/path_classes.rpt and the slack_<class>_ns columns
 PATH_CLASSES = ("in2reg", "reg2reg", "reg2out", "in2out")
 
@@ -241,6 +284,7 @@ FORGE_COLUMNS = ["recipe", "W", "snax_forge_commit",   # after COLUMNS, forge ro
                  "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2"]
 CHAR_COLUMNS = ["datapath", "lanes", "depth", "op", "form", "snax_forge_commit"]  # after COLUMNS, char rows only
 BAMBU_COLUMNS = ["ctrl_um2", "datapath_um2", "glue_um2"]  # after COLUMNS, bambu rows only (X41)
+CLUSTER_COLUMNS = ["recipe", "W", "snax_forge_commit", "snax_cluster_commit", "macro_um2", "macros"]  # cluster rows
 HLS_COLUMNS = ["ram_um2", "ram_kind"]   # after COLUMNS, hls rows only (X62): a RAM's area, inside area_um2
 RAM_TECH = "nangate45"                  # the macros are CACTI's 45 nm (X47)
 # after COLUMNS, streamer and xbar rows (X52): the grid's params, then the flop check's numbers
@@ -325,6 +369,8 @@ def techs_with_summary(only: str | None) -> list[str]:
 def all_points() -> list[str]:
     """The points of the source: a forge or char point is a bundle zip, rtl/<set>/<point>.zip, holding a
     bundle.json (forge) or an emitted.json (char); an HLS tool's is an rtl/ folder with a filelist.f."""
+    if SOURCE == "cluster":
+        return sorted(f.stem for f in RTL.glob("*.zip") if "provenance.json" in arc.names(f))
     if SOURCE in BUNDLED:
         marker = {"forge": "bundle.json", "char": "emitted.json"}.get(SOURCE, "config.json")
         return sorted(f.relative_to(RTL).with_suffix("").as_posix() for f in RTL.rglob("*.zip")
@@ -336,7 +382,7 @@ def all_points() -> list[str]:
 
 def columns() -> list[str]:
     return COLUMNS + {"forge": FORGE_COLUMNS, "char": CHAR_COLUMNS, "bambu": BAMBU_COLUMNS, "hls": HLS_COLUMNS,
-                      **STRM_COLUMNS}.get(SOURCE, [])
+                      "cluster": CLUSTER_COLUMNS, **STRM_COLUMNS}.get(SOURCE, [])
 
 
 def bundle_zip(point: str) -> Path:
@@ -499,6 +545,8 @@ def select(patterns: list[str]) -> list[str]:
 
 
 def top_of(point: str) -> str:
+    if SOURCE == "cluster":
+        return SOURCES["cluster"]["top"]
     if SOURCE == "forge":
         return forge_json(point, "bundle.json").get("top", "")
     if SOURCE == "char":
@@ -517,7 +565,7 @@ def point_files(point: str) -> list[str]:
 
 
 def rams_of(point: str) -> list[str]:
-    if SOURCE in BUNDLED:
+    if SOURCE in BUNDLED or SOURCE == "cluster":
         return []
     return re.findall(r"^#\s*ram:\s*(\S+)", (RTL / point / "filelist.f").read_text(), re.M)
 
@@ -551,9 +599,9 @@ def run_zip(tech: str, point: str, clock: str) -> Path:
 
 
 def pack_run(rdir: Path) -> Path:
-    """A finished run folder to its zip (KEEP_RUN, test-read), then the folder goes, scratch with it."""
+    """A finished run folder to its zip (keep_run(), test-read), then the folder goes, scratch with it."""
     z = arc.write(rdir.with_name(rdir.name + ".zip"),
-                  {m: p.read_bytes() for m, p in arc.files_of(rdir, KEEP_RUN).items()})
+                  {m: p.read_bytes() for m, p in arc.files_of(rdir, keep_run()).items()})
     shutil.rmtree(rdir)
     return z
 
@@ -656,6 +704,10 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row.update(strm_extra(point, row["top"], log_text))
     if SOURCE == "hls" and tj is not None:
         row.update(ram_area(json.loads(tj), get, tech, point, clock))
+    cluster_gate = ""
+    if SOURCE == "cluster":
+        extra, cluster_gate = cluster_extra(json.loads(tj) if tj is not None else {}, get, log_text, tech)
+        row.update(extra)
     split_error = ""
     if SOURCE == "bambu":
         split, split_error = bambu_split(tech, point, clock, row["area_um2"])
@@ -688,8 +740,9 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row["e_total_pj"] = _num(e_total)
         if dyn is not None:
             e_dyn = dyn * clock_ns / 1000.0
-            # X62: an SRAM macro is a black box to DC (its default-activity power is in that group, not in the four)
-            if row.get("ram_kind") == "macro":
+            # X62: an SRAM macro is a black box to DC (its default-activity power is in that group, not in the four);
+            # the cluster's memories are macros (X66, PITFALLS DC12)
+            if row.get("ram_kind") == "macro" or SOURCE == "cluster":
                 bb = power_groups(power, ["black_box"]).get("black_box", (0.0, 0.0, 0.0))
                 e_dyn -= (bb[0] + bb[1]) * clock_ns / 1000.0
             energy_ok = abs(e_total - e_dyn) <= 1e-3 * max(abs(e_dyn), 1e-9) + 1e-6
@@ -703,6 +756,8 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
                          else f"failed: licence ({lic})" if lic else "failed: no area report")
     elif "No wire load specified" not in area:
         row["status"] = "failed: a wire-load model applied"
+    elif cluster_gate:
+        row["status"] = f"failed: cluster gate ({cluster_gate})"
     elif not energy_ok:
         row["status"] = "failed: power groups do not sum to the total dynamic power"
     elif split_error:
@@ -716,6 +771,57 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
     else:
         row["status"] = "ok"
     return row
+
+
+LINK5 = re.compile(r"\(LINK-5\)|Unable to resolve reference", re.I)
+
+
+def cluster_check(text: str) -> dict:
+    """cluster_check.rpt (cluster/cluster_check.tcl): leaf_cells, refs {ref: (lib, cells, bb)}, unresolved,
+    black_box, library and constant {name: cells}, macro_area."""
+    out = {"leaf_cells": None, "refs": {}, "unresolved": {}, "black_box": {}, "library": {}, "constant": {},
+           "macro_area": ""}
+    for ln in text.splitlines():
+        t = ln.split()
+        if not t or t[0].startswith("#"):
+            continue
+        if t[0] == "leaf_cells" and len(t) == 2:
+            out["leaf_cells"] = int(t[1])
+        elif t[0] == "ref" and len(t) == 5:
+            out["refs"][t[1]] = (t[2], int(t[3]), t[4] == "1")
+        elif t[0] in ("unresolved", "black_box", "library", "constant") and len(t) == 3:
+            out[t[0]][t[1]] = int(t[2])
+        elif t[0] == "macro_area":
+            out["macro_area"] = t[1] if len(t) == 2 else ""
+    return out
+
+
+def cluster_extra(tj: dict, get, log: str, tech: dict) -> tuple[dict, str]:
+    """A cluster row's CLUSTER_COLUMNS (tech.json's resolved cluster block, cluster_check.rpt) and its gates
+    (X67): no unresolved reference (cluster_check.rpt, LINK-5 in the log), the macros the only black boxes in
+    the point's numbers (srams), every leaf cell from the technology's library or a macro's. '' when they pass."""
+    cl = tj.get("resolved", {}).get("cluster", {})
+    srams = dict(sorted(cl.get("srams", {}).items()))
+    row = {"recipe": cl.get("recipe", ""), "W": cl.get("W", ""), "snax_forge_commit": cl.get("snax_forge_commit", ""),
+           "snax_cluster_commit": cl.get("snax_cluster_commit", ""), "macro_um2": "", "macros": ""}
+    text = get("reports/cluster_check.rpt")
+    if text is None:
+        return row, "no reports/cluster_check.rpt"
+    cc = cluster_check(text)
+    row["macro_um2"] = cc["macro_area"]
+    row["macros"] = ";".join(f"{k}={v}" for k, v in sorted(cc["black_box"].items()))
+    bad = []
+    link5 = sum(1 for ln in log.splitlines() if LINK5.search(ln))      # lines, not matches
+    if cc["unresolved"] or link5:
+        bad.append(f"{len(cc['unresolved'])} unresolved references, {link5} LINK-5 lines")
+    if cc["black_box"] != srams:
+        bad.append(f"black boxes {cc['black_box']} against srams {srams}")
+    libs = set(cc["library"]) - {tech["lib_name"], *srams}
+    if libs:
+        bad.append(f"cells from {sorted(libs)}")
+    if cc["leaf_cells"] is None:
+        bad.append("no leaf_cells line in cluster_check.rpt")
+    return row, "; ".join(bad)
 
 
 def ram_area(tj: dict, get, tech: dict, point: str, clock: str) -> dict:
@@ -832,17 +938,17 @@ def report_zip(tech: str, point: str, clock: str) -> Path:
 
 
 def copy_reports(tech: str, point: str, clock: str) -> list[str]:
-    """KEPT_REPORTS, from the run's zip, into the committed report zip (flat); returns what was skipped."""
+    """kept_reports(), from the run's zip, into the committed report zip (flat); returns what was skipped."""
     z = run_zip(tech, point, clock)
     dest = report_zip(tech, point, clock)
     have = set(arc.names(z)) if z.is_file() else set()
     members, skipped = {}, []
-    for name in KEPT_REPORTS:
-        m = name if name == "tech.json" else f"reports/{name}"
+    for name in kept_reports():
+        m = name if name in TOP_MEMBERS else f"reports/{name}"
         if m not in have:
             continue
         data = arc.read(z, m)
-        if len(data) > MAX_REPORT_BYTES:
+        if len(data) > MAX_REPORT_BYTES and name not in UNLIMITED_REPORTS.get(SOURCE, ()):
             skipped.append(f"{name} ({len(data)} B)")
             continue
         members[name] = data
@@ -883,7 +989,8 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
     modules = []
     for r in rows:
         if r["run"]:
-            modules += read_modules(tech, r["point"], r["clock_ns"])
+            if SOURCE != "cluster":          # no modules CSV for the cluster (X67; R3b reads the reports)
+                modules += read_modules(tech, r["point"], r["clock_ns"])
             skipped = copy_reports(name, r["point"], r["clock_ns"])
             if skipped:
                 print(f"results: {r['point']}: skipped over 1 MB: {', '.join(skipped)}")
@@ -891,7 +998,8 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
             stale = report_zip(name, r["point"], r["clock_ns"])
             if stale.exists():
                 stale.unlink()
-    _merge(out / modules_csv, MODULE_COLUMNS, key, modules, done)
+    if SOURCE != "cluster":
+        _merge(out / modules_csv, MODULE_COLUMNS, key, modules, done)
 
 
 def print_rows(rows: list[dict]) -> None:
@@ -946,11 +1054,55 @@ def dc_env(tech: dict, res: dict, point: str, args) -> dict:
         "SYN_FORMAT": src["format"],
         "SYN_CLK_PORT": src["clk"],
         "SYN_RST_PORT": src["rst"],
+        **({"SYN_WRITE_SDF": "1"} if getattr(args, "sdf", False) else {}),   # X69: no SDF unless asked
     }
 
 
 RETRIES: list[str] = []          # points rerun on a licence error, this invocation
 RETRIES_LOCK = threading.Lock()
+
+
+def run_dc(point: str, name: str, rdir: Path, cmd: list[str], syn_env: dict, clock: str, prepare) -> int:
+    """DC in a fresh rdir (logs/ made, then prepare() writes what the run reads), its stdout into
+    logs/dc_stdout.log as it runs; rerun once on a licence error (X17, counted in RETRIES). The return code."""
+    for attempt in (1, 2):
+        if rdir.exists():
+            shutil.rmtree(rdir)
+        (rdir / "logs").mkdir(parents=True)
+        prepare()
+        print(f"run  {point} on {name} at {clock} ns in {rdir.relative_to(ROOT)}"
+              + (" (licence retry)" if attempt == 2 else ""), flush=True)
+        with (rdir / "logs" / "dc_stdout.log").open("w") as fh:
+            rc = subprocess.run(cmd, cwd=rdir, env=dict(os.environ, **syn_env), stdout=fh,
+                                stderr=subprocess.STDOUT, check=False).returncode
+        lic = licence_error(folder_reader(rdir))
+        if not lic or attempt == 2:
+            break
+        with RETRIES_LOCK:
+            RETRIES.append(point)
+        print(f"retry {point} on {name}: licence error: {lic}", flush=True)
+    return rc
+
+
+def finish_run(point: str, rdir: Path, tech: dict, res: dict, args, syn_env: dict, rc: int, extra: dict,
+               before_pack=None) -> dict:
+    """tech.json (the tech file, the resolved values, the run's environment and return code, extra), then
+    before_pack() if given, the zip (keep_run()), and the summary row read back from it."""
+    name = tech["name"]
+    (rdir / "tech.json").write_text(json.dumps({
+        "tech_file": str((TECH_DIR / f"{name}.json").relative_to(ROOT)),
+        "tech": tech,
+        "resolved": {**res, "clock_ns": args.clock, "cores": args.cores,
+                     "dc_env": syn_env, "dc_returncode": rc, **extra},
+        "dc_lib_info": lib_info(folder_reader(rdir)),
+    }, indent=2) + "\n")
+    if before_pack is not None:
+        before_pack()
+    pack_run(rdir)
+    row = read_run(tech, point, args.clock)
+    print(f"done {point} on {name}: {row['status']}  area {row['area_um2'] or '-'} um2"
+          f"  slack {row['slack_ns'] or '-'} ns  errors {row['errors']}", flush=True)
+    return row
 
 
 def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
@@ -1000,10 +1152,7 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
                 d = stack.enter_context(arc.unpacked(Path(m["zip"]), [f"{m['cell']}.db"]))
                 dbs.append(str(d / f"{m['cell']}.db"))
             syn_env["SYN_RAM_DBS"] = " ".join(dbs)
-        for attempt in (1, 2):
-            if rdir.exists():
-                shutil.rmtree(rdir)
-            (rdir / "logs").mkdir(parents=True)
+        def prepare() -> None:
             if bundle is not None:
                 Path(syn_env["SYN_FILELIST"]).write_text(
                     f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in point_filelist(point, bundle)))
@@ -1014,28 +1163,9 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
                 lines = [str(rdir / "ram" / f) if f in ram_plan["wrappers"] else str((RTL / point / f).resolve())
                          for f in ram_plan["files"]]
                 Path(syn_env["SYN_FILELIST"]).write_text(f"# top: {top_of(point)}\n" + "".join(f"{f}\n" for f in lines))
-            print(f"run  {point} on {name} at {args.clock} ns in {rdir.relative_to(ROOT)}"
-                  + (" (licence retry)" if attempt == 2 else ""), flush=True)
-            with (rdir / "logs" / "dc_stdout.log").open("w") as fh:
-                rc = subprocess.run(cmd, cwd=rdir, env=dict(os.environ, **syn_env), stdout=fh,
-                                    stderr=subprocess.STDOUT, check=False).returncode
-            lic = licence_error(folder_reader(rdir))
-            if not lic or attempt == 2:
-                break
-            with RETRIES_LOCK:
-                RETRIES.append(point)
-            print(f"retry {point} on {name}: licence error: {lic}", flush=True)
-    (rdir / "tech.json").write_text(json.dumps({
-        "tech_file": str((TECH_DIR / f"{name}.json").relative_to(ROOT)),
-        "tech": tech,
-        "resolved": {**res, "clock_ns": args.clock, "cores": args.cores,
-                     "dc_env": syn_env, "dc_returncode": rc, "ram": ram_info},
-        "dc_lib_info": lib_info(folder_reader(rdir)),
-    }, indent=2) + "\n")
-    pack_run(rdir)
-    row = read_run(tech, point, args.clock)
-    print(f"done {point} on {name}: {row['status']}  area {row['area_um2'] or '-'} um2"
-          f"  slack {row['slack_ns'] or '-'} ns  errors {row['errors']}", flush=True)
+
+        rc = run_dc(point, name, rdir, cmd, syn_env, args.clock, prepare)
+    row = finish_run(point, rdir, tech, res, args, syn_env, rc, {"ram": ram_info})
     glue = row.get("glue_um2", "")
     if SOURCE == "forge" and row["area_um2"] and not glue:
         gone = [k for k in ("csr_um2", "ctrl_um2", "datapath_um2") if not row[k]]
@@ -1048,6 +1178,8 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
 
 
 def cmd_run(args) -> int:
+    if SOURCE == "cluster":
+        sys.exit("the cluster source runs through cluster/cluster.py: pixi run cluster syn <point> (X67)")
     points = select(args.patterns)
     if not points:
         sys.exit("no rtl point matches (syn.py list shows them)")
@@ -1106,7 +1238,7 @@ def main() -> int:
                        help="hls (Vitis, hls-exercises' rtl/, the default), bambu (the same rtl/), xls "
                             "(dslx-exercises' rtl/), forge (rtl/forge/, pixi run forge-rtl) "
                             "char (rtl/char/, pixi run char-rtl), streamer or xbar (rtl/streamer/, rtl/xbar/, "
-                            "pixi run strm-rtl)")
+                            "pixi run strm-rtl), cluster (results and summary; runs through pixi run cluster syn)")
         if name == "check-ports":
             continue
         if name == "run":
@@ -1115,6 +1247,7 @@ def main() -> int:
             p.add_argument("--cores", type=int, default=16, help="cores per DC run (default 16)")
             p.add_argument("-j", "--jobs", type=int, default=1, help="DC runs at once (each takes a license)")
             p.add_argument("--dry-run", action="store_true", help="print the commands, run nothing")
+            p.add_argument("--sdf", action="store_true", help="also write the SDF (SYN_WRITE_SDF=1); off by default (X69)")
             p.add_argument("--with-ram", action="store_true",
                            help="also run points with a '# ram:' line (parked by default)")
         else:

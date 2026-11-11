@@ -10,7 +10,7 @@ Ryan's home has a file-count quota (1,600,000 soft, folders count too), shared b
 2. **Reading.** Read a single file straight from the zip (`arc.read`). Unpack (`arc.unpacked`) only for a tool that needs real files on disk (DC reading a bundle, PT reading a netlist, `lc_shell` reading a `.lib`), into a temporary folder that is deleted when the step ends, also when it fails.
 3. **Processing.** Unpack what the step needs, process, pack the results into the point's zip (`arc.pack`), check the zip with a test read, then delete everything unpacked. Delete originals only after that check passes.
 4. **One point at a time.** A job unpacks one point, finishes it and cleans up before the next; a batch never unpacks everything first. With N parallel jobs, at most N points are unpacked at once.
-5. **Scratch is deleted, not zipped.** DC's `WORK/`, `alib-*/`, `.sdf`, `.svf` and the reports not kept; Questa's `work/`, transcripts, logs and generated `tb.sv`; CACTI's per-point run folder.
+5. **Scratch is deleted, not zipped.** DC's `WORK/`, `alib-*/`, `.svf` and the reports not kept (and an `.sdf` where `syn.py --sdf` wrote one; none by default, X69); Questa's `work/`, transcripts, logs and generated `tb.sv`; CACTI's per-point run folder.
 6. **Deterministic zips.** Entries sorted, fixed timestamps, so a rerun with the same contents gives the same bytes and a committed zip changes only when its contents do.
 7. **Nothing left behind.** `pixi run arc check` lists unpacked run folders, stray temporary folders and the file count per top-level folder. It must report nothing left over at the end of every round; say so in the run note. Never commit an unpacked report folder.
 
