@@ -68,6 +68,10 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X63](#x63-the-parts-at-n2048-and-forges-total-without-csr) | `compare_hls.md`'s parts at n2048 (forge csr, ctrl, datapath, total, total without csr; Bambu ctrl, datapath, total; Vitis dace's RAM apart; totals otherwise); forge without csr is the like-for-like figure; each compare row takes its own run's parts |
 | [X65](#x65-forges-csr-without-its-peripherals) | forge's `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168) is in no figure: the csr part is the csr cell minus it, the total without csr is the total minus the whole csr cell (as in Part A); kept in `peripherals_um2` and `e_dyn_peripherals_pj` for the record; amends X63 |
 | [X64](#x64-the-comparison-one-page-per-kernel) | `results/compare/`: a README (setup, summary, parts' basis, nangate15 check) and one page per kernel with its figure, table, insights and parts; replaces `results/compare_hls.md`; amends X46, X61, X63 |
+| [X66](#x66-the-clusters-sram-implementation-generated-from-its-memory-list) | The cluster's `tc_sram_impl.sv` generated from `gen-mem-cfg`'s list, one branch per size, CACTI macros (draft) |
+| [X67](#x67-the-cluster-source) | The `cluster` source: a snax-forge bundle through snax_cluster's main, the whole cluster synthesized and run in three steps (draft) |
+| [X68](#x68-the-clusters-constraints-and-run-budget) | The cluster's constraints (AXI 30 %, CSR 10 %, async reset, static ports false) and one run at a time at `--cores 16` (draft) |
+| [X69](#x69-no-sdf-unless-asked) | DC writes no SDF unless `syn.py --sdf` (draft) |
 
 ## Synthesis
 
@@ -605,3 +609,38 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 - **Why:** BUSY_COUNTER is an observability counter, neither the cluster interface nor the control, and no HLS block has one. Counting it in the csr would charge forge's interface for it; counting it in the total without csr would charge forge's block for it against HLS totals that hold nothing like it. Kept out of every figure, the comparison stays like for like, and Part A (where the counter sat inside the csr and so outside the total without csr) and CTRL2 are measured on one basis. CTRL2 R5 first left it in the total without csr; R5b took it out (CTRL2 topic 5).
 - **Source:** `results/forge/runs/2026-11-11_ctrl2_r5.md`.
 
+## CSYN1 Part B: the cluster
+
+X66 to X69 are drafts from the Part B brainstorm (2026-11-11, `claude/csyn1-partb-plan-2026-11-11.md` in the project); each is confirmed, with its source, in the round that builds it.
+
+### X66. The cluster's SRAM implementation, generated from its memory list
+
+- **Date:** 2026-11-11 (draft, CSYN1 Part B; built in R2)
+- **Decision:** a cluster's memories are RAM1's macros (X47 to X50). `cluster/mem.py` reads snax_cluster's memory list (`make gen-mem-cfg CFG_OVERRIDE=<cluster file>`, clustergen's `memory_cfg`: words, width, byte enable per memory), makes each macro with `ram/ram.py`'s `make_macro` (`--mask 8` where byte enable is set) and writes one `tc_sram_impl.sv` with snax_cluster's `tc_sram_impl` parameters and ports: one `if (NumWords == ... && DataWidth == ...)` branch per memory instantiating `sram_d<words>_w<width>[_m8]` with plain wiring (the macros have `tc_sram_impl`'s port names, X49), `impl_o` tied to 0, and `$error` when `NumPorts` or `Latency` is not 1 or no branch matches (naming the size). No sub-banking and no bit-enable conversion: CACTI makes each size as one macro and the mask is per byte. snax_cluster reads the file through its `SRAM_IMPL` hook (snax_cluster `ry/csyn1`), in RTL simulation and in synthesis; the netlist keeps each `tc_sram_impl` as a level holding one macro cell, and its simulation reads the macros' `.v`. The file and the macros are generated per run and never committed (X49); the file is zipped with the run (X51). For `snax_forge_cluster`: 512 x 64 with mask (32 TCDM banks), 128 x 256 (I-cache data, 2 ways, `be_i` tied high), 128 x 39 (I-cache tag, 2 ways; costs from 40 bits, X49).
+- **Why:** every memory of the cluster (`snitch_data_mem`, cluster_icache's data and tag) goes through `tc_sram_impl`, so one module swaps them all, as the 16 nm tapeout's `tc_sram_impl.sv` did by hand; generated from the cluster's own list, another configuration (more banks, another I-cache) gets its file with no hand edit.
+- **Source:** CSYN1 Part B brainstorm, topic 2.
+
+### X67. The cluster source
+
+- **Date:** 2026-11-11 (draft, CSYN1 Part B; built in R2 to R4)
+- **Decision:** a cluster point (`cluster/points.json`: `point`, `recipe`, `W`, `sets`; first `dot3_w16`, dot_3 at W = 16, N = 2048) is a snax-forge design built into snax_cluster's whole cluster, top `snax_forge_cluster_wrapper` (instance `i_snax_forge_cluster` of the testharness). Its bundle, ELF and `forge_expected.txt` come from snax-forge's `pixi run forge` (snax-forge C§18; a dirty bundle refused and its commit recorded, as X21). snax_cluster is read from `SNAX_CLUSTER` (default `../snax_cluster`): clean, HEAD on `origin/main` (`git merge-base --is-ancestor`) unless `--allow-branch`, its commit recorded. snax_cluster's make targets run in its container, `podman run --rm -v "$PWD":"$PWD" -w "$PWD" c5db84ad7bce` with no `-it` from scripts, the mount the parent folder of snax-forge, snax_cluster and this repo (plus the PDK folder if elsewhere) and PITFALLS SC6's Scala caches; `rtl-gen` and the vsim or `gen-syn` call are separate make calls. Three steps, one command each, the same testbench (`tb_bin`, the ELF, D123's check against `forge_expected.txt`):
+  1. `pixi run cluster rtl`: RTL with X66's `tc_sram_impl.sv` and the macros' `.v` (`SRAM_IMPL`); cycles equal to a plain RTL run, every `tc_sram_impl` on a macro.
+  2. `pixi run cluster syn`: DC on the whole cluster from snax_cluster's `gen-syn` file list as written (the bundle's `snax_forge.f` included, `SRAM_IMPL` set), X1 to X5 and X22's compile (`compile_ultra -no_autoungroup`), the macros' `.db` linked (`SYN_RAM_DBS`), X68's constraints; DC's stdout streamed to a log to follow during the run, the whole log kept in the run's zip on failure; the hierarchy tree from `area_hierarchy.rpt` to a fixed depth in the run note.
+  3. `pixi run cluster gls`: the netlist through snax_cluster's `SIM_TYPE=gate_level_sim` (netlist, Nangate cells and macro models compiled after the RTL list, `+initreg+0`, `+acc=n`, a check that `i_snax_forge_cluster` holds Nangate cells); D123 as step 1, cycles equal to step 1's.
+  Results in `results/cluster/nangate45/` (X5), each step's log in the point's zip (X51). Gates: the library and wire-load checks (X3, X4), no unresolved module, the macros the only black boxes (DC12); no flop count. The area (and later power) breakdown into groups is written after the first tree is read.
+- **Why:** the flow is the way any snax-forge design reaches a synthesized cluster: snax-forge, then snax_cluster, then synthesis and the netlist run, with snax_cluster's own lists so nothing is rebuilt by hand; one design proves it before designs are picked for the evaluation. Taking snax_cluster from main keeps every result on reviewed hooks.
+- **Source:** CSYN1 Part B brainstorm, topics 1, 3, 4 and 5.
+
+### X68. The cluster's constraints and run budget
+
+- **Date:** 2026-11-11 (draft, CSYN1 Part B; built in R3)
+- **Decision:** a cluster run uses `constraints.sdc` (X2 to X4: `clk_i` at 10 ns, uncertainty 0.1 / 0.02 ns, `INV_X4` driving every input but the clock, four `INV_X4` inputs of output load, max transition 0.25 ns) plus: `rst_ni` asynchronous, ideal and `set_false_path -from rst_ni`; `set_false_path` on the static and asynchronous ports the wrapper marks `(* false_path *)` (`meip_i`, `mtip_i`, `msip_i`, `hart_base_id_i`, `cluster_base_addr_i`, `boot_addr_i`, `obs_o`) and on `sram_cfgs_i`; input and output delays of 30 % of the clock (3 ns) on the narrow and wide AXI ports and 10 % (1 ns) on the CSR ports to BINGO (unused here), in place of 0.01 ns. A cluster run is `syn.py --cores 16`, alone: no other DC, Questa or PT batch beside it and no second cluster run; it checks free DC-Expert licences first (X59, PITFALLS L4) and drops to 8 cores when 16 would take most of them. Amends X16 and X59 for cluster runs only.
+- **Why:** a cluster sits in a SoC, so its boundary gets an outside budget (a rule of thumb; this configuration registers its AXI boundary, so at 10 ns the value changes nothing); the reset and the static ports carry no timing. Cluster runs are few and picked, not swept, so one at a time with the host's 16-core budget.
+- **Source:** CSYN1 Part B brainstorm, topic 3.
+
+### X69. No SDF unless asked
+
+- **Date:** 2026-11-11 (draft, CSYN1 Part B; built in R3)
+- **Decision:** `dc_syn.tcl` writes the SDF only when `syn.py --sdf` is given (`SYN_WRITE_SDF`), for every source; default off. snax_cluster's SDF hooks (`SDF_ANNOTATE_PATH`, `SDF_TOP`) stay optional and unused. Amends X51's scratch list.
+- **Why:** nothing reads it: energy is from a zero-delay simulation (X7) and the SDF was deleted as scratch; on the whole cluster it costs time and disk for nothing.
+- **Source:** CSYN1 Part B brainstorm, topic 4.
