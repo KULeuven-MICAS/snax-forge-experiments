@@ -382,8 +382,8 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 
 - **Symptom:** `pwr run ... --source forge` on a SYN2 bundle fails at tb.json with `snax_forge.design.problems.DesignError: ... [graph.brm] node add: no BRM 'elementwise_add' in the library (['accumulate', 'mac', 'simd'])`; DC on the same bundle works.
 - **Cause:** `sim/sources/forge.py` asks snax-forge (`forge/query.py point`) about the bundle, and `query.py` loads the design point `bundle.json` names (`out/design/syn1/<point>/design_point.json` in the snax-forge checkout) with the checkout's own code. From DRY1-2 (snax-forge #52) the BRM library is indexed by family, and a design point from before (the bundles' `f9764d5`) no longer loads, on `main` as on the DRY1-3 branch.
-- **Fix or check:** run the forge power flow with snax-forge at the bundle's `snax_forge_commit` (its `point.json`): `git -C ../snax-forge checkout --detach <commit>`, the run, then back (the pixi lock is the same from `f9764d5` to `f49c394`), or rebuild the bundles (`pixi run forge-rtl`).
-- **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4).
+- **Fix or check:** run the forge power flow with snax-forge at the bundle's `snax_forge_commit` (its `point.json`): `git -C ../snax-forge checkout --detach <commit>`, the run, then back (the pixi lock is the same from `f9764d5` to `f49c394`), or rebuild the bundles (`pixi run forge-rtl`). From snax-forge D168 (CTRL2) a bundle made before it fails the same way, in snax-forge's own platform check: `[platform.keys] acc_csr: unknown keys ['counter_width'] (allowed: ['job_width', 'busy_counter_width'])`; `sim/sources/forge.py` now refuses a bundle without a BUSY_COUNTER CSR before it asks snax-forge, with that cause in the message.
+- **Found in:** `results/runs/2026-11-06_arc1_r1.md` (step 4); the D168 case in `results/forge/runs/2026-11-11_ctrl2_r5.md` (step 1).
 
 ### E3. `git diff --word-diff` on a CSV marks whole rows
 
@@ -479,6 +479,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** `io_aguCfg_temporalStrides_<k>` is `addressWidth` (17) bits, but `ProgrammableCounter`'s `step` input is `width - 1` (16) bits, so a stride of 2^16 B becomes 0: loop k never moves. With 1,024 beats over 6 or 7 loops and the larger bounds innermost, the outermost bound is 2 and its stride 8 x 16 x 512 = 65,536 B.
 - **Fix or check:** the largest stride a reader takes is 65,535 B. `sim/sources/strm.py` puts the larger bounds outermost (the outermost stride is then at most 32,768 B on the grid) and refuses a stride over the step's range before simulating; the TB checks every request address.
 - **Found in:** `results/strm/runs/2026-11-06_strm1_r1.md`.
+
+### E7. A snax-forge submodule off main's pin marks every bundle dirty
+
+- **Symptom:** snax-forge's `git status --porcelain` lists ` M gvsoc/snax-gvsoc` although nothing was edited, and `forge/bundles.py` would refuse every bundle as dirty (its `bundle.json` `dirty: true`).
+- **Cause:** snax-forge's `gen/bundle.py` `provenance` takes the work tree as dirty on any `git status --porcelain` line, a submodule whose checkout differs from the commit the superproject pins included. After a branch is squash-merged, `git pull` on main moves the pin to the squash commit of the submodule's own PR while the submodule stays on the branch's commit (CTRL2: snax-gvsoc `0a378cdf` on `ry/ctrl2`, main pins `85552fc4`); the trees can be the same.
+- **Fix or check:** before bundling, `git -C ../snax-forge status --porcelain` must be empty; for a submodule line, check the submodule has no local change (`git -C <sub> status --porcelain`) and run `git -C ../snax-forge submodule update <sub>`. The bundles do not read the submodule.
+- **Found in:** `results/forge/runs/2026-11-11_ctrl2_r5.md` (step 3).
 
 ## Zips (X51)
 
