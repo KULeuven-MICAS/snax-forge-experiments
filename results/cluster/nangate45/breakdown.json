@@ -1,0 +1,207 @@
+{
+ "dot3_w16": {
+  "total_um2": 1314306.1527,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432726.40640000015,
+    "share_pct": 32.92432326448776
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43064.479999999996,
+    "share_pct": 3.276594263180763
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 115506.5106,
+    "share_pct": 8.788402181844248
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 755.706,
+    "share_pct": 0.057498475408301275
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 1059.744,
+    "share_pct": 0.08063144175525246
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 169311.39249999935,
+    "share_pct": 12.882188229293476
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 3898.7620000000065,
+    "share_pct": 0.2966403217386389
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM sparse interconnect",
+    "area_um2": 107685.04810000007,
+    "share_pct": 8.193300159082492
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 55965.06999999999,
+    "share_pct": 4.258145629542254
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 82140.53589999999,
+    "share_pct": 6.249726194407398
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 54198.8304,
+    "share_pct": 4.1237599237178095
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 45217.87190000001,
+    "share_pct": 3.440436751141142
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 183551.17660000024,
+    "share_pct": 13.965633214371563
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 18608.296399999945,
+    "share_pct": 1.4158266216568056
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 616.3218999993114,
+    "share_pct": 0.046893328372022876
+   }
+  ],
+  "snax_forge_commit": "5c5a11cd76664849c0336777a7a72947f5e947c8",
+  "snax_cluster_commit": "7c14681c03e8999de4ed72c300e750d7da64d5ac",
+  "macro_check": {
+   "groups_um2": 475790.88640000013,
+   "synth_dc_um2": 475790.88623,
+   "ok": true
+  },
+  "hwcost": {
+   "snax_forge_commit": "b19b9262ca52155ef8e694e6322c66e5b206516b",
+   "snax_forge_clean": true,
+   "platform": "platforms/snax_forge.json",
+   "parts": [
+    {
+     "part": "datapath",
+     "groups": [
+      "acc_datapath"
+     ],
+     "hwcost_um2": 115449.852566,
+     "cluster_um2": 115506.5106,
+     "diff_pct": -0.049051809898577936,
+     "hwcost_share_pct": 13.972127170653149,
+     "cluster_share_pct": 13.984091927349478
+    },
+    {
+     "part": "control",
+     "groups": [
+      "acc_control"
+     ],
+     "hwcost_um2": 712.88,
+     "cluster_um2": 755.706,
+     "diff_pct": -5.66701865540303,
+     "hwcost_share_pct": 0.08627512115462477,
+     "cluster_share_pct": 0.09149148493149586
+    },
+    {
+     "part": "streamers",
+     "groups": [
+      "streamers"
+     ],
+     "hwcost_um2": 158089.916122,
+     "cluster_um2": 169311.39249999935,
+     "diff_pct": -6.627714894022501,
+     "hwcost_share_pct": 19.13257023166594,
+     "cluster_share_pct": 20.49811793957474
+    },
+    {
+     "part": "crossbar",
+     "groups": [
+      "tcdm_interconnect"
+     ],
+     "hwcost_um2": 119307.82342470996,
+     "cluster_um2": 107685.04810000007,
+     "diff_pct": 10.793304669295013,
+     "hwcost_share_pct": 14.439031703318133,
+     "cluster_share_pct": 13.037166511300113
+    },
+    {
+     "part": "memory",
+     "groups": [
+      "tcdm_banks"
+     ],
+     "hwcost_um2": 432726.4,
+     "cluster_um2": 432726.40640000015,
+     "diff_pct": -1.4789945875049569e-06,
+     "hwcost_share_pct": 52.36999577320814,
+     "cluster_share_pct": 52.389132136844175
+    }
+   ],
+   "hwcost_um2": 826286.87211271,
+   "cluster_um2": 825985.0635999995,
+   "diff_pct": 0.03653922159259015,
+   "not_costed_um2": 488321.0890999995
+  },
+  "alone": {
+   "point": "done/dot/forge3_w16",
+   "snax_forge_commit": "3c7ea0055c7f1f42fe30c1204439003f2b177632",
+   "shell": "i_snax_core_0_acc_0_snax_forge_dot_3/i_snax_forge_dot_3_shell_wrapper",
+   "rows": [
+    {
+     "name": "csr",
+     "cluster_um2": 1059.744,
+     "alone_um2": 1073.576,
+     "diff_pct": -1.288404360753231
+    },
+    {
+     "name": "ctrl",
+     "cluster_um2": 755.706,
+     "alone_um2": 760.76,
+     "diff_pct": -0.6643356643356608
+    },
+    {
+     "name": "datapath",
+     "cluster_um2": 115506.5106,
+     "alone_um2": 115441.6066,
+     "diff_pct": 0.05622236376602454
+    },
+    {
+     "name": "glue",
+     "cluster_um2": 0.5320000000065193,
+     "alone_um2": 1.596,
+     "diff_pct": null
+    },
+    {
+     "name": "total",
+     "cluster_um2": 117322.4926,
+     "alone_um2": 117277.538623,
+     "diff_pct": 0.03833127598670561
+    }
+   ]
+  }
+ }
+}
