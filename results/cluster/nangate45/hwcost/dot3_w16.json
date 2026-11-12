@@ -1,8 +1,8 @@
 {
  "W": 16,
  "cost": {
-  "area": 826286.87211271,
-  "area_design": 393560.47211271,
+  "area": 820755.2527820403,
+  "area_design": 388028.85278204025,
   "energy": 69.922664140008,
   "extrapolated": [],
   "kernel_energy": 23.985369466007995,
@@ -26,7 +26,7 @@
     "energy": 0.06548330920800001
    },
    "crossbar": {
-    "area": 119307.82342470996,
+    "area": 113776.20409404027,
     "energy": 11.223497971
    },
    "datapath": {
@@ -50,13 +50,13 @@
   "tech": "nangate45",
   "xbar": {
    "accesses": 4097,
-   "area": 119307.82342470996,
+   "area": 113776.20409404027,
    "banks": 32,
    "e_access": 2.739443,
    "energy": 11.223497971,
    "extrapolated": [],
    "form": "factor",
-   "inputs": 36,
+   "inputs": 35,
    "read_only": 32,
    "write_only": 1
   }
@@ -68,6 +68,6 @@
   "N=2048"
  ],
  "snax_forge_clean": true,
- "snax_forge_commit": "b19b9262ca52155ef8e694e6322c66e5b206516b",
+ "snax_forge_commit": "299ef01001fc55c3139a3549cd0e86bb673b35f1",
  "tech": "nangate45"
 }
