@@ -79,6 +79,7 @@ What this repo has settled. Each entry: date, decision, why, source (run note in
 | [X74](#x74-primepower-on-the-whole-cluster) | PrimePower on the whole cluster: one VCD, one cutting pass, one PT session in averaged mode over the windows' SAIFs, >= 95 % of the driven nets annotated |
 | [X75](#x75-the-macros-in-cluster-measurements) | The macros in cluster measurements: PT's averaged figure as measured, no counted accesses |
 | [X76](#x76-tb_bins-1-ns-clock-read-as-10-ns) | `tb_bin`'s 1 ns clock read as 10 ns: the cut VCDs carry `$timescale 10ps` |
+| [X77](#x77-a-second-figure-forges-ctrl-and-datapath) | A second figure per kernel, `<kernel>_ctrl_dp.png`: forge's ctrl + datapath against the HLS totals |
 
 ## Synthesis
 
@@ -700,3 +701,10 @@ X66 to X69 are drafts from the Part B brainstorm (2026-11-11, `claude/csyn1-part
 - **Decision:** snax_cluster's testbench clocks at 1 ns (`tb_bin.sv`, `TCK = 1ns`, vsim `-t 1ps`). Each cut VCD's header gets `$timescale 10ps` in place of `1ps` (`sim/pwr.py`'s `vcd_windows(..., timescale_10ps=True)`), with the time numbers unchanged, so the run reads as if at 10 ns: X9's DURATION check (cycles x 10 ns), PT's 10 ns clock from `constraints.sdc` and t_clk = 10 ns in the energies hold unchanged. A VCD whose unit is not `1ps` is refused.
 - **Why:** a zero-delay run's activity does not depend on the clock's period, and the energy per toggle does not depend on it either; reading the run at 10 ns keeps the toggle rates PT sees consistent with its clock (X2), with no change to snax_cluster or to PT's constraints.
 - **Source:** `results/cluster/runs/2026-11-12_pwr1_r1.md`.
+
+### X77. A second figure: forge's ctrl and datapath
+
+- **Date:** 2026-11-12
+- **Decision:** `report/compare_hls.py` writes a second figure per kernel, `results/compare/<tier>/<kernel>_ctrl_dp.png`, beside `<kernel>.png` and in the same layout. Every forge case is plotted as its ctrl + datapath only (`ctrl_um2 + datapath_um2`, and `(e_dyn_ctrl_pj + e_dyn_datapath_pj) x cycles`, power from that), with no csr, peripherals or glue; the HLS cases are their totals, as in `<kernel>.png`. Each kernel page links it under its table. `<kernel>.png` is unchanged.
+- **Why:** ctrl + datapath is the closest to what an HLS block holds (its own control and datapath, sizes on plain pins). It differs from X63's total without csr only by the glue (at most 1.1 µm²). The totals figure stays as it is.
+- **Source:** this commit.

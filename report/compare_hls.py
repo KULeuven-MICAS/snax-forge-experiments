@@ -10,6 +10,8 @@ forge_baked; X61):
   results/compare/README.md                  the setup, the summary across kernels, the index, the nangate15 check
   results/compare/<tier>/<kernel>.md         one kernel: its figure and table, the insights, the parts at n2048
   results/compare/<tier>/<kernel>.png        area, energy, latency and power against W, one line per case
+  results/compare/<tier>/<kernel>_ctrl_dp.png  the same with forge's ctrl + datapath only (no csr, peripherals
+                                               or glue) against the HLS totals
 
 Only the parts between <!-- gen:NAME --> and <!-- /gen --> are generated. Everything outside the markers is
 hand-written (the summary and the insights) and is kept as it is; a missing page is created from a template
@@ -84,7 +86,20 @@ def fmt(x: float, digits: int = 4) -> str:
     return f"{x:.{digits}g}"
 
 
-def figure(tier: str, kernel: str, pts: dict) -> str:
+def ctrl_dp(r: dict) -> dict:
+    """forge's ctrl + datapath only (no csr, no peripherals, no glue): the row with area, energy and power
+    replaced; any other tool's row as it is (its total)."""
+    if r["tool"] != "forge":
+        return r
+    cyc = int(r["cycles"])
+    e_pj = (float(r["e_dyn_ctrl_pj"]) + float(r["e_dyn_datapath_pj"])) * cyc
+    return {**r, "area_um2": float(r["ctrl_um2"]) + float(r["datapath_um2"]), "energy_nj": e_pj / 1000.0,
+            "power_mw": e_pj / (cyc * T_CLK_NS)}
+
+
+def figure(tier: str, kernel: str, pts: dict, basis: str = "") -> str:
+    """The four metrics against W, one line per case. basis "" plots every case's total (`<kernel>.png`);
+    "ctrl_dp" plots forge's ctrl + datapath against the HLS totals (`<kernel>_ctrl_dp.png`)."""
     fig, axes = plt.subplots(2, 2, figsize=(9, 6.6))
     for ax, (key, title, unit) in zip(axes.flat, METRICS):
         for _tool, case in CASES:
@@ -92,8 +107,10 @@ def figure(tier: str, kernel: str, pts: dict) -> str:
             if not ws:
                 continue
             color, marker, line = STYLE[case]
-            ax.plot(ws, [float(pts[(case, w)][key]) for w in ws],
-                    color=color, marker=marker, linestyle=line, label=LABEL[case], markersize=5)
+            rows = [ctrl_dp(pts[(case, w)]) if basis == "ctrl_dp" else pts[(case, w)] for w in ws]
+            label = f"{LABEL[case]} (ctrl + datapath)" if basis == "ctrl_dp" and _tool == "forge" else LABEL[case]
+            ax.plot(ws, [float(r[key]) for r in rows],
+                    color=color, marker=marker, linestyle=line, label=label, markersize=5)
         ax.set_xscale("log", base=2)
         ax.set_yscale("log")
         ax.set_xticks(WS, [str(w) for w in WS])
@@ -101,9 +118,10 @@ def figure(tier: str, kernel: str, pts: dict) -> str:
         ax.set_title(f"{title} ({unit})", fontsize=10)
         ax.grid(True, which="both", alpha=0.3)
     axes.flat[0].legend(fontsize=8)
-    fig.suptitle(f"{kernel} ({tier}), {SIZE[tier][kernel]}, {TECH}, 10 ns clock", fontsize=11)
+    what = ": forge's ctrl + datapath against the HLS totals" if basis == "ctrl_dp" else ""
+    fig.suptitle(f"{kernel} ({tier}), {SIZE[tier][kernel]}, {TECH}, 10 ns clock{what}", fontsize=11)
     fig.tight_layout()
-    path = OUT / tier / f"{kernel}.png"
+    path = OUT / tier / (f"{kernel}_{basis}.png" if basis else f"{kernel}.png")
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, dpi=130)
     plt.close(fig)
@@ -298,7 +316,10 @@ def main() -> int:
             body = md.read_text() if md.is_file() else template_page(tier, kernel)
             pts = pick(rows, TECH, tier, kernel)
             fig = figure(tier, kernel, pts)
-            main_part = [f"![{kernel}]({fig})", "", f"{SIZE[tier][kernel]}, {TECH}, int64, 10 ns.", ""]
+            fig_cd = figure(tier, kernel, pts, basis="ctrl_dp")
+            main_part = [f"![{kernel}]({fig})", "", f"{SIZE[tier][kernel]}, {TECH}, int64, 10 ns.", "",
+                         f"[forge's ctrl + datapath against the HLS totals]({fig_cd}): forge without its csr, its "
+                         "`<tag>_peripherals` and its glue; the HLS cases as above.", ""]
             body = fill(body, "main", main_part + table(tier, kernel, pts), md)
             body = fill(body, "parts", parts_table(rows, tier, kernel), md)
             md.write_text(body)
