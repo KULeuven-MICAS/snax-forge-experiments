@@ -90,14 +90,6 @@ def test_vcd_add_escaped():
     assert power.components(two) == ["a", "\\gen_x[0].b ", "c", "\\gen_y[1].d "]
 
 
-def test_busy_intervals():
-    iv = power.busy_intervals("# found dot_busy_o x\n0 dot_busy_o 0\n1586000 dot_busy_o 1\n1718000 dot_busy_o 0\n")
-    assert iv == {"dot_busy_o": [[1586000, 1718000]]}
-    w = power.windows("944000 1\n1249000 2\n1583000 3\n1768000 4\n", MARKS)
-    b = power.busy_in_windows(iv, w)["dot_busy_o"]["windows"]
-    assert [x["busy_cycles"] for x in b] == [0, 0, 132] and b[2]["cycles"] == 185
-
-
 VCD = """$date today $end
 $version Questa $end
 {ts}

@@ -34,10 +34,8 @@ clock hold unchanged.
      (PITFALLS Q15); a `when` on the wrapper's obs_o (a port, visible under +acc=n, Q16) writes `<ps> <value>` per
      change to pwr/obs_log.txt, flushed, and at the check's mark runs `vcd off` and `vcd flush`; the run goes on to
      the program's exit. The dump runs from time 0 (a `when` can only turn it on at the mark's edge, a quarter cycle
-     after the window opens). The busy pins found in the netlist's ports (core 0's axi_dma_busy_o, each group's
-     <group>_busy_o of the shell wrapper) are checked with `find nets` and sampled at every falling edge of the
-     wrapper's clk_i (a `when` takes no escaped path, Q15): pwr/busy_log.txt, `<ps> <name> <value>` per change, the
-     time the rising edge before the sample. `run -all`, `quit -f`; no `log`, no `power` (X8, X18).
+     after the window opens). `run -all`, `quit -f`; no `log`, no `power` (X8, X18). The windows come from obs_o
+     only (X73).
   5. the windows (pwr/windows.json): the marks of obs_log.txt in order, each once, from the legend's first up to the
      check's mark; section k from t_k - 250 ps to t_{k+1} - 250 ps (a quarter cycle before the edge where its mark
      appears, a time with no events), (t_{k+1} - t_k) / 1000 cycles, a non-integer count failing. Each window's
@@ -49,7 +47,7 @@ clock hold unchanged.
      deleted after its vcd2saif; at most min(nproc, windows) jobs at once, with no more cuts on disk than jobs; then
      pwr.saif_check(saif, cycles, "clk_i") per window (DURATION = cycles x 10 ns, clk_i TC = 2 x cycles).
   8. under pwr/ of sim/runs/cluster/nangate45/<point>.zip (other members kept): pwr.do, vcd_add.do, vsim_cmd.sh,
-     vsim.txt, obs_log.txt, busy_log.txt, windows.json, <mark>_<kind>/w.saif and vcd2saif.log per window, logs/,
+     vsim.txt, obs_log.txt, windows.json, <mark>_<kind>/w.saif and vcd2saif.log per window, logs/,
      check.json; also on a failure. Then vsim.wlf (none expected) dropped, tmp/cluster/<point>/ deleted, make
      clean-vsim clean-generated in snax_cluster. The SAIFs live only in this zip (sim/runs/ is git-ignored, X18).
 One line at the end; a failure names the check or step and prints at most 30 lines of its log.
@@ -212,68 +210,14 @@ def against_ref(wins: list[dict], ref: dict[int, int] | None) -> tuple[bool, lis
     return ok, rows
 
 
-def busy_pins(text: str, scopes: list[str]) -> list[dict]:
-    """The busy pins the netlist kept as module ports: core 0's axi_dma_busy_o on snitch_cc, each <group>_busy_o of
-    the accelerator's shell wrapper; each with the scope of its instance (pwr.scopes' form) and the vsim path."""
-    wanted = ((re.compile(r"snitch_cc\w*"), re.compile(r"axi_dma_busy_o"), "gen_core[0]"),
-              (re.compile(r"\w+_shell_wrapper"), re.compile(r"\w+_busy_o"), None))
-    heads = re.findall(r"^\s*module\s+(\w+)\s*\((.*?)\);", text, re.M | re.S)
-    out = []
-    for mod_re, port_re, inst_has in wanted:
-        for mod, ports in heads:
-            if not mod_re.fullmatch(mod):
-                continue
-            names = [p for p in re.findall(r"[\\\w][^\s,]*", ports) if port_re.fullmatch(p)]
-            insts = set(re.findall(rf"^\s*{re.escape(mod)}\s+(\\\S+ |\w+)\s*\(", text, re.M))
-            for s in scopes:
-                last = components(s)[-1]
-                if last in insts and (inst_has is None or inst_has in last):
-                    for port in names:
-                        out.append({"name": port, "scope": s, "path": f"{vsim_path(s)}/{port}"})
-    return out
-
-
-def busy_intervals(text: str) -> dict[str, list[list[int]]]:
-    """busy_log.txt's `<ps> <name> <value>` lines as [rise, fall) intervals in ps per name (a value ending in 1 is
-    busy; an interval still open at the log's end gets None)."""
-    out: dict[str, list[list[int]]] = {}
-    for ln in text.splitlines():
-        if not ln.strip() or ln.startswith("#"):
-            continue
-        t, name, v = ln.split()
-        iv = out.setdefault(name, [])
-        busy = v.rstrip().endswith("1")
-        if busy and (not iv or iv[-1][1] is not None):
-            iv.append([int(t), None])
-        elif not busy and iv and iv[-1][1] is None:
-            iv[-1][1] = int(t)
-    return out
-
-
-def busy_in_windows(iv: dict[str, list[list[int]]], wins: list[dict]) -> dict:
-    """Per busy pin and window: its intervals clipped to the window and the cycles they cover."""
-    out = {}
-    for name, ivs in iv.items():
-        rows = []
-        for w in wins:
-            a, b = w["t_mark_ps"], w["t_mark_ps"] + w["cycles"] * CLOCK_PS
-            clip = [[max(r, a), min(f if f is not None else b, b)] for r, f in ivs if r < b and (f is None or f > a)]
-            rows.append({"mark": w["mark"], "kind": w["kind"], "intervals_ps": clip,
-                         "busy_cycles": sum(f - r for r, f in clip) // CLOCK_PS, "cycles": w["cycles"]})
-        out[name] = {"intervals_ps": ivs, "windows": rows,
-                     "outside_span": [x for x in ivs if x[0] < wins[0]["t_mark_ps"]
-                                      or (x[1] or x[0]) > wins[-1]["t_mark_ps"] + wins[-1]["cycles"] * CLOCK_PS]}
-    return out
-
-
 def program_output(text: str) -> list[str]:
     """The run's lines outside Questa's `#` transcript but fesvr's: the program's own output."""
     return [ln for ln in text.splitlines() if ln.strip() and not ln.startswith("#") and not ln.startswith(FESVR)]
 
 
-def do_file(pdir: Path, check_mark: int, pins: list[dict]) -> str:
+def do_file(pdir: Path, check_mark: int) -> str:
     q = lambda p: "{" + str(p) + "}"   # noqa: E731
-    L = ["# PWR1 part 1 (cluster/power.py): the VCD of the cluster's design scopes, obs_o's changes, the busy pins",
+    L = ["# PWR1 part 1 (cluster/power.py): the VCD of the cluster's design scopes, obs_o's changes",
          "onbreak {resume}", "onfinish stop",
          f"vcd file {q(pdir / 'dut.vcd')}",
          f"source {q(pdir / 'vcd_add.do')}",
@@ -292,36 +236,11 @@ def do_file(pdir: Path, check_mark: int, pins: list[dict]) -> str:
          '    echo "pwr: vcd off at $now (mark $v)"',
          "  }",
          "}",
-         f"set busy_f [open {q(pdir / 'busy_log.txt')} w]",
-         "array set busy_sig {}"]
-    for p in pins:
-        L += [f"set s {q(p['path'])}",
-              "if {[llength [find nets $s]] > 0} {",
-              f"  set busy_sig({p['name']}) $s",
-              f"  set busy_prev({p['name']}) {{}}",
-              f'  puts $busy_f "# found {p["name"]} [find nets $s]"',
-              "} else {",
-              f'  puts $busy_f "# missing {p["name"]} $s"',
-              "}"]
-    L += ["flush $busy_f",
-          "if {[array size busy_sig] > 0} {",
-          f"  when -label busy {{{WRAP}/clk_i == 1'b0}} {{",
-          "    foreach n [array names busy_sig] {",
-          "      set v [examine -radix binary $busy_sig($n)]",
-          "      if {$v ne $busy_prev($n)} {",
-          f'        puts $busy_f "[expr {{$now - {CLOCK_PS // 2}}}] $n $v"',
-          "        flush $busy_f",
-          "        set busy_prev($n) $v",
-          "      }",
-          "    }",
-          "  }",
-          "}",
-          'echo "pwr: run from $now"',
-          "run -all",
-          'echo "pwr: run ended at $now"',
-          "close $obs_f",
-          "close $busy_f",
-          "quit -f"]
+         'echo "pwr: run from $now"',
+         "run -all",
+         'echo "pwr: run ended at $now"',
+         "close $obs_f",
+         "quit -f"]
     return "\n".join(L) + "\n"
 
 
@@ -537,22 +456,17 @@ def part1(p: dict, images: dict, args) -> dict:
 
         # step 3 and 4: the do-file, the scopes, the vsim command
         t = time.monotonic()
-        text = netlist.read_text()
         scopes = pwr.scopes(netlist, TOP)
-        pins = busy_pins(text, scopes)
-        del text
         adds = vcd_add_lines(scopes)
         (pdir / "vcd_add.do").write_text("\n".join(adds) + "\n")
-        (pdir / "pwr.do").write_text(do_file(pdir, chk["mark"], pins))
+        (pdir / "pwr.do").write_text(do_file(pdir, chk["mark"]))
         res["scopes"] = {"vcd_add": len(adds), "design_scopes": len(scopes),
                          "escaped": sum(1 for s in scopes if "\\" in s)}
-        res["busy_pins_netlist"] = pins
         script = (TB_DIR / "bin" / "snitch_cluster.vsim").read_text()
         cmd = vsim_command(script, pdir / "pwr.do", work / "sw" / "forge_quiet.elf")
         (pdir / "vsim_cmd.sh").write_text(cmd)
         res["seconds"]["do_file"] = round(time.monotonic() - t, 1)
-        print(f"  do-file                       {len(adds)} vcd add ({res['scopes']['escaped']} escaped scopes); busy "
-              f"pins in the netlist: {', '.join(x['name'] for x in pins) or 'none'}", flush=True)
+        print(f"  do-file                       {len(adds)} vcd add ({res['scopes']['escaped']} escaped scopes)", flush=True)
         vtxt = pdir / "vsim.txt"
         try:
             steps.host("pwr_vsim", TB_DIR, f"bash {shlex.quote(str(pdir / 'vsim_cmd.sh'))} > {shlex.quote(str(vtxt))} 2>&1",
@@ -586,10 +500,6 @@ def part1(p: dict, images: dict, args) -> dict:
         for r in cmp_rows:
             print(f"  window {r['mark']} {r['kind']:<16s} {r['cycles']:5d} cycles, CORE1 R2 {r['ref']}, diff {r['diff']}",
                   flush=True)
-        busy = cl._text(pdir / "busy_log.txt")
-        res["busy_pins_found"] = re.findall(r"^# found (\S+)", busy, re.M)
-        res["busy_pins_missing"] = re.findall(r"^# missing (\S+)", busy, re.M)
-        res["busy"] = busy_in_windows(busy_intervals(busy), wins)
         if not ok:
             raise cl.Stop(f"window cycles beyond {REF_TOL:.0%} of CORE1 R2's: {cmp_rows}")
 
@@ -659,7 +569,7 @@ def pack(work: Path, point: str, res: dict) -> None:
     z = cl.RUN_ZIPS / f"{point}.zip"
     pdir = work / "pwr"
     new = {}
-    for f in ("pwr.do", "vcd_add.do", "vsim_cmd.sh", "vsim.txt", "obs_log.txt", "busy_log.txt", "windows.json"):
+    for f in ("pwr.do", "vcd_add.do", "vsim_cmd.sh", "vsim.txt", "obs_log.txt", "windows.json"):
         if (pdir / f).is_file():
             new[f"pwr/{f}"] = (pdir / f).read_bytes()
     for d in sorted(x for x in pdir.iterdir() if x.is_dir()):
