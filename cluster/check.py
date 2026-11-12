@@ -4,9 +4,10 @@
 
 Mirrors snax_cluster's target/snitch_cluster/snax_forge_check.sh `compare`: the run's `forge data:` line
 equals the expected one; its `forge counter <task>: <c>` lines, in order, name the expected tasks, each
-count within that task's `forge fill <task>: <n>` of the expected count (the group's streamer fill: the
-counter counts the streamer's head start before START, which SNAX-GVSoC does not model); a file without
-fill lines asks for equal counts. Also reads the run's `forge cycles:` and its `[tc_sram_impl] <path>: <macro>`
+count's gap beyond that task's `forge fill <task>: <n>` (the group's streamer fill: the counter counts the
+streamer's head start before START, which SNAX-GVSoC does not model; 0 without a fill line), as a share of the
+expected count, e = max(0, |got - want| - fill) / want, at most WARN_PCT (D123 as amended 11 Nov: NEAR up to
+NEAR_PCT, WARNING up to WARN_PCT, FAIL beyond; snax_cluster's script since #694). Also reads the run's `forge cycles:` and its `[tc_sram_impl] <path>: <macro>`
 prints (cluster/mem.py's, one per instance at time 0, `<path>.gen_<macro>: <macro>`), and the macro models'
 `RAMCOUNT <path> <macro> reads N writes M` lines (ram/ram.py's final block): the netlist run (R4) and the RTL macro
 run, compared without the paths (they differ; the netlist's hold escaped identifiers with spaces), must give the same
@@ -28,6 +29,7 @@ CYCLES = re.compile(r"forge cycles: (\d+)")
 SRAM_MARK = "[tc_sram_impl] "
 SRAM_END = re.compile(r"\.gen_(\w+): (\w+)[ \t]*$", re.M)
 SUCCESS = "[SUCCESS] Program finished successfully"
+NEAR_PCT, WARN_PCT = 10, 15   # D123: a counter's gap beyond its fill, in % of its count
 # the path may hold spaces: a netlist's escaped identifiers end in one (`\gen_banks[0].i_data_mem .\gen_...`)
 RAMCOUNT = re.compile(r"RAMCOUNT (\S.*?)\s+(\w+) reads (\d+) writes (\d+)")
 
@@ -68,9 +70,12 @@ def compare(want_text: str, got_text: str) -> tuple[bool, list[str]]:
             continue
         fill = want["fills"].get(wn, 0)
         d = abs(gv - wv)
-        if d > fill:
-            ok = False
-            notes.append(f"{wn}: counter {gv} against {wv}, beyond its fill {fill}")
+        over = max(0, d - fill)
+        e = 0.0 if over == 0 else (100 * over / wv if wv > 0 else 100.0)
+        if over:
+            verdict = "NEAR" if e <= NEAR_PCT else "WARNING" if e <= WARN_PCT else "FAIL"
+            ok = ok and verdict != "FAIL"
+            notes.append(f"{wn}: counter {gv} against {wv}, {over} beyond its fill {fill} ({e:.1f} %, {verdict})")
         elif d:
             notes.append(f"{wn}: counter {gv} against {wv}, within its fill {fill}")
     return ok, notes
