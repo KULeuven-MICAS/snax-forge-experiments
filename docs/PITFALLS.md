@@ -379,6 +379,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** no `-nosplit` on it (as `sim/scripts/pt_power.tcl`).
 - **Found in:** `results/ram/runs/2026-11-06_ram1_r3.md`.
 
+### PT9. PT's nets are not the SAIF's entries
+
+- **Symptom:** on the cluster (`dot3_w16`) the SAIF from vcd2saif has 1,437,059 entries (923,145 driven, 513,914 at Z for the whole window), the VCD 1,437,900 `$var`, and PT reports 732,298 nets (`report_switching_activity`), of which 732,296 are annotated from the SAIF.
+- **Cause:** the VCD and the SAIF hold every net of every design scope, a hierarchical port net once per level it crosses; PT counts a net through the hierarchy once (its 1,385,713 `get_nets -hierarchical` objects are the net segments). Most of the SAIF's Z entries are port bits DC cut loose (DC18), which PT has no net for (PT6).
+- **Fix or check:** take the annotation's denominator from PT (`switching_activity.rpt`'s net count minus the not-annotated nets the SAIF has at Z for the whole window), never from the SAIF's entries. Check one net inside an escaped instance by hand: `get_attribute [get_nets {i_cluster/gen_core[0].i_snitch_cc/i_snitch/N424}] toggle_rate` equals its SAIF TC over the window (0.050270 per ns for TC 93 in 1,850 ns).
+- **Found in:** `results/cluster/runs/2026-11-12_pwr1_r2.md`.
+
 ## Licences
 
 ### L1. Transient error -92 from DC
