@@ -1,710 +1,396 @@
 # Decisions
 
-What this repo has settled. Each entry: date, decision, why, source (run note in `results/<source>/runs/` or `results/runs/`, or commit). A later decision that changes one adds a new number and says which it replaces; numbers are not reused.
+What this repo has settled, one entry per choice: the rule, why, and when and where it was decided (the run note in `results/<source>/runs/` or `results/runs/`). How a flow is run is in the folder READMEs and [`power.md`](power.md); an entry points there instead of repeating it.
 
-| X | title |
+A later choice that changes an entry takes the next number and says which one it amends; numbers are never reused. Retired entries are listed at the end. The longer wording of every entry, with its full record of numbers, is in git history (`git log -p docs/DECISIONS.md`, before 12 Nov 2026).
+
+| X | Decision |
 |---|---|
-| [X1](#x1-libraries) | Nangate 45 nm and 15 nm Open Cell Libraries, typical corner; gscl45nm retired |
+| [X1](#x1-libraries) | Nangate 45 nm and 15 nm Open Cell Libraries, typical corner |
 | [X2](#x2-clock) | Clock 10 ns throughout; `fmax_mhz` is a lower bound |
-| [X3](#x3-wire-load-drive-and-load) | No wire-load model; four `INV_X4` inputs of output load; max transition 0.25 ns |
-| [X4](#x4-physical-constraints-and-the-unit-check) | Constraints in ns and fF, scaled to library units, with the unit check |
-| [X5](#x5-results-per-technology) | One results tree and CSV per technology; only `KEPT_REPORTS` committed |
-| [X6](#x6-run-folders-are-kept) | Mapped netlists in `syn/runs/` are kept |
-| [X7](#x7-energy-from-simulated-activity) | Energy from a zero-delay Questa sim of the mapped netlist, then PrimePower, no resynthesis |
-| [X8](#x8-activity-from-the-vcd-through-vcd2saif) | Activity: VCD, then vcd2saif, then `read_saif`; the VCD is deleted at once |
-| [X9](#x9-every-activity-file-is-checked) | The SAIF is checked (DURATION, window, clock toggles) and >= 99 % of nets annotated |
-| [X10](#x10-pt-setup-check) | PT setup check per technology: the forced-activity pair, not P0 against DC (tolerances replaced by X25) |
-| [X11](#x11-flop-energy) | Flop energy compared as clock plus register |
-| [X12](#x12-cycles-and-windows) | Cycles from the first `ap_start` edge to the first `ap_done` edge, as cosim |
-| [X13](#x13-dynamic-energy-only) | Dynamic energy only, busy window, E_comb and E_flop per cycle |
-| [X14](#x14-tbjson-is-internal) | `tb.json` is internal to this repo; producers are not changed |
+| [X3](#x3-wire-load-drive-and-load) | No wire-load model; `INV_X4` drive, four `INV_X4` inputs of load; max transition 0.25 ns |
+| [X4](#x4-physical-constraints-and-the-unit-check) | Constraints in ns and fF, scaled to the library's units, with a unit check |
+| [X5](#x5-results-per-technology) | One results tree per technology; only `KEPT_REPORTS` committed |
+| [X6](#x6-run-folders-are-kept) | The mapped netlists in `syn/runs/` are kept |
+| [X7](#x7-energy-from-simulated-activity) | Energy from a zero-delay simulation of the netlist, then PrimePower |
+| [X8](#x8-activity-from-the-vcd-through-vcd2saif) | Activity: VCD, vcd2saif, `read_saif`; the VCD deleted at once |
+| [X9](#x9-every-activity-file-is-checked) | Every SAIF checked; at least 99 % of nets annotated |
+| [X11](#x11-flop-energy) | Flop energy is clock plus register |
+| [X12](#x12-cycles-and-windows) | Vitis cycles: first `ap_start` edge to first `ap_done` edge |
+| [X13](#x13-dynamic-energy-only) | Dynamic energy of the busy window only |
+| [X14](#x14-tbjson-is-internal) | `tb.json` is internal; the producers are not changed |
 | [X15](#x15-python-from-pixi) | Python from the repo's pixi workspace |
-| [X16](#x16-parallel-jobs-from-free-licences) | Parallel jobs from free licences |
-| [X17](#x17-licence-errors) | A tool that fails with a licence error is retried once |
-| [X18](#x18-no-dumps-kept) | No VCD, WLF or compiled design is kept; SAIFs stay in `sim/runs/` |
-| [X19](#x19-stimulus-and-expected-cycles) | Stimulus rand64, 64 beats, seed 0 (rowsum at m8_n64); expected cycles from cosim's line |
-| [X20](#x20-power-results) | `power_pt.csv`'s columns and definitions; checks fail a point but are not stored |
-| [X21](#x21-the-forge-source) | The forge source: `forge/points.json`, `forge-rtl`, bundles in `rtl/forge/`, one snax-forge commit per result |
-| [X22](#x22-synthesis-of-a-forge-point) | A forge point synthesizes `<tag>_shell_wrapper`, hierarchy kept; csr, ctrl, datapath and glue columns |
-| [X23](#x23-power-of-a-forge-point) | A forge point's power: `forge_csr`, `csr_seq.sv`, window = COUNTER = snax-forge's cycles |
-| [X24](#x24-the-reference-task-n2048) | SYN1 compares one task of N = 2048 elements on both sides; its joined table retired (X43) |
-| [X25](#x25-pt-is-the-reference-the-setup-check-is-a-diagnostic) | PT is the reference; the setup check is a diagnostic and never fails a point |
-| [X26](#x26-forge-control-rtl-copied-as-a-reading-aid) | Forge's csr, ctrl and wrapper SV at W = 8 copied into `results/analysis/control/src/`, an exception to X21 (retired, X43) |
-| [X27](#x27-syn2-syn1-read-from-git-results-hold-syn2) | SYN2: SYN1 read from git at `f99c423`; `results/forge/<tech>/` holds SYN2; SYN1's local runs kept in `*_syn1/` (retired, X43) |
-| [X28](#x28-the-char-source) | The char source: `char/points.json`, `char-rtl` through snax-forge's `gen-block`, `rtl/char/`, provenance from git, a dirty checkout refused first |
-| [X29](#x29-the-char1-grid) | The CHAR1 grid: int64 only; the W and depth values; Mac accumulating; ElementwiseLanes add and mul |
-| [X30](#x30-synthesis-of-a-block-alone) | A block alone: the block as top, `clock` and an ideal asynchronous active-high `reset`, X22's settings, the char columns, alone against inside by module name |
-| [X31](#x31-char1s-windows-and-stimulus) | CHAR1's windows and stimulus: busy and idle, LinkBuffer's stream, a lead-in, inputs at the rising edge, 128 cycles (departs from X13 and X19 for CHAR1 only) |
-| [X32](#x32-the-vcd-cut-per-window) | The VCD cut per window in place of `vcd2saif -time` on the shared VCD (PITFALLS VS1), CHAR1 |
-| [X33](#x33-char_powercsvs-columns-and-e_hold) | `char_power.csv`'s columns; e_hold, the mean idle e_bit; a link not loading costs its flops x e_hold |
-| [X34](#x34-busy_t1-and-duty50-dropped) | `busy_t1` and `duty50` dropped; duty50's finding (an isolated fire costs 25 to 30 % more) a known limit |
-| [X35](#x35-nangate45s-linkbuffer-slope-kept-as-measured) | nangate45's LinkBuffer stream slope kept as PT's averaged mode gives it |
-| [X36](#x36-char_tablemd-and-the-draft-json) | `char_table.md` and `char_draft.json` generated by `report/char_table.py`; the JSON a draft (replaced by X37 in R4) |
-| [X37](#x37-charjson-the-table-snax-forge-reads) | `char.json` per technology, the table snax-forge reads (`report/char_export.py`): flop, ctrl's counter factor, per block e_comb and comb area with a lanes rule; checked against SYN2 in `char_table.md` |
-| [X38](#x38-hsyn1s-scope) | HSYN1's scope: four HLS cases (Vitis opt and dace, Bambu, XLS), W <= 16, every tool at a 10 ns HLS clock; Vitis unopt and every W = 32 point retired; `hls` means Vitis |
-| [X39](#x39-the-bambu-and-xls-sources) | The bambu and xls sources: roots, case filters, `MAX_W`, clock and reset per source, the port guard, runs and results trees |
-| [X40](#x40-path-class-slacks-measured-after-compile) | The path-class slack columns (in2reg, reg2reg, reg2out, in2out), measured only after compile |
-| [X41](#x41-a-controldatapath-split-only-where-the-rtl-declares-it) | A control/datapath split only where the RTL declares it as hierarchy: forge (X22) and Bambu; Vitis and XLS totals only |
-| [X42](#x42-the-cycle-csvs-imported-with-provenance) | The Bambu and XLS cycle CSVs imported byte for byte with a `SOURCE` file (`report/import_cycles.py`) |
-| [X43](#x43-syn1-and-syn2-analyses-retired) | Retired: X24's joined table, X26's copied control RTL, X27's SYN1 read from git, the SYN1 and SYN2 analysis scripts and notes |
-| [X44](#x44-power-of-the-bambu-and-xls-points) | Power of the bambu and xls points: their windows, expected-cycle lines, XLS's cfg packing, Bambu's held pins, one port table (changes X12 for these two sources) |
-| [X45](#x45-the-tier-comparison-csvs) | `results/compare_done.csv` and `compare_untiered.csv` (`report/compare.py`): one row per tech, tier, kernel, W, tool, case and size, data laid out with no ratios |
-| [X46](#x46-the-hls-cases-side-by-side) | `results/compare_hls.md` (`report/compare_hls.py`): the four HLS cases per kernel, area, energy, latency and power against W, with hand-written insights between generated parts |
-| [X47](#x47-sram-area-and-energy-from-cacti-7-at-45-nm) | SRAM area and dynamic energy per access from CACTI 7 at 45 nm (itrs-hp, scaled to 1.1 V); OpenRAM dropped |
-| [X48](#x48-the-sram-lookup-table) | `results/ram/nangate45/ram_table.csv`: every depth 32 to 4096 (step 32) and width 8 to 256 (step 8), a lookup table, no fit |
-| [X49](#x49-memories-as-generated-liberty-and-verilog-models-from-cactis-numbers) | SRAM macros as generated `.lib`/`.db` and `.v` from CACTI's numbers (`pixi run ram lib`), `tc_sram_impl`'s ports, energy on the rising edge only when selected; never committed |
-| [X50](#x50-memory-energy-is-counted-accesses-times-the-table) | Memory energy = counted reads and writes (`RAMCOUNT`) x the table's energies, added to PT's energy of the rest; an exception to X25 for macros |
-| [X52](#x52-the-streamer-reader-and-the-sparse-interconnect-characterized) | STRM1: snax_cluster's reader alone (also a writer's cost) and sparse interconnect, totals only, the reader as the Streamer uses it, the two stimuli, no clock gating, the run settings |
-| [X53](#x53-the-strm-tables-and-their-interpolation) | `results/strm/<tech>/streamer.csv` and `xbar.csv` (`report/strm_table.py`): totals per point; trilinear and bilinear interpolation in the raw values, refused outside the grid; the interconnect's energy above inputs = banks |
-| [X54](#x54-the-interconnects-energy-interpolated-in-1inputs) | The interconnect's energy interpolated linearly in 1/inputs (it goes as a + b/inputs); replaces X53's linear rule for that field only |
-| [X55](#x55-untiered-at-n2048) | Untiered at n2048 for every source (relu and axpy n2048, matadd m32_n64, rowsum m16_n128); forge has only that size; amends X24 and X45 |
-| [X56](#x56-cycles-checked-within-5-) | The start-to-done window is the measurement; expected cycles beside it, a point fails only past 5 %; replaces X19's and X23's exact match |
-| [X57](#x57-forges-untiered-points-at-int64) | forge's relu, matadd, axpy and axpy_baked at int64: snax-forge's recipe with a `dtypes` override from `forge/points.json`, fed to its sandbox from `tmp/` |
-| [X58](#x58-a-forge-points-program-from-snax-forges-lower) | A forge point is bundled at its n2048 shape (its sets, tier done N = 2048 too) and driven with what snax-forge's LOWER writes for it: JOBS, JOB_BEATS, scalar CSRs, each stream's element order |
-| [X59](#x59-at-most-16-cores-and-some-licences-left-free) | Everything a round runs at once uses at most 16 cores and leaves licences free: DC `-j 4 --cores 4`, `pwr run --cores 16 -j 4`, one batch at a time; amends X16 |
-| [X60](#x60-n2048-module-energies-beside-the-default-run) | `power_pt_modules.csv` has a `size` column: the default run's modules and every n2048 run's, per point and size; no default run moves; amends X20 |
-| [X61](#x61-the-tables-with-forge-and-n2048-untiered-on-nangate45) | compare.py and compare_hls.py with forge's untiered points: new module names and cases, untiered n2048 required and its parts on nangate45 only, compare_hls.md with forge's cases and every tier at n2048; amends X45, X46, X55 |
-| [X62](#x62-a-vitis-ram-swapped-for-an-sram-macro) | Vitis dace's one-port RAM swapped for a CACTI macro of the instance's size (2048 x 64 for dot and axpy), a wrapper with Vitis's ports; rowsum's two-port 16-word buffer from flops; `ram_um2`, `e_ram_pj` and the counts beside the totals |
-| [X63](#x63-the-parts-at-n2048-and-forges-total-without-csr) | `compare_hls.md`'s parts at n2048 (forge csr, ctrl, datapath, total, total without csr; Bambu ctrl, datapath, total; Vitis dace's RAM apart; totals otherwise); forge without csr is the like-for-like figure; each compare row takes its own run's parts |
-| [X65](#x65-forges-csr-without-its-peripherals) | forge's `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168) is in no figure: the csr part is the csr cell minus it, the total without csr is the total minus the whole csr cell (as in Part A); kept in `peripherals_um2` and `e_dyn_peripherals_pj` for the record; amends X63 |
-| [X64](#x64-the-comparison-one-page-per-kernel) | `results/compare/`: a README (setup, summary, parts' basis, nangate15 check) and one page per kernel with its figure, table, insights and parts; replaces `results/compare_hls.md`; amends X46, X61, X63 |
-| [X66](#x66-the-clusters-sram-implementation-generated-from-its-memory-list) | The cluster's `tc_sram_impl.sv` generated from clustergen's `--memories` list, one branch per size, CACTI macros with the list's byte enable, the models through `SRAM_MODELS` (confirmed in R2) |
-| [X67](#x67-the-cluster-source) | The `cluster` source: a snax-forge bundle through snax_cluster's main, the whole cluster synthesized and run in three steps (step 1, `cluster rtl`, confirmed in R2; step 2, `cluster syn`, in R3; step 3, `cluster gls`, in R4) |
-| [X68](#x68-the-clusters-constraints-and-run-budget) | The cluster's constraints (AXI 30 %, CSR 10 %, async reset, static ports false) and one run at a time at `--cores 16`, kept under load (`SYN_IGNORE_LOAD`); it holds 2 DC-Expert (confirmed in R3) |
-| [X69](#x69-no-sdf-unless-asked) | DC writes no SDF unless `syn.py --sdf` (`SYN_WRITE_SDF`, every source; confirmed in R3) |
-| [X70](#x70-the-interconnect-with-read-only-and-write-only-inputs-xbar_mix) | The `xbar_mix` source: the TCDM sparse interconnect with read-only and write-only inputs and the cluster template's ties |
-| [X71](#x71-the-interconnects-read-only-and-write-only-inputs-in-the-cost-factor-form-by-default-crosspoint-form-as-an-option) | `xbar_kinds.json`: the interconnect's read-only and write-only inputs, factor form by default, crosspoint form as an option |
-| [X72](#x72-the-clusters-area-in-groups-against-hwcost) | The cluster's area in groups (`cluster/groups.json`), against snax-forge's HWCOST (`cluster/hwcost.py`) and the accelerator alone |
-| [X73](#x73-the-clusters-windows-and-span) | The cluster's windows: one per program section from the quiet ELF's `obs_o` marks; the span from the first mark to the end of the last DMA out |
-| [X74](#x74-primepower-on-the-whole-cluster) | PrimePower on the whole cluster: one VCD, one cutting pass, one PT session in averaged mode over the windows' SAIFs, >= 95 % of the driven nets annotated |
-| [X75](#x75-the-macros-in-cluster-measurements) | The macros in cluster measurements: PT's averaged figure as measured, no counted accesses |
-| [X76](#x76-tb_bins-1-ns-clock-read-as-10-ns) | `tb_bin`'s 1 ns clock read as 10 ns: the cut VCDs carry `$timescale 10ps` |
-| [X77](#x77-a-second-figure-forges-ctrl-and-datapath) | A second figure per kernel, `<kernel>_ctrl_dp.png`: forge's ctrl + datapath against the HLS totals |
+| [X16](#x16-parallel-jobs-from-free-licences) | Parallel jobs from free licences (amended by X59, X68) |
+| [X17](#x17-licence-errors) | A licence error is retried once |
+| [X18](#x18-no-dumps-kept) | No VCD, WLF or compiled library kept; SAIFs stay in the run zip |
+| [X19](#x19-stimulus-and-expected-cycles) | rand64 stimulus, seed 0, 64 beats by default; expected cycles from cosim's line |
+| [X20](#x20-power-results) | `power_pt.csv` and `power_pt_modules.csv` |
+| [X21](#x21-the-forge-source) | The forge source: bundles from snax-forge, one commit per result |
+| [X22](#x22-synthesis-of-a-forge-point) | A forge point: the shell wrapper, hierarchy kept, csr / ctrl / datapath / glue |
+| [X23](#x23-power-of-a-forge-point) | A forge point's power: CSR-driven TB, window checked against BUSY_COUNTER |
+| [X24](#x24-the-reference-task-n2048) | The reference task: N = 2048 elements on every side |
+| [X25](#x25-pt-is-the-reference-the-setup-check-is-a-diagnostic) | PT is the reference; the PT-against-DC check is a diagnostic |
+| [X28](#x28-the-char-source) | The char source: catalogue blocks through snax-forge's `gen-block` |
+| [X29](#x29-the-char1-grid) | The CHAR1 grid: 27 points, int64 |
+| [X30](#x30-synthesis-of-a-block-alone) | A block alone: the block as top, X22's settings |
+| [X31](#x31-char1s-windows-and-stimulus) | CHAR1's busy, idle and stream windows |
+| [X32](#x32-the-vcd-cut-per-window) | The VCD cut per window before vcd2saif |
+| [X33](#x33-char_powercsvs-columns-and-e_hold) | `char_power.csv`; e_hold, one held-flop energy per technology |
+| [X34](#x34-busy_t1-and-duty50-dropped) | `busy_t1` and `duty50` dropped; the isolated-fire cost a known limit |
+| [X35](#x35-nangate45s-linkbuffer-slope-kept-as-measured) | nangate45's LinkBuffer slope kept as measured |
+| [X37](#x37-charjson-the-table-snax-forge-reads) | `char.json`, the block model snax-forge reads |
+| [X38](#x38-hsyn1s-scope) | Four HLS cases, W ≤ 16, a 10 ns HLS clock |
+| [X39](#x39-the-bambu-and-xls-sources) | The bambu and xls sources, with a port guard |
+| [X40](#x40-path-class-slacks-measured-after-compile) | Path-class slacks measured after compile |
+| [X41](#x41-a-controldatapath-split-only-where-the-rtl-declares-it) | A control/datapath split only where the RTL declares it |
+| [X42](#x42-the-cycle-csvs-imported-with-provenance) | Bambu's and XLS's cycle CSVs copied with a `SOURCE` file |
+| [X44](#x44-power-of-the-bambu-and-xls-points) | Bambu's and XLS's windows and handshakes |
+| [X45](#x45-the-tier-comparison-csvs) | `compare_done.csv` and `compare_untiered.csv`: raw rows, no ratios |
+| [X47](#x47-sram-area-and-energy-from-cacti-7-at-45-nm) | SRAM area and energy from CACTI 7 at 45 nm; OpenRAM dropped |
+| [X48](#x48-the-sram-lookup-table) | The SRAM table is a lookup, never fitted |
+| [X49](#x49-memories-as-generated-liberty-and-verilog-models-from-cactis-numbers) | SRAM macros generated from CACTI's numbers |
+| [X50](#x50-memory-energy-is-counted-accesses-times-the-table) | Memory energy = counted accesses x the table |
+| [X51](#x51-outputs-zipped-one-per-point) | Every point's outputs are one zip |
+| [X52](#x52-the-streamer-reader-and-the-sparse-interconnect-characterized) | The streamer reader and the sparse interconnect characterized |
+| [X53](#x53-the-strm-tables-and-their-interpolation) | `streamer.csv` and `xbar.csv`, read by multilinear interpolation |
+| [X54](#x54-the-interconnects-energy-interpolated-in-1inputs) | The interconnect's energy interpolated in 1/inputs |
+| [X55](#x55-untiered-at-n2048) | Untiered at n2048 too |
+| [X56](#x56-cycles-checked-within-5-) | The window is the measurement; expected cycles within 5 % |
+| [X57](#x57-forges-untiered-points-at-int64) | forge's untiered points at int64 through the recipe's `dtypes` |
+| [X58](#x58-a-forge-points-program-from-snax-forges-lower) | A forge point's CSR writes and stream order from snax-forge's LOWER |
+| [X59](#x59-at-most-16-cores-and-some-licences-left-free) | At most 16 cores at once, licences left free |
+| [X60](#x60-n2048-module-energies-beside-the-default-run) | `power_pt_modules.csv` keyed by point and size |
+| [X61](#x61-the-tables-with-forge-and-n2048-untiered-on-nangate45) | forge in the tables; untiered n2048 on nangate45 only |
+| [X62](#x62-a-vitis-ram-swapped-for-an-sram-macro) | A Vitis RAM swapped for an SRAM macro |
+| [X63](#x63-the-parts-at-n2048-and-forges-total-without-csr) | The parts at n2048; forge without its csr is the like-for-like total |
+| [X64](#x64-the-comparison-one-page-per-kernel) | `results/compare/`: one page per kernel |
+| [X65](#x65-forges-csr-without-its-peripherals) | BUSY_COUNTER's peripherals are in no figure |
+| [X66](#x66-the-clusters-sram-implementation-generated-from-its-memory-list) | The cluster's `tc_sram_impl.sv` generated from its memory list |
+| [X67](#x67-the-cluster-source) | The cluster source: `cluster rtl`, `syn`, `gls` |
+| [X68](#x68-the-clusters-constraints-and-run-budget) | The cluster's port constraints; one 16-core run at a time |
+| [X69](#x69-no-sdf-unless-asked) | No SDF unless asked |
+| [X70](#x70-the-interconnect-with-read-only-and-write-only-inputs-xbar_mix) | `xbar_mix`: the interconnect with read-only and write-only inputs |
+| [X71](#x71-the-interconnects-read-only-and-write-only-inputs-in-the-cost-factor-form-by-default-crosspoint-form-as-an-option) | Their area in the cost: factor form, crosspoint form as an option |
+| [X72](#x72-the-clusters-area-in-groups-against-hwcost) | The cluster's area in groups, against HWCOST |
+| [X73](#x73-the-clusters-windows-and-span) | The cluster's windows from the quiet program's marks |
+| [X74](#x74-primepower-on-the-whole-cluster) | PrimePower on the whole cluster, one session over the windows |
+| [X75](#x75-the-macros-in-cluster-measurements) | Cluster macros as PT measures them |
+| [X76](#x76-tb_bins-1-ns-clock-read-as-10-ns) | `tb_bin`'s 1 ns clock read as 10 ns |
+| [X77](#x77-a-second-figure-forges-ctrl-and-datapath) | A second figure per kernel: forge's ctrl + datapath |
 
 ## Synthesis
 
 ### X1. Libraries
 
-- **Date:** 2026-10-28
-- **Decision:** synthesis runs on the Nangate 45 nm Open Cell Library (`NangateOpenCellLibrary_typical.db`: typical, 1.10 V, 25 C) and the Nangate 15 nm Open Cell Library (`NanGate_15nm_OCL_typical_conditional_nldm.db`: typical, 0.80 V, 25 C), chosen per run with `--tech`; there is no default library. OSU gscl45nm (FreePDK45) is retired with its rows; run notes before 28 Oct 2026 are on it.
-- **Why:** gscl45nm has 31 cells (676 buf/inv against nangate45's 104 on `done/vecadd/opt_w8`), pins with `max_capacitance` 0 and capacitance in pF. Two open libraries of different nodes give a technology axis with the same flow.
-- **Source:** `2026-10-28_step0_libs.md`, `2026-10-28_syn_tech_probe.md`, `b6869b5`.
+Synthesis runs on the Nangate 45 nm Open Cell Library (typical, 1.10 V, 25 °C) and the Nangate 15 nm one (typical, 0.80 V, 25 °C), chosen per run with `--tech`, no default. New work is on nangate45 only (snax-forge D159); the nangate15 rows stay as data. **Why:** two open libraries give a technology axis with one flow; OSU gscl45nm, used before 28 Oct, has 31 cells and broken pin limits. *28 Oct (SYN); `2026-10-28_step0_libs.md`.*
 
 ### X2. Clock
 
-- **Date:** 2026-10-27 (kept on both libraries 2026-10-28)
-- **Decision:** the ASIC clock is 10 ns on every point and technology (`--clock` exists but is not used for results). `fmax_mhz` = 1000 / (`clock_ns` - `slack_ns`) is a lower bound, not the library's speed.
-- **Why:** one clock makes the points comparable in area and energy per cycle. At 10 ns DC meets timing with room to spare and keeps area-optimized structures; it does not upsize for speed.
-- **Source:** `2026-10-27_done.md`, `2026-10-28_tech_rerun.md` (Odd things).
+10 ns on every point and technology. `fmax_mhz` = 1000 / (`clock_ns` − `slack_ns`) is a lower bound. **Why:** one clock makes area and energy per cycle comparable; at 10 ns DC keeps area-optimized structures and never upsizes for speed. *27 Oct; `2026-10-27_done.md`.*
 
 ### X3. Wire load, drive and load
 
-- **Date:** 2026-10-28
-- **Decision:** no wire-load model on either library (nangate45 `wire_load off`, nangate15 `none`). Input drive `INV_X4`. Output load four `INV_X4` inputs: 25.0 fF on nangate45 (4 x 6.258), 13.2 fF on nangate15 (4 x 3.301). Max transition 0.25 ns. A run whose `area.rpt` shows a wire-load model is marked `failed: a wire-load model applied`.
-- **Why:** nangate15 has no wire-load models and nangate45's default (`5K_hvratio_1_1`) would change its timing and switching power, so none on either treats both alike. The old `set_load 0.03` meant 30 fF on gscl45nm and 0.03 fF on nangate45; four `INV_X4` inputs is the same fanout in each library's own cells.
-- **Source:** `2026-10-28_syn_tech_probe.md`, `b6869b5`; `syn/README.md` (Wire load).
+No wire-load model on either library. Inputs driven by `INV_X4`; outputs loaded with four `INV_X4` inputs (25.0 fF on nangate45, 13.2 fF on nangate15); max transition 0.25 ns. A run whose `area.rpt` shows a wire-load model fails. **Why:** nangate15 has none and nangate45's default would change timing and power, so neither gets one; four inputs is the same fanout in each library's own cells (PITFALLS DC1). *28 Oct; `2026-10-28_syn_tech_probe.md`.*
 
 ### X4. Physical constraints and the unit check
 
-- **Date:** 2026-10-28
-- **Decision:** `constraints.sdc` holds physical values only (ns, fF). syn.py derives `T_SCALE` (library time units per ns: 1 on nangate45, 1000 on nangate15) and `C_SCALE` (1 on both) from the tech file, and DC multiplies every constraint by them. Right after the library is set, `dc_syn.tcl` reads the library's name and time and capacitance units from `report_lib`; if any differs from the tech file it exits with code 2 before reading RTL (`failed: library mismatch`).
-- **Why:** a library in other units takes every constraint 1000x off with no error (a 10 ns clock read as 10 ps on nangate15).
-- **Source:** `2026-10-28_step0_libs.md` (Conclusion), `2026-10-28_syn_tech_probe.md` (Checks), `b6869b5`.
+`constraints.sdc` holds ns and fF; `syn.py` scales them to the library's units (nangate15 times by 1000). DC stops before reading RTL if the library's name or units differ from the tech file. **Why:** a library in other units takes every constraint 1000x off with no error (PITFALLS DC2). *28 Oct; `2026-10-28_syn_tech_probe.md`.*
 
 ### X5. Results per technology
 
-- **Date:** 2026-10-28
-- **Decision:** each technology has its own tree and CSVs: `results/hls/<tech>/synth_dc.csv`, `synth_dc_modules.csv`, `reports/`. Only the eight reports in `KEPT_REPORTS` (`area.rpt`, `area_hierarchy.rpt`, `reference.rpt`, `power.rpt`, `power_hierarchy.rpt`, `qor.rpt`, `tech.json`, `lib_info.txt`) are committed per point; a file over 1 MB is left out and named in `skipped.txt`.
-- **Why:** area is in each library's own unit and comparable only within a library, so the rows are kept apart. The kept reports are what the area and energy model reads and what the run ran on; the rest checks a run and a rerun rebuilds it.
-- **Source:** `b6869b5`, `b2b08a0`; `2026-10-28_tech_rerun.md`.
+Each technology has its own `results/<source>/<tech>/` tree. Only `KEPT_REPORTS` (`syn/README.md`) is committed per point. **Why:** areas compare only within a library; the kept reports are what the models read and what the run ran on. *28 Oct.*
 
 ### X6. Run folders are kept
 
-- **Date:** 2026-10-29
-- **Decision:** the mapped netlists in `syn/runs/` are kept. Power and simulation prompts never delete or modify anything under `syn/runs/`; synthesis prompts clean only the points they rerun.
-- **Why:** simulation and power read the netlist DC wrote, with no resynthesis (X7); a deleted run folder can only be rebuilt by a new synthesis, which could differ (`2026-10-27_wsweep_r2.md`: area moves by up to 0.02 % with names alone).
-- **Source:** `2026-10-29_pwr_step0.md`.
+The mapped netlists in `syn/runs/` are kept; a clean never deletes `syn/runs/` or `sim/runs/`, and synthesis reruns replace only their own points. **Why:** power reads DC's netlist with no resynthesis (X7), and a resynthesis can differ (PITFALLS DC3). *29 Oct.*
 
 ## Power
 
 ### X7. Energy from simulated activity
 
-- **Date:** 2026-10-29
-- **Decision:** energy comes from simulated activity. A functional, zero-delay Questa simulation of the mapped netlist (no SDF, `vsim +nospecify +notimingchecks`; `vopt +initreg+0 +acc=n`, see PITFALLS Q1 and Q2), then PrimePower (`pt_shell`, averaged mode) on the same netlist with the same library, constraints and wire-load setting as DC (`pt_power.tcl`). No resynthesis.
-- **Why:** DC's default activity follows the logic structure, not the work a point does (PITFALLS DC4). The netlist is unplaced, so there is no wire delay to annotate; zero delay gives the activity per cycle the model needs.
-- **Source:** `2026-10-29_pwr_step0.md`, `19c1323`.
+Energy comes from a functional, zero-delay Questa simulation of the mapped netlist (`+nospecify +notimingchecks`, `vopt +initreg+0 +acc=n`), then PrimePower in averaged mode on the same netlist, library and constraints as DC. No resynthesis. **Why:** DC's default activity follows the logic structure, not the work (PITFALLS DC4); the netlist is unplaced, so zero delay gives what a per-cycle model needs. *29 Oct; `2026-10-29_pwr_step0.md`.*
 
 ### X8. Activity from the VCD, through vcd2saif
 
-- **Date:** 2026-10-29 (rewritten for `pwr_r1` the same day)
-- **Decision:** activity comes from a Questa VCD of the DUT's scopes (the netlist's own nets and those of its sub-designs, not the cells'), dumped by the TB from the edge that raises `ap_start` to the done edge. `vcd2saif -instance tb/dut -time t0 t1` cuts the busy window in the VCD's time unit (ps here) into a SAIF, and PT reads it with `read_saif -strip_path tb/dut`. The VCD is deleted right after vcd2saif, whatever the result. Questa's `power report -bsaif` is not used. This replaces the kickoff's "Questa writes the SAIF" and step 0's `read_vcd -zero_delay -time`.
-- **Why:** Questa 2022.4's SAIF is wrong in four ways at zero delay and 13 % low busy, 34 % low idle on vecadd `opt_w8`, with 100 % annotation coverage in PT (PITFALLS Q4). vcd2saif and `read_vcd` agree within 0.1 % (step 0: 1.0004 to 1.0010); a SAIF is small, can be checked in Python (X9) and kept (X18), where a VCD of a long run is not.
-- **Source:** `2026-10-29_pwr_step0.md` (Questa's SAIF against the VCD), `2026-10-29_pwr_r1.md`.
+The TB dumps a VCD of the design's own scopes over the window; `vcd2saif` cuts it into a SAIF, PT reads it with `read_saif`, and the VCD is deleted at once. Questa's own SAIF is not used. **Why:** Questa 2022.4's SAIF is wrong at zero delay (PITFALLS Q4); vcd2saif agrees with PT's `read_vcd` within 0.1 %. *29 Oct; `2026-10-29_pwr_r1.md`.*
 
 ### X9. Every activity file is checked
 
-- **Date:** 2026-10-29 (rewritten for `pwr_r1` the same day)
-- **Decision:** before PT, `sim/pwr.py` checks the window's SAIF: T0 + T1 + TX = DURATION on every driven net (a net at Z for the whole window is an undriven wire bit, counted apart; PITFALLS DC5), every entry parsed, DURATION = cycles x clock period, and the clock net's TC = 2 x cycles. After PT, at least 99 % of the design's nets must be annotated from the SAIF (`report_switching_activity`); the list of nets that are not is kept in the run folder. A failed check fails the point.
-- **Why:** coverage alone said 3566/3566 for the defective Questa SAIF too; it says a net has a number, not that the number is right. The clock check caught a lost window edge while building the TB (PITFALLS Q6).
-- **Source:** `2026-10-29_pwr_step0.md` (For the design: Coverage is not a SAIF check), `2026-10-29_pwr_r1.md`.
-
-### X10. PT setup check
-
-- **Date:** 2026-10-29 (tolerance amended after `pwr_r1` the same day)
-- **Decision:** the PT setup check per technology is the forced-activity pair: `pt_power.tcl` and `dc_readback.tcl` with `PWR_MODE=uniform` (DC's default toggle rate and static probability annotated on every net but the clock), agreeing per power group within 0.1 %, except nangate15's combinational group within 2.5 %. PT is the reference tool for energy. P0 (PT with DC's defaults, propagated) against DC's `power.rpt` is not the check.
-- **Why:** with identical annotated activity PT and DC agree to 0.00 % in every group on nangate45; with default activity they differ by 2.4 % (register 35 %) because their vectorless propagation differs, which says nothing about the setup (PITFALLS PT2). nangate15's combinational gap (+1.95 %) is non-switching internal power, which PT and DC handle differently (PITFALLS PT5), not the setup; PT, the sign-off power tool that reads the simulated activity, is the one the results use.
-- **Status:** the tolerances are replaced by X25 (2026-11-01): the check is a diagnostic, `SETUP_TOL` and `SETUP_TOL_GROUP` are gone from `sim/pwr.py`. At the time both technologies passed: nangate45 within 0.0013 %, nangate15 within 0.08 % and combinational +1.95 %.
-- **Source:** `2026-10-29_pwr_step0.md` (P0 against DC), `2026-10-29_pwr_r1.md`.
+Before PT, each SAIF must satisfy T0 + T1 + TX = DURATION on every driven net, DURATION = cycles x clock period and the clock's TC = 2 x cycles. After PT at least 99 % of the nets must be annotated (95 % of the driven nets on a whole cluster, X74). A failed check fails the point. **Why:** annotation coverage alone passed a defective SAIF. *29 Oct; `2026-10-29_pwr_r1.md`.*
 
 ### X11. Flop energy
 
-- **Date:** 2026-10-29
-- **Decision:** flop energy is compared as clock plus register (e_clk + e_reg), never one group alone.
-- **Why:** PT books a flop's clock-edge energy under register when its output toggles and under clock when it does not (PITFALLS PT3); e_clk is 4.04 pJ idle against 2.40 busy on vecadd `opt_w8`.
-- **Source:** `2026-10-29_pwr_step0.md` (Energy per cycle).
+Flop energy is always e_clk + e_reg, never one group alone. **Why:** PT books a flop's clock-edge energy under register when its output toggles and under clock when it does not (PITFALLS PT3). *29 Oct.*
 
 ### X12. Cycles and windows
 
-- **Date:** 2026-10-29
-- **Decision:** a run's cycles count rising edges from the first edge that samples `ap_start` = 1 to the first edge that samples `ap_done` = 1. The busy window opens at the falling edge before the first start edge and closes at the falling edge before the done edge (`sim/tb/ap_ctrl_hs_seq.sv` prints both; step 0 marked them with `$stop`).
-- **Why:** this count equals cosim's latency with no offset (66 against 66 on vecadd `opt_w8`). Falling-edge boundaries hold exactly the transitions of the rising edges inside the window, since nothing toggles at a falling edge.
-- **Source:** `2026-10-29_pwr_step0.md` (Simulation: Result, Windows).
+A Vitis run's cycles count the rising edges from the first that samples `ap_start` = 1 to the first that samples `ap_done` = 1; the window runs between the falling edges before those two. **Why:** the count equals cosim's latency with no offset, and falling-edge bounds hold exactly the rising edges inside. Bambu, XLS, forge and the cluster have their own windows (X23, X44, X73). *29 Oct.*
 
 ### X13. Dynamic energy only
 
-- **Date:** 2026-10-29
-- **Decision:** the power flow measures the busy window only, from start to done (X12), and reports two dynamic numbers per cycle: E_comb, and E_flop = E_clk + E_reg + E_seq. Idle windows are not measured. Leakage stays in `synth_dc.csv` and is not repeated in the power results. Energy per run is (E_comb + E_flop) x C_run.
-- **Why:** snax-dfg and snax-gvsoc annotate only dynamic activity, as logic plus register energy per active cycle. E_flop sums the flop groups because PT books a flop's clock-edge energy under register or clock depending on whether its output toggles (X11), so the register group alone undercounts a register's cost per active cycle.
-- **Source:** agreed after `2026-10-29_pwr_step0.md`; its idle rows (P3, P4) are kept for the record only.
+The power flow reports dynamic energy of the busy window, per cycle as E_comb and E_flop = E_clk + E_reg + E_seq; energy per task is (E_comb + E_flop) x cycles. No leakage in the power results (it stays in `synth_dc.csv`), no idle window (except CHAR1, X31, and the cluster, X73). **Why:** snax-forge's models annotate only dynamic activity per active cycle. *29 Oct.*
 
 ### X14. tb.json is internal
 
-- **Date:** 2026-10-29
-- **Decision:** `tb.json`, the description the TB is built from, is internal to this repo. Producers are not changed: hls-exercises keeps writing `rtl/<point>/filelist.f` and `sizes.txt`; snax-forge keeps its bundle and `accelerator.json` (snax-forge C§17). One adapter per source builds `tb.json`: `sim/sources/hls.py`, from the point's Verilog ports and `params.json`; `sim/sources/forge.py` (SYN1 R2, X23), from the bundle's `accelerator.json`, `bundle.json`, `point.json` and the netlist's ports. `tb.json` is written into each run folder at run time and committed with the point's reports in `power_reports/` (X20).
-- **Why:** this repo is the data-collection side, and snax-forge must not need changes to be measured.
-- **Source:** agreed 2026-10-29, after `2026-10-29_pwr_step0.md`.
+`tb.json`, the description each TB is built from, is written by an adapter per source (`sim/sources/`) from what the producer already writes; hls-exercises, dslx-exercises and snax-forge are never changed to be measured. **Why:** this repo is the measuring side. *29 Oct.*
 
 ## Environment
 
 ### X15. Python from pixi
 
-- **Date:** 2026-10-29
-- **Decision:** Python comes from the repo's pixi workspace (`pixi.toml`: Python 3.11, numpy): `pixi install` once, then `pixi run syn ...` and `pixi run python <script>`. Not the host's `python3` or `python3.11`.
-- **Why:** the host's `python3` is 3.6.8 and cannot parse the scripts; `python3.11` on the host has no numpy. One pinned environment (`pixi.lock`) gives the same Python everywhere.
-- **Source:** `620bb67`, `8bd46e5`; `2026-10-27_done.md` (Tools).
+Python comes from the repo's pixi workspace (Python 3.11): `pixi run ...`, never the host's `python3`. **Why:** the server's `python3` is 3.6; one locked environment everywhere. *29 Oct.*
 
 ### X16. Parallel jobs from free licences
 
-- **Date:** 2026-10-29 (rewritten for `pwr_r1` the same day; synthesis since 2026-10-28)
-- **Decision:** count free licences with `lmutil lmstat` on both servers at the start of a batch, then:
-  - power (`pwr run`): J = min(free `msimhdlsim`, free PrimePower, free PrimeTime, nproc) workers; each worker runs one point from start to end (compile, then per run vsim, vcd2saif and PT). PT threads per run = max(1, nproc // J) (`set_host_options -max_cores`). The counts, J and the threads go into the run note;
-  - DC runs (`syn.py -j`): from free Design-Compiler licences (9 free gave `-j 2`), at `--cores 16` per run.
-- **Why:** a job that cannot check out a licence fails or waits; J workers with nproc // J threads each use the cores without oversubscribing them.
-- **Source:** `2026-10-29_pwr_step0.md` (Licences), `2026-10-28_tech_rerun.md` (Commands), `2026-10-29_pwr_r1.md`.
+Count free licences with `lmutil lmstat` before a batch and size the parallel jobs from them; PT threads = cores // jobs. Amended by X59 (at most 16 cores) and X68 (cluster runs). **Why:** a job without a licence fails or waits. *29 Oct.*
 
 ### X17. Licence errors
 
-- **Date:** 2026-10-29
-- **Decision:** a tool that fails with a licence error is retried once; a second failure stops and is reported.
-- **Why:** licence errors can be transient: DC failed once with error -92 during an `lmreread` with 0 of 10 in use, and the rerun seconds later worked (PITFALLS L1).
-- **Source:** `2026-10-29_pwr_step0.md` (Licences).
+A tool that fails with a licence error is retried once; a second failure is reported. **Why:** error -92 was transient (PITFALLS L1). *29 Oct.*
 
 ## Power runs
 
 ### X18. No dumps kept
 
-- **Date:** 2026-10-29
-- **Decision:** no VCD, WLF or compiled design library is kept. The VCD is deleted right after vcd2saif, whatever the result; `vsim.wlf` and the point's compiled `work/` at the end of each point. A run folder keeps `tb.json`, the stimulus, the logs, the SAIF, the PT reports and the list of nets not annotated. SAIFs stay in `sim/runs/` (git ignores it); only the reports in X20 are committed.
-- **Why:** a VCD grows with nets x cycles (16.9 MB for vecadd `unopt_w32`, 6273 cycles) and is fully replaced by its SAIF (2.3 MB there); WLF and the compiled library are rebuilt in about 2 s.
-- **Source:** `2026-10-29_pwr_r1.md`.
+No VCD, WLF or compiled design is kept; the VCD is deleted right after vcd2saif. A point's zip keeps `tb.json`, the SAIF and PT's reports (X51). **Why:** a VCD grows with nets x cycles and its SAIF replaces it; the rest rebuilds in seconds. *29 Oct.*
 
 ### X19. Stimulus and expected cycles
 
-- **Date:** 2026-10-29
-- **Decision:** the default stimulus is `rand64`: uniform full-range int64 from numpy `default_rng(seed)`, seed 0, drawn stream by stream in `tb.json` order, then the data pins (axpy's alpha). Every point runs 64 beats whatever W: loop_count = 64 (and len = 64 for dot and vsum), so n = 64 x W elements; matadd loop_count = 64. rowsum runs its cosim size m8_n64 as is. Every input stream bit must toggle at least once before the sim, enforced from 64 beats up; a task size with fewer beats (n64 at W = 32 is 2 beats, and a random bit stays 0 with probability 2^-beats) records the count of bits that never toggle in its `result.json` and runs (amended in `pwr_tasks`). Task runs (`--size all`) take every size in the point's `sizes.txt`, compared exactly with cosim's cycles. `--stim forge` (hls-exercises' `data.h` at a cosim size, with `sim/ref.py` asserted equal to its `EXP_*`) is for validation only. Expected cycles come from `results/hls/hls_cycles.csv`: cosim's two sizes of the point give cycles = a x loop_count + b, with a and b integers; at a cosim size the comparison is exact. A mismatch fails the point.
-- **Why:** full-range data toggles every bit, so the energy does not depend on how narrow a test's values are (forge's data cost 4.3 % less per busy cycle in step 0); 64 beats keeps every W's run the same work per beat. The cycle line checks the netlist against cosim at sizes cosim never ran.
-- **Source:** `2026-10-29_pwr_step0.md` (forge against full), `2026-10-29_pwr_r1.md`, `2026-10-29_pwr_tasks.md`.
-- **See also:** X24, SYN1's reference task n2048; this entry stays as it is.
+The default stimulus is rand64: full-range int64 from NumPy's `default_rng(0)`, stream by stream in `tb.json` order, then the data pins. The default HLS task is 64 beats (`b64`); every input bit must toggle at least once. Expected cycles come from cosim's line a x loop_count + b through its two sizes. **Why:** full-range data toggles every bit, so energy does not depend on how narrow the test values are. The compared task is n2048 (X24, X55); the cycle check is X56's. *29 Oct; `2026-10-29_pwr_r1.md`.*
 
 ### X20. Power results
 
-- **Date:** 2026-10-29
-- **Decision:** `results/hls/<tech>/power_pt.csv`, one row per point, size and seed (merged on those three), columns in this order:
-  - `point`, `top`, `tech`, `clock_ns`, `W`, `size` (`b64`, or a cosim size), `config` (the pins, e.g. `loop_count=64`), `beats` (beats per input stream), `seed` (`forge` for the forge stimulus), `cycles`;
-  - `e_clk_pj`, `e_reg_pj`, `e_seq_pj`, `e_comb_pj`: (internal + switching) of each PT power group x `clock_ns`, per cycle of the busy window;
-  - `e_flop_pj` = e_clk + e_reg + e_seq; `e_dyn_pj` = e_flop + e_comb; `p_dyn_uw` = e_dyn / clock_ns x 1000;
-  - `e_comb_fire_pj`, `e_flop_fire_pj` = per cycle x cycles / beats; `e_run_pj` = e_dyn x cycles;
-  - `flop_bits` = `seq_cells` of the point in `synth_dc.csv`; `e_bit_pj` = e_flop / flop_bits;
-  - `status`: `ok`, `failed: <which check>`, or `skipped: needs a RAM macro (...)` (a `# ram:` point, as syn.py).
-
-  No leakage columns (X13). `power_pt_modules.csv` (`point, tech, path, design, e_dyn_pj`) has one row per hierarchical cell of the default run. Committed per point in `power_reports/<tier>/<kernel>/<point>/`: `power.rpt`, `power_hierarchy.rpt`, `switching_activity.rpt`, `tb.json` (other runs of the point in a subfolder `<size>_<seed>/`). The checks (X9, X19) fail a point but are not stored as columns; tool versions go in the run note.
-- **Why:** the HWCOST model needs energy per cycle and per firing, split into combinational and flop energy, across the W sweeps; everything else is either a check or recoverable from the run folder.
-- **Source:** `2026-10-29_pwr_r1.md`.
+`power_pt.csv` has one row per point, size and seed, with the per-cycle energies and per-task energy defined in [`power.md`](power.md#energy-quantities); `power_pt_modules.csv` has one row per hierarchical cell (X60). The checks fail a point but are not columns; tool versions go in the run note. **Why:** the cost model needs energy per cycle and per firing, split into combinational and flop, across W. *29 Oct; amended by X60, X62, X74.*
 
 ## SYN1: snax-forge
 
 ### X21. The forge source
 
-- **Date:** 2026-11-01 (built in SYN1 R0 to R1b, 2026-10-31)
-- **Decision:** `forge/points.json` lists the forge points, one snax-forge recipe at one W each, named as hls-exercises names its points (`<tier>/<kernel>/<case>_w<W>`, e.g. `done/dot/forge3_w4`) so a forge row joins the HLS rows of the same kernel and W. `pixi run forge-rtl` (`forge/bundles.py`) runs snax-forge's sandbox, design and bundle tasks in the sibling checkout (`SNAX_FORGE`, default `../snax-forge`) through its own pixi, with this repo's `PIXI_*` and `CONDA_*` variables and `.pixi` PATH entries removed and the inner `CONDA_PREFIX` checked. Bundles go to `rtl/forge/<point>/`, which git ignores: a bundle is rebuilt from its commit. Each bundle's `point.json` records `snax_forge_commit` and `dirty`, and every forge row carries `recipe`, `W` and `snax_forge_commit`; a dirty bundle is refused. Every row of a result names one snax-forge commit: when the commit moves without an RTL change, all points are rebundled and their `rtl/sv/` and `rtl/files.f` diffed byte for byte before the rows are re-labelled.
-- **Why:** snax-forge must not change to be measured (X14), and a result must be traceable to exactly the RTL that was synthesized; rebundling and diffing proves a re-label instead of assuming it.
-- **Source:** `results/forge/runs/2026-10-31_syn1_r0.md`, `2026-10-31_syn1_r1b.md`, `b79c371` (all 48 points rebundled from snax-forge `32dbcc6`, SV identical, every row re-labelled).
+`forge/points.json` lists the forge points, named like hls-exercises' (`<tier>/<kernel>/<case>_w<W>`). `pixi run forge-rtl` runs snax-forge's own tasks in the sibling checkout and zips each bundle into `rtl/forge/` (not committed). Every row records its snax-forge commit; a dirty bundle is refused; a re-label after a commit move needs a byte-for-byte rebundle diff. **Why:** a result must trace to exactly the RTL synthesized, without changing snax-forge. *1 Nov (SYN1); `results/forge/runs/2026-10-31_syn1_r1b.md`.*
 
 ### X22. Synthesis of a forge point
 
-- **Date:** 2026-11-01 (built in SYN1 R0 and R1, 2026-10-31)
-- **Decision:** a forge point synthesizes the bundle's top `<tag>_shell_wrapper` (C§17's wrapper, `snax_forge_shell_wrapper`) with its hierarchy kept (`compile_ultra -no_autoungroup`), with the same libraries, clock, constraints and reports as HLS (X1 to X5). The source adapter sets `SYN_FORMAT` (`sverilog`), `SYN_CLK_PORT` (`clk_i`) and `SYN_RST_PORT` (`rst_ni`); the HLS defaults (`verilog`, `ap_clk`, `ap_rst_n`) are unchanged. Forge rows of `synth_dc.csv` add `csr_um2`, `ctrl_um2`, `datapath_um2` (the wrapper's three instances, children included, from `synth_dc_modules.csv`) and `glue_um2`, the total minus the three: the cells DC moves to the wrapper's own level. DC's boundary optimization is left on, so forge is compiled as HLS is.
-- **Why:** the comparison needs forge's control and datapath apart, which only a kept hierarchy gives; turning boundary optimization off would compile forge differently from HLS (and `-no_boundary_optimization` crashed DC, PITFALLS DC7). The glue is small: at most 0.08 % of the total on nangate45 and 0.06 % on nangate15 (0.5 to 2.1 µm² and 0.15 to 0.44 µm² over the 48 points); `syn.py` reports a glue below 0 or above 1 %.
-- **Source:** `results/forge/runs/2026-10-31_syn1_r0.md`, `2026-10-31_syn1_r1.md` (the glue share), `2026-10-31_syn1_r1b.md`.
+A forge point synthesizes its `<tag>_shell_wrapper` with the hierarchy kept (`compile_ultra -no_autoungroup`) and boundary optimization on, otherwise as HLS. Its rows add `csr_um2`, `ctrl_um2`, `datapath_um2` and `glue_um2` (the total minus the three). **Why:** the comparison needs control and datapath apart, and only a kept hierarchy gives them; the glue stays under 0.1 % of the total. *1 Nov; `2026-10-31_syn1_r1.md`.*
 
 ### X23. Power of a forge point
 
-- **Date:** 2026-11-01 (built in SYN1 R2, 2026-10-31)
-- **Decision:** `sim/sources/forge.py` builds `tb.json` with control kind `forge_csr` (X14) from the bundle and the netlist's ports, every port covered as C§17's wrapper has them; the container per port, the kernel and the expected cycles come from snax-forge's own code through `forge/query.py` in snax-forge's environment (`gen/rtl.py`'s `group_counter`). The TB's CSR sequencer `sim/tb/csr_seq.sv` writes JOBS (and a fold's JOB_BEATS), then START. The window opens at the falling edge before the edge that accepts START and closes one cycle before the first falling edge that samples `<group>_done_o` = 1; its cycles must equal the COUNTER the TB reads back and snax-forge's expected cycles, and every output must match `sim/ref.py` (itself checked against snax-forge's kernel body once per batch). Nets PT leaves unannotated that the SAIF has at Z for the whole window (constant outputs whose ports DC left floating) leave the annotation check's denominator (PITFALLS PT6); every other net is checked as for HLS (X9). Results in `results/forge/<tech>/` with X20's columns plus `recipe` and `snax_forge_commit`; `power_pt_modules.csv` gives csr, ctrl and datapath apart.
-- **Why:** the same flow as HLS (X7 to X13, X20), driven the way the cluster drives forge; three independent cycle counts (the TB's window, the RTL's COUNTER, snax-forge's model) agreeing is the check that the window is the task.
-- **Source:** `results/forge/runs/2026-10-31_syn1_r2.md`, `2026-11-01_syn1_r3.md`.
+`sim/sources/forge.py` builds the TB from the bundle; `sim/tb/csr_seq.sv` writes the CSRs LOWER writes (X58), then START. The window opens before the edge that accepts START and closes one cycle before done; BUSY_COUNTER and snax-forge's expected cycles are recorded beside it (X56). Details in [`power.md`](power.md#forge---source-forge). **Why:** the same flow as HLS, driven as the cluster drives forge. *1 Nov; `2026-10-31_syn1_r2.md`.*
 
 ### X24. The reference task n2048
 
-- **Date:** 2026-11-01
-- **Decision:** SYN1's comparisons use one task of N = 2048 elements on both sides, size `n2048`: 2048 / W beats per input stream (64 at W = 32), rand64 stimulus with seed 0 (X19's). The forge points have only this size; the HLS points of tier done (vecadd, vecmul, vsum, dot) have it beside cosim's sizes and `b64` (`sim/sources/hls.py` `EXTRA_SIZES`), its pins from `params.json`'s config at n = 2048 and its expected cycles from cosim's line through n64 and n512 (X19). The existing HLS results (64 beats, cosim sizes) are kept as extra data; X19 stays as it is. The joined table is `results/forge_vs_hls.md` (`pixi run table`).
-- **Why:** the same task on both sides makes e_run per task and per element comparable whatever W; 64 beats per W (X19) is a different task at each W. N = 2048 gives at least 64 beats at every W, so the toggle check applies everywhere.
-- **Source:** `results/forge/runs/2026-11-01_syn1_r3.md`, `results/hls/runs/2026-11-01_syn1_r3_hls.md`.
+Comparisons use one task of N = 2048 elements per input stream on every side (`n2048`, 2048 / W beats). The forge points have only this size; the HLS points have it beside cosim's sizes and `b64`. **Why:** the same task at every W makes energy per task and per element comparable. *1 Nov; extended to untiered by X55.*
 
 ### X25. PT is the reference; the setup check is a diagnostic
 
-- **Date:** 2026-11-01
-- **Decision:** replaces X10's tolerances. PT with simulated activity is the reference for energy. DC's power in `synth_dc.csv` (default activity) is an early check only, and matching the two is not a goal. The PT-against-DC setup check (`pwr setup-check`, X10's forced-activity pair) stays as a diagnostic, run when the flow or a library changes: it prints its per-group differences, which go into the run note, and it never fails a point; `SETUP_TOL` and `SETUP_TOL_GROUP` are removed from `sim/pwr.py`. The checks that catch real errors stay gates: the wire-load check (PITFALLS PT1: after `set_load 0` and `set_resistance 0` no net keeps a wire capacitance or resistance; it fails a run and the setup check) and the SAIF and annotation checks (X9).
-- **Why:** on nangate15 the two tools differ for library reasons, not setup ones (PITFALLS PT5), and the differences vary with the netlist. The record, from SYN1 R3: nangate45 within 0.02 % in every group; nangate15's register group -0.08 % on HLS `done/vecadd/opt_w8` and -0.25 % to -1.08 % on the three forge points (`vecadd/forge_w4` -0.55 %, `vsum/forge_w8` -0.25 %, `dot/forge5_w4` -1.08 %), combinational +1.79 % to +2.21 %, consistent with PT5. The register group is a small part of the forge points' energy: 1.3 %, 14.0 % and 2.6 % of e_dyn at n2048 on nangate15 (vecadd W = 4, vsum W = 8, dot 5 W = 4; 1.5 %, 14.8 %, 3.5 % on nangate45), so a -1 % gap there is at most 0.04 % of e_dyn.
-- **Source:** `results/hls/runs/2026-10-29_pwr_r1.md`, `results/forge/runs/2026-10-31_syn1_r2.md`, `2026-11-01_syn1_r3.md` (Step 2).
-
-### X26. Forge control RTL copied as a reading aid
-
-- **Date:** 2026-11-01
-- **Decision:** for the control-role analysis (`report/control_roles.py`, `pixi run control`), the csr, ctrl and wrapper SystemVerilog of the eight W = 8 forge points (vecadd, vecmul, vsum, dot 2 to 6) are copied unchanged from their bundles into `results/analysis/control/src/<kernel>/<case>_w8/`, with a `point.json` naming the snax-forge commit (`32dbcc6`) and `dirty` false. They are a reading aid: `roles.json` cites their lines, and a reader needs no bundle to follow it. This is an exception to X21: `rtl/` stays uncommitted, nothing is synthesized or simulated from the copies, and the role checks still read every point's own bundle. HLS's Verilog is not copied: it is committed in hls-exercises (`rtl/done/<kernel>/<case>_w<W>/`).
-- **Why:** the roles are read from the RTL, so the lines they cite must stay reachable from a commit; the bundles are rebuilt on demand and not committed.
-- **Source:** `results/analysis/control/` (`control_roles.md`, `roles.json`).
-
-## SYN2: snax-forge after CTRL1
-
-### X27. SYN2: SYN1 read from git, results hold SYN2
-
-- **Date:** 2026-11-02
-- **Decision:** SYN2 reruns SYN1's 48 forge points with SYN1's flow and settings on snax-forge's CTRL1 (`f9764d5`, D152 and D153). Its "before" is SYN1 read from git at the pinned commit `f99c4238e4653b82ed4bded7344b5c48be4516f7` (`git show`, never a copy); `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `power_pt.csv`, `power_pt_modules.csv`, `reports/`, `power_reports/`) now holds SYN2, and `pixi run syn2` (`report/analysis_syn2.py`) writes `results/analysis/syn2/syn2_before_after.md`. SYN1's analysis files (`results/analysis/syn1/syn1_analysis.md` and figures, the split's `split_*.csv`, `results/analysis/control/`, `results/forge_vs_hls*.md` and `.csv`) describe SYN1 and stay as committed; they are regenerated from the pinned commit, not from this tree: `pixi run table`, `analysis`, `split` or `control` run here would write SYN2's forge rows into SYN1's files. SYN1's local runs are kept, ignored by git: its netlists in `syn/runs/forge_syn1/`, its bundles in `rtl/forge_syn1/`, its power runs and SAIFs in `sim/runs/forge_syn1/`; the split's PrimePower runs stay in `sim/split_runs/`.
-- **How to regenerate SYN1's files:** the scripts have no path option (`rtl/forge`, `syn/runs/forge`, `sim/runs/forge` and `results/` are fixed from the repo root), so use a worktree of the pinned commit, beside this repo (`analysis` reads `../hls-exercises`), with temporary symlinks to the kept folders; no code change:
-
-  ```bash
-  R=$PWD; git worktree add ../sfe-syn1 f99c4238e4653b82ed4bded7344b5c48be4516f7 && cd ../sfe-syn1
-  mkdir -p rtl syn/runs sim/runs
-  ln -s $R/rtl/forge_syn1 rtl/forge;  ln -s $R/syn/runs/forge_syn1 syn/runs/forge;  ln -s $R/syn/runs/hls syn/runs/hls
-  ln -s $R/sim/runs/forge_syn1 sim/runs/forge;  ln -s $R/sim/runs/nangate45 sim/runs/nangate45
-  ln -s $R/sim/runs/nangate15 sim/runs/nangate15;  ln -s $R/sim/split_runs sim/split_runs
-  pixi install && pixi run control && pixi run split collect && pixi run analysis && pixi run table
-  git status --short        # only the untracked sim/split_runs link: the committed files are reproduced
-  cd $R && git worktree remove --force ../sfe-syn1   # removes the links, not their targets
-  ```
-
-  `pixi run split pt` (PrimePower again on SYN1's SAIFs) works the same way; it writes into `sim/split_runs/`, so point that link at a scratch folder to rerun without replacing the kept runs.
-- **Why:** git already holds SYN1's results exactly, so a copy could only drift; the local runs (netlists, bundles, SAIFs) are not in git and are kept so SYN1's analyses can be rerun without resynthesis or resimulation.
-- **Source:** `results/forge/runs/2026-11-02_syn2_r1.md`, `2026-11-02_syn2_r2.md`, `2026-11-02_syn2_r3.md` (the worktree recipe checked: `control`, `split collect`, `analysis` and `table` reproduce the committed files byte for byte; `split pt` on `done/dot/forge3_w4` into a scratch folder gives the kept run's `cells.tsv`).
+PT with simulated activity is the reference for energy; DC's power is an early check only. `pwr setup-check` (PT against DC on one netlist with the same forced activity) prints its per-group differences for the run note and never fails a point. The wire-load and SAIF checks stay gates. **Why:** the two tools differ on nangate15 for library reasons (PITFALLS PT5), within 0.02 % on nangate45. *1 Nov; replaces X10.*
 
 ## CHAR1: snax-forge's blocks alone
 
 ### X28. The char source
 
-- **Date:** 2026-11-03 (built in CHAR1 R0)
-- **Decision:** `char/points.json` lists the CHAR1 points, one snax-forge catalogue datapath at full params each (`hw/chisel/blocks.json`'s names and values), named `<block>/<case>_w<W>` (`lanes/add_w8`, `mac/acc_w32`, `tree/add_w4`, `serial/sum_w16`, `link/d4_w1`). `pixi run char-rtl` (`char/blocks.py`) runs snax-forge's `gen-block` (`Emit --block`, C§17) once for every selected point in the sibling checkout (`SNAX_FORGE`), through its own pixi with `forge/bundles.py`'s environment clean-up and check (imported, not copied), into `rtl/char/<point>/` (`sv/`, `emitted.json`), which git ignores. gen-block records no provenance, so each point's `point.json` takes snax-forge's commit and dirty flag from `git rev-parse HEAD` and `git status --porcelain` (its `bundle.py`'s rule), before and after the call; a dirty checkout is refused before anything runs (forge-rtl refuses after bundling).
-- **Why:** as X21 for forge: snax-forge is not changed to be measured, and every row must trace to the RTL that was synthesized; refusing first leaves no half-built folder.
-- **Source:** `results/char/runs/2026-11-03_char1_r0.md`.
+`char/points.json` lists one catalogue datapath per point; `pixi run char-rtl` runs snax-forge's `gen-block` into `rtl/char/`, recording the commit; a dirty checkout is refused first. **Why:** as X21. *3 Nov (CHAR1).*
 
 ### X29. The CHAR1 grid
 
-- **Date:** 2026-11-03 (CHAR1 R0)
-- **Decision:** 27 points at int64 only: ElementwiseLanes add and mul at W = 1, 8, 32; Mac in its accumulating form (`accumulate` true, `regOut` false) at W = 1, 8, 32; TreeAccumulate at W = 1, 2, 4, 8, 16, 32; SerialAccumulate at W = 2, 4, 8, 16, 32 (W = 1 has no lane select); LinkBuffer at D = 1, 2, 4, 8, 16 at W = 1 and D = 1 at W = 8 and 32. No other ElementwiseLanes op, no plain Mac, no other dtype.
-- **Why:** the blocks and forms the dot and matvec accelerators of SYN1 and SYN2 use, at the W they run, enough points for a first-order model of each (lane copies, the folds against W, the buffer against depth); other dtypes and ops wait for a model that needs them.
-- **Source:** `results/char/runs/2026-11-03_char1_r0.md`; `char/points.json`.
+27 points at int64: ElementwiseLanes (now SimdLanes) add and mul at W = 1, 8, 32; accumulating Mac at W = 1, 8, 32; TreeAccumulate at W = 1–32; SerialAccumulate at W = 2–32; LinkBuffer at D = 1–16 (W = 1) and D = 1 at W = 8, 32. **Why:** the blocks and forms SYN1's accelerators use, enough points for a first-order model. *3 Nov.*
 
 ### X30. Synthesis of a block alone
 
-- **Date:** 2026-11-03 (CHAR1 R0)
-- **Decision:** `syn/syn.py --source char` synthesizes `emitted.json`'s top (the block itself, no wrapper) from its `files`, SystemVerilog, clock `clock`, reset `reset` (asynchronous, active high, kept ideal as the others), with X22's settings otherwise (X1 to X4, 10 ns, no wire-load model, `compile_ultra -no_autoungroup`, boundary optimization on). Results in `results/char/<tech>/` under their own names, `char_synth.csv` and `char_synth_modules.csv` (the columns of `synth_dc.csv` and `synth_dc_modules.csv`), a char row adding `datapath`, `lanes`, `depth`, `op`, `form` and `snax_forge_commit` from `point.json`. A block alone is compared with the same module inside SYN2's accelerators by its module name (DC's `_<n>` allowed), comb and seq summed over the cell's subtree.
-- **Why:** a block alone then compares with the same block inside SYN2's accelerators: equal area within 0.05 % wherever the accelerator drives its pins (R0); where it ties one (TreeAccumulate's `first` in dot 4) the difference is the free pin's logic, a known limit in `results/char/char_table.md`.
-- **Source:** `results/char/runs/2026-11-03_char1_r0.md`.
+`syn.py --source char` synthesizes the block itself as top (clock `clock`, asynchronous active-high `reset`) with X22's settings; results in `results/char/<tech>/char_synth.csv`. **Why:** a block alone then equals the same module inside an accelerator within 0.05 % where the accelerator drives its pins. *3 Nov.*
 
 ### X31. CHAR1's windows and stimulus
 
-- **Date:** 2026-11-03 (built in CHAR1 R1, settled in R2)
-- **Decision:** for CHAR1 only (X13 and X19 stay as they are for HLS and forge), a block has no CSRs, no START and no done, and `sim/pwr.py --source char` drives its data and pins as its control unit would through fixed windows (`sim/sources/char.py`, `sim/tb/char_<kind>_seq.sv`): `busy` (a fire every cycle; SerialAccumulate a read every cycle, 128 beats of W) and `idle` (the enable at 0, every other input held, `first` included) for ElementwiseLanes, Mac, TreeAccumulate and SerialAccumulate; `stream` only for LinkBuffer, a FIFO at full rate (a D-slot fill, then a load of new data every cycle with `rslot` the oldest slot). After 5 cycles of reset and 4 settle slots, each window follows a lead-in slot of its own kind outside every window (LinkBuffer: the fill), so a window holds only its own input changes and its own kind's captures. Inputs change at the rising edge, as SYN1 and SYN2's TBs and a block's neighbours inside an accelerator change them, and outputs are compared with `sim/ref.py`'s `char_ref` at every falling edge. 128 cycles per window (against X19's 64 beats); rand64 with seed 0, one stream per data input port. Departs from X13 (idle is measured, for E_task = n_fire E_busy + n_idle E_idle) and X19 (128 cycles, the windows) for CHAR1 only.
-- **Why:** a first-order block model needs a block's energy busy and idle apart. Inputs at the falling edge (R1's first two batches) let the inputs and an accumulator reach its adder half a cycle apart, two transitions per cycle in a zero-delay simulation: TreeAccumulate's busy was 1.36x its module inside vsum on the same stream, 0.998x driven at the rising edge. With inputs at the rising edge an edge carries the previous slot's capture and the next slot's input change, which the lead-in slot keeps out of every window.
-- **Source:** `results/char/runs/2026-11-03_char1_r1.md`, `2026-11-03_char1_r2.md`.
+A block has no CSRs, so `sim/pwr.py --source char` drives it through fixed 128-cycle windows: `busy` (a fire every cycle) and `idle` (enable low, inputs held) for the compute blocks, `stream` (a full-rate FIFO) for LinkBuffer. Inputs change at the rising edge; each window follows a lead-in of its own kind. Details in [`power.md`](power.md#char---source-char). **Why:** a block model needs busy and idle apart, and falling-edge inputs doubled the transitions in a zero-delay run (TreeAccumulate 1.36x). *3 Nov; `2026-11-03_char1_r2.md`.*
 
 ### X32. The VCD cut per window
 
-- **Date:** 2026-11-03 (CHAR1 R1)
-- **Decision:** `sim/pwr.py --source char` cuts the run's VCD into one file per window (`vcd_windows`: the header, every variable's value at the last time step before t0 as plain value changes, the window's events, a bare time step at t1) and runs `vcd2saif -time t0 t1` on each cut, not on the shared VCD; the shared VCD and each cut are deleted at once (X18). The HLS and forge sources keep their single-window cut on the shared VCD.
-- **Why:** on the shared VCD vcd2saif counts one toggle in the window for every net whose last change before t0 was a zero-width pulse (PITFALLS VS1): ElementwiseLanes' idle cost 0.028 pJ per cycle where nothing toggles. On the cuts TC equals the VCD's net toggles on every net. SYN1 and SYN2's single windows may carry up to one phantom toggle per net and are not rechecked.
-- **Source:** `results/char/runs/2026-11-03_char1_r1.md`; PITFALLS VS1.
+`sim/pwr.py` cuts the VCD into one file per window (`vcd_windows`) and runs vcd2saif on each cut, not on the shared VCD. Used by char, streamer, xbar and the cluster. **Why:** on a shared VCD vcd2saif adds a phantom toggle for a zero-width pulse before the window (PITFALLS VS1). *3 Nov.*
 
 ### X33. char_power.csv's columns and e_hold
 
-- **Date:** 2026-11-03 (CHAR1 R1, R2)
-- **Decision:** `results/char/<tech>/char_power.csv` has one row per point and window: `point`, `datapath`, `lanes`, `depth`, `op`, `form`, `tech`, `clock_ns`, `window`, `cycles`, `fires`, `seed`, `e_clk_pj`, `e_reg_pj`, `e_seq_pj`, `e_comb_pj`, `e_flop_pj` (clock + register + sequential), `e_dyn_pj`, `e_bit_pj` (= e_flop / `char_synth.csv`'s `seq_cells`, empty at 0 flops), `status`, `snax_forge_commit`, every energy per cycle of its window (X20's definitions); PT's `power.rpt` and `switching_activity.rpt` per window in `power_reports/<point>/<window>/`. e_hold, one number per technology, is the mean idle e_bit of the registered blocks (Mac, TreeAccumulate, SerialAccumulate): 7.1476 fJ on nangate45 and 1.8911 fJ on nangate15, 14 points each within 0.17 % and 0.06 %. A LinkBuffer that is not loading costs its flops x e_hold; it has no idle window.
-- **Why:** a held flop costs the same in every block (the 14 points agree to 0.2 %), so one number per technology prices a register that is not working, a buffer's included.
-- **Source:** `results/char/runs/2026-11-03_char1_r2.md`; `results/char/char_table.md` (e_hold).
+`char_power.csv` has one row per point and window with X20's per-cycle energies. e_hold is the mean idle energy per flop bit of the registered blocks: 7.1476 fJ on nangate45, 1.8911 fJ on nangate15. A LinkBuffer that is not loading costs its flops x e_hold. **Why:** a held flop costs the same in every block (14 points within 0.2 %). *3 Nov.*
 
 ### X34. busy_t1 and duty50 dropped
 
-- **Date:** 2026-11-03 (CHAR1 R2)
-- **Decision:** R1's `busy_t1` (`first` on every fire) and `duty50` (a fire every other cycle) windows are gone from the schedules; the model has busy and idle (stream for LinkBuffer). duty50's finding stays as a known limit of the model: an isolated fire of an accumulator costs more than a back-to-back one, +25.4 % (Mac W = 8) and +29.7 % (TreeAccumulate W = 8) against the mean of busy and idle on nangate45, +3.0 % for SerialAccumulate, since the inputs change at one edge and the accumulator at the next and its adders settle twice per fire.
-- **Why:** busy_t1 is within 5 % of busy (-1.8 %, -4.5 %, -0.07 %), and duty50 is a check, not a window the model uses; the limit is kept with its numbers (`results/char/char_table.md`, computed from R1's committed CSV).
-- **Source:** `results/char/runs/2026-11-03_char1_r1.md`, `2026-11-03_char1_r2.md`.
+The model has busy and idle (stream for LinkBuffer). Known limit: an isolated fire of an accumulator costs 25 to 30 % more than a back-to-back one (Mac, TreeAccumulate at W = 8 on nangate45). **Why:** `busy_t1` was within 5 % of busy, and `duty50` is a check, not a window the model uses. *3 Nov.*
 
 ### X35. nangate45's LinkBuffer slope kept as measured
 
-- **Date:** 2026-11-03 (CHAR1 R2, reviewed for R3)
-- **Decision:** nangate45's LinkBuffer stream energy is kept as PT's averaged mode gives it, though a streaming slot's flop costs less than a held one there (e_bit 6.52 to 4.59 fJ at D = 2 to 16 against e_hold 7.15 fJ) and the stream slope over D = 1 to 16 is 0.710 (e_dyn) and 0.564 (e_flop) of 64 e_hold; nangate15's is 1.137 and 0.960. Noted as a known limit; the flow is not changed.
-- **Why:** the aim is a first-order model; R2's diagnostic (`link/d4_w1` synthesized without sequential output inversion) changed e_flop by -2.3 %, so the cell DC picks is not the cause, and what is (plausibly the averaged mode's state probabilities for a flop whose D equals its Q in all but one cycle of D) is not established.
-- **Source:** `results/char/runs/2026-11-03_char1_r2.md` (Diagnostic).
-
-### X36. char_table.md and the draft JSON
-
-- **Date:** 2026-11-03 (CHAR1 R3)
-- **Decision:** `report/char_table.py` (`pixi run char-table`) writes `results/char/char_table.md` (e_hold, one section per block with both technologies side by side, how each scales, the known limits) and `results/char/<tech>/char_draft.json` (`status` draft, `tech`, `clock_ns`, `units`, `source`, `e_hold_fj`, and per point `datapath`, `params` as `blocks.json` names them, `area`, `flops`, `fmax_mhz`, `energy` per window: `comb` and `flop`) from `char_synth.csv` and `char_power.csv`; the known limits also read the files they cite (SYN2's CSVs, R1's CSV from git, R2's run note). Nothing is typed. The JSON is a draft for review, not yet a contract snax-forge reads.
-- **Why:** one generated source for the table and the JSON, so a rerun regenerates both; the review decides the JSON's final form before snax-forge depends on it.
-- **Source:** `results/char/runs/2026-11-03_char1_r3.md`.
-- **Amended:** 2026-11-03 (CHAR1 R4): the draft JSON and the code writing it are removed; the table snax-forge reads is `char.json`, written by `report/char_export.py` (X37). `char_table.py` keeps the table and adds its Model section.
+nangate45's LinkBuffer stream energy is kept as PT gives it, although a streaming flop costs less than a held one there. A known limit. **Why:** a first-order model; the cause is not established. *3 Nov.*
 
 ### X37. char.json, the table snax-forge reads
 
-- **Date:** 2026-11-03 (CHAR1 R4)
-- **Decision:** Registers are bits: a flop that loads costs e_load per cycle, one that holds e_hold; a block keeps only its comb part per fire; ctrl is its flops x e_hold x a counter factor. Per unit and task, E_unit = n_fire (e_comb + n_bits (e_load - e_hold)) + C_acc n_bits e_hold and E_ctrl = f_ctrl n_bits_ctrl C_acc e_hold, C_acc the task's cycles. `report/char_export.py` (`pixi run char-export`) writes `results/char/<tech>/char.json` from `char_synth.csv` and `char_power.csv` only, but for the counter factor: `tech`, `clock_ns`, `units`, `source` (the CSVs' snax-forge commit, the last snax-forge-experiments commit touching that technology's char CSVs, rand64 seed 0); `flop` (`area_um2` = seq_area / seq_cells, one constant or a failure; `e_load_fj`, the mean busy e_bit of Mac, TreeAccumulate and SerialAccumulate and LinkBuffer depth 1 stream, whose flops all load every cycle; `e_hold_fj`, X33's); `ctrl.counter_factor`, from SYN2 (`results/forge/<tech>/`): per point ctrl/ctrl's e_dyn per cycle over its flops x e_hold, the mean over the 48 points to two decimals, ctrl's flops being its `seq_um2` / `flop.area_um2` (SYN2's `synth_dc_modules.csv` has no per-module `seq_cells`; an integer at every point or a failure); `blocks`, per datapath entries of `params` (`blocks.json`'s but lanes and depth, checked against it and `char/points.json`), `lanes_rule` and `points` (`lanes`, `depth` for LinkBuffer, `comb_um2`, `e_comb_pj`, the busy window's e_comb, LinkBuffer's stream per load). A block's n_bits is not a field: its register bits from its params (lanes x depth x the output's width), checked equal to `seq_cells`. A point char.json holds is used as it is; another lanes value takes the entry's rule, `copy` (W x the lanes-1 point: ElementwiseLanes, Mac, LinkBuffer, whose W = 8 and 32 points are the copy's checks) or `interpolate` (linear in lanes: TreeAccumulate, SerialAccumulate). `char_table.md`'s Model section, by `char_table.py` reading `char.json` (refused if it differs from what the CSVs give now), lists the constants with their spreads, e_fire and the hold term per point, and the model against SYN2's module energies for vecmul, vsum, dot 4 and dot 5 at W = 8 and 32 on both technologies (n = 2048).
-- **Why:** a model snax-forge can evaluate from a block's params and a task's firings and cycles, with only a few constants per technology; SYN2's accelerators check it: the kernel (ctrl + datapath) at 0.992 to 1.037 of SYN2's. The model leaves out the csr, the memory and the streamers.
-- **Source:** `results/char/runs/2026-11-03_char1_r4.md`; `results/char/char_table.md` (Model).
+`pixi run char-export` writes `results/char/<tech>/char.json`: the flop constants (area, e_load, e_hold), ctrl's counter factor, and per block its comb area and comb energy per fire, with a rule for other lane counts (`copy` or `interpolate`). The model it feeds is explained in [`results/char/README.md`](../results/char/README.md#the-block-model). **Why:** a model snax-forge evaluates from a block's params and a task's fires and cycles, with a few constants per technology; it lands within 0.99 to 1.04 of SYN2's kernels. *3 Nov; replaces X36.*
 
 ## HSYN1: four HLS cases
 
 ### X38. HSYN1's scope
 
-- **Date:** 2026-11-05 (HSYN1 R3)
-- **Decision:** HSYN1 compares forge with four HLS cases: Vitis opt, Vitis dace, Bambu and Google XLS. W <= 16 everywhere, that is at most 16 64-bit channels per stream (c = W·b/64 channels for lanes of b bits, so a narrower dtype may take more lanes under the same cap); `MAX_W = 16` in `syn/syn.py`. Every tool is scheduled at a 10 ns HLS clock (Vitis rebuilt at 10 ns in R2). Vitis's unopt case and every W = 32 point are retired (Bambu's 10 faulty points are all at W = 32, so they drop out too). Each tool is its own source, as forge and char are; `hls` stays the name for Vitis.
-- **Why:** at W = 32 three streams take 3 · 32 = 96 TCDM ports, which overloads the interconnect; unopt is a known-poor baseline (Bambu dropped it in BAM2); one HLS clock for every tool, so the clock is not a difference between them.
-- **Source:** `results/runs/2026-11-05_hsyn1_r0.md`, `results/runs/2026-11-05_hsyn1_r3.md`.
+forge is compared with four HLS cases: Vitis opt, Vitis dace, Bambu and Google XLS, every tool scheduled at a 10 ns HLS clock, W ≤ 16 (`MAX_W`). Vitis unopt and every W = 32 point are retired. `hls` names the Vitis source. **Why:** W = 32 overloads the interconnect (96 ports for three streams); unopt is a known-poor baseline; one clock for every tool. *5 Nov (HSYN1).*
 
 ### X39. The bambu and xls sources
 
-- **Date:** 2026-11-05 (HSYN1 R3)
-- **Decision:** `syn/syn.py` has three HLS sources. `hls` (Vitis): `SYN_RTL`, default `../hls-exercises/rtl`, cases opt and dace, clock `ap_clk`, reset `ap_rst_n`. `bambu`: the same root, case bambu, clock `clock`, reset `reset`. `xls`: `SYN_RTL_XLS`, default `../dslx-exercises/rtl`, case xls, clock `clk`, reset `rst`. All Verilog. A point of these sources is a `*/*/*/filelist.f` folder named `<case>_w<W>` with `<case>` in the source's cases and W <= `MAX_W` (X38); any other folder (unopt_w*, *_w32, a per-size folder such as opt_n512_w8, a clock variant such as opt_w8_c10) is not listed. Before DC starts, a port guard reads the `# top:` module's port list from the point's Verilog files and checks the source's clock and reset ports are on it; if not, the row is `failed: no clock port <name> on <top>` (or reset) and DC is not run. `syn.py check-ports [--source S] [patterns]` runs the guard alone. Runs go to `syn/runs/<source>/<tech>/`, results to `results/<source>/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `reports/`).
-- **Why:** the hls source listed every folder under hls-exercises' `rtl/`, Bambu's included, with Vitis's port names, so a Bambu point would have been synthesized with a clock DC could not find.
-- **Source:** `results/runs/2026-11-05_hsyn1_r3.md`; `syn/README.md`.
+`syn.py` has three HLS sources, each with its root, cases, clock and reset port (`syn/README.md`). Before DC, a port guard checks the source's clock and reset are on the top; `syn.py check-ports` runs it alone. **Why:** the hls source once listed Bambu's folders with Vitis's port names. *5 Nov.*
 
 ### X40. Path-class slacks measured after compile
 
-- **Date:** 2026-11-05 (HSYN1 R3)
-- **Decision:** after compile and the other reports, `dc_syn.tcl` measures the worst setup slack of four path classes with `get_timing_paths -from/-to` only (no `group_path` or anything else that could change the compile): in2reg, reg2reg, reg2out and in2out. Inputs are all inputs but the clock and the reset port, outputs all outputs, registers `all_registers` (clock pins as start points, data pins as endpoints). They go to `reports/path_classes.rpt` (in `KEPT_REPORTS`) and to `synth_dc.csv` as `slack_in2reg_ns`, `slack_reg2reg_ns`, `slack_reg2out_ns` and `slack_in2out_ns`, in ns as the other slacks. A class with no path is empty. Every source has them; existing forge and char rows keep empty cells until rerun.
-- **Why:** XLS's points are one combinational stage, so their in2out path takes most of the period with 0.01 ns I/O delays, and `fmax_mhz` alone would not show that.
-- **Source:** `results/runs/2026-11-05_hsyn1_r3.md`.
+After compile `dc_syn.tcl` measures the worst slack of in2reg, reg2reg, reg2out and in2out with `get_timing_paths` only, into `path_classes.rpt` and four `slack_*_ns` columns. **Why:** XLS's points are one combinational stage, which `fmax_mhz` alone hides. *5 Nov.*
 
 ### X41. A control/datapath split only where the RTL declares it
 
-- **Date:** 2026-11-05 (HSYN1 R3)
-- **Decision:** a control/datapath area split only where the RTL declares it as hierarchy: forge (X22: csr, ctrl, datapath, glue) and Bambu: `ctrl_um2` (the `controller_*` instance with its children), `datapath_um2` (the `datapath_*` instance with its children) and `glue_um2` (the total minus the two), from `synth_dc_modules.csv`'s rows; a Bambu point without exactly one `controller_*` and one `datapath_*` fails. Vitis and XLS rows report totals only, with no split columns. Bambu's `datapath_*` also holds its loop counter and its stream interfaces, so its "datapath" is not only arithmetic.
-- **Why:** a split of a flat netlist has to be inferred (by register names or a data cone), and inference misclassifies designs with data-dependent control.
-- **Source:** `results/runs/2026-11-05_hsyn1_r3.md`.
+Area is split into control and datapath only where the hierarchy declares it: forge (X22) and Bambu (`controller_*`, `datapath_*`, glue). Vitis and XLS report totals. **Why:** splitting a flat netlist means guessing. *5 Nov.*
 
 ### X42. The cycle CSVs imported with provenance
 
-- **Date:** 2026-11-05 (HSYN1 R3)
-- **Decision:** `report/import_cycles.py` (`pixi run import-cycles`) copies `../dslx-exercises/results/xls_cycles.csv` to `results/xls/xls_cycles.csv` and `../hls-exercises/results_staging/bambu_cycles.csv` to `results/bambu/bambu_cycles.csv`, byte for byte, and writes a `SOURCE` file next to each (repo URL, HEAD commit, the file's last commit, path in the repo, sha256, date). It refuses a missing file, one git does not track, or one with uncommitted changes in its checkout, before copying anything. The rows stay exactly as produced (W = 32 and failed rows included); readers filter W <= `MAX_W`.
-- **Why:** the cycles are produced in the tool repos; a byte copy cannot drift from them, and the `SOURCE` file names the commit that produced the numbers, as forge's and char's results name their snax-forge commit.
-- **Source:** `results/runs/2026-11-05_hsyn1_r3.md`; `results/xls/SOURCE`, `results/bambu/SOURCE`.
-
-### X43. SYN1 and SYN2 analyses retired
-
-- **Date:** 2026-11-05 (HSYN1 R3)
-- **Decision:** retired and deleted from the tree, not frozen: X24's joined table (`report/forge_vs_hls.py`, `results/forge_vs_hls.md` and `_<tech>.csv`, task `table`); X26's copied control RTL with the control-role analysis (`report/control_roles.py`, `results/analysis/control/`, task `control`); X27's SYN1 read from git with SYN2's analysis (`report/analysis_syn2.py`, `results/analysis/syn2/`, task `syn2`); SYN1's analysis (`report/analysis_syn1.py`, `results/analysis/syn1/`, task `analysis`), its flop split (`report/flop_split.py`, `sim/scripts/pt_cells.tcl`, task `split`) and `sim/report_energy.py` with `results/hls/report_energy.md`. X24's reference task n2048 stays. The tier CSVs from `report/compare.py` replace the joined table (R8). Local run folders (`sim/split_runs/`, `rtl/forge_syn1/`, `*_syn1/` runs) are not touched.
-- **Why:** stale analysis code and results are deleted rather than kept beside the new flow; git history keeps them (`git show e8c4e91:<path>`).
-- **Source:** `results/runs/2026-11-05_hsyn1_r3.md`.
+`pixi run import-cycles` copies `bambu_cycles.csv` and `xls_cycles.csv` byte for byte from their repos, with a `SOURCE` file (repo, commit, path, sha256, date); it refuses an untracked or modified file. **Why:** a byte copy cannot drift, and `SOURCE` names the commit. *5 Nov.*
 
 ### X44. Power of the bambu and xls points
 
-- **Date:** 2026-11-05 (HSYN1 R5)
-- **Decision:** `sim/pwr.py --source bambu|xls` measures the Bambu and XLS points as the Vitis points (X7 to X9, X13, X18 to X20), with their own tb.json adapter and sequencer. Changes X12 for these two sources only; Vitis keeps `ap_ctrl_hs_seq.sv` and X12 unchanged.
-  - **One port table:** `syn/syn.py`'s `SOURCES` holds every source's clock and reset port; `sim/sources/__init__.py` loads `syn.py` once and gives `ports(source)`, which `sim/pwr.py` and every adapter (hls, forge, char, bambu, xls) use. No second copy.
-  - **Bambu** (`sim/sources/bambu.py`, `sim/tb/bambu_seq.sv`): control `bambu_ctl`, `start_port` pulsed high for one cycle, `done_port` watched, `idle_port` connected and not read; streams `<arg>_TDATA/_TVALID/_TREADY` in hls-exercises' params.json `axis` order; the run-time pins (`loop_count`, `len`, axpy's `alpha`) are plain inputs driven from time 0, before reset is released, and held for the whole run (Bambu reads them on every iteration); `alpha` is drawn as a rand64 data pin after the streams (X19). Reset `reset`, synchronous, active low: 5 cycles, then 2 idle cycles; the sources are valid one cycle before the start. **Window:** opens at the falling edge before the first rising edge that samples `start_port` = 1, closes at the falling edge before the first rising edge that samples `done_port` = 1; its rising edges are Bambu's `cycles_done` (start pulse to `done_port`).
-  - **XLS** (`sim/sources/xls.py`, `sim/tb/xls_seq.sv`): control `xls_cfg`, one cfg beat on `_cfg_TDATA/_TVALID/_TREADY`, held until a rising edge samples `_cfg_TREADY` = 1 (the cfg transfer edge); streams `_<arg>_TDATA/...`, inputs then outputs as dslx-exercises' params.json lists them, matched by position to hls-exercises' `axis` for `sim/ref.py`'s names. **cfg packing:** the fields in params.json's `cfg` order, the first in the high bits (XLS flattens a tuple MSB first), widths from `CFG_BITS` (`loop_count` 32, `len` 32, `alpha` 64), whose sum must equal `_cfg_TDATA`'s width (32, 64 or 96) or the point fails; config fields from the cfg expressions at the size, `alpha` drawn as a rand64 data pin after the streams. Reset `rst`, synchronous, active high, driven with the TB's `~rst_n`. **Window:** opens at the falling edge before the cfg transfer edge, closes at the falling edge after the rising edge that transfers the last output beat (every sink complete); its rising edges are XLS's `cycles` + 1.
-  - **Expected cycles** (any mismatch fails the run): Bambu, the line a x loop_count + b through `cycles_done` at the point's sizes in `results/bambu/bambu_cycles.csv` (status ok rows), a and b integers and exact at those sizes; XLS, the line through `cycles` in `results/xls/xls_cycles.csv` (a = 1, b = 0), plus 1.
-  - **Sizes:** b64 (64 beats, the default), the point's `rtl/<point>/sizes.txt` (`--size all`; hls-exercises' for Bambu, dslx-exercises' for XLS) and n2048 for tier done (X24).
-  - **Checks:** X9's SAIF check with the source's clock port (`clock`, `clk`) toggling 2 x the window's cycles; at least 99 % of nets annotated and no net with wire load (PITFALLS PT1); every module of the netlist gets a dump scope (PITFALLS DC6); the sinks count beats only after reset is released (PITFALLS Q7).
-  - **Results:** `results/<source>/<tech>/power_pt.csv`, `power_pt_modules.csv` and `power_reports/`, with X20's columns; runs in `sim/runs/<source>/<tech>/<point>/`.
-- **Why:** each tool's own handshake decides where its task starts and ends: Bambu's window is the counterpart of Vitis's `ap_start` to `ap_done` (and of Bambu's own co-simulation count); XLS has no start or done, its task starts at the cfg transfer and ends at the last output, and its datapath is combinational, so the cycle that ends at the last transfer computes the last beat and must be in the window. One port table, because the hls source once listed Bambu's folders with Vitis's ports (X39) and a second copy in `sim/` could drift the same way.
-- **Source:** `results/runs/2026-11-05_hsyn1_r5.md`.
+Bambu and XLS are measured as Vitis is, each with its own handshake: Bambu's window runs from `start_port` to `done_port` (its `cycles_done`); XLS's from the cfg transfer to the last output transfer (its `cycles` + 1, as its datapath is combinational). One port table, in `syn.py`'s `SOURCES`, serves synthesis and power. Details in [`power.md`](power.md#bambu---source-bambu). **Why:** each tool's own handshake marks its task. *5 Nov; `results/runs/2026-11-05_hsyn1_r5.md`.*
 
 ### X45. The tier comparison CSVs
 
-- **Date:** 2026-11-05 (HSYN1 R8)
-- **Decision:** `report/compare.py` (`pixi run compare`) writes `results/compare_done.csv` and `results/compare_untiered.csv` from the committed CSVs only (synthesis, power, per-cell energy and the cycle CSVs of forge, hls, bambu and xls, on both technologies). One row per tech, tier, kernel, W, tool (forge, vitis, bambu, xls), case and size, for every point with W <= MAX_W (X38); forge has tier done only, at n2048. Columns: the key and status; beats, elements (beats x W), the window's cycles and how the tool's window is defined (X12, X13, X44); area with the split where the RTL declares it (X41: forge's csr, ctrl, datapath, glue; Bambu's ctrl, datapath, glue); timing with the path-class slacks (X40; empty on forge rows, synthesized before X40); the energy groups per cycle, e_run per task, pJ per element and DC's leakage; energy per cycle of each declared part, from the point's default run (`parts_size`: b64 for the HLS sources, n2048 for forge); provenance (the RTL's repo commit, tool version, DC version, synthesis date). Parked points are rows with their status and no numbers. It writes nothing if a point is missing on a technology, a point lacks a size the other points of its kernel have (tier done: n2048), a run is not ok, a key repeats, or a split does not sum to the area. The tables hold no ratios or rankings; how they are compared is decided on top of them.
-- **Why:** one table per tier, raw, so that every comparison reads the same rows and the readings can be brainstormed after the data is laid out (SYN1's rule); per-tier files because forge has no untiered points and untiered has no n2048.
-- **Source:** `results/runs/2026-11-05_hsyn1_r8.md`.
-
-### X46. The HLS cases side by side
-
-- **Date:** 2026-11-05 (HSYN1 R9)
-- **Decision:** `report/compare_hls.py` (`pixi run compare-hls`) writes, from the two tier CSVs only (X45), `results/compare_hls.md` and one figure per kernel in `results/compare_hls/<tier>_<kernel>.png`: Vitis opt, Vitis dace, Bambu and XLS, forge left out until its accelerator parts are in. Four metrics, each against W (1 to 16, int64): area, dynamic energy per task, latency per task (the tool's window, X12 and X44) and power $P = E_{run} / (\text{cycles} \cdot T_{clk})$ with $T_{clk}$ = 10 ns. Main view on nangate45 at n2048 for tier done (X24) and each kernel's larger task size for untiered (matadd m16_n32, relu and axpy n512, rowsum m8_n64); nangate15 appears once, as values at W = 8 and a count of how often the order of the cases is the same on both. The script fills only the parts between `<!-- gen:NAME -->` and `<!-- /gen -->`; the insights around them are written by hand and kept across reruns.
-- **Why:** an early, simple view (four standard measures, labelled with W and dtype) to read before the comparison with forge is laid out; everything else stays derivable from the CSVs. Generated tables and figures next to hand-written readings keep the readings when the data is rerun.
-- **Source:** `results/runs/2026-11-05_hsyn1_r8.md` (R9 adds to it).
+`pixi run compare` writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs only: one row per tech, tier, kernel, W, tool, case and size, with areas, splits, energies, cycles and provenance, and no ratios. It writes nothing if a point or size is missing, a run failed, a key repeats or a split does not add up. **Why:** every comparison reads the same raw rows. *5 Nov; amended by X55, X61, X63.*
 
 ### X47. SRAM area and energy from CACTI 7 at 45 nm
 
-- **Date:** 2026-11-06 (RAM1 R0 to R2)
-- **Decision:** SRAM banks (one read-write port, no ECC) are costed with CACTI 7 at commit `1ffd8df`, built from source by `pixi run ram-build`, never committed: 45 nm, itrs-hp cells and peripherals, `cache type "ram"`, one UCA bank, 300 K, design objective 0:50:0:0:50 (dynamic energy and area) with `-Optimize "NONE"`, `-Add ECC "false"` (`ram/ram.py`). Dynamic energies are scaled from CACTI's 1.0 V to Nangate 45 nm's 1.10 V by (1.1 / 1.0)² = 1.21; area, timing and leakage are not scaled. Area is CACTI's height x width. Only Nangate 45 nm (snax-forge D159); CACTI's smallest node is 22 nm, so 15 nm is out. The `.lib` and `.v` DC, Questa and PrimeTime need are generated from these numbers (RAM1 R3), not taken from a memory compiler.
-- **Why:** OpenRAM 1.2.48's analytical model (R0) writes one power value at a fixed 100 MHz, the same for read, write and deselected, on both clock edges (DC and PT would charge 11.5 pJ per cycle to every bank, selected or not); its area exists only with layout, and one 512 x 64 macro took about 10 minutes without layout and hours with it. CACTI gives read and write energy and area per access in about 0.2 s, its 512 x 64 lies between D154's placeholder (68.68 fJ per bit) on read and write (55.3 and 101 fJ per bit), and its 64-bit reads are 0.64 and 0.90 x Horowitz's 45 nm figures (8 and 32 KB). Its density (0.30 µm² cell, about 0.41 µm² per bit with periphery at 512 x 64) is close to a foundry 45 nm SRAM; OpenRAM's FreePDK45 layout is about 3 x larger.
-- **Source:** `results/ram/runs/2026-11-05_ram1_r0.md`, `results/ram/runs/2026-11-05_ram1_r1.md`.
+SRAM banks (one read-write port, no ECC) are costed with CACTI 7 (commit `1ffd8df`, built by `pixi run ram-build`) at 45 nm, itrs-hp, design objective weighted to dynamic energy and area; dynamic energies scaled from 1.0 V to 1.10 V by 1.21. Nangate 45 nm only. **Why:** OpenRAM's analytical model gives one power for read, write and idle and an area only with layout; CACTI gives read and write energy and area in 0.2 s, close to published 45 nm figures. *6 Nov (RAM1); `results/ram/runs/2026-11-05_ram1_r1.md`.*
 
 ### X48. The SRAM lookup table
 
-- **Date:** 2026-11-06 (RAM1 R2)
-- **Decision:** `pixi run ram table` writes `results/ram/nangate45/ram_table.csv`: one row per (depth, width) for every depth 32 to 4096 in steps of 32 words and every width 8 to 256 in steps of 8 bits that CACTI models (4,095 rows; 32 x 8, under 64 bytes, is left out), with area, read and write energy per access (1.1 V), access and cycle time, leakage and CACTI's organization. It is used as a lookup table: a reader takes the exact row. No curve fit is kept, and interpolation between rows is not advised. How a reader handles a size off the grid (not a multiple of 32 words or 8 bits, or beyond 4096 x 256) is the reader's decision (snax-forge's HWCOST). The table replaces R1's `ram_cacti.csv`, whose numbers it reproduces exactly.
-- **Why:** each point costs about 0.06 s, so the whole grid is a few minutes and every bank a design can use is in it exactly. Scored against all 4,095 points, the best fit (third order in log₂ d and log₂ w) still misses by 1.6 / 6.1 / 6.5 % on average (area / read / write) and 22 / 22 / 30 % at worst, the power law 3.0 / 9.8 / 9.0 % and up to 66 %, and fits on a small grid (depths up to 256, widths up to 128) miss the large banks by 62 % (power law) up to a factor of nearly 400 (third order); CACTI's numbers jump by up to 30 % between neighbouring sizes where its organization changes (PITFALLS C5), which no smooth function follows.
-- **Source:** `results/ram/runs/2026-11-06_ram1_r2.md`.
+`results/ram/nangate45/ram_table.csv` holds every depth 32–4096 (step 32) and width 8–256 (step 8): 4,095 rows. It is a lookup, never interpolated or fitted; a size off the grid is the reader's choice. **Why:** CACTI's numbers jump up to 30 % between neighbouring sizes (PITFALLS C5); the best fit still misses by 6 % on average and 30 % at worst. *6 Nov.*
 
 ### X49. Memories as generated Liberty and Verilog models from CACTI's numbers
 
-- **Date:** 2026-11-06 (RAM1 R3)
-- **Decision:** DC, Questa and PrimeTime see each SRAM as a macro written by `pixi run ram lib <depth> <width> [--mask 8]` (or `libs ram/macros.json`): a Liberty model compiled to `.db` with `lc_shell`, and a behavioural Verilog model, both in `ram/runs/lib/<name>/` and never committed (generated on demand from the cached CACTI point and `ram/nangate45_pins.json`). Ports as `tc_sram_impl` with one port and no `impl_*`: `clk_i`, `req_i`, `we_i`, `addr_i`, `wdata_i`, `be_i` (with a mask only), `rdata_o`, active high, no reset; ports keep the real width, costs come from the width padded to whole bytes. The `.lib`: one library per macro in nangate45's units, `nom_*`, operating conditions, slew and delay thresholds and `default_*`; `area` CACTI's area; read energy on `clk_i`'s rising edge `when "req_i & !we_i"`, write energy `when "req_i & we_i"`, nothing `when "!req_i"` and nothing on the falling edge (once per access, never when deselected); a byte-masked write is charged as a full write (CACTI gives one write energy); input pins with `DFF_X1/D`'s capacitance and setup and hold to `clk_i` (the largest entry of each of its tables), `clk_i` with `DFF_X1/CK`'s capacitance, CACTI's cycle as `min_period`; `rdata_o` driven as `BUF_X4/Z` (its `max_capacitance` and transition) with CACTI's access time from the rising edge; `dont_use`, `dont_touch`, no `memory` group. The `.v` behaves as `tc_sram` at `NumPorts 1`, `Latency 1` and counts accesses (`RAMCOUNT`). Memory energy in cluster runs is counted accesses x the table, or time-based PT; not averaged PT (PITFALLS PT7).
-- **Why:** CACTI gives area, read and write energy and timing but no Liberty; OpenRAM's `.lib` (R0) had a per-cycle power charged on both edges in every state, an area of 0 without layout and an output limit of 0.84 fF that made DC buffer every read bit. Generated from the table's own numbers, the macro adds no second energy model: the `.lib` converted back equals the table's row on all three macros, DC links it as one cell with that area and no buffers on `rdata_o`, and time-based PT charges the counted energy to 1e-7. Pins borrowed from `DFF_X1` and `BUF_X4` make the macro's boundary look like Nangate's own flops and buffers to DC and PT.
-- **Source:** `results/ram/runs/2026-11-06_ram1_r3.md`, `results/ram/runs/2026-11-05_ram1_r0.md`.
+DC, Questa and PT see each SRAM as a macro written by `pixi run ram lib`: a Liberty model (area, read and write energy on the rising edge only when selected, pins borrowed from Nangate's `DFF_X1` and `BUF_X4`) and a behavioural Verilog model with `tc_sram_impl`'s ports that counts accesses (`RAMCOUNT`). Never committed. Details in [`ram/README.md`](../ram/README.md). **Why:** CACTI gives no Liberty; generated from the table's own numbers, the macro adds no second energy model. *6 Nov.*
 
 ### X50. Memory energy is counted accesses times the table
 
-- **Date:** 2026-11-06 (RAM1)
-- **Decision:** a point or cluster with SRAM macros (X49) reports their energy as $E_{mem} = \sum_m (N_{rd,m} e_{rd,m} + N_{wr,m} e_{wr,m})$: $N$ from each macro instance's `RAMCOUNT` line in the simulation, $e$ from the macro's own CACTI point at the padded width (the numbers its `.lib` carries, X49), which is the row of `results/ram/nangate45/ram_table.csv` for any size on the table's grid (X48); a size off the grid, such as a 8192-word buffer, gets its point from `ram.py` the same way. Its dynamic energy is PT's dynamic energy of everything but the macro cells (averaged mode, SAIF, X8) plus $E_{mem}$. This is an exception to X25 for memory macros only; the rest of the design keeps PT as the reference. HWCOST charges the same per-access energies, so the cost model and a measured run differ only in their access counts. CACTI's leakage stays in the `.lib`'s `cell_leakage_power` (X49) and is not used, since only dynamic energy is reported; it is revisited if it becomes a problem in the cluster synthesis.
-- **Why:** averaged PT charges a macro's `when` energies with independent pin probabilities and came out 12.46 % low on the probe's mix, a gap that changes with the mix of reads, writes and idle cycles (PITFALLS PT7). Time-based PT is exact (1e-7 on the probe) but needs every run's full VCD, which X8 deletes at once. The counters are exact and cost nothing.
-- **Source:** `results/ram/runs/2026-11-06_ram1_r3.md` (step 6).
+A single point with SRAM macros reports their energy as counted reads and writes x the macro's table energies, plus PT's energy of everything else ([`docs/cost_tables.md`](cost_tables.md#sram-banks)). An exception to X25 for macros; cluster points use X75. **Why:** averaged PT charges a macro's energy with independent pin probabilities, 12.5 % low on the probe (PITFALLS PT7); the counters are exact. *6 Nov.*
 
 ### X51. Outputs zipped one per point
 
-- **Date:** 2026-11-06 (ARC1)
-- **Decision:** every point's bulky outputs are one zip, local and committed alike, and every flow reads from and writes to the zips through `arc/arc.py` (no script calls `zipfile` itself): a DC run is `syn/runs/<source>/<tech>/<point>[_c<clock>].zip` (`syn.py`'s `KEEP_RUN`: the mapped netlist, `KEPT_REPORTS` with `tech.json` and `lib_info.txt`, `dc_shell.log` and `dc_stdout.log`); a power point is `sim/runs/.../<point>.zip` (`pwr.py`'s `KEEP_POINT`: `tb.json`, per run tag the SAIF and PT's reports, for char per window; setup-check's `check.json` and reports), merged when a point gets more runs; the CACTI cache is one `ram/runs/cacti.zip` (`key.json`, `rc`, `cacti.out`, `cacti.err` per point, the vdd check as `vdd_check/`), rewritten whole by the main thread; a macro is `ram/runs/lib/<name>.zip` (`.lib`, `.db`, `.v`, `lc.log`, `key.json`, `result.json`); a bundle is `rtl/forge/<point>.zip` or `rtl/char/<point>.zip`; the committed reports are `results/<source>/<tech>/reports/<point>.zip` and `power_reports/<point>.zip`. Everything else a step writes is scratch and is deleted with its folder, not zipped: DC's `WORK/`, `alib-*/`, `default.svf`, the reports not kept and the command logs (and an `.sdf` where `syn.py --sdf` wrote one: none by default since X69); Questa's `work/`, transcripts, logs, `tb.sv`, `stim/`; vcd2saif's and PT's logs; `result.json`; CACTI's run folder; `lc.tcl` and lc_shell's own logs. The zips are deterministic: entries sorted, deflated at a fixed level, timestamps 1980-01-01, mode 0644, written to a temporary name, read back member by member against what was written, then renamed into place, so a zip is never replaced by one that does not read back, and the same contents give the same bytes. A single file is read straight from its zip; a tool that needs files on disk (DC reading a bundle, Questa and PT reading a netlist, lc_shell writing a macro, CACTI running a point) gets them unpacked into `tmp/` (git-ignored, on the repo's filesystem) one point at a time, deleted when the step ends, also when it fails. The CSVs' `run` column keeps naming the run folder (its zip is `<run>.zip`), so the committed CSVs do not change. Plain files stay plain: the CSVs, the RAM lookup table, run notes, docs, code, `summary.csv`, `batches.jsonl`, and Questa's cell models in `sim/runs/<tech>/_cells/` (a cache). `pixi run arc check` lists what is left unzipped and must report nothing left over at the end of every round; `pixi run arc migrate` converts folders from before X51 as the flows would write them. `CLAUDE.md` ("Files are zipped") holds the working rules.
-- **Why:** Ryan's home has a file-count quota (1,600,000 soft, folders count) shared by every repo, environment and cache on it, and was over it (ARC1 R0: 1,676,657). This repo held 149,552 inodes, almost all loose run outputs: `ram/runs/cacti` 41,041, `sim/runs` 32,998, `syn/runs` 29,877, the committed reports 9,150, the bundles 2,996. One zip per point keeps every file a later step reads (ARC1 R0 listed who reads what) and brings the repo's outputs from about 116,000 inodes to about 2,500. Deterministic zips keep git's history to real changes, and unpacking one point at a time keeps the file count flat during a batch.
-- **Source:** `results/runs/2026-11-06_arc1_r1.md`; ARC1 R0 (in the chat).
+Every point's bulky outputs are one deterministic zip, read and written through `arc/arc.py`; tools that need files get one point unpacked into `tmp/` at a time. What is zipped and the working rules are in `CLAUDE.md`; `pixi run arc check` must report nothing left at the end of a round. **Why:** Ryan's home has a file-count quota shared by every repo, and loose run outputs took about 116,000 inodes (now about 2,500). *6 Nov (ARC1); `results/runs/2026-11-06_arc1_r1.md`.*
 
 ## STRM1: the streamer reader and the sparse interconnect
 
 ### X52. The streamer reader and the sparse interconnect, characterized
 
-- **Date:** 2026-11-06 (STRM1 R0, R1)
-- **Decision:** snax-forge's HW cost model gets a total area and an energy per beat for snax_cluster's streamer data mover, and a total area and an energy per access for its TCDM sparse interconnect, on Nangate 45 nm only.
-  - **What is measured.** Readers only: a writer has the same address generator, requestors and buffer, minus the reader's responsers and output repeat, so the reader's cost stands for both. Totals per point only, no split by module.
-  - **The reader as the Streamer uses it.** `strm__C0_Reader` from `StreamerGen` (one reader, `fifo_depth` D for both buffers, `temporal_dim` L, `num_channel` C, spatial bounds `[C]`, 64-bit TCDM of 128 KiB, no datapath extension, no configurable channel or byte mask, as `platforms/snax_forge_cluster.hjson`), not a reader emitted as its own top. firtool trims the ports the Streamer never reads; none carries a register (PITFALLS SC2).
-  - **The interconnect.** `SparseInterconnect` from its own entry point with snaxgen's widths for a 128 KiB TCDM (`strm/grid.json`).
-  - **The grid.** Readers: D in {2, 4, 8, 16} x L in 1..7 x C in {1, 2, 4, 6, 8, 16} (168). Interconnect: inputs in {4, 8, 16, 24, 32, 40, 48, 56, 64} x banks in {16, 32, 64} (27). snax_cluster `ea9c837b514e38fd43f99543721a5eba447d91b0`, read only; bundles by `strm/gen.py` (`strm/README.md`).
-  - **Synthesis.** X1 to X4 and X22's compile (`syn.py --source streamer|xbar`), clock `clock`, reset `reset` ideal, with the flop check: DC's `seq_cells` must equal the bits the RTL declares (a point alone keeps every register it has inside the cluster).
-  - **Power.** X7, X8, X9 and X32's cut window (`pwr.py --source streamer|xbar`, `sim/sources/strm.py`), seed 0 (`vsim -sv_seed`).
-    - Reader stimulus: 1,024 beats from address 0, the bounds powers of two whose product is 1,024, the larger ones outermost, unit strides. The TCDM grants every request at once and answers it the next cycle with random data, and the output is always ready. Window: from the edge taking `io_start` to the edge taking the last beat, so the fill (3 cycles on every point) is in it. Gates: 1,024 beats, the data in order, every address, no stall after the fill.
-    - Interconnect stimulus, only where inputs <= banks: input i on bank (i + t) mod banks at cycle t, so no two inputs share a bank, a random row, reads and writes alternating every cycle, random write data. The memory side is always ready and answers reads with random data the next cycle. 1,024 cycles, and the window adds the last responses' cycle. Gates: every input granted every cycle, each bank's request its input's, each read response the bank's data.
-  - **Energies.** Energy per beat = PT's total dynamic energy over the window / beats; per access = over the window / grants. No clock gating: the netlists have none and none is inserted, as in CHAR1 (X30), so every flop's clock pin toggles every cycle.
-  - **Run settings (R1).** DC at `--cores 4`, 8 jobs (min(free Design-Compiler 10, DC-Expert 10, nproc / 4 = 8)), split 4 and 4 between the two sources, largest first. Power at J = 8 (readers, beside the interconnect's DC) and 20 (interconnect).
-- **Why:** the cost model needs a streamer's and the interconnect's cost by their design parameters, as it has the datapath blocks' (X37). A reader inside a streamer is what an accelerator instantiates, and its trimmed ports cost no register. The stimuli are the full-rate cases the model scales from: a reader never stalled, an interconnect with every input served every cycle. Inputs > banks always conflict, and their per-access energy comes from X53's rule.
-- **Source:** `results/strm/runs/2026-11-06_strm1_r0.md`, `results/strm/runs/2026-11-06_strm1_r1.md`.
+snax_cluster's streamer reader (`strm__C0_Reader`, as the Streamer instantiates it) and its TCDM sparse interconnect are synthesized and powered over their parameters, totals only, Nangate 45 nm: readers over depth {2, 4, 8, 16} x loops 1–7 x channels {1, 2, 4, 6, 8, 16} (168), the interconnect over inputs 4–64 x banks {16, 32, 64} (27, energy only where inputs ≤ banks). A writer is priced as a reader. Stimuli, windows and settings in [`power.md`](power.md#streamer-and-interconnect---source-streamer---source-xbar) and [`cost_tables.md`](cost_tables.md). **Why:** the cost model needs these costs by their design parameters; the full-rate stimuli are the cases the model scales from. *6 Nov (STRM1); `results/strm/runs/2026-11-06_strm1_r1.md`.*
 
 ### X53. The STRM tables and their interpolation
 
-- **Date:** 2026-11-06 (STRM1 R1)
-- **Decision:** `pixi run strm-table` (`report/strm_table.py`) writes `results/strm/<tech>/` from the synth and power CSVs:
-  - **`streamer.csv`:** `depth, loops, channels, area_um2, e_beat_pj, flops, slack_ns, fmax_mhz, status`.
-  - **`xbar.csv`:** `inputs, banks, area_um2, e_access_pj, flops, slack_ns, fmax_mhz, status`. `e_access_pj` is empty where inputs > banks.
-  - **Rows.** One per grid point; a failed point keeps its row and its status.
-  - **The reference interpolation the cost model copies.**
-    - Reader: trilinear over (depth, loops, channels). Interconnect: bilinear over (inputs, banks).
-    - Linear in each raw value between the two grid values around it; a grid value is matched exactly.
-    - A query outside the grid on any axis is refused, as is one that needs a missing value.
-    - Interconnect energy where inputs > banks: each bank count's row is completed with its value at inputs = banks, the most measured; then the bilinear rule applies.
-  - **Tests.** `pixi run strm-table-test` checks it with seeded synthetic tables.
-- **Why:** area and energy are nearly multilinear in the parameters over the grid, and a multilinear rule is exact for every product term (C x D). The leave-one-out check (R1, for information; each interior point predicted with its own value on every interpolated axis left out) gives:
-  - **Reader area:** mean 0.83 %, worst +1.66 % (D 4, L 2, C 2).
-  - **Reader energy:** mean 4.01 %, worst -8.68 % (D 4, L 6, C 6). Depth 4, predicted from depths 2 and 8, averages 7.4 %, depth 8 0.63 %: the energy is not linear in depth between 2 and 8.
-  - **Interconnect area:** mean 1.08 %, worst +3.04 % (8 inputs, 16 banks).
-  - **Interconnect energy:** mean 8.98 %, worst +24.32 % (8 inputs, 64 banks). The energy per access falls roughly as a + b / inputs at a fixed bank count, so 8 and 16 inputs are overestimated by 11 to 24 %; 64 banks also dips at 32 inputs (+11.4 %); from 24 inputs up within 5 % otherwise.
-  - Leaving a point out doubles the gap the rule bridges, so a query between two real grid values sees less error than this.
-- **Source:** `results/strm/runs/2026-11-06_strm1_r1.md`.
-- **Replaced in part:** by X54 for the interconnect's energy, which is interpolated in 1/inputs.
+`pixi run strm-table` writes `results/strm/<tech>/streamer.csv` and `xbar.csv`. Readers read them by interpolating linearly along one axis at a time between the two grid values around the query; a grid value is exact; above inputs = banks the interconnect's energy takes the value at inputs = banks. The rule and its checks are in [`cost_tables.md`](cost_tables.md#reading-a-table). **Why:** area and energy are close to multilinear in the parameters. *6 Nov; the interconnect's energy amended by X54.*
 
 ### X54. The interconnect's energy interpolated in 1/inputs
 
-- **Date:** 2026-11-06 (STRM1 R2)
-- **Decision:** in `report/strm_table.py`'s reference interpolation, the interconnect's `e_access_pj` is interpolated linearly in 1/inputs along the inputs axis (and linearly in banks); its area and every reader field stay linear in the raw values (X53). Inputs > banks still take the value at inputs = banks. No curve fit is used; the worked steps, the reason and the checks are in `docs/cost_tables.md`. This replaces X53's rule for that one field.
-- **Why:** at a fixed bank count the energy per access is $a + b/n$: a per-cycle cost $b$ (the registers, which are not clock-gated, and the bank side, about 0.38 pJ per bank per cycle) shared by the $n$ grants of a conflict-free cycle, plus a cost $a$ per access. Interpolation in 1/inputs reproduces that form exactly between two grid points. Leave-one-out over the 11 interior points: mean 2.49 % and worst +11.32 % (32 inputs, 64 banks, a measured dip; all others within 3.9 %), against 8.98 % and +24.32 % in inputs. Seven fitted forms (power, exponential, second-order polynomials in $n$ and $1/n$, $a + b/n + c\thinspace n$) did no better; the best, $a + b/n + c\thinspace n$, ties at 2.7 % and +10.8 %.
-- **Source:** `results/strm/runs/2026-11-06_strm1_r2.md`, `docs/cost_tables.md`.
+The interconnect's energy per access is interpolated linearly in 1/inputs along the inputs axis; every other field stays linear in the raw values. **Why:** at fixed banks the energy per access is a + b/n (a per-cycle part shared by n grants), which 1/inputs reproduces exactly; leave-one-out error 2.5 % mean against 9.0 % linear in inputs. *6 Nov; `results/strm/runs/2026-11-06_strm1_r2.md`.*
 
 ## CSYN1: E7's untiered rows
 
 ### X55. Untiered at n2048
 
-- **Date:** 2026-11-10 (CSYN1)
-- **Decision:** X24's reference task is extended to the untiered tier. Every untiered point of every source has an `n2048` task, shaped relu and axpy n2048, matadd m32_n64, rowsum m16_n128. The forge points (`relu`, `matadd`, `axpy`, `axpy_baked`, `rowsum`, `rowsum_2` at W = 1, 2, 4, 8, 16) have only this size. Vitis opt and dace, Bambu and XLS have it beside cosim's sizes and `b64`, its pins from `params.json`'s config at those values (`sim/sources/hls.py` `EXTRA_SIZES`, by tier and kernel) and its expected cycles from cosim's line (X19). The dace cases are rebuilt at these sizes, as DaCe sizes its buffers at build time. Energy is compared at n2048: `parts_size` is `n2048` on every untiered row. Amends X24 (untiered included) and X45 (forge has untiered points, and untiered has n2048).
-- **Why:** the same task at every W and for every tool, with at least 128 beats at W = 16, so the toggle check applies everywhere. The shapes keep the ratios of the cosim sizes and let `rowsum_2` (W ≤ M) and `rowsum` (N a multiple of W) run at W = 16.
-- **Source:** agreed 2026-11-10, CSYN1 Part A topics 1 to 3.
+Every untiered point also runs one 2048-element task: relu and axpy n2048, matadd m32_n64, rowsum m16_n128. The forge points have only this size; energy is compared at n2048. **Why:** the same task at every W and tool, with at least 128 beats at W = 16. *10 Nov (CSYN1).*
 
 ### X56. Cycles checked within 5 %
 
-- **Date:** 2026-11-10 (CSYN1)
-- **Decision:** the window is the measurement: each tool's start-to-done window as X12, X13, X23 and X44 define it. The expected cycles are a column beside it with the difference: for forge the COUNTER read back and snax-forge's model, for HLS cosim's line. A point fails only when the window differs from the expected count by more than 5 %. Replaces the exact match in X19 and X23.
-- **Why:** energy is taken per task over the measured window, and a few cycles of fill or drain change it very little; a gap past 5 % means a wrong size, CSR or stimulus, which is what the check is for.
-- **Source:** agreed 2026-11-10, CSYN1 Part A topic 3.
+Each tool's start-to-done window is the measurement. The expected cycles (forge's BUSY_COUNTER and snax-forge's model, HLS's cosim line) sit beside it, and a point fails only past 5 %. Replaces the exact match of X19 and X23. **Why:** a few cycles of fill change the energy very little; past 5 % means a wrong size, CSR or stimulus. *10 Nov.*
 
 ### X57. forge's untiered points at int64
 
-- **Date:** 2026-11-10 (CSYN1 R1)
-- **Decision:** the forge points of relu, matadd, axpy and axpy_baked are built at int64: `forge/points.json` gives them `dtypes` (every container of the kernel int64: relu A, B; matadd A, B, C; axpy alpha, x, y), and `forge/bundles.py` writes snax-forge's recipe (found by name, `recipes/**/`) with that `dtypes` field into `tmp/forge_recipes/<work name>.json`, runs the sandbox on that file and deletes it when the point ends. The work folders end `_int64`; `point.json` records `dtypes` and `recipe_file`. snax-forge is not changed, and the steps are its recipe's. axpy's scalar is then int64, two CSRs `K1_LO` and `K1_HI` (C§17). `forge/query.py ref` runs snax-forge's kernel body at the same dtypes.
-- **Why:** snax-forge's relu, matadd and axpy kernels are int32 (its D113, packed two per 64-bit word), so their recipes bundle int32 datapaths (4 lanes in 2 channels at W = 4, K1 one 32-bit CSR), while every HLS point and forge's rowsums are int64. The recipe's own `dtypes` field (snax-forge's `recipe.py`) is the switch snax-forge offers for this (`vecadd_i32` uses it the other way); the bundle is clean (`dirty: false`). Agreed with Ryan on 2026-11-10 (CSYN1 R1, step 1).
-- **Source:** `results/forge/runs/2026-11-10_csyn1_r1.md`.
+forge's relu, matadd, axpy and axpy_baked are bundled at int64 through the recipe's own `dtypes` field (`forge/points.json`), written to a temporary recipe file; snax-forge is not changed. **Why:** those kernels are int32 in snax-forge, every other point int64. *10 Nov; `results/forge/runs/2026-11-10_csyn1_r1.md`.*
 
 ### X58. A forge point's program from snax-forge's LOWER
 
-- **Date:** 2026-11-10 (CSYN1 R1)
-- **Decision:** every forge point, tier done included, is bundled at its n2048 shape: its `sets` in `forge/points.json` (tier done `N=2048`, untiered X55's), so its design point is that task's. `sim/sources/forge.py` refuses a bundle whose sets are not X55's shape and takes what it writes from snax-forge's LOWER for that design point (`forge/query.py program`: `lower/derive.py`'s task list, `lower/c.py`'s `job_writes`): JOBS and each JOB_BEATS, and each slot read from a scalar container, written before START with the container's value (X19's data pin, or the value the recipe bakes, which has no CSR). Each stream's element order is the streamer task's loops (bounds and strides, temporal and spatial) mapped back through the container's L1 layout; the TB feeds and collects each stream in that order (`order` in tb.json when it is not the identity). A container with an input and an output stream (axpy's y, in place) has two TB streams, `<c>_in` and `<c>_out`. Replaces X23's rule per group (an elementwise group N / W jobs, a fold one job of N / W beats, no other read-write CSR) and amends X21 (the tier done bundles had their recipe's default N).
-- **Why:** the rule per group does not hold for the untiered recipes (rowsum JOBS M, JOB_BEATS N / W; rowsum_2 JOBS M / W, JOB_BEATS N; axpy's K1), and the TB fed every container in flat order, which is wrong for rowsum_2's column walk. LOWER is the program snax-forge runs on the cluster, so the TB drives the accelerator as the cluster would, and the design point must be at the task's size for LOWER to write that task. The rebuilt tier done bundles give the same values as the rule (vecadd W = 4 JOBS 512, dot_4 W = 4 JOBS 1 and JOB_BEATS 512) and the same SystemVerilog once snax-forge's renames are masked (the tag now carries the design's name, `snax_forge_dot_4_*`; `ElementwiseLanes` is `SimdLanes`).
-- **Source:** `results/forge/runs/2026-11-10_csyn1_r1.md`.
+Every forge point is bundled at its n2048 shape, and the TB writes what snax-forge's LOWER writes for it (JOBS, JOB_BEATS, scalar CSRs, START) and feeds each stream in its streamer's element order. **Why:** a per-group rule did not hold for the untiered recipes; LOWER is the program the cluster runs. *10 Nov; replaces X23's per-group rule.*
 
 ### X59. At most 16 cores, and some licences left free
 
-- **Date:** 2026-11-10 (CSYN1 R1)
-- **Decision:** everything a round runs at the same time (DC, Questa, PT, CACTI) uses at most 16 cores of the host, and never all the free licences: DC `syn.py run -j 4 --cores 4` (4 Design-Compiler and DC-Expert licences); power `pwr run --cores 16 -j 4` (`--cores` added to `sim/pwr.py`: J <= cores, PT threads = cores // J, so 4 workers with 4 PT threads); one batch at a time, not DC beside power or one source's power beside another's. Amends X16 (J and the threads from nproc, DC at `--cores 16`).
-- **Why:** the host and the licences are shared. CSYN1 R1's first probe ran six DC runs at `--cores 16` beside three power batches of 3 workers with 10 PT threads each: load 74 on 32 cores, and six DC runs held 8 of the 10 DC-Expert licences (a multicore DC run can take more than one), so two of them hit SEC-50 (PITFALLS L4). Ryan asked to keep to 16 cores and leave licences free; the batches were stopped, their folders deleted and the runs repeated within the budget.
-- **Source:** `results/forge/runs/2026-11-10_csyn1_r1.md`.
+A round uses at most 16 cores at once and never every free licence: DC `-j 4 --cores 4`, power `--cores 16 -j 4`, one batch at a time. **Why:** the host and licences are shared; a multicore DC run can hold several DC-Expert licences (PITFALLS L4). *10 Nov; amends X16.*
 
 ### X60. n2048 module energies beside the default run
 
-- **Date:** 2026-11-10 (CSYN1 R2)
-- **Decision:** `power_pt_modules.csv` (every source with one: forge, hls, bambu, xls; both technologies) gets a `size` column after `tech` and is keyed by point and size. A run writes its module rows when it is the point's default run (as before: b64, rowsum m8_n64, forge n2048) or an `n2048` run with seed 0; a rerun replaces the rows of its point and size only. The default run of an HLS point does not change, so its committed reports stay at the top of its `power_reports` zip. `pixi run pwr modules --source S --tech T` filled the column on the rows written before (each point's default size, from its committed `tb.json` and the source's `default_size`) and added the rows of every n2048 run made before, from the run's `power_hierarchy.rpt` and `units.rpt` kept in its `sim/runs/` zip, each point's top row checked equal to `power_pt.csv`'s `e_dyn_pj`. Amends X20 (one row per hierarchical cell of the default run).
-- **Why:** X55 compares untiered energy at n2048 (`parts_size` n2048), but the parts come from `power_pt_modules.csv`, which held the default run only; making n2048 an HLS point's default run moves its committed reports (CSYN1 R1, rowsum). A size column keeps both, loses no row and needs no rerun: every n2048 run had its hierarchy report kept.
-- **Source:** `results/forge/runs/2026-11-10_csyn1_r2.md`.
+`power_pt_modules.csv` has a `size` column and holds each point's default run and its n2048 run, keyed by point and size. **Why:** the parts at n2048 need that run's modules without moving the default run. *10 Nov; amends X20.*
 
 ### X61. The tables with forge, and n2048 untiered on nangate45
 
-- **Date:** 2026-11-10 (CSYN1 R2)
-- **Decision:** `report/compare.py` reads forge's parts by the module's design name among the wrapper's instances, `snax_forge_<part>` or `snax_forge_<design>_<part>` (PITFALLS E5), takes every forge case (`forge`, `forge2` to `forge6`, `forge_baked`), and lets an untiered forge point exist on nangate45 only (snax-forge D159); every other point must be on both technologies. Untiered must have n2048 on every ok point and takes its parts from n2048 (X60's rows) on nangate45; on nangate15, where CSYN1 ran no n2048, untiered keeps its earlier sizes and its parts from the default run. `report/compare_hls.py` puts forge's cases beside the HLS cases of each kernel (one line each) and shows every tier at n2048; its nangate15 check compares untiered at each kernel's larger cosim size (m16_n32, n512, m8_n64), the one size both technologies have. Amends X45 (forge has untiered points), X46 (forge in, untiered at n2048) and X55 (n2048 on nangate45).
-- **Why:** the CSYN1 rounds are Nangate 45 nm only, so the untiered n2048 task exists on nangate45 only; requiring it on nangate15 would refuse the whole table. Showing every tier at n2048 is X55's comparison; the HSYN1 R9 insights in `compare_hls.md` were written at the cosim sizes and are marked as not reread.
-- **Source:** `results/forge/runs/2026-11-10_csyn1_r2.md`.
+The compare scripts take every forge case by its design name (PITFALLS E5); an untiered forge point exists on nangate45 only; untiered takes its parts from n2048 on nangate45 and from the default run on nangate15. **Why:** CSYN1 ran on nangate45 only (D159). *10 Nov; amends X45, X55.*
 
 ### X62. A Vitis RAM swapped for an SRAM macro
 
-- **Date:** 2026-11-10 (CSYN1 R3)
-- **Decision:** on nangate45, `syn/syn.py` replaces each RAM Vitis built (`*_RAM_AUTO_1R1W`, a `# ram:` line of the point's `filelist.f`) by an SRAM macro, through `ram/vitis_ram.py` (shared with `sim/pwr.py`): the macro `sram_d<AddressRange>_w<DataWidth>` (no byte mask), its sizes read from the parent's instantiation, made with `ram.py`'s `make_macro` (`pixi run ram lib`) when missing; a module with Vitis's name and ports in the run folder wraps it with plain wiring (`ce0` to `req_i`, `we0` to `we_i`, `address0` to `addr_i`, `d0` to `wdata_i`, `q0` from `rdata_o`; `reset` unused); the run's own `filelist.f` takes the wrapper instead of Vitis's file; DC links the macro's `.db` beside Nangate's, after the library check (`SYN_RAM_DBS`), and the plan goes into the run's `tech.json` (`resolved.ram`). Only a one-port RAM is swapped. A RAM with no macro (another technology, a size CACTI refuses, a second port) parks the point; `--with-ram` synthesizes it as Vitis wrote it, from flops. `synth_dc.csv`'s hls rows get `ram_um2` (the RAM instances' area, inside `area_um2`; for a macro equal to its CACTI area) and `ram_kind` (`macro` or `flops`); DC's black-box group, where the macro's power sits, is left out of the energy columns and of their sum check. In power, the macro's `.v` is simulated with `SRAM_INIT_ZERO` (as Vitis's zeroed `.dat`), PT links its `.db`, and the run's energy is X50's: the logic's per cycle is PT's four groups with the macro's output-net switching added to the combinational group; the memory's per task `e_ram_pj` = `ram_reads` x e_rd + `ram_writes` x e_wr from the macro's `RAMCOUNT` line and its CACTI numbers; `e_run_pj` = e_dyn x cycles + `e_ram_pj`; PT's own averaged figure for the macro is kept as `e_ram_pt_pj` (PITFALLS PT7), not used. With flops, `e_ram_pj` is PT's energy of the RAM instance, already inside `e_run_pj`. CSYN1 R3: dot and axpy's `__tmp0` 2048 x 64 are macros; rowsum's `y_buf` (16 x 64, two ports) is flops (CACTI refuses 16 words, PITFALLS C4, and a one-port macro cannot take its second read port).
-- **Why:** the three dace points were parked for their buffers (RAM1, X47 to X50 give the macros). Vitis's RAM reads first (on a write, `q0` takes the old word) and the macro keeps the last read word (`tc_sram`); they differ only in `q0` after a write, and in dot and axpy one loop only writes the buffer and the next only reads it (the FSM runs them in turn), so DaCe never reads `q0` after a write; the outputs matched the reference on all three. A wrapper keeps Vitis's RTL untouched and puts the macro behind the same ports, so the netlist differs from Vitis's design only in the memory.
-- **Source:** `results/hls/runs/2026-11-10_csyn1_r3.md`.
+On nangate45, `syn.py` replaces each one-port RAM Vitis built by a CACTI macro of its size behind a wrapper with Vitis's ports (`ram/vitis_ram.py`); a RAM with no macro parks the point, or is built from flops with `--with-ram`. Its energy is counted (X50) into `e_ram_pj`; rows add `ram_um2` and `ram_kind`. dot's and axpy's 2048 x 64 buffers are macros; rowsum's 16-word two-port buffer is flops. **Why:** the dace points were parked for their buffers; the netlist differs from Vitis's only in the memory. *10 Nov; `results/hls/runs/2026-11-10_csyn1_r3.md`.*
 
 ### X63. The parts at n2048, and forge's total without csr
 
-- **Date:** 2026-11-10 (CSYN1 R3)
-- **Decision:** `results/compare_hls.md` has a section 5, "Parts at n2048", generated by `report/compare_hls.py` from the tier CSVs: per tier, kernel and W on nangate45, each tool and case at n2048, its parts with area, energy per task (a part's energy per cycle times the window's cycles) and pJ per element (/ 2048): forge csr, ctrl, datapath, total (glue included) and total without csr; Bambu ctrl, datapath (X41) and total; Vitis dace with a RAM, the RAM (X62) and the logic without it, and the total; Vitis opt and XLS totals. The comparison's basis: the HLS tools take their sizes on plain pins and have no CSR file, so forge's total without csr is the like-for-like figure against an HLS total; integrating any HLS block into the cluster would need a register interface of its own, which no HLS total here contains. `report/compare.py` gives each row the parts of its own run where `power_pt_modules.csv` has them (X60: every n2048 run), and the point's default run's otherwise (`parts_size` says which): tier done Bambu n2048 rows took their b64 run's parts per cycle before, and untiered Bambu b64 and m8_n64 rows took the n2048 run's (CSYN1 R2). Amends X45 and X61.
-- **Why:** ctrl and datapath are compared apart (DACE1's kickoff), and an energy per task of a part must come from the run whose window it multiplies. The csr is forge's cluster interface, a cost an HLS block placed in the cluster would also pay but does not show here.
-- **Source:** `results/hls/runs/2026-11-10_csyn1_r3.md`.
+Each kernel page lists the parts at n2048: forge's csr, ctrl, datapath, total and total without csr; Bambu's ctrl and datapath; Vitis dace's RAM apart. forge's total without csr is the like-for-like figure against an HLS total, since the HLS tools take their sizes on plain pins and have no CSR file. Each row takes the parts of its own run. **Why:** a part's energy per task must come from the run whose window it multiplies. *10 Nov; amended by X65, X77.*
 
 ### X64. The comparison, one page per kernel
 
-- **Date:** 2026-11-10 (CSYN1)
-- **Decision:** `report/compare_hls.py` (`pixi run compare-hls`) writes `results/compare/` instead of `results/compare_hls.md` and `results/compare_hls/`: `README.md` holds the index, the setup, the summary across kernels (hand-written), the parts' basis (X63) and the nangate15 check; `<tier>/<kernel>.md` holds one kernel's figure and table, its insights (hand-written) and its parts at n2048, with the figure beside it as `<tier>/<kernel>.png`. The markers are the same kind as before (`gen:index`, `gen:setup`, `gen:parts-basis`, `gen:tech` in the README; `gen:main` and `gen:parts` on each page), and the hand-written text was moved over unchanged apart from its cross-references. The generated parts and the figures are the same as in the single file. Amends X46, X61 and X63, which name `compare_hls.md`.
-- **Why:** the single file had grown past 1,000 lines; a page per kernel keeps each kernel's numbers and insights together and short.
-- **Source:** CSYN1, after R4.
+`pixi run compare-hls` writes `results/compare/`: a README (setup, summary, parts' basis, nangate15 check) and per kernel a page and a figure. Generated parts sit between `<!-- gen:NAME -->` markers; the insights around them are hand-written and kept across reruns. **Why:** one file had grown past 1,000 lines. *10 Nov; replaces X46.*
 
 ## CTRL2: snax-forge's leaner control unit
 
 ### X65. forge's csr without its peripherals
 
-- **Date:** 2026-11-11 (CTRL2 R5, basis fixed in R5b the same day)
-- **Decision:** from snax-forge D168 (CTRL2) the busy-cycle CSR is BUSY_COUNTER (accelerator.json, `+BUSY_COUNTER_ADDR` in `csr_seq.sv`; `sim/sources/forge.py` refuses a bundle without it), and it sits in `snax_forge_<design>_peripherals`, a child of `<tag>_csr`. It is counted in no figure. `report/compare.py` makes forge's `csr` part the `snax_forge_(<design>_)?csr` cell minus that child, one level below it: in area from `synth_dc_modules.csv` (DC's `area_hierarchy.rpt`), in energy from `power_pt_modules.csv` (X60's rows). forge's total without csr, X63's like-for-like figure, stays the total minus the whole csr cell, peripherals included, as in Part A: `area_um2 - csr_um2 - peripherals_um2` and `e_run_pj - (e_dyn_csr_pj + e_dyn_peripherals_pj) * cycles`, which is ctrl + datapath + glue. The child's own figures are kept for the record in `peripherals_um2` and `e_dyn_peripherals_pj` of the compare CSVs, and in no page; the split check sums csr, ctrl, datapath, glue and peripherals to the total, and the glue stays the total minus the wrapper's three instances (the whole csr). A bundle without `_peripherals` (every point before CTRL2 R5, nangate15's among them) subtracts nothing, so Part A and CTRL2 share one basis. The README and every kernel page of `results/compare/` say so in one line on top. Amends X63.
-- **Why:** BUSY_COUNTER is an observability counter, neither the cluster interface nor the control, and no HLS block has one. Counting it in the csr would charge forge's interface for it; counting it in the total without csr would charge forge's block for it against HLS totals that hold nothing like it. Kept out of every figure, the comparison stays like for like, and Part A (where the counter sat inside the csr and so outside the total without csr) and CTRL2 are measured on one basis. CTRL2 R5 first left it in the total without csr; R5b took it out (CTRL2 topic 5).
-- **Source:** `results/forge/runs/2026-11-11_ctrl2_r5.md`.
+BUSY_COUNTER (snax-forge D168) sits in `<tag>_peripherals` inside the csr and is in no figure: the csr part is the csr cell minus it, the total without csr is the total minus the whole csr cell, i.e. ctrl + datapath + glue. It stays in the CSVs as `peripherals_um2` and `e_dyn_peripherals_pj`. **Why:** an observability counter is neither forge's interface nor its control, and no HLS block has one. *11 Nov (CTRL2); `results/forge/runs/2026-11-11_ctrl2_r5.md`.*
 
 ## CSYN1 Part B: the cluster
 
-X66 to X69 are drafts from the Part B brainstorm (2026-11-11, `claude/csyn1-partb-plan-2026-11-11.md` in the project); each is confirmed, with its source, in the round that builds it: X66 and X67's step 1 in R2, X67's step 2, X68 and X69 in R3, X67's step 3 in R4.
-
 ### X66. The cluster's SRAM implementation, generated from its memory list
 
-- **Date:** 2026-11-11 (drafted in the CSYN1 Part B brainstorm; confirmed in R2)
-- **Decision:** a cluster's memories are RAM1's macros (X47 to X50). The list is snax_cluster's `util/clustergen.py -c <cluster file> -o <dir> --memories` (`<dir>/memories.json`, clustergen's `memory_cfg`: words, width, byte width, ports, latency, byte enable per memory size), run in snax_cluster's image; not `make gen-mem-cfg`, which writes the TSMC compiler's text files. `cluster/mem.py MEMORIES_JSON OUT_DIR` makes each entry one macro with `ram/ram.py`'s `make_macro`, reusing `ram/runs/lib/<name>.zip` when cached: `sram_d<words>_w<width>`, with `_m8` (`--mask 8`) where the list sets byte enable, so the mask follows the list and not the use (the I-cache data is listed with byte enable and becomes `sram_d128_w256_m8`, although cluster_icache ties `be_i` to `'1`; its `.lib` area and energies equal `sram_d128_w256`'s, the same CACTI row). It writes one `tc_sram_impl.sv` with tech_cells_generic's `tc_sram_impl` parameters and ports: one `if (NumWords == ... && DataWidth == ...)` branch per macro (and `ByteWidth == 8` for a masked one) instantiating it on port 0 with plain wiring (the macros have `tc_sram_impl`'s port names, X49), `impl_o` tied to 0, `$error` when `NumPorts` or `Latency` is not 1 or no branch matches (naming the size), and in simulation a `[tc_sram_impl] <path>: <macro>` print per instance at time 0. Beside it `models/<macro>.v` (the models from the macros' zips) and `sram_models.f`: `-sv`, then the models' absolute paths, since the models are SystemVerilog in `.v` files (PITFALLS Q12). No sub-banking and no bit-enable conversion: CACTI makes each size as one macro and the mask is per byte. snax_cluster reads the file through `SRAM_IMPL` (in vsim and in `gen-syn`) and the models through `SRAM_MODELS` (vsim only), both on its main since R1 (`ddc258b8`); the netlist keeps each `tc_sram_impl` as a level holding one macro cell, and its simulation reads the macros' `.v`. The file, the models and the list are generated per run and never committed (X49); they are zipped with the run (X51). For `snax_forge_cluster`: 512 x 64 with mask (TCDM, 32 instances), 128 x 256 with mask (I-cache data, 2), 128 x 39 (I-cache tag, 2; costs from 40 bits, X49). The models start X as tech_cells_generic's `tc_sram` does at `SimInit "none"` and do not reset their read address; `+define+SRAM_INIT_ZERO` starts them at zero and is not used. Against tech_cells_generic's `tc_sram_impl` (`cluster/eqv_tb.sv`, Verilator 5.020, the same random traffic per size, rdata compared every cycle from the first read): 19,486, 19,867 and 19,870 cycles compared, 0 mismatches for the TCDM, I-cache data and tag sizes. On the cluster (`pixi run cluster rtl dot3_w16`, X67) the 36 instances print their macro, the RTL run with them gives the plain RTL's 828 cycles and passes D123.
-- **Why:** every memory of the cluster (`snitch_data_mem`, cluster_icache's data and tag) goes through `tc_sram_impl`, so one module swaps them all, as the 16 nm tapeout's `tc_sram_impl.sv` did by hand; generated from the cluster's own list, another configuration (more banks, another I-cache) gets its file with no hand edit. clustergen's list is JSON with the byte enable per size; `gen-mem-cfg`'s text files are for the TSMC compiler.
-- **Source:** CSYN1 Part B brainstorm, topic 2; `results/cluster/runs/2026-11-11_csyn1_r2.md`.
+A cluster's memories are RAM1's macros. `cluster/mem.py` reads clustergen's `--memories` list and writes one `tc_sram_impl.sv` with a branch per size (byte mask as the list sets it), the macros' models and `sram_models.f`; snax_cluster reads them through `SRAM_IMPL` and `SRAM_MODELS`. Generated per run, never committed. Checked against tech_cells_generic's model with Verilator: 0 mismatches. **Why:** every memory of the cluster goes through `tc_sram_impl`, so one generated file swaps them all, for any configuration. *11 Nov; `results/cluster/runs/2026-11-11_csyn1_r2.md`.*
 
 ### X67. The cluster source
 
-- **Date:** 2026-11-11 (drafted in the CSYN1 Part B brainstorm; step 1 confirmed in R2, step 2 in R3, step 3 in R4)
-- **Decision:** a cluster point (`cluster/points.json`: `point`, `recipe`, `W`, `sets`; first `dot3_w16`, dot_3 at W = 16, N = 2048) is a snax-forge design built into snax_cluster's whole cluster, top `snax_forge_cluster_wrapper` (instance `i_snax_forge_cluster` of the testharness). Its bundle, ELF and `forge_expected.txt` come from snax-forge's `pixi run forge` (snax-forge C§18; a dirty bundle refused and its commit recorded, as X21). snax_cluster is read from `SNAX_CLUSTER` (default `../snax_cluster`): clean, HEAD on `origin/main` (`git merge-base --is-ancestor`) unless `--allow-branch`, its commit recorded. snax_cluster's make targets run in its container, `podman run --rm -v "$PWD":"$PWD" -w "$PWD" c5db84ad7bce` with no `-it` from scripts, the mount the parent folder of snax-forge, snax_cluster and this repo (plus the PDK folder if elsewhere) and PITFALLS SC6's Scala caches; `rtl-gen` and the vsim or `gen-syn` call are separate make calls. Three steps, one command each, the same testbench (`tb_bin`, the ELF, D123's check against `forge_expected.txt`):
-  1. `pixi run cluster rtl <point>` (confirmed in R2): the bundle zip `rtl/cluster/<point>.zip` (`pixi run forge` in snax-forge's image: the bundle folder, the ELF and, since CORE1, the quiet build beside it (`sw/forge_quiet.elf`, `sw/obs_marks.json`, snax-forge D135, for PWR1), `forge.log`, `provenance.json` with the commit, the image and its id, the command; reused when those three match), then in `tmp/cluster/<point>/` `rtl-gen` and clustergen's list in snax_cluster's image, X66's files, and two vsim runs of the ELF: the plain RTL and the RTL with `SRAM_IMPL` and `SRAM_MODELS` (`vsim_preparation` in the image, `snax-forge-sim` and `snax-forge-run` outside it; the vsim stamp rebuilds `work-vsim/` between them). Checks (`cluster/check.py`): D123 on both runs (as snax_cluster's `snax_forge_check.sh` `compare`), the macro run's `forge cycles` equal to the plain run's, the `[tc_sram_impl]` prints against the point's `srams` in `cluster/points.json`, the macro run's `vlog.log` (X66's file and every model compiled, nothing of tech_cells_generic's `tc_sram`), `[SUCCESS]` in both. Packed under `rtl/` of `sim/runs/cluster/nangate45/<point>.zip` (the list, X66's files, both runs' output, the macro run's `vlog.log` and `vopt.log`, every step's log, `check.json` with each check, both cycle counts, the instance counts, both commits, the image ids and the Questa version), also on a failure; then the point's tmp folder is deleted and `make clean-vsim clean-generated` runs in snax_cluster. The images are in `cluster/points.json` (`images`).
-  2. `pixi run cluster syn <point> [--cores N]` (confirmed in R3): from the same bundle zip, in `tmp/cluster/<point>/`, `rtl-gen`, clustergen's list and `mem.py --text-only`, whose `tc_sram_impl.sv` must equal step 1's (or the run stops), then `make gen-syn CFG_OVERRIDE=... SRAM_IMPL=<that file>` in the image: snax_cluster's `work-syn/syn_flist.tcl` as written (bender's groups, from snax_cluster #693 with target `rtl` so iDMA is in it, PITFALLS SC10; then the bundle's `snax_forge.f`, then `SRAM_IMPL`'s file). DC runs through `syn/syn.py`'s source `cluster` (`dc_env`, `run_dc` with the licence retry, `finish_run`, `write_summary`): `dc_syn.tcl` sources the list (`SYN_FLIST_TCL`; a failed group stops it), elaborates `snax_forge_cluster_wrapper` (`SYN_TOP`), links the macros' `.db` (`SYN_RAM_DBS`), adds `cluster/cluster.sdc` after `constraints.sdc` (`SYN_EXTRA_SDC`, X68), compiles as X1 to X5 and X22 (`compile_ultra -no_autoungroup`), and runs `cluster/cluster_check.tcl` after the reports (`SYN_POST_TCL`); no SDF (X69). DC's stdout goes to `logs/dc_stdout.log` as it runs, its path printed first. The gates fail the row (syn.py's `read_run`): the library and wire-load checks, an unresolved reference (`cluster_check.rpt` or a LINK-5 line), a black box that is not one of the point's macros or a macro count other than its `srams`, a leaf cell from a library other than Nangate's and the macros'. `tree.txt` (`cluster/tree.py`, `area_hierarchy.rpt` to depth 4) beside the reports. Kept: the run zip `syn/runs/cluster/nangate45/<point>.zip` (`KEEP_RUN` plus `syn_flist.tcl`, `cluster.sdc`, `tc_sram_impl.sv`, `cluster_check.rpt`, `cluster_ports.rpt`, `tree.txt`), a row in `results/cluster/nangate45/synth_dc.csv` (syn.py's columns plus `recipe`, `W`, `snax_forge_commit`, `snax_cluster_commit`, `macro_um2`, `macros`; no modules CSV) and the report zip `results/cluster/nangate45/reports/<point>.zip` (`KEPT_REPORTS`, the two cluster reports, `tree.txt`; the hierarchical area and power reports whatever their size). After DC, also on a failure, the tmp folder is deleted and `make clean-syn clean-generated` runs in snax_cluster. `dot3_w16`: 1,314,306 um2, of which the 36 macros 475,791 um2, slack +1.442 ns at 10 ns, 65 minutes of DC.
-  3. `pixi run cluster gls <point> [--allow-branch]` (confirmed in R4): step 2's netlist (`out/snax_forge_cluster_wrapper_mapped.v` of `syn/runs/cluster/nangate45/<point>.zip`) in step 1's testbench, with step 1's ELF and check, zero delay. Before anything runs: step 1 PASS, the netlist there, the bundle zip's ELF the one both steps used (the bundle is reused, never made again), and no file but Makefiles, `.mk` and docs changed under `hw/`, `util/`, `target/snitch_cluster/cfg/` or `Bender.yml` between the netlist's snax_cluster commit and HEAD. In `tmp/cluster/<point>/`: `rtl-gen`, clustergen's list and `mem.py`, whose `tc_sram_impl.sv` must equal step 1's; the cell models as `sim/pwr.py` finds them (`pwr.cell_model`, the `.v` beside the `.db`). snax_cluster's hook, on its main since #695 (`ac231e42`): `SIM_TYPE=gate_level_sim` with `GLS_NETLIST` and `GLS_CELLS`, which needs `SRAM_IMPL` and `SRAM_MODELS` (the RTL list stays as in the macro run: the testharness and its packages); `compile.vsim.tcl` ends by compiling `GLS_CELLS`, `-sv -f $(SRAM_MODELS)` and `GLS_NETLIST` into a library of their own, `work-vsim/gls`; vopt takes `-Lf work-vsim/gls`, so `snax_forge_cluster_wrapper` and everything below it resolve to the netlist and the testharness to the RTL, with `+initreg+0` and `+acc=n`; vsim `+nospecify +notimingchecks`. The draft's `GLS_MACROS` is not built: the macro models are `SRAM_MODELS`'s, and the draft's `-t gate_level_sim` is gone (no Bender source has that target). The two files are prerequisites of `bin/snitch_cluster.vsim`, checked only outside the image, which never reads them. Checks: D123; forge cycles equal to step 1's; the swap (vopt loaded the wrapper, the netlist's modules and Nangate cells from `gls`, its command has `+initreg+0` and `+acc=n`; the run prints no `[tc_sram_impl]`); RAMCOUNT, without the paths, against step 1's macro run: reads equal on every instance, writes equal but for at most one more on an instance (the netlist's write at time 0, PITFALLS Q14), listed as `ram_extra_writes`; `[SUCCESS]` in both runs. Packed under `gls/` of `sim/runs/cluster/nangate45/<point>.zip`; `vsim.wlf` (VSIM_FLAGS' `log -r /*`, 55.7 MB for `dot3_w16`) deleted. `dot3_w16`: PASS, 828 cycles as the RTL, in 3.5 min (vopt 34 s, the run 52 s).
-  Results in `results/cluster/nangate45/` (X5), each step's log in the point's zip (X51). Gates: the library and wire-load checks (X3, X4), no unresolved module, the macros the only black boxes (DC12); no flop count. The area in groups, against HWCOST and the accelerator alone, is X72.
-- **Why:** the flow is the way any snax-forge design reaches a synthesized cluster: snax-forge, then snax_cluster, then synthesis and the netlist run, with snax_cluster's own lists so nothing is rebuilt by hand; one design proves it before designs are picked for the evaluation. Taking snax_cluster from main keeps every result on reviewed hooks.
-- **Source:** CSYN1 Part B brainstorm, topics 1, 3, 4 and 5; step 1: `results/cluster/runs/2026-11-11_csyn1_r2.md`; step 2: `results/cluster/runs/2026-11-11_csyn1_r3.md`; step 3: `results/cluster/runs/2026-11-11_csyn1_r4.md`.
+A cluster point (`cluster/points.json`) is a snax-forge design built into snax_cluster's whole cluster, from snax_cluster's main, in three steps: `pixi run cluster rtl` (the bundle, the RTL run and the RTL with macros, both checked with D123), `cluster syn` (DC on snax_cluster's synthesis list, with gates for unresolved references and stray black boxes) and `cluster gls` (the netlist in the same testbench). The steps and what each keeps are in [`cluster/README.md`](../cluster/README.md). **Why:** this is the way any snax-forge design reaches a synthesized cluster, with snax_cluster's own lists. *11 Nov; `results/cluster/runs/2026-11-11_csyn1_r2.md`, `_r3.md`, `_r4.md`.*
 
 ### X68. The cluster's constraints and run budget
 
-- **Date:** 2026-11-11 (drafted in the CSYN1 Part B brainstorm; confirmed in R3)
-- **Decision:** a cluster run uses `constraints.sdc` (X2 to X4: `clk_i` at 10 ns, uncertainty 0.1 / 0.02 ns, `INV_X4` driving every input but the clock, four `INV_X4` inputs of output load, max transition 0.25 ns) plus: `rst_ni` asynchronous, ideal and `set_false_path -from rst_ni`; `set_false_path` on the static and asynchronous ports the wrapper marks `(* false_path *)` (`meip_i`, `mtip_i`, `msip_i`, `hart_base_id_i`, `cluster_base_addr_i`, `boot_addr_i`, `obs_o`) and on `sram_cfgs_i`; input and output delays of 30 % of the clock (3 ns) on the narrow and wide AXI ports and 10 % (1 ns) on the CSR ports to BINGO (unused here), in place of 0.01 ns. They are `cluster/cluster.sdc` (`get_ports -quiet` on `rst_ni`, `meip_i*` ... `obs_o*` and `sram_cfgs_i*`, `narrow_*` and `wide_*`, `csr_*`), sourced after `constraints.sdc`; `reports/cluster_ports.rpt` counts each group and lists every port in none (for `dot3_w16`, 3,590 ports: 122 false-path, 3,232 AXI, 234 CSR, clock and reset, none left over). A cluster run is `pixi run cluster syn --cores 16`, alone: no other DC, Questa or PT batch beside it and no second cluster run; it checks free DC-Expert licences first (X59, PITFALLS L4) and drops to 8 cores when 16 would take most of them. The 16 cores are kept on a loaded host: `SYN_IGNORE_LOAD=1` turns DC's load check off before `set_host_options` (PITFALLS DC13; without it DC took 7 at load 25). The 16-core run held 2 DC-Expert and 1 Design-Compiler licence of 10 each, so 8 cores were never needed. Amends X16 and X59 for cluster runs only.
-- **Why:** a cluster sits in a SoC, so its boundary gets an outside budget (a rule of thumb; this configuration registers its AXI boundary, so at 10 ns the value changes nothing: `dot3_w16`'s in2reg slack is 5.95 ns and reg2out 5.77 ns with the 3 ns budget, the worst path reg2reg in a Snitch core); the reset and the static ports carry no timing. Cluster runs are few and picked, not swept, so one at a time with the host's 16-core budget, kept under load since the host is shared.
-- **Source:** CSYN1 Part B brainstorm, topic 3; `results/cluster/runs/2026-11-11_csyn1_r3.md`.
+A cluster run adds `cluster/cluster.sdc` to `constraints.sdc`: asynchronous reset and static ports false-pathed, 30 % of the clock as I/O delay on the AXI ports and 10 % on the CSR ports. One cluster DC run at a time at `--cores 16`, nothing beside it, with `SYN_IGNORE_LOAD=1` (PITFALLS DC13). **Why:** a cluster sits in a SoC, so its boundary gets an outside budget; cluster runs are few and picked. *11 Nov; amends X16, X59 for cluster runs.*
 
 ### X69. No SDF unless asked
 
-- **Date:** 2026-11-11 (drafted in the CSYN1 Part B brainstorm; confirmed in R3)
-- **Decision:** `dc_syn.tcl` writes the SDF only when `syn.py --sdf` is given (`SYN_WRITE_SDF`), for every source; default off. snax_cluster's SDF hooks (`SDF_ANNOTATE_PATH`, `SDF_TOP`) stay optional and unused. Amends X51's scratch list. With no `--sdf`, `syn.py run --dry-run` prints the same environment as before for a forge, an hls and a parked hls point; `--sdf` adds only `SYN_WRITE_SDF='1'`.
-- **Why:** nothing reads it: energy is from a zero-delay simulation (X7) and the SDF was deleted as scratch; on the whole cluster it costs time and disk for nothing.
-- **Source:** CSYN1 Part B brainstorm, topic 4; `results/cluster/runs/2026-11-11_csyn1_r3.md`.
+DC writes an SDF only with `syn.py --sdf`. **Why:** energy is from a zero-delay simulation (X7); nothing reads the SDF. *11 Nov.*
 
 ### X70. The interconnect with read-only and write-only inputs (xbar_mix)
 
-- **Date:** 2026-11-11 (CSYN1 Part B R3c)
-- **Decision:** a set `xbar_mix` measures the TCDM sparse interconnect as the cluster drives it, so HWCOST can price it (R3d). A point `i<inputs>_b<banks>_r<ro>_w<wo>` is the xbar point's own `SparseInterconnect` (the same SV bytes as `rtl/xbar/i<inputs>_b<banks>.zip`, X52) inside `strm/xbar_mix.py`'s wrapper `xbar_mix`: inputs `0..ro-1` read-only (`bits_write`, `bits_data`, `bits_amo` tied 0, as snax_cluster's `DataRequestor` ties a reader's), `ro..ro+wo-1` write-only (`bits_write` 1, `bits_amo` 0, response data open, as a writer), the rest read-write ports; every point also carries `sparse_interconnect_wrapper.sv.tpl`'s ties (every `io_tcdmRsps_*_ready` and `io_memRsps_*_valid` 1, every `io_memRsps_*_ready` and `io_memReqs_*_bits_priority` open). The grid (`strm/grid.json`): inputs {16, 32, 64} x banks {16, 32, 64}, each all read-write (`r0_w0`), all read-only (`r<inputs>_w0`) and all write-only (`r0_w<inputs>`), plus `i36_b32_r0_w0` and the cluster's mix `i36_b32_r32_w1` (32 reader channels, one writer, two cores and the AXI port); 29 points. `i36_b32` is the xbar set's `extra` point, generated by sbt as the others; the rest reuse STRM1's zips. Synthesis as X52 (`syn.py --source xbar_mix`), but the flop check reports the flops DC removes (`flops_removed`) instead of failing the row; more flops than the RTL declares still fails. Results in `results/xbar_mix/nangate45/`; no power runs.
-- **Why:** HWCOST took 187,547 um2 for the cluster's 36 x 32 interconnect from STRM1's table, where every input is a full read-write port; the cluster's synthesized interconnect is 107,878 um2 (the `i_tcdm_interconnect` wrapper level; 107,685 um2 for `sparse_interconnect_i`). The RTL is the same, so the difference is in the constants the cluster puts on it, which DC propagates. R3c found: the template's ties alone take 1.8 to 2.6 % off STRM1's points; all read-only inputs take 38.9 to 40.6 % off the all read-write point and keep every flop; all write-only inputs take 40.7 to 41.4 % off and lose inputs x log2(banks) flops (each input's `prevBankRequest`, which routes the response back). The cluster's mix is 118,952 um2, 35.9 % under `i36_b32_r0_w0` and 10.5 % over the cluster's `sparse_interconnect_i`: the flops agree (435 against 434), the gap is all combinational, so the cluster makes more of the interconnect constant or dead than these ties do (open; candidates in the run note).
-- **Source:** CSYN1 Part B R3 (the HWCOST comparison); `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`.
+The `xbar_mix` source synthesizes STRM1's interconnect with some inputs tied as the cluster ties them (a reader's channel read-only, a writer's write-only) plus the cluster template's ties: inputs {16, 32, 64} x banks {16, 32, 64}, each all read-write, all read-only and all write-only, plus two 36-input points. Area only. **Why:** HWCOST priced the cluster's interconnect at +74 % with every input read-write; DC removes what the constants make dead. *11 Nov; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`.*
 
 ### X71. The interconnect's read-only and write-only inputs in the cost: factor form by default, crosspoint form as an option
 
-- **Date:** 2026-11-11 (CSYN1 Part B R3d-a)
-- **Decision:** `report/xbar_kinds.py` (`pixi run xbar-kinds`) turns X70's points into `results/strm/<tech>/xbar_kinds.json`, next to `xbar.csv`, with two forms of the interconnect's area for a design with $n = n_{rw} + n_{ro} + n_{wo}$ inputs and $b$ banks (a reader's channel read-only, a writer's write-only, the cores and the AXI port read-write). The **factor form**, the default (Ryan, 11 Nov): $A = A_{table}(n, b)\thinspace(1 - f_{ro}\thinspace n_{ro}/n - f_{wo}\thinspace n_{wo}/n)$, $A_{table}$ read from `xbar.csv` as before (X53), $f_{ro}$ = 0.3965 and $f_{wo}$ = 0.4108, each the mean over the 9 (inputs, banks) pairs of $1 - A(\text{all read-only or all write-only}) / A(\text{all read-write})$ (ranges 0.389–0.407 and 0.407–0.415). The **crosspoint form**, an option: $A = b\thinspace(c_{rw}\thinspace n_{rw} + c_{ro}\thinspace n_{ro} + c_{wo}\thinspace n_{wo}) + d\thinspace n + e\thinspace b + g$, by ordinary least squares over the 27 grid points (the two `i36_b32` points held out): $c_{rw}$ 159.34, $c_{ro}$ 95.06, $c_{wo}$ 93.65, $d$ 26.30, $e$ −19.43, $g$ −201.0 µm², worst residual 2.9 %; it needs no table, so it also answers outside `xbar.csv`'s range (linear extrapolation, unchecked there). Energy is unchanged (per access, X52): only area is adjusted. `xbar_kinds.json` stores $f$ to 6 decimals and the coefficients to 4, so the worked examples' sums hold to 1 µm² (the values above are rounded for reading).
-- **Why:** the factor form keeps `xbar.csv` and its interpolation as the source of truth (exact at every grid point) and adds two numbers; the area is close to a cost per crosspoint everywhere (STRM1: 156.7–166.1 µm² per input per bank from 4 to 64 inputs), so $n_{ro}/n$ is the share of crosspoints that lose their write side and $n_{wo}/n$ the share that lose their response side. Checks: the cluster's mix `i36_b32_r32_w1` (118,952 µm²): factor +0.3 %, crosspoint −2.7 %; the cluster's `sparse_interconnect_i` (107,685 µm², X70): factor +10.8 %, crosspoint +7.5 %, against +74 % with every input read-write. The rest is constants the mix does not tie (X70) and is left: within HWCOST's 30 % target. $f$ is measured with the template's ties on both points and applied to STRM1's untied table (about 2 % larger), which the factor form's +1.1 % on `i36_b32_r0_w0` shows.
-- **Source:** `results/xbar_mix/runs/2026-11-11_csyn1_r3d.md`; `docs/cost_tables.md` (read-only and write-only inputs, worked examples). snax-forge's HWCOST takes `xbar_kinds.json` through `import-costs` after PORT1 merges (CSYN1 R3d-b).
+`pixi run xbar-kinds` writes `results/strm/<tech>/xbar_kinds.json` with two forms of the interconnect's area: the factor form (default), `xbar.csv`'s area times $1 - f_{ro}\thinspace n_{ro}/n - f_{wo}\thinspace n_{wo}/n$, and the crosspoint form (an option), a least-squares cost per crosspoint of each kind. Energy stays `xbar.csv`'s per access. Variables, fits and worked examples in [`cost_tables.md`](cost_tables.md#read-only-and-write-only-inputs). **Why:** the factor form keeps `xbar.csv` as the source and adds two numbers; on the cluster it lands at +10.8 % (crosspoint +7.5 %), within HWCOST's 30 % target. *11 Nov; `results/xbar_mix/runs/2026-11-11_csyn1_r3d.md`.*
 
 ### X72. The cluster's area in groups, against HWCOST
 
-- **Date:** 2026-11-11 (CSYN1 Part B R3b)
-- **Decision:** `cluster/groups.json` names the cluster's groups, each by rules (a regex on the instance path under `snax_forge_cluster_wrapper`, and optionally on the design name): TCDM banks, I-cache macros, the accelerator's datapath, control and csr, the streamers, the SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue), the TCDM sparse interconnect (`sparse_interconnect_i`, as X71 compares), the TCDM bank logic (AMO shims, muxes), DMA (iDMA, its AXI-to-memory, its interconnect), the cores (with the shared mul/div), the I-cache logic, AXI (the external cuts, both crossbars, the converters), the peripherals, and `others`. A node of `area_hierarchy.rpt` belongs to the first group with a rule it matches, else to its parent's group (the top's is `others`), and its own area (its total minus its children's) goes there, so the groups add up to the total. `report/cluster_breakdown.py` (`pixi run cluster-breakdown [--md]`) writes `results/cluster/<tech>/breakdown.json`: per point the groups with their shares, the macros against `synth_dc.csv`'s `macro_um2` (a mismatch fails the run), snax-forge's five parts (D167) against the groups `groups.json`'s `hwcost` maps them to (datapath, control, streamers, the interconnect, the TCDM banks; the rest is what HWCOST does not cost), and the accelerator's shell against its point synthesized alone (`points.json`'s `alone`, X22's columns). HWCOST comes from `cluster/hwcost.py` (`pixi run cluster-hwcost <point>`): snax-forge's own estimate on the recipe's last graph and `platforms/snax_forge.json`, run in snax-forge's environment, written with snax-forge's commit to `results/cluster/<tech>/hwcost/<point>.json`.
-- **Why:** the plan's breakdown (Part B topic 5) after reading R3's tree; rules by path keep the groups exact and the file readable, and the parent rule puts every unnamed node somewhere, so nothing is lost or counted twice. HWCOST is priced by snax-forge itself, at a recorded commit, so the comparison changes when the cost model does and not otherwise.
-- **Source:** `results/cluster/runs/2026-11-11_csyn1_r3b.md`.
+`cluster/groups.json` names the cluster's groups by path rules; each node of `area_hierarchy.rpt` adds its own area to the first group it matches, else its parent's, so the groups add up to the total. `pixi run cluster-breakdown` compares them with snax-forge's HWCOST five parts (priced by snax-forge itself, `pixi run cluster-hwcost`) and the accelerator with its point synthesized alone. **Why:** path rules keep the groups exact, and nothing is lost or counted twice. *11 Nov; `results/cluster/runs/2026-11-11_csyn1_r3b.md`.*
 
 ### X73. The cluster's windows and span
 
-- **Date:** 2026-11-12 (PWR1)
-- **Decision:** a cluster point's power is measured on the quiet build of its program (`forge_quiet.elf`, snax-forge's `FORGE_QUIET`, X67's bundle zip): no prints, every section in series, each section the next value of CSR `0x7c5`, which reaches the cluster's top port `obs_o`; `obs_marks.json` names each value (`dma_in`, `streamer_config`, `acc_config`, `run`, `dma_out`, `check`). A vsim `when` on `obs_o` logs every change with its time (`obs_log.txt`); each section is one window, from a quarter cycle before the rising edge where its mark appears to a quarter cycle before the next one's (times with no events). The span runs from the first mark to the check's mark: the boot (mark 0) and the check are left out, so the measurement ends when the data has left L1. The windows tile the span, so its energy is their sum. Amends X12 and X13 (start to done, busy window only) for cluster points: every window of the span is measured, idle ones included. The busy pins are not used: DC keeps them as ports with no driver (PITFALLS DC18); busy figures come from RTL runs.
-- **Why:** the marks come from the run itself, on the netlist, so no window depends on a signal name surviving synthesis or on a cycle count taken from the RTL; the quiet build keeps printing out of every window. On `dot3_w16` the six windows' cycles equal CORE1's RTL run exactly (901 in all).
-- **Source:** `results/cluster/runs/2026-11-12_pwr1_r1.md`; the plan in the project doc `claude/pwr1-plan-2026-11-12.md`.
+A cluster point's power is measured on the quiet program (`forge_quiet.elf`): each program section writes the next value to CSR `0x7c5`, which reaches the top port `obs_o`. Each section is one window, between quarter cycles before consecutive marks; the span runs from the first mark to the check's mark, so it ends when the data has left L1. Idle windows are measured too. **Why:** the marks come from the run on the netlist itself; on `dot3_w16` the windows equal the RTL's cycles exactly. *12 Nov (PWR1); amends X12, X13 for cluster points.*
 
 ### X74. PrimePower on the whole cluster
 
-- **Date:** 2026-11-12 (PWR1)
-- **Decision:** `pixi run cluster pwr <point>` (`cluster/power.py`). Part 1: the quiet ELF on the netlist with the gate-level options `cluster gls` uses, through its own vsim command (`bin/snitch_cluster.vsim`'s line with our `-do` in place of `log -r /*; run -a`), the VCD from a do-file (`vcd add` per design scope, X8), from time 0 to the check's mark; one `vcd_windows` pass cuts every window (X32), the VCD is deleted after it (X18), vcd2saif per cut with X9's SAIF checks. Part 2: one PT session links the netlist once and, per window, `reset_switching_activity`, `read_saif`, `update_power` and the reports (`sim/scripts/pt_power.tcl`'s cluster mode), in averaged mode. Each window needs at least 95 % of its driven nets annotated, the nets at Z for the whole window (DC's cut-loose port bits, PT6, PT9) left out of the count. `results/cluster/<tech>/power_pt.csv` holds one row per window with X20's per-cycle columns plus `e_macro_pj` (PT's black_box and memory groups), `e_io_pj`, the window's total `e_win_pj` and `tx_nets` (VS2), amending X20 for cluster rows; the reports per window go to `power_reports/<point>.zip`. `report/cluster_energy.py` (`pixi run cluster-energy [--md]`) sums each window's `power_hierarchy.rpt` into X72's groups (`results/cluster/<tech>/energy.json`): per window, the span, the run phase against the idle `acc_config` window before it (each group's energy and its part above idle), HWCOST's five energy parts against the run phase as shares of each side's own sum, and the shell against its point alone. One cluster PT or Questa run at a time, never beside a cluster DC run.
-- **Why:** one VCD and one PT session over all windows keep the run to minutes (`dot3_w16`: about 5 minutes for part 1, 4 for part 2). Averaged mode, not time-based: on the idle window averaged mode's clock energy (44.5 mW) matches the library's per-flop clock-pin energy counted by hand (about 44.8 mW), while time-based mode gives half of it for flops that hold (PITFALLS PT10). Most of every group's energy is the clock of flops that are never gated, so the run phase is shown both as each group's total and as its part above idle. HWCOST is a first-order estimate with no bit-level switching: the shares are what is compared, not the absolute numbers.
-- **Source:** `results/cluster/runs/2026-11-12_pwr1_r1.md`, `2026-11-12_pwr1_r2.md`, `2026-11-12_pwr1_r2b.md`, `2026-11-12_pwr1_r3.md`.
+`pixi run cluster pwr <point>`: one netlist run dumps one VCD, one pass cuts it into the windows' SAIFs, and one PT session in averaged mode reports each window; at least 95 % of each window's driven nets annotated. `power_pt.csv` has one row per window, adding `e_macro_pj`, `e_io_pj` and `e_win_pj`; `pixi run cluster-energy` sums each window into X72's groups and compares the run phase with HWCOST's energy shares. **Why:** one VCD and one PT session keep a run to minutes; averaged mode matches the library's clock-pin energy where time-based mode halves it (PITFALLS PT10). *12 Nov; amends X20 for cluster rows.*
 
 ### X75. The macros in cluster measurements
 
-- **Date:** 2026-11-12 (PWR1)
-- **Decision:** a cluster's energy takes the macros (the TCDM banks and I-cache macros) as PrimePower measures them in averaged mode, their `.db` linked (PT's black_box group, `e_macro_pj`), with PITFALLS PT7's bias (independent pin probabilities) noted and not corrected; no access counting and no RAMCOUNT check for cluster points. X50's counted accesses times the table stay for HWCOST's cost tables and for the single-point rows X62 wrote. Leakage is left out, as everywhere (X13).
-- **Why:** a cluster measurement gives the data as the tool measured it, macros included; the counted model is HWCOST's, and comparing the two is the point of the comparison. On `dot3_w16` the banks' run-window energy (14.65 nJ) is within 1 % of HWCOST's counted 4,096 reads (14.50 nJ).
-- **Source:** `results/cluster/runs/2026-11-12_pwr1_r2.md`, `2026-11-12_pwr1_r3.md`.
+A cluster's macros (TCDM banks, I-cache) are taken as PT measures them in averaged mode, with PITFALLS PT7's bias noted; no counted accesses for cluster points. **Why:** a cluster measurement gives the data as measured; the counted model is HWCOST's, and comparing the two is the point (the banks within 1 % on `dot3_w16`). *12 Nov.*
 
 ### X76. tb_bin's 1 ns clock read as 10 ns
 
-- **Date:** 2026-11-12 (PWR1)
-- **Decision:** snax_cluster's testbench clocks at 1 ns (`tb_bin.sv`, `TCK = 1ns`, vsim `-t 1ps`). Each cut VCD's header gets `$timescale 10ps` in place of `1ps` (`sim/pwr.py`'s `vcd_windows(..., timescale_10ps=True)`), with the time numbers unchanged, so the run reads as if at 10 ns: X9's DURATION check (cycles x 10 ns), PT's 10 ns clock from `constraints.sdc` and t_clk = 10 ns in the energies hold unchanged. A VCD whose unit is not `1ps` is refused.
-- **Why:** a zero-delay run's activity does not depend on the clock's period, and the energy per toggle does not depend on it either; reading the run at 10 ns keeps the toggle rates PT sees consistent with its clock (X2), with no change to snax_cluster or to PT's constraints.
-- **Source:** `results/cluster/runs/2026-11-12_pwr1_r1.md`.
+snax_cluster's testbench clocks at 1 ns. Each cut VCD's header gets `$timescale 10ps` for `1ps`, so the run reads as 10 ns and X9's checks and PT's clock hold unchanged. **Why:** a zero-delay run's activity and energy per toggle do not depend on the period. *12 Nov.*
 
 ### X77. A second figure: forge's ctrl and datapath
 
-- **Date:** 2026-11-12
-- **Decision:** `report/compare_hls.py` writes a second figure per kernel, `results/compare/<tier>/<kernel>_ctrl_dp.png`, beside `<kernel>.png` and in the same layout. Every forge case is plotted as its ctrl + datapath only (`ctrl_um2 + datapath_um2`, and `(e_dyn_ctrl_pj + e_dyn_datapath_pj) x cycles`, power from that), with no csr, peripherals or glue; the HLS cases are their totals, as in `<kernel>.png`. Each kernel page links it under its table. `<kernel>.png` is unchanged.
-- **Why:** ctrl + datapath is the closest to what an HLS block holds (its own control and datapath, sizes on plain pins). It differs from X63's total without csr only by the glue (at most 1.1 µm²). The totals figure stays as it is.
-- **Source:** this commit.
+`pixi run compare-hls` also writes `<tier>/<kernel>_ctrl_dp.png`: every forge case as its ctrl + datapath only (no csr, peripherals or glue) against the HLS totals, in the same layout as `<kernel>.png`, which is unchanged. **Why:** ctrl + datapath is the closest to what an HLS block holds; it differs from X63's total without csr only by the glue (at most 1.1 µm²). *12 Nov.*
+
+## Retired
+
+| X | What it was | Retired by |
+|---|---|---|
+| X10 | PT setup check with pass tolerances | X25 (a diagnostic) |
+| X26 | forge's control RTL copied as a reading aid | X43 |
+| X27 | SYN2 read SYN1 from git; SYN1's local runs kept | X43 |
+| X36 | `char_table.md` and a draft JSON | X37 |
+| X43 | SYN1's and SYN2's analysis code and results deleted (git `e8c4e91`) | (the retirement itself) |
+| X46 | `results/compare_hls.md`, one file | X64 |
