@@ -51,6 +51,30 @@ clock hold unchanged.
      check.json; also on a failure. Then vsim.wlf (none expected) dropped, tmp/cluster/<point>/ deleted, make
      clean-vsim clean-generated in snax_cluster. The SAIFs live only in this zip (sim/runs/ is git-ignored, X18).
 One line at the end; a failure names the check or step and prints at most 30 lines of its log.
+
+Part 2 (R2), run by the same command; part 1 is skipped when the zip's pwr/check.json is PASS for the same netlist
+sha256, quiet ELF sha256 and snax_cluster commit (--again reruns it):
+  1. PT's threads from --cores (default 16, X59), lowered to the host's free cores (nproc minus the load); a session
+     takes one PrimeTime and one PrimePower (L2), and one of each must stay free
+  2. in tmp/cluster/<point>/pt/: the DC run's tech.json, reports/lib_info.txt, the netlist and cluster.sdc; the
+     macros' .db (ram/runs/lib/<name>.zip, points.json's srams); every window's SAIF from pwr/ of the run zip
+  3. one pt_shell (sim/scripts/pt_power.tcl, PWR_MODE=cluster): the library and the macros linked with the netlist,
+     the wire load zeroed (PT1), constraints.sdc then cluster.sdc (PWR_EXTRA_SDC, X68), then per window of
+     PWR_WINDOWS reset_switching_activity, read_saif -strip_path tb_bin/i_dut/i_snax_forge_cluster, update_power,
+     the reports and a done file; a licence error is retried once (X17); peak memory from /usr/bin/time
+  4. per window, each check failing the window and the run: the wire-load counts 0 (PT1, X25); at least ANN_MIN %
+     of the driven nets annotated, the driven nets PT's nets minus the not-annotated ones the window's SAIF has at Z
+     for the whole window (PT6, DC18; the SAIF streamed, names compared with backslashes and trailing spaces
+     dropped); the SAIF's entries as part 1 counted them; every row of power.rpt parsed, no group but PT_GROUPS;
+     the hierarchy's top total equal to power.rpt's
+  5. results/cluster/nangate45/power_pt.csv, one row per window merged on (point, mark): X20's per-cycle energies
+     plus e_macro_pj (black_box + memory, the macros as PT measures them in averaged mode, PITFALLS PT7) and
+     e_io_pj, e_dyn_pj, p_dyn_uw, e_win_pj = e_dyn x cycles, the annotation, tx_nets (part 1), the commits, status;
+     no leakage (X13)
+  6. results/cluster/nangate45/power_reports/<point>.zip: per window power.rpt, power_hierarchy.rpt,
+     switching_activity.rpt, units.rpt; wire_load.rpt, licenses.rpt, windows.json, pt_check.json. pt/ of the run
+     zip: the not-annotated lists, pt_shell.log, the done files, logs/, pt_check.json; also on a failure. Then
+     tmp/cluster/<point>/ is deleted. One line at the end.
 """
 
 from __future__ import annotations
@@ -414,10 +438,10 @@ def saif_jobs(vcd: Path, wins: list[dict], pdir: Path, res: dict) -> None:
               flush=True)
 
 
-def part1(p: dict, images: dict, args) -> dict:
+def part1(p: dict, images: dict, args, pre: dict | None = None) -> dict:
     """Part 1: the quiet netlist run, the windows, the SAIFs, packed under pwr/ of the point's zip. Returns the
-    check.json it packed; R2's PT reads the SAIFs from the zip and can skip this when pwr/check.json is PASS."""
-    pre = preflight(p, images, args)
+    check.json it packed; part 2 reads the SAIFs from the zip, and main skips this when part1_current says so."""
+    pre = pre or preflight(p, images, args)
     repos, images, point = pre["repos"], pre["images"], p["point"]
     marks = json.loads(arc.read(pre["z"], "sw/obs_marks.json"))
     upto, chk = obs_marks(marks)
@@ -598,10 +622,419 @@ def summary(point: str, res: dict) -> str:
     return line
 
 
+# ---------------------------------------------------------------- part 2 (R2): PrimePower per window
+PT_GROUPS = ("io_pad", "memory", "black_box", "clock_network", "register", "sequential", "combinational")
+E_GROUP = {"clock_network": "clk", "register": "reg", "sequential": "seq", "combinational": "comb",
+           "black_box": "macro", "memory": "macro", "io_pad": "io"}
+ANN_MIN = 95.0                                       # % of the driven nets (PWR1 plan, topic 4)
+PT_TIMEOUT = 4 * 3600
+STRIP = TB_TOP                                       # read_saif -strip_path
+STRIP_LEVELS = len(TB_TOP.split("/"))                # the SAIF's instance levels above the wrapper
+RESULTS = ROOT / "results" / "cluster" / TECH
+POWER_CSV = RESULTS / "power_pt.csv"
+POWER_REPORTS = RESULTS / "power_reports"
+REPORT_FILES = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt", "units.rpt")
+HIER_TOL = 1e-5                                      # relative: report_power's 6 significant digits
+CSV_COLUMNS = ["point", "tech", "clock_ns", "mark", "kind", "label", "cycles", "t0_ps", "t1_ps",
+               "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_macro_pj", "e_io_pj",
+               "e_dyn_pj", "p_dyn_uw", "e_win_pj", "nets", "annotated", "floating", "ann_pct", "tx_nets",
+               "snax_forge_commit", "snax_cluster_commit", "status"]
+NUM = r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?"
+
+
+def part1_current(old: dict | None, netlist_sha: str, quiet_sha: str, sc_commit: str) -> tuple[bool, str]:
+    """Part 1 is skipped when the zip's pwr/check.json is PASS for the same netlist, quiet ELF and snax_cluster."""
+    if not old:
+        return False, "no pwr/check.json"
+    if old.get("status") != "PASS":
+        return False, f"pwr/check.json is {old.get('status')}"
+    for what, got, want in (("netlist sha256", (old.get("netlist") or {}).get("sha256"), netlist_sha),
+                            ("quiet ELF sha256", old.get("quiet_elf_sha256"), quiet_sha),
+                            ("snax_cluster commit", old.get("snax_cluster_commit"), sc_commit)):
+        if got != want:
+            return False, f"pwr/check.json's {what} {str(got)[:12]} is not {want[:12]}"
+    return True, "pwr/check.json PASS for the same netlist, quiet ELF and snax_cluster commit"
+
+
+def window_name(w: dict) -> str:
+    return f"{w['mark']}_{w['kind']}"
+
+
+def windows_file(wins: list[dict], saifs: dict[str, Path]) -> str:
+    """PWR_WINDOWS: one `<name> <saif path>` per line, in the span's order (pt_power.tcl's cluster mode)."""
+    lines = []
+    for w in wins:
+        n, f = window_name(w), str(saifs[window_name(w)])
+        if re.search(r"\s", n + f):
+            raise ValueError(f"whitespace in a window's name or SAIF path: {n!r} {f!r}")
+        lines.append(f"{n} {f}")
+    return "\n".join(lines) + "\n"
+
+
+def norm(component: str) -> str:
+    r"""A name component as PT writes it: the netlist's `\gen_core[0].i_snitch_cc ` and the SAIF's
+    `gen_core\[0\]\.i_snitch_cc` both become `gen_core[0].i_snitch_cc` (backslashes and the trailing space dropped)."""
+    return component.replace("\\", "").strip()
+
+
+def saif_floating(saif: Path, names: set[str], strip_levels: int = STRIP_LEVELS) -> dict:
+    """Streams the SAIF (vcd2saif's layout: an INSTANCE per line indented two per level, a net's name on its own
+    line, its T0/T1/TX/TZ line, then its TC line) and returns which of `names` (PT's not-annotated nets, PT's form)
+    it has at Z for the whole window, how many nets it has at Z in all, and its entries."""
+    dur, path, name, found, nz, entries = None, [], None, set(), 0, 0
+    with saif.open() as f:
+        for ln in f:
+            s = ln.strip()
+            if s.startswith("(INSTANCE "):
+                depth = (len(ln) - len(ln.lstrip())) // 2
+                path = path[:depth] + [s.split(None, 1)[1]]
+            elif s.startswith("(T0 "):
+                entries += 1
+                m = re.search(r"\(TZ (\d+)\)", s)
+                if m and int(m.group(1)) == dur:
+                    nz += 1
+                    full = "/".join(norm(c) for c in path[strip_levels:] + [name])
+                    if full in names:
+                        found.add(full)
+            elif s.startswith("(") and " " not in s and not s.startswith("(NET") and s != "(":
+                name = s[1:]
+            elif dur is None and s.startswith("(DURATION"):
+                dur = int(re.search(r"\d+", s).group(0))
+    return {"floating": found, "z_nets": nz, "entries": entries, "duration": dur}
+
+
+def power_table(text: str) -> tuple[dict, float]:
+    """report_power's group table: {group: (internal, switching, leakage, total)} in the report's unit, every row
+    parsed (a row that is not fails), and the Total Power line."""
+    lines = text.splitlines()
+    try:
+        h = next(i for i, ln in enumerate(lines) if ln.startswith("Power Group"))
+    except StopIteration:
+        raise pwr.Fail("power.rpt: no group table") from None
+    rows = {}
+    for ln in lines[h + 2:]:
+        if not ln.strip():
+            break
+        m = re.match(rf"^(\w+)\s+({NUM})\s+({NUM})\s+({NUM})\s+({NUM})\s+\(\s*[\d.]+%\)", ln)
+        if not m:
+            raise pwr.Fail(f"power.rpt: row not parsed: {ln.strip()!r}")
+        rows[m.group(1)] = tuple(float(x) for x in m.groups()[1:])
+    m = re.search(rf"^Total Power\s*=\s*({NUM})", text, re.M)
+    if not m:
+        raise pwr.Fail("power.rpt: no Total Power line")
+    return rows, float(m.group(1))
+
+
+def hier_top(text: str) -> tuple[float, float, float, float]:
+    """report_power -hierarchy's first row, the top: (internal, switching, leakage, total)."""
+    lines = text.splitlines()
+    for i, ln in enumerate(lines):
+        if ln.startswith("-----"):
+            m = re.match(rf"^(\S+)\s+({NUM})\s+({NUM})\s+({NUM})\s+({NUM})", lines[i + 1])
+            if m:
+                return tuple(float(x) for x in m.groups()[1:])
+            break
+    raise pwr.Fail("power_hierarchy.rpt: no top row")
+
+
+def wire_load(text: str) -> dict:
+    m = re.search(r"nets: (\d+), with wire_capacitance_max > 0: (\d+), with net_resistance_max > 0: (\d+)", text)
+    if not m:
+        raise pwr.Fail("wire_load.rpt: no counts")
+    return {"nets": int(m.group(1)), "wire_cap": int(m.group(2)), "wire_res": int(m.group(3))}
+
+
+def energy(groups: dict, to_uw: float, cycles: int) -> dict:
+    """X20's per-cycle energies (pJ) from the groups' internal + switching, plus the macros (black_box + memory, as
+    PT measures them, PITFALLS PT7) and io_pad; e_dyn their sum, e_win e_dyn x cycles. No leakage (X13)."""
+    e = {k: 0.0 for k in ("clk", "reg", "seq", "comb", "macro", "io")}
+    for g, (i, s, _l, _t) in groups.items():
+        e[E_GROUP[g]] += (i + s) * to_uw * pwr.CLOCK_NS / 1000.0      # uW x ns -> pJ
+    e_flop = e["clk"] + e["reg"] + e["seq"]
+    e_dyn = e_flop + e["comb"] + e["macro"] + e["io"]
+    return {"e_clk_pj": e["clk"], "e_reg_pj": e["reg"], "e_seq_pj": e["seq"], "e_comb_pj": e["comb"],
+            "e_flop_pj": e_flop, "e_macro_pj": e["macro"], "e_io_pj": e["io"], "e_dyn_pj": e_dyn,
+            "p_dyn_uw": e_dyn / pwr.CLOCK_NS * 1000.0, "e_win_pj": e_dyn * cycles}
+
+
+def check_window(wdir: Path, saif: Path, w: dict, wl: dict) -> tuple[dict, dict]:
+    """A window's checks (each fails the window) and its energies: the wire load (PT1), the annotation (>= ANN_MIN
+    % of the driven nets: PT's nets minus the not-annotated ones the SAIF has at Z for the whole window, PT6, DC18),
+    every row of power.rpt, only PT_GROUPS, the hierarchy's top equal to power.rpt's total."""
+    c: dict = {"wire_load": {**wl, "status": "PASS" if wl["wire_cap"] == 0 and wl["wire_res"] == 0 else "FAIL"}}
+    annotated, nets = pwr.coverage(wdir / "switching_activity.rpt")
+    na = set(pwr.not_annotated(wdir / "not_annotated.rpt"))
+    t, r0 = time.monotonic(), resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    fl = saif_floating(saif, na)
+    driven = nets - len(fl["floating"])
+    pct = 100.0 * annotated / driven if driven else 0.0
+    c["annotation"] = {"nets": nets, "annotated": annotated, "not_annotated": len(na), "floating": len(fl["floating"]),
+                       "driven": driven, "ann_pct": round(pct, 3), "saif_z_nets": fl["z_nets"],
+                       "saif_entries": fl["entries"], "not_annotated_driven": sorted(na - fl["floating"])[:20],
+                       "saif_parse_s": round(time.monotonic() - t, 1),
+                       "maxrss_mb": round(max(r0, resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) / 1024, 1),
+                       "status": "PASS" if pct >= ANN_MIN and annotated + len(na) == nets else "FAIL"}
+    groups, total = power_table((wdir / "power.rpt").read_text())
+    extra = sorted(set(groups) - set(PT_GROUPS))
+    missing = sorted(set(PT_GROUPS) - set(groups))
+    c["groups"] = {"groups": sorted(groups), "extra": extra, "missing": missing,
+                   "status": "PASS" if not extra and not missing else "FAIL"}
+    top = hier_top((wdir / "power_hierarchy.rpt").read_text())
+    c["hierarchy_total"] = {"power_rpt": total, "hierarchy": top[3],
+                            "status": "PASS" if abs(top[3] - total) <= HIER_TOL * abs(total) else "FAIL"}
+    c["power_rows"] = {"rows": len(groups), "status": "PASS"}
+    to_uw = pwr.pt_to_uw(wdir / "units.rpt")
+    e = energy({g: v for g, v in groups.items() if g in PT_GROUPS}, to_uw, w["cycles"])
+    e["groups_uw"] = {g: {"internal": v[0] * to_uw, "switching": v[1] * to_uw} for g, v in groups.items()}
+    return c, e
+
+
+def csv_row(point: str, w: dict, e: dict, ann: dict, tx_nets, commits: dict, status: str) -> dict:
+    return {"point": point, "tech": TECH, "clock_ns": pwr.CLOCK_NS, "mark": w["mark"], "kind": w["kind"],
+            "label": w["label"], "cycles": w["cycles"], "t0_ps": w["t0_ps"], "t1_ps": w["t1_ps"],
+            **{k: v for k, v in e.items() if k in CSV_COLUMNS}, "nets": ann.get("nets", ""),
+            "annotated": ann.get("annotated", ""), "floating": ann.get("floating", ""),
+            "ann_pct": ann.get("ann_pct", ""), "tx_nets": tx_nets if tx_nets is not None else "",
+            "snax_forge_commit": commits["snax_forge"], "snax_cluster_commit": commits["snax_cluster"], "status": status}
+
+
+def merge_csv(path: Path, rows: list[dict]) -> None:
+    """power_pt.csv merged on (point, mark): the point's rows for these marks replaced, sorted by point and mark."""
+    import csv  # noqa: PLC0415
+    keys = {(r["point"], str(r["mark"])) for r in rows}
+    table = []
+    if path.is_file():
+        with path.open(newline="") as fh:
+            table = [r for r in csv.DictReader(fh) if (r["point"], r["mark"]) not in keys]
+    table += [{c: pwr._num(r.get(c, "")) for c in CSV_COLUMNS} for r in rows]
+    table.sort(key=lambda r: (r["point"], int(r["mark"])))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="") as fh:
+        wr = csv.DictWriter(fh, fieldnames=CSV_COLUMNS, extrasaction="ignore")
+        wr.writeheader()
+        wr.writerows(table)
+
+
+def pt_threads(cores: int, lic: dict) -> tuple[int, str]:
+    """PT's threads: --cores, lowered to the host's free cores (nproc minus the load) when fewer; a session takes
+    one PrimeTime and one PrimePower (L2), and at least one of each is left free."""
+    for f in ("PrimeTime", "PrimePower"):
+        if lic[f]["free"] < 2:
+            raise cl.Stop(f"{lic[f]['free']} {f} licences free: one session would leave none")
+    free = (os.cpu_count() or 1) - os.getloadavg()[0]
+    if free < cores:
+        t = max(4, int(free))
+        return t, f"--cores {cores} lowered to {t}: {free:.1f} cores free (nproc {os.cpu_count()}, load " \
+                  f"{os.getloadavg()[0]:.1f})"
+    return cores, f"--cores {cores}: {free:.1f} cores free (nproc {os.cpu_count()}, load {os.getloadavg()[0]:.1f})"
+
+
+def part2(p: dict, pre: dict, args, p1: dict) -> dict:
+    """Part 2: one PT session on the netlist, a window after another (pt_power.tcl's cluster mode), the checks per
+    window, power_pt.csv, the report zip and pt/ of the run zip."""
+    point, images = p["point"], pre["images"]
+    wins = p1["windows"]
+    run_zip = cl.RUN_ZIPS / f"{point}.zip"
+    work = cl.TMP / point
+    shutil.rmtree(work, ignore_errors=True)
+    pt = work / "pt"
+    (pt / "run" / "out").mkdir(parents=True)
+    (pt / "run" / "reports").mkdir()
+    (pt / "reports").mkdir()
+    steps = cl.Steps(work, images)
+    t_all = time.monotonic()
+    commits = {"snax_forge": pre["prov"]["snax_forge_commit"], "snax_cluster": pre["repos"]["snax_cluster"]}
+    res = {"point": point, "tech": TECH, "part": 2, "status": "FAIL", "failed": None, "windows": {},
+           "snax_cluster_commit": pre["repos"]["snax_cluster"], "bundle_snax_forge_commit": commits["snax_forge"],
+           "netlist": {"zip": str(pre["synz"].relative_to(ROOT)), "sha256": pre["netlist_sha"]},
+           "quiet_elf_sha256": pre["quiet_sha"], "seconds": {}}
+    rows = []
+    try:
+        lic = pwr.licences()
+        res["licences_free"] = {k: v["free"] for k, v in lic.items()}
+        threads, why = pt_threads(args.cores, lic)
+        res["threads"], res["threads_why"] = threads, why
+        print(f"  PT threads {threads} ({why}); free PrimeTime {lic['PrimeTime']['free']}, PrimePower "
+              f"{lic['PrimePower']['free']}", flush=True)
+        t = time.monotonic()
+        for m in ("tech.json", "reports/lib_info.txt", cl.NETLIST, "cluster.sdc"):
+            (pt / "run" / m).write_bytes(arc.read(pre["synz"], m))
+        if sha((pt / "run" / cl.NETLIST).read_bytes()) != pre["netlist_sha"]:
+            raise cl.Stop("the netlist unpacked is not part 1's")
+        (pt / "macros").mkdir()
+        dbs = []
+        for m in sorted(p["srams"]):
+            dbs.append(pt / "macros" / f"{m}.db")
+            dbs[-1].write_bytes(arc.read(cl.ram_zip(m), f"{m}.db"))
+        (pt / "saifs").mkdir()
+        saifs = {}
+        for w in wins:
+            n = window_name(w)
+            saifs[n] = pt / "saifs" / f"{n}.saif"
+            saifs[n].write_bytes(arc.read(run_zip, f"pwr/{n}/w.saif"))
+        (pt / "windows.txt").write_text(windows_file(wins, saifs))
+        res["seconds"]["unpack"] = round(time.monotonic() - t, 1)
+        env = {**os.environ, "PWR_RUN": str(pt / "run"), "PWR_MODE": "cluster", "PWR_WINDOWS": str(pt / "windows.txt"),
+               "PWR_STRIP": STRIP, "PWR_EXTRA_SDC": str(pt / "run" / "cluster.sdc"),
+               "PWR_RAM_DBS": " ".join(str(d) for d in dbs), "PWR_THREADS": str(threads), "PWR_OUT": str(pt / "reports")}
+        argv = ["/usr/bin/time", "-v", "-o", str(pt / "time.txt"), pwr.tool("pt_shell", "PT_SHELL"), "-no_init",
+                "-f", str(pwr.PT_SCRIPT), "-output_log_file", str(pt / "pt_shell.log")]
+        for attempt in (1, 2):
+            try:
+                steps._run("pt_shell" if attempt == 1 else "pt_shell_retry", "host", argv, pt, env, PT_TIMEOUT)
+                break
+            except cl.StepFailed:
+                text = cl._text(pt / "pt_shell.log") + cl._text(steps.logs / f"{steps.k:02d}_pt_shell.log")
+                if attempt == 1 and pwr.LICENCE_ERR.search(text):
+                    print("  licence error in pt_shell, retrying once (X17)", flush=True)
+                    continue
+                raise
+        res["seconds"]["pt_session"] = steps.times.get("pt_shell_retry", steps.times.get("pt_shell"))
+        m = re.search(r"Maximum resident set size \(kbytes\): (\d+)", cl._text(pt / "time.txt"))
+        res["pt_maxrss_mb"] = round(int(m.group(1)) / 1024, 1) if m else None
+        st = cl._text(pt / "reports" / "setup_times.txt").split()
+        res["pt_setup"] = dict(zip(st[::2], st[1::2]))
+        res["pt_version"] = (re.findall(r"Version: (\S+)", cl._text(pt / "reports" / f"{window_name(wins[0])}" /
+                                                                      "power.rpt")) or [None])[0]
+        wl = wire_load(cl._text(pt / "reports" / "wire_load.rpt"))
+        res["wire_load"] = wl
+        tx = {n: i.get("tx_nets") for n, i in (p1.get("saif") or {}).items()}
+        for w in wins:
+            n = window_name(w)
+            wdir = pt / "reports" / n
+            if not (wdir / "done").is_file():
+                res["windows"][n] = {"status": "FAIL", "why": "PT did not finish the window (no done file)"}
+                rows.append(csv_row(point, w, {}, {}, tx.get(n), commits, "failed: pt"))
+                continue
+            d = (wdir / "done").read_text().split()
+            stages = dict(zip(d[::2], d[1::2]))
+            try:
+                c, e = check_window(wdir, saifs[n], w, wl)
+                want = ((p1.get("saif") or {}).get(n) or {}).get("entries")
+                c["saif_entries"] = {"parsed": c["annotation"]["saif_entries"], "part1": want,
+                                     "status": "PASS" if want == c["annotation"]["saif_entries"] else "FAIL"}
+                bad = [k for k, v in c.items() if v["status"] != "PASS"]
+                status = "ok" if not bad else "failed: " + ", ".join(bad)
+            except pwr.Fail as ex:
+                c, e, bad, status = {"parse": {"status": "FAIL", "why": str(ex)}}, {}, ["parse"], f"failed: {ex}"
+            res["windows"][n] = {"status": "PASS" if not bad else "FAIL", "checks": c, "pt_stages": stages,
+                                 "energy": e, "cycles": w["cycles"], "tx_nets": tx.get(n)}
+            rows.append(csv_row(point, w, e, c.get("annotation", {}), tx.get(n), commits, status))
+            a = c.get("annotation", {})
+            print(f"  {n:<20s} {status}: e_dyn {e.get('e_dyn_pj', 0):.1f} pJ/cycle, e_win {e.get('e_win_pj', 0) / 1000:.2f} nJ, "
+                  f"annotated {a.get('ann_pct')} % ({a.get('floating')} floating), SAIF parse {a.get('saif_parse_s')} s; "
+                  f"PT {stages}", flush=True)
+        bad = [n for n, v in res["windows"].items() if v["status"] != "PASS"]
+        res["status"] = "PASS" if not bad and len(res["windows"]) == len(wins) else "FAIL"
+        res["failed"] = ", ".join(bad) or None
+    except cl.StepFailed as e:
+        res["failed"] = f"step {e.step} ({e.why})"
+        res["failed_log"], res["failed_tail"] = str(e.log), cl.tail(pt / "pt_shell.log") or cl.tail(e.log)
+        print(f"cluster pwr {point}: FAIL at {e.step} ({e.why})", flush=True)
+    except cl.Stop as e:
+        res["failed"] = str(e)
+        print(f"cluster pwr {point}: FAIL: {e}", flush=True)
+    except (Exception, SystemExit) as e:  # noqa: BLE001 - recorded; the zips and the clean still done
+        res["failed"] = f"driver: {e!r}"
+        print(f"cluster pwr {point}: FAIL in the driver: {e!r}", flush=True)
+    finally:
+        res["seconds"].update(steps.times)
+        res["seconds"]["total_before_pack"] = round(time.monotonic() - t_all, 1)
+        res["date"] = dt.datetime.now().isoformat(timespec="seconds")
+        t = time.monotonic()
+        try:
+            if rows:
+                merge_csv(POWER_CSV, rows)
+            pack2(pt, point, res, wins, run_zip)
+        except Exception as e:  # noqa: BLE001
+            print(f"  could not write the results or zips: {e!r}", flush=True)
+        res["pack_s"] = round(time.monotonic() - t, 1)
+        shutil.rmtree(work, ignore_errors=True)
+        if cl.TMP.is_dir() and not any(cl.TMP.iterdir()):
+            cl.TMP.rmdir()
+        print(f"  cleaned: {work} deleted", flush=True)
+    return res
+
+
+def pack2(pt: Path, point: str, res: dict, wins: list[dict], run_zip: Path) -> None:
+    """The report zip results/cluster/nangate45/power_reports/<point>.zip (per window the four reports; at the top
+    wire_load.rpt, licenses.rpt, windows.json, pt_check.json) and pt/ of the run zip (the not-annotated lists,
+    pt_shell.log and the session's other files, logs/, pt_check.json)."""
+    rep = pt / "reports"
+    check_json = (json.dumps(res, indent=2, default=str) + "\n").encode()
+    members = {}
+    for w in wins:
+        n = window_name(w)
+        for f in REPORT_FILES:
+            if (rep / n / f).is_file():
+                members[f"{n}/{f}"] = (rep / n / f).read_bytes()
+    for f in ("wire_load.rpt", "licenses.rpt"):
+        if (rep / f).is_file():
+            members[f] = (rep / f).read_bytes()
+    members["windows.json"] = arc.read(run_zip, "pwr/windows.json")
+    members["pt_check.json"] = check_json
+    z = POWER_REPORTS / f"{point}.zip"
+    arc.write(z, members)
+    res["report_zip"] = {"zip": str(z.relative_to(ROOT)), "bytes": z.stat().st_size, "members": len(members)}
+    new = {"pt/pt_check.json": check_json}
+    for f in ("pt_shell.log", "time.txt", "windows.txt"):
+        if (pt / f).is_file():
+            new[f"pt/{f}"] = (pt / f).read_bytes()
+    for f in ("setup_times.txt", "cluster_ports.rpt"):
+        for src in (rep / f, pt / "reports" / f):
+            if src.is_file():
+                new[f"pt/{f}"] = src.read_bytes()
+    for w in wins:
+        n = window_name(w)
+        for f in ("not_annotated.rpt", "done"):
+            if (rep / n / f).is_file():
+                new[f"pt/{n}/{f}"] = (rep / n / f).read_bytes()
+    if (pt.parent / "logs").is_dir():
+        new.update({f"pt/logs/{k}": v.read_bytes() for k, v in arc.files_of(pt.parent / "logs").items()})
+    old = {k: v for k, v in arc.read_all(run_zip).items() if not k.startswith("pt/")}
+    arc.write(run_zip, {**old, **new})
+    print(f"  packed {z.relative_to(ROOT)} ({len(members)} members, {z.stat().st_size / 1e6:.1f} MB) and "
+          f"{run_zip.relative_to(ROOT)} ({len(new)} members under pt/)", flush=True)
+
+
+def summary2(point: str, res: dict) -> str:
+    ws = [v for v in res["windows"].values() if v.get("energy")]
+    if not ws:
+        return f"cluster pwr {point}: {res['status']}, no window measured; failed: {res['failed']}"
+    span = sum(v["energy"]["e_win_pj"] for v in ws)
+    mac = sum(v["energy"]["e_macro_pj"] * v["cycles"] for v in ws)
+    run = [v["energy"]["e_win_pj"] for n, v in res["windows"].items() if n.endswith("_run") and v.get("energy")]
+    pcts = [v["checks"]["annotation"]["ann_pct"] for v in ws]
+    line = (f"cluster pwr {point}: {res['status']}, {len(res['windows'])} windows, span "
+            f"{sum(v['cycles'] for v in ws)} cycles, E_span {span / 1000:.1f} nJ (macros {100 * mac / span:.0f} %), "
+            f"run window {run[0] / 1000:.1f} nJ, annotated {min(pcts):.1f}–{max(pcts):.1f} % of driven nets"
+            if run else "")
+    if res["status"] != "PASS":
+        line += f"; failed: {res['failed']}"
+    return line
+
+
 def main(p: dict, images: dict, args) -> int:
     signal.signal(signal.SIGTERM, cl._sigterm)
-    res = part1(p, images, args)
-    print(summary(p["point"], res) + f" (pack {res.get('pack_s', 0):.0f} s)", flush=True)
-    if res["status"] != "PASS" and res.get("failed_tail"):
-        print(f"  last {TAIL} lines of {res.get('failed_log')}:\n{res['failed_tail']}", flush=True)
-    return 0 if res["status"] == "PASS" else 1
+    pre = preflight(p, images, args)
+    z = cl.RUN_ZIPS / f"{p['point']}.zip"
+    old = json.loads(arc.read(z, "pwr/check.json")) if arc.has(z, "pwr/check.json") else None
+    current, why = part1_current(old, pre["netlist_sha"], pre["quiet_sha"], pre["repos"]["snax_cluster"])
+    if args.again or not current:
+        print(f"cluster pwr {p['point']}: part 1 runs ({'--again' if args.again else why})", flush=True)
+        res1 = part1(p, images, args, pre)
+        print(summary(p["point"], res1) + f" (pack {res1.get('pack_s', 0):.0f} s)", flush=True)
+        if res1["status"] != "PASS":
+            if res1.get("failed_tail"):
+                print(f"  last {TAIL} lines of {res1.get('failed_log')}:\n{res1['failed_tail']}", flush=True)
+            return 1
+    else:
+        print(f"cluster pwr {p['point']}: part 1 skipped ({why})", flush=True)
+        res1 = old
+    print(f"cluster pwr {p['point']} (part 2): PT on {len(res1['windows'])} windows; work {cl.TMP / p['point']}",
+          flush=True)
+    res2 = part2(p, pre, args, res1)
+    print(summary2(p["point"], res2) + f" (pack {res2.get('pack_s', 0):.0f} s)", flush=True)
+    if res2["status"] != "PASS" and res2.get("failed_tail"):
+        print(f"  last {TAIL} lines of {res2.get('failed_log')}:\n{res2['failed_tail']}", flush=True)
+    return 0 if res2["status"] == "PASS" else 1

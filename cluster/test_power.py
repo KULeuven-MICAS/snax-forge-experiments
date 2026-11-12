@@ -162,6 +162,150 @@ def test_program_output():
     assert power.program_output(run + "forge cycles: 810\n") == ["forge cycles: 810"]
 
 
+# ---------------------------------------------------------------- part 2 (R2)
+def test_windows_file():
+    w = power.windows(LOG, MARKS)
+    saifs = {power.window_name(x): Path(f"/w/pt/saifs/{power.window_name(x)}.saif") for x in w}
+    assert power.windows_file(w, saifs) == ("1_dma_in /w/pt/saifs/1_dma_in.saif\n2_dma_in /w/pt/saifs/2_dma_in.saif\n"
+                                            "3_run /w/pt/saifs/3_run.saif\n")
+    saifs["3_run"] = Path("/w/a b/3_run.saif")
+    raises(power.windows_file, w, saifs, has="whitespace")
+
+
+def test_part1_current():
+    old = {"status": "PASS", "netlist": {"sha256": "n" * 64}, "quiet_elf_sha256": "q" * 64,
+           "snax_cluster_commit": "c" * 40}
+    assert power.part1_current(old, "n" * 64, "q" * 64, "c" * 40)[0]
+    assert not power.part1_current(None, "n" * 64, "q" * 64, "c" * 40)[0]
+    assert not power.part1_current({**old, "status": "FAIL"}, "n" * 64, "q" * 64, "c" * 40)[0]
+    ok, why = power.part1_current(old, "m" * 64, "q" * 64, "c" * 40)
+    assert not ok and "netlist" in why
+    ok, why = power.part1_current(old, "n" * 64, "r" * 64, "c" * 40)
+    assert not ok and "quiet ELF" in why
+    ok, why = power.part1_current(old, "n" * 64, "q" * 64, "d" * 40)
+    assert not ok and "snax_cluster" in why
+
+
+SAIF = """(SAIFILE
+(SAIFVERSION "2.0")
+(DIRECTION "backward")
+(DESIGN )
+(DIVIDER / )
+(TIMESCALE 10 ps)
+(DURATION 185000)
+(INSTANCE tb_bin
+  (INSTANCE i_dut
+    (INSTANCE i_snax_forge_cluster
+      (NET
+        (SYNOPSYS_UNCONNECTED__0
+          (T0 0) (T1 0) (TX 0) (TZ 185000)
+          (TC 0) (IG 0)
+        )
+        (clk_i
+          (T0 92500) (T1 92500) (TX 0)
+          (TC 370) (IG 0)
+        )
+      )
+      (INSTANCE i_cluster
+        (INSTANCE gen_core\\[0\\]\\.i_snitch_cc
+          (NET
+            (in_i\\[2\\]
+              (T0 0) (T1 0) (TX 0) (TZ 185000)
+              (TC 0) (IG 0)
+            )
+            (in_i\\[3\\]
+              (T0 0) (T1 92500) (TX 0) (TZ 92500)
+              (TC 0) (IG 0)
+            )
+            (acc_demux_snitch\\[data\\]\\[0\\]
+              (T0 53000) (T1 132000) (TX 0)
+              (TC 6) (IG 0)
+            )
+          )
+        )
+      )
+    )
+  )
+)
+)
+"""
+
+
+def test_saif_floating_escaped():
+    # the netlist's form and the SAIF's form of one escaped instance become PT's
+    assert power.norm("\\gen_core[0].i_snitch_cc ") == "gen_core[0].i_snitch_cc"
+    assert power.norm("gen_core\\[0\\]\\.i_snitch_cc") == "gen_core[0].i_snitch_cc"
+    with tempfile.TemporaryDirectory() as d:
+        f = Path(d) / "w.saif"
+        f.write_text(SAIF)
+        names = {"i_cluster/gen_core[0].i_snitch_cc/in_i[2]", "i_cluster/gen_core[0].i_snitch_cc/in_i[3]",
+                 "SYNOPSYS_UNCONNECTED__0", "i_cluster/other/x"}
+        got = power.saif_floating(f, names)
+    # in_i[3] is at Z for half the window only: not floating
+    assert got == {"floating": {"i_cluster/gen_core[0].i_snitch_cc/in_i[2]", "SYNOPSYS_UNCONNECTED__0"},
+                   "z_nets": 2, "entries": 5, "duration": 185000}, got
+
+
+POWER_RPT = """****************************************
+Report : Averaged Power
+Design : snax_forge_cluster_wrapper
+Version: W-2024.09-SP5
+****************************************
+
+                        Internal             Switching            Leakage              Total
+Power Group             Power                Power                Power                Power               (     %)   Attrs
+----------------------------------------------------------------------------------------------------------------------------
+clock_network           3.000000e-02         0.000000e+00         0.000000e+00         3.000000e-02        (23.96%)   i
+register                1.000000e-03         5.000000e-04         5.258187e-03         6.758187e-03        ( 4.06%)   
+combinational           7.000000e-03         1.000000e-02         1.000000e-02         2.700000e-02        (17.98%)   
+sequential              0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+memory                  1.000000e-03         0.000000e+00         0.000000e+00         1.000000e-03        ( 0.00%)   
+io_pad                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)   
+black_box               8.000000e-03         1.000000e-04         8.000000e-02         8.810000e-02        (53.99%)   
+
+  Net Switching Power  = 1.060000e-02          ( 7.23%)
+Total Power            = 1.528582e-01         (100.00%)
+"""
+UNITS = "Time_unit                   : 1e-09 Second\nUser Specified Power Unit   : 1 Watt\n"
+HIER = """Hierarchy                             Power                     Power                     Power                     Power                     %
+------------------------------------------------------------------------------------------------------------------------------------------------------
+snax_forge_cluster_wrapper            4.700000e-02              1.060000e-02              9.525819e-02              {total}              100.0
+  i_cluster (snitch_cluster_48)       1.000000e-02              1.000000e-03              1.000000e-02              2.100000e-02              13.7
+"""
+
+
+def test_power_rows_and_csv():
+    groups, total = power.power_table(POWER_RPT)
+    assert sorted(groups) == sorted(power.PT_GROUPS) and total == 1.528582e-01
+    with tempfile.TemporaryDirectory() as d:
+        (Path(d) / "units.rpt").write_text(UNITS)
+        to_uw = pwr.pt_to_uw(Path(d) / "units.rpt")
+    e = power.energy(groups, to_uw, 185)
+    near = lambda a, b: abs(a - b) < 1e-9 * max(1.0, abs(b))   # noqa: E731
+    # (internal + switching) W x 1e6 uW x 10 ns / 1000 -> pJ per cycle
+    assert near(e["e_clk_pj"], 300.0) and near(e["e_reg_pj"], 15.0) and near(e["e_comb_pj"], 170.0)
+    assert near(e["e_seq_pj"], 0.0) and near(e["e_io_pj"], 0.0) and near(e["e_macro_pj"], 91.0)   # black_box + memory
+    assert near(e["e_flop_pj"], 315.0) and near(e["e_dyn_pj"], 576.0) and near(e["p_dyn_uw"], 57600.0)
+    assert near(e["e_win_pj"], 576.0 * 185)
+    w = power.windows(LOG, MARKS)[0]
+    row = power.csv_row("dot3_w16", w, e, {"nets": 10, "annotated": 9, "floating": 1, "ann_pct": 100.0}, 7,
+                        {"snax_forge": "f", "snax_cluster": "s"}, "ok")
+    assert set(power.CSV_COLUMNS) == set(row) and row["mark"] == 1 and row["tx_nets"] == 7
+    raises(power.power_table, POWER_RPT.replace("sequential              0.000000e+00", "sequential              N/A"),
+           has="row not parsed")
+    extra, _ = power.power_table(POWER_RPT.replace("io_pad ", "mygroup"))
+    assert "mygroup" in extra and "io_pad" not in extra
+
+
+def test_hierarchy_total():
+    _, total = power.power_table(POWER_RPT)
+    top = power.hier_top(HIER.format(total="1.528582e-01"))
+    assert top == (4.7e-02, 1.06e-02, 9.525819e-02, 1.528582e-01)
+    assert abs(top[3] - total) <= power.HIER_TOL * total
+    top = power.hier_top(HIER.format(total="1.530000e-01"))
+    assert abs(top[3] - total) > power.HIER_TOL * total
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
