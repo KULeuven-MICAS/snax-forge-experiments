@@ -386,6 +386,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** take the annotation's denominator from PT (`switching_activity.rpt`'s net count minus the not-annotated nets the SAIF has at Z for the whole window), never from the SAIF's entries. Check one net inside an escaped instance by hand: `get_attribute [get_nets {i_cluster/gen_core[0].i_snitch_cc/i_snitch/N424}] toggle_rate` equals its SAIF TC over the window (0.050270 per ns for TC 93 in 1,850 ns).
 - **Found in:** `results/cluster/runs/2026-11-12_pwr1_r2.md`.
 
+### PT10. Time-based PrimePower gives about half the clock-pin energy of held flops on the cluster's netlist
+
+- **Symptom:** on `dot3_w16`'s idle window `4_acc_config` time-based PT (`read_vcd -zero_delay` on the window's cut) gives the clock_network group 21.1 mW against averaged mode's 44.5 mW (the SAIF of the same cut); in `5_run` 27.7 against 38.9 mW. Combinational and the macros agree within 0.5 %; the whole difference is in the flops' clock pins. Averaged mode agrees with the `.lib` hand count: 63,135 flops × about 7.1 fJ per cycle for a held DFFR_X1's clock pin (rise + fall, 3.17 + 3.98 fJ at D = Q = 0) ≈ 44.8 mW.
+- **Cause** (likely, not confirmed): every clock-pin `when` state of nangate45's flops names both Q and QN, and most of the netlist's flops leave one of them unconnected (Q only 57 %, QN only 19 %, both 23 %). An unconnected pin has no net and no activity in the VCD, so time-based mode, which evaluates the states at each edge, can match none of them for many held flops; averaged mode takes the missing pin's probability from the cell's function.
+- **Fix or check:** use averaged mode for the cluster's windows (X74, X75). A time-based run's idle clock_network group should come out near flops × the `.lib`'s held clock-pin energy per cycle. In a time-based `report_power -hierarchy` the fourth number column is the peak power, not the total.
+- **Found in:** `results/cluster/runs/2026-11-12_pwr1_r2b.md`.
+
 ## Licences
 
 ### L1. Transient error -92 from DC
