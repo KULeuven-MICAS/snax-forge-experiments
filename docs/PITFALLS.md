@@ -124,6 +124,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** compare dry runs at `-j 1`, where the order is fixed (R3c: `xbar` 594 lines and `streamer` 3,696 lines, byte for byte).
 - **Found in:** `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`.
 
+### DC18. An output port nothing loads stays in the netlist with no driver
+
+- **Symptom:** in the cluster netlist run (PWR1 R1) core 0's `axi_dma_busy_o` (`snitch_cc`) and dot_3's `dot_busy_o` (`snax_forge_dot_3_shell_wrapper`) are Z for the whole run, although the DMA and the group work: vsim's `find nets` finds both and `examine` gives `z`, and every window's SAIF has them at TZ = DURATION. On the RTL (CORE1 R2) the group's busy covers 133 of the run window's 185 cycles.
+- **Cause:** nothing in the cluster loads either port, so DC (`compile_ultra`, hierarchy kept) removed the logic that drives them but kept the port in the module's header: each is declared `output` with no driver. The same boundary optimization leaves the SAIF's other Z nets (513,914 on `dot3_w16`): sub-design port bits nothing loads or that are tied constant, such as the crossbars' unused AXI data ports and the interconnect's read-only `io_tcdmReqs_*_bits_data`, which PT has no net for (PT6).
+- **Fix or check:** take an internal status signal from the RTL run, not the netlist; a port kept in the netlist is no proof that it is driven (look for a driver in the module body, or at its SAIF entry). The cluster's windows come from `obs_o`, a port of the top driven by registers (X73).
+- **Found in:** `results/cluster/runs/2026-11-12_pwr1_r1.md`.
+
 ## Libraries
 
 ### LIB1. nangate15's flops all have async reset or set
@@ -285,7 +292,7 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 
 - **Symptom:** the cluster netlist run (CSYN1 R4) printed all 36 RAMCOUNT lines, but `cluster/check.py` read none: `RAMCOUNT (\S+) (\w+) reads ...` found no match. A vsim `when` on a macro port by its path stops with `vsim-3561 No objects found`.
 - **Cause:** DC (`dc_syn.tcl` runs no `change_names`) names flattened generate blocks as escaped identifiers, `\gen_banks[0].i_data_mem` and `\gen_sram_d512_w64_m8.i_macro`, and an escaped identifier ends at a space, so `%m` prints `...i_snitch_data_mem.\gen_banks[0].i_data_mem .\gen_sram_d512_w64_m8.i_macro  sram_d512_w64_m8 reads 139 writes 139`: spaces inside the path and two before the macro. In vsim the path is `/.../\gen_banks[0].i_data_mem /...`; `find instances` prints the same instance as `{/.../gen_banks[0].i_data_mem} /...`, without the backslash.
-- **Fix or check:** parse a path as everything up to the last whitespace before the next field (`RAMCOUNT (\S.*?)\s+(\w+) reads`; `test_check.py` holds two of R4's real lines). In vsim, `examine {/.../\gen_banks[0].i_data_mem /i_macro}/addr_i` works with the path in braces; a `when` condition does not take such a path, so trigger on a port with a plain path (the wrapper's `clk_i`) and `examine` the escaped one inside the handler. Compare RTL and netlist runs without paths, or with backslashes and spaces removed and `/` for `.`.
+- **Fix or check:** parse a path as everything up to the last whitespace before the next field (`RAMCOUNT (\S.*?)\s+(\w+) reads`; `test_check.py` holds two of R4's real lines). In vsim, `examine {/.../\gen_banks[0].i_data_mem /i_macro}/addr_i` works with the path in braces; a `when` condition does not take such a path, so trigger on a port with a plain path (the wrapper's `clk_i`) and `examine` the escaped one inside the handler. For `vcd add` the braces hold the whole word with its `/*` (`vcd add {/.../\gen_core[0].i_snitch_cc /*}`): `vcd add {...}/*` is a Tcl error, `extra characters after close-brace` (PWR1 R1). The VCD names such a scope without the backslash and the space (`gen_core[0].i_snitch_cc`), the SAIF from it with its brackets and dots escaped (`gen_core\[0\]\.i_snitch_cc`). Compare RTL and netlist runs without paths, or with backslashes and spaces removed and `/` for `.`.
 - **Found in:** `results/cluster/runs/2026-11-11_csyn1_r4.md`.
 
 ### Q16. Under `vopt +acc=n` a testbench's variables are not visible to vsim's commands
@@ -303,6 +310,13 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** the zero-delay simulation makes zero-width pulses: in one time step a net changes two or more times and ends where it began (a 64-bit adder when its inputs change). vcd2saif (Y-2026.03-SP2, the one on PATH) counts one toggle in the window for every net whose last change before t0 was such a pulse, however long before t0 it was: moving t0 later or t1 earlier does not remove it. Every one of the 519 nets, and no other, is such a pulse (checked net by net against the VCD). Inside a window vcd2saif counts net toggles correctly (pulses dropped); only the pulse before t0 leaks in, at most one toggle per net per window.
 - **Fix or check:** cut the VCD into one file per window and run vcd2saif on the cut (`sim/pwr.py`'s `vcd_windows`, `--source char`): the header, every variable's value at the last time step before t0 as plain value changes (a `$dumpvars` block there makes vcd2saif start the window at the next event), the window's events, and a bare time step at t1 (vcd2saif ends a file's window at its last time step); both details cost 2.5 ns of DURATION when missing. On the cuts TC equals the VCD's net toggles on every net and T0, T1, TX equal the shared VCD's SAIF. SYN1 and SYN2's single-window runs (`--source hls` and `--source forge`) still run `vcd2saif -time` on the shared VCD after reset and the setup writes, so they may carry up to one phantom toggle per net over a window of 64 cycles or more; they are not rechecked here.
 - **Found in:** `results/char/runs/2026-11-03_char1_r1.md`.
+
+### VS2. A change to or from X is no toggle in vcd2saif's count
+
+- **Symptom:** the cluster's DMA windows have far more nets with X time than the others: on `dot3_w16` 104,919 in `dma load_A` and 96,751 in `dma store_out`, against 2,708 to 3,156 in the other four windows. The SAIFs pass X9 (T0 + T1 + TX = DURATION).
+- **Cause:** the X comes from the models, not the netlist. In the first DMA window the banks' read data is X before any read (RAM1's macro models start X and do not reset their read address, X66): `snax_tcdm_rsp[*][p][data]` (2,048 bits at the wrapper) is X for 15.5 % of the window, and the interconnect and response buffers carry it on. In `dma store_out` the DMA writes one word, so 448 of `wide_out_req_o[w][data]`'s 512 bits (the unfilled byte lanes) are X for 71 % of the window. vcd2saif counts TC on changes between 0 and 1, so a change to or from X is not counted.
+- **Fix or check:** X66 is kept (models start X, no `SRAM_INIT_ZERO`). X stands for a value that holds still here, so a window misses at most one toggle per net leaving X, the size of VS1. In the SAIFs, 91,247 of the 104,919 X nets of `dma load_A` and 92,233 of the 96,751 of `dma store_out` hold X and one value with TC 0; 13,672 and 4,518 hold X, 0 and 1 (TC up to 253 and 1), and for those the SAIF does not say how often they leave X. Count a window's nets with X time (`saif_check`'s `tx_nets`) before reading its energy.
+- **Found in:** `results/cluster/runs/2026-11-12_pwr1_r1.md`.
 
 ## PrimeTime
 
@@ -364,6 +378,20 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** `report_switching_activity` has no `-nosplit` (W-2024.09-SP5); `report_power` has.
 - **Fix or check:** no `-nosplit` on it (as `sim/scripts/pt_power.tcl`).
 - **Found in:** `results/ram/runs/2026-11-06_ram1_r3.md`.
+
+### PT9. PT's nets are not the SAIF's entries
+
+- **Symptom:** on the cluster (`dot3_w16`) the SAIF from vcd2saif has 1,437,059 entries (923,145 driven, 513,914 at Z for the whole window), the VCD 1,437,900 `$var`, and PT reports 732,298 nets (`report_switching_activity`), of which 732,296 are annotated from the SAIF.
+- **Cause:** the VCD and the SAIF hold every net of every design scope, a hierarchical port net once per level it crosses; PT counts a net through the hierarchy once (its 1,385,713 `get_nets -hierarchical` objects are the net segments). Most of the SAIF's Z entries are port bits DC cut loose (DC18), which PT has no net for (PT6).
+- **Fix or check:** take the annotation's denominator from PT (`switching_activity.rpt`'s net count minus the not-annotated nets the SAIF has at Z for the whole window), never from the SAIF's entries. Check one net inside an escaped instance by hand: `get_attribute [get_nets {i_cluster/gen_core[0].i_snitch_cc/i_snitch/N424}] toggle_rate` equals its SAIF TC over the window (0.050270 per ns for TC 93 in 1,850 ns).
+- **Found in:** `results/cluster/runs/2026-11-12_pwr1_r2.md`.
+
+### PT10. Time-based PrimePower gives about half the clock-pin energy of held flops on the cluster's netlist
+
+- **Symptom:** on `dot3_w16`'s idle window `4_acc_config` time-based PT (`read_vcd -zero_delay` on the window's cut) gives the clock_network group 21.1 mW against averaged mode's 44.5 mW (the SAIF of the same cut); in `5_run` 27.7 against 38.9 mW. Combinational and the macros agree within 0.5 %; the whole difference is in the flops' clock pins. Averaged mode agrees with the `.lib` hand count: 63,135 flops × about 7.1 fJ per cycle for a held DFFR_X1's clock pin (rise + fall, 3.17 + 3.98 fJ at D = Q = 0) ≈ 44.8 mW.
+- **Cause** (likely, not confirmed): every clock-pin `when` state of nangate45's flops names both Q and QN, and most of the netlist's flops leave one of them unconnected (Q only 57 %, QN only 19 %, both 23 %). An unconnected pin has no net and no activity in the VCD, so time-based mode, which evaluates the states at each edge, can match none of them for many held flops; averaged mode takes the missing pin's probability from the cell's function.
+- **Fix or check:** use averaged mode for the cluster's windows (X74, X75). A time-based run's idle clock_network group should come out near flops × the `.lib`'s held clock-pin energy per cycle. In a time-based `report_power -hierarchy` the fourth number column is the peak power, not the total.
+- **Found in:** `results/cluster/runs/2026-11-12_pwr1_r2b.md`.
 
 ## Licences
 

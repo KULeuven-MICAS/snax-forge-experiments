@@ -37,3 +37,6 @@ cluster = "python cluster/cluster.py"
 cluster-hwcost = "python cluster/hwcost.py"
 cluster-breakdown = "python report/cluster_breakdown.py"
 cluster-breakdown-test = "python report/test_cluster_breakdown.py"
+# PWR1 R3: the cluster's energy per window in groups, the run phase against HWCOST (X74)
+cluster-energy = "python report/cluster_energy.py"
+cluster-energy-test = "python report/test_cluster_energy.py"

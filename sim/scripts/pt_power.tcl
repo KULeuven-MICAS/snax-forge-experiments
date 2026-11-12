@@ -13,6 +13,12 @@
 #                uniform  DC's power_default_toggle_rate and power_default_static_probability
 #                         annotated on every net but the clock's, nothing propagated (the setup
 #                         check against sim/probe/dc_readback.tcl uniform, docs/DECISIONS.md X10)
+#                cluster  PWR1 (cluster/power.py): the netlist linked once, then per window of PWR_WINDOWS
+#                         reset_switching_activity, read_saif -strip_path PWR_STRIP, update_power and the
+#                         reports into PWR_OUT/<name>/, with a `done` file (each stage's seconds); licenses.rpt once
+#   PWR_WINDOWS  cluster: a file, one `<name> <saif path>` per line
+#   PWR_EXTRA_SDC  sourced after constraints.sdc when set (cluster: cluster/cluster.sdc, X68)
+#   PWR_RAM_DBS  the macros' .db, space separated, linked beside the library (X62; the cluster's 3 macros)
 #   PWR_ACT      the SAIF (saif)
 #   PWR_STRIP    the DUT instance in the TB, tb/dut (saif)
 #   PWR_OUT      where the reports go (default reports)
@@ -25,6 +31,7 @@ set run        [file normalize $::env(PWR_RUN)]
 set mode       $::env(PWR_MODE)
 set out        [expr {[info exists ::env(PWR_OUT)] ? $::env(PWR_OUT) : "reports"}]
 set threads    [expr {[info exists ::env(PWR_THREADS)] ? $::env(PWR_THREADS) : 1}]
+set t_start    [clock milliseconds]
 file mkdir $out
 set_host_options -max_cores $threads
 
@@ -86,6 +93,7 @@ set top [file rootname [file tail $netlist]]
 regsub {_mapped$} $top {} top
 current_design $top
 link_design
+set t_link     [clock milliseconds]
 
 #-----------------------------
 # Wire load: none, as in dc_syn.tcl. PT applies the library's default_wire_load (nangate45's
@@ -114,6 +122,41 @@ redirect [file join $out wire_load.rpt] {
 # $rst_port above)
 #-----------------------------
 source [file join $repo syn scripts constraints.sdc]
+if {[info exists ::env(PWR_EXTRA_SDC)] && $::env(PWR_EXTRA_SDC) ne ""} { source $::env(PWR_EXTRA_SDC) }
+
+#-----------------------------
+# PWR1's cluster mode: one session, one window after another (the reports as below, per window)
+#-----------------------------
+if {$mode eq "cluster"} {
+    set t_setup [clock milliseconds]
+    set fh [open [file join $out setup_times.txt] w]
+    puts $fh "link_s [expr {($t_link - $t_start) / 1000.0}] setup_s [expr {($t_setup - $t_start) / 1000.0}] mem_kb [mem]"
+    close $fh
+    set fh [open $::env(PWR_WINDOWS) r]; set wlines [split [string trim [read $fh]] "\n"]; close $fh
+    foreach wline $wlines {
+        lassign $wline name saif
+        set wout [file join $out $name]
+        file mkdir $wout
+        set t0 [clock milliseconds]
+        reset_switching_activity
+        read_saif -strip_path $::env(PWR_STRIP) $saif
+        set t1 [clock milliseconds]
+        update_power
+        set t2 [clock milliseconds]
+        report_switching_activity > [file join $wout switching_activity.rpt]
+        report_switching_activity -list_not_annotated > [file join $wout not_annotated.rpt]
+        redirect [file join $wout units.rpt] { report_units }
+        report_power -nosplit -significant_digits 6 > [file join $wout power.rpt]
+        report_power -hierarchy -nosplit -significant_digits 6 > [file join $wout power_hierarchy.rpt]
+        set t3 [clock milliseconds]
+        set fh [open [file join $wout done] w]
+        puts $fh "read_saif_s [expr {($t1 - $t0) / 1000.0}] update_power_s [expr {($t2 - $t1) / 1000.0}] reports_s [expr {($t3 - $t2) / 1000.0}] mem_kb [mem]"
+        close $fh
+        puts "pt_power.tcl: window $name done"
+    }
+    redirect [file join $out licenses.rpt] { list_licenses }
+    exit
+}
 
 #-----------------------------
 # Activity
