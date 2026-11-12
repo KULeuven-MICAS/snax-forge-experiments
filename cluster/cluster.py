@@ -4,6 +4,9 @@
   pixi run cluster rtl <point> [--allow-branch]    step 1: the RTL with every memory as a RAM1 macro
   pixi run cluster syn <point> [--cores N] [--allow-branch]   step 2: DC on the whole cluster
   pixi run cluster gls <point> [--allow-branch]    step 3: the netlist in the same testbench (R4)
+  pixi run cluster pwr <point> [--allow-branch]    PWR1: the energy per program section; part 1 (R1) runs the quiet
+                                                   build on the netlist and cuts its VCD into one SAIF per section
+                                                   (cluster/power.py, whose docstring holds its steps)
 
 A point is an entry of cluster/points.json (point, recipe, W, sets, and srams: the macro instances the
 cluster holds, per macro); the file also names the two images. snax_cluster is read from SNAX_CLUSTER
@@ -998,8 +1001,14 @@ def main() -> int:
     g = sub.add_parser("gls", help="step 3: step 2's netlist in step 1's testbench (X67)")
     g.add_argument("point")
     g.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
+    w = sub.add_parser("pwr", help="PWR1: the quiet build on the netlist, one SAIF per program section (cluster/power.py)")
+    w.add_argument("point")
+    w.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
     a = ap.parse_args()
     images, p = load(a.point)
+    if a.cmd == "pwr":
+        import power  # noqa: PLC0415  cluster/power.py (it imports this file as the module cluster)
+        return power.main(p, images, a)
     return {"rtl": rtl, "syn": syn, "gls": gls}[a.cmd](p, images, a)
 
 

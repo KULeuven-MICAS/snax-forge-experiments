@@ -1328,7 +1328,8 @@ def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
     return {"beats": beats, "exps": exps, "n_new": n_new, "busy_beats": len(busy)}
 
 
-def vcd_windows(vcd: Path, wins: list[tuple[str, int, int]], out: dict) -> None:
+def vcd_windows(vcd: Path, wins: list[tuple[str, int, int]], out: dict, timescale_10ps: bool = False,
+                done=None) -> None:
     """Cut the run's VCD into one VCD per window, in one pass: the header, then at the window's start t0 a
     $dumpvars block with every variable's value there, then the window's own events up to t1 (VCD time units).
     vcd2saif -time t0 t1 on the shared VCD counts one toggle in the window for a net whose last change before t0 was
@@ -1336,7 +1337,11 @@ def vcd_windows(vcd: Path, wins: list[tuple[str, int, int]], out: dict) -> None:
     makes); the cut file has no event before t0, so a window is counted from its own events only (docs/power.md,
     Char). The values are written at the time of the last time step before t0, as plain value changes, and each cut
     ends with a bare time step at t1 (vcd2saif ends a file's window at its last time step), so the window is whole. The boundaries are quiet: an event at a
-    boundary fails the point. `out` maps a window to its file."""
+    boundary fails the point. `out` maps a window to its file.
+
+    timescale_10ps (cluster pwr, draft X76): the VCD's $timescale must be 1ps (on one line or three) and each cut's
+    is written as 10ps, the time numbers unchanged, so a run at tb_bin's 1 ns clock reads as one at 10 ns. `done`,
+    when given, is called with a window's name as soon as its cut is closed (it may block, holding the pass)."""
     wins = sorted(wins, key=lambda w: w[1])
     bounds = {a for _, a, _ in wins} | {b for _, _, b in wins}
     state: dict = {}
@@ -1347,6 +1352,12 @@ def vcd_windows(vcd: Path, wins: list[tuple[str, int, int]], out: dict) -> None:
             header.append(line)
             if line.startswith("$enddefinitions"):
                 break
+        if timescale_10ps:
+            text = "".join(header)
+            m = re.search(r"\$timescale\s+(\d+)\s*(\w+)\s+\$end[^\n]*\n?", text)
+            if not m or (m.group(1), m.group(2)) != ("1", "ps"):
+                raise Fail(f"vcd: timescale {m.group(1) + m.group(2) if m else None} is not 1ps")
+            header = (text[:m.start()] + "$timescale 10ps $end\n" + text[m.end():]).splitlines(keepends=True)
 
         def open_win():
             nonlocal fh
@@ -1366,6 +1377,8 @@ def vcd_windows(vcd: Path, wins: list[tuple[str, int, int]], out: dict) -> None:
                     fh.close()
                     fh = None
                     idx += 1
+                    if done is not None:
+                        done(wins[idx - 1][0])
                 else:
                     return
 
