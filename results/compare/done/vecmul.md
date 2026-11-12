@@ -9,6 +9,8 @@ Part of [the comparison](../README.md): setup, summary across kernels and the pa
 
 n2048, nangate45, int64, 10 ns.
 
+[forge's ctrl + datapath against the HLS totals](vecmul_ctrl_dp.png): forge without its csr, its `<tag>_peripherals` and its glue; the HLS cases as above.
+
 | W | Case | Area (µm²) | Energy (nJ) | Latency (cycles) | Power (mW) |
 |---|---|---|---|---|---|
 | 1 | forge | 8,179 | 25.19 | 2048 | 1.23 |
