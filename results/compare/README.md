@@ -2,7 +2,14 @@
 
 forge's figures exclude `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168): it is in neither the csr nor the total without csr.
 
-Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs (X45, X46, X61, X64); the text outside the `gen` markers is written by hand. One page per kernel; this page has the setup, the summary across kernels, the parts' basis and the nangate15 check. The insights were written in HSYN1 R9 for the HLS cases and reread against the n2048 numbers in CSYN1 R4, with forge's cases added; the pages moved here from `results/compare_hls.md` in CSYN1 (X64). forge's rows and insights were remeasured and reread in CTRL2 R5 on snax-forge's leaner control unit (D168, X65), and reread again in R5b when X65 took BUSY_COUNTER out of every figure; the numbers before it are kept only in [ctrl2_before_after.md](ctrl2_before_after.md).
+| Date | What changed on these pages |
+|---|---|
+| 5 Nov (HSYN1) | the four HLS cases side by side, insights written |
+| 10 Nov (CSYN1) | forge's cases added, every tier at n2048, one page per kernel (X64); insights reread |
+| 11 Nov (CTRL2) | forge remeasured on its leaner control unit; BUSY_COUNTER out of every figure (X65); the earlier numbers in [ctrl2_before_after.md](ctrl2_before_after.md) |
+| 12 Nov | a second figure per kernel, `<kernel>_ctrl_dp.png`: forge's ctrl + datapath against the HLS totals (X77) |
+
+Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs (X45, X64); the text outside the `gen` markers is written by hand. This page has the setup, the summary across kernels, the parts' basis and the nangate15 check; each kernel has its own page.
 
 <!-- gen:index -->
 | Tier | Kernels |
@@ -126,6 +133,6 @@ The order of the cases (smallest to largest) is the same on both technologies in
 
 ## 5. Notes
 
-- Vitis dace_w1 of dot, axpy and rowsum: rebuilt for n2048 with their RAM as an SRAM macro (dot, axpy) or flops (rowsum), X62 (CSYN1 R3); parked on nangate15, which has no macros.
+- Vitis dace_w1 of dot, axpy and rowsum: rebuilt for n2048 with their RAM as an SRAM macro (dot, axpy) or flops (rowsum), X62; parked on nangate15, which has no macros.
 - forge's tier done rows on nangate15 are CTRL1's RTL (`f9764d5`, the setup table's second commit), not rerun in CTRL2 R5, which is nangate45 only (snax-forge D159): in section 4 each forge cell sets CTRL2's nangate45 value beside CTRL1's nangate15 one, so forge's nangate45 areas there are 297 to 617 µm² below what CTRL1's RTL gave in Part A (its leaner ctrl and csr). The order agrees in 87 of 120 comparisons, one fewer than before CTRL2.
 - The rows behind every number are in `results/compare_done.csv` and `results/compare_untiered.csv`.

@@ -1,6 +1,6 @@
 # Pitfalls
 
-Tool behaviour that gives wrong numbers, or no numbers, without an error. Grouped by tool (and the environment, and the zips of X51). Each entry: symptom, cause, fix or check, and the run note (in `results/hls/runs/`) that found it. The decisions they led to are in [`DECISIONS.md`](DECISIONS.md).
+Tool behaviour that gives wrong numbers, or no numbers, without an error. Grouped by tool (and the environment, and the zips of X51). Each entry: symptom, cause, fix or check, and the run note that found it. The decisions they led to are in [`DECISIONS.md`](DECISIONS.md).
 
 ## DC
 
@@ -512,7 +512,14 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Fix or check:** edit such files as bytes (or keep `newline=""` and `csv.writer`'s default), and check `git diff --stat` before committing.
 - **Found in:** `results/hls/runs/2026-11-10_csyn1_r3.md`.
 
-## snax_cluster's generators (STRM1)
+### E7. A snax-forge submodule off main's pin marks every bundle dirty
+
+- **Symptom:** snax-forge's `git status --porcelain` lists ` M gvsoc/snax-gvsoc` although nothing was edited, and `forge/bundles.py` would refuse every bundle as dirty (its `bundle.json` `dirty: true`).
+- **Cause:** snax-forge's `gen/bundle.py` `provenance` takes the work tree as dirty on any `git status --porcelain` line, a submodule whose checkout differs from the commit the superproject pins included. After a branch is squash-merged, `git pull` on main moves the pin to the squash commit of the submodule's own PR while the submodule stays on the branch's commit (CTRL2: snax-gvsoc `0a378cdf` on `ry/ctrl2`, main pins `85552fc4`); the trees can be the same.
+- **Fix or check:** before bundling, `git -C ../snax-forge status --porcelain` must be empty; for a submodule line, check the submodule has no local change (`git -C <sub> status --porcelain`) and run `git -C ../snax-forge submodule update <sub>`. The bundles do not read the submodule.
+- **Found in:** `results/forge/runs/2026-11-11_ctrl2_r5.md` (step 3).
+
+## snax_cluster's generators
 
 ### SC1. A reader of a streamer set is named with a double underscore
 
@@ -584,13 +591,6 @@ Tool behaviour that gives wrong numbers, or no numbers, without an error. Groupe
 - **Cause:** iDMA's `Bender.yml` puts every source (`idma_inst64_top`, the midends, the backends, `target/rtl/idma_generated.sv`) under bender target `rtl`; vsim and vcs pass `-t rtl`, `gen-syn`'s `SYN_BENDER` passed only `-t synthesis`.
 - **Fix or check:** snax_cluster #693 (main `7c14681c`) adds `-t rtl` to `SYN_BENDER`; it adds exactly iDMA's 34 files. `cluster_check.tcl` and syn.py's LINK-5 count fail a cluster row with an unresolved reference.
 - **Found in:** `results/cluster/runs/2026-11-11_csyn1_r3.md`.
-
-### E7. A snax-forge submodule off main's pin marks every bundle dirty
-
-- **Symptom:** snax-forge's `git status --porcelain` lists ` M gvsoc/snax-gvsoc` although nothing was edited, and `forge/bundles.py` would refuse every bundle as dirty (its `bundle.json` `dirty: true`).
-- **Cause:** snax-forge's `gen/bundle.py` `provenance` takes the work tree as dirty on any `git status --porcelain` line, a submodule whose checkout differs from the commit the superproject pins included. After a branch is squash-merged, `git pull` on main moves the pin to the squash commit of the submodule's own PR while the submodule stays on the branch's commit (CTRL2: snax-gvsoc `0a378cdf` on `ry/ctrl2`, main pins `85552fc4`); the trees can be the same.
-- **Fix or check:** before bundling, `git -C ../snax-forge status --porcelain` must be empty; for a submodule line, check the submodule has no local change (`git -C <sub> status --porcelain`) and run `git -C ../snax-forge submodule update <sub>`. The bundles do not read the submodule.
-- **Found in:** `results/forge/runs/2026-11-11_ctrl2_r5.md` (step 3).
 
 ## Zips (X51)
 

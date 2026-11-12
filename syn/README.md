@@ -185,7 +185,6 @@ A DC run that fails on a licence is rerun once by `run` itself (docs X17, PITFAL
 - Switching activity is DC's default (`power_default_toggle_rate` 0.1, `power_default_static_probability` 0.5, recorded in `lib_info.txt`), not simulated activity.
 - `fmax_mhz` is a lower bound: at 10 ns DC meets timing with room to spare and does not upsize for speed.
 - The HLS points are int64 only.
-- Run notes in `results/hls/runs/` before 28 Oct 2026 are on gscl45nm (FreePDK45), now retired.
 - The DC, library, Questa, PrimeTime and licence pitfalls found so far are in [`docs/PITFALLS.md`](../docs/PITFALLS.md).
 
 ## Files
@@ -222,7 +221,7 @@ A `# ram:` line names a memory Vitis built. Neither library has RAM cells, and D
 
 **The results tree.** As for the HLS sources, under `forge`: runs in `syn/runs/forge/<tech>/<tier>/<kernel>/<point>.zip` with `syn/runs/forge/<tech>/summary.csv`, committed results in `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `reports/` with one zip of `KEPT_REPORTS` per point). A forge row of `synth_dc.csv` has seven more columns after `run`: `recipe`, `W` (from `point.json`), `snax_forge_commit` (from `bundle.json`), and the area split of the wrapper, in um2: `csr_um2`, `ctrl_um2` and `datapath_um2` (the absolute total, children included, of the rows of `synth_dc_modules.csv` whose design is `snax_forge_csr`, `snax_forge_ctrl` and `snax_forge_datapath`, the keys of `bundle.json`'s `modules`), and `glue_um2` = `area_um2` minus the three.
 
-**The glue.** DC's boundary optimization is left on, so forge compiles like the HLS points (`compile_ultra -no_autoungroup`). It moves a few cells to the wrapper's own level: the inverter that turns `rst_ni` into the active-high `reset` of firtool's flops, and inverters on outputs taken out of the modules (R0's `dot_3` W=4: 2.1 um2 on nangate45, 0.3 um2 on nangate15). `glue_um2` is their area. `run` prints a point whose glue is negative or above 1 % of the total (`GLUE_MAX`), or that has no row for one of the three modules (then the glue is empty); it does not fail it.
+**The glue.** DC's boundary optimization is left on, so forge compiles like the HLS points (`compile_ultra -no_autoungroup`). It moves a few cells to the wrapper's own level: the inverter that turns `rst_ni` into the active-high `reset` of firtool's flops, and inverters on outputs taken out of the modules (`dot_3` at W = 4: 2.1 um2 on nangate45, 0.3 um2 on nangate15). `glue_um2` is their area. `run` prints a point whose glue is negative or above 1 % of the total (`GLUE_MAX`), or that has no row for one of the three modules (then the glue is empty); it does not fail it.
 
 ```bash
 pixi run forge-rtl --list 'done/dot/*'                                     # the forge points
@@ -234,24 +233,24 @@ pixi run syn summary --source forge                                        # eve
 
 ## The streamer and xbar sources
 
-`--source streamer` and `--source xbar` (STRM1, X52) synthesize snax_cluster's streamer reader alone (`strm__C0_Reader`, as the Streamer uses it) and its TCDM sparse interconnect (`SparseInterconnect`), one point per grid value: `rtl/streamer/d<depth>_l<loops>_c<channels>.zip` and `rtl/xbar/i<inputs>_b<banks>.zip`, which `pixi run strm-rtl` writes (`strm/README.md`).
+`--source streamer` and `--source xbar` (X52) synthesize snax_cluster's streamer reader alone (`strm__C0_Reader`, as the Streamer uses it) and its TCDM sparse interconnect (`SparseInterconnect`), one point per grid value: `rtl/streamer/d<depth>_l<loops>_c<channels>.zip` and `rtl/xbar/i<inputs>_b<banks>.zip`, which `pixi run strm-rtl` writes (`strm/README.md`).
 
 **The points.** Every zip there with a `config.json`; the top is its `filelist.f`'s `# top:` line. `run` unpacks the zip into `tmp/` for the DC run and writes the run folder's `filelist.f` with the unpacked `<top>.sv`. Settings as every source: X1 to X4, 10 ns, `compile_ultra -no_autoungroup`. `run` starts the largest points first (xbar by inputs x banks, streamer by channels x depth, then loops), so the longest runs do not end the batch alone.
 
-**The flop check.** A row adds `rtl_flop_bits`, the register and memory bits the bundle's RTL declares under the top (`strm/gen.py`'s `flop_bits`, firtool's simulation-only `_RANDOM*` temporaries left out, PITFALLS SC7), and `opt1207`, the registers DC removed as unloaded (its unique OPT-1207 lines). A row whose `seq_cells` differs from `rtl_flop_bits` is `failed: flop check (DC <n> flops, RTL <m> bits, <k> OPT-1207)`: a point alone must keep every register it has inside the cluster (R0 and R1: none trimmed). Rows also carry the grid's params and `snax_cluster_commit` (from `config.json`).
+**The flop check.** A row adds `rtl_flop_bits`, the register and memory bits the bundle's RTL declares under the top (`strm/gen.py`'s `flop_bits`, firtool's simulation-only `_RANDOM*` temporaries left out, PITFALLS SC7), and `opt1207`, the registers DC removed as unloaded (its unique OPT-1207 lines). A row whose `seq_cells` differs from `rtl_flop_bits` is `failed: flop check (DC <n> flops, RTL <m> bits, <k> OPT-1207)`: a point alone must keep every register it has inside the cluster (none was trimmed). Rows also carry the grid's params and `snax_cluster_commit` (from `config.json`).
 
 ```bash
 pixi run syn list --source streamer
-pixi run syn run '*' --source xbar --tech nangate45 -j 4 --cores 4          # STRM1 R1: with the streamer run beside it
+pixi run syn run '*' --source xbar --tech nangate45 -j 4 --cores 4
 pixi run syn run 'd8_*' --source streamer --tech nangate45 -j 4 --cores 4
 ```
 
-`rtl/xbar/` also holds `i36_b32` (`strm/grid.json`'s `extra`, the base of xbar_mix's cluster points) since CSYN1 R3c, so `syn run '*' --source xbar` would synthesize it too; it is not one of STRM1's 27 points and not in `results/xbar/`.
+`rtl/xbar/` also holds `i36_b32` (`strm/grid.json`'s `extra`, the base of xbar_mix's cluster points), so `syn run '*' --source xbar` would synthesize it too; it is not one of STRM1's 27 points and not in `results/xbar/`.
 
 ## The xbar_mix source
 
-`--source xbar_mix` (CSYN1 R3c, X70) synthesizes an xbar point's `SparseInterconnect` inside `strm/xbar_mix.py`'s wrapper, top `xbar_mix`: inputs `0..ro-1` read-only (`bits_write`, `bits_data`, `bits_amo` tied 0), `ro..ro+wo-1` write-only (`bits_write` 1, `bits_amo` 0, response data open), the rest read-write, and on every point the ties of snax_cluster's `sparse_interconnect_wrapper.sv.tpl` (every `io_tcdmRsps_*_ready` and `io_memRsps_*_valid` 1, `io_memRsps_*_ready` and `io_memReqs_*_bits_priority` open). The zips are `rtl/xbar_mix/i<inputs>_b<banks>_r<ro>_w<wo>.zip` (`pixi run strm-rtl --set xbar_mix`, `strm/README.md`); `run` treats them as the xbar points, two files in the run's `filelist.f`, largest first by inputs x banks. A row adds `ro` and `wo`; `rtl_flop_bits` is the SparseInterconnect's (the wrapper declares no register), and `flops_removed` is `rtl_flop_bits` minus DC's flops: DC may remove the registers the ties make dead, so a removed flop is printed per point (`flops <point>: DC removed ...`) and does not fail the row. A row with more flops than the RTL declares, or with no count, is `failed: flop check (...)`.
+`--source xbar_mix` (X70) synthesizes an xbar point's `SparseInterconnect` inside `strm/xbar_mix.py`'s wrapper, top `xbar_mix`: inputs `0..ro-1` read-only (`bits_write`, `bits_data`, `bits_amo` tied 0), `ro..ro+wo-1` write-only (`bits_write` 1, `bits_amo` 0, response data open), the rest read-write, and on every point the ties of snax_cluster's `sparse_interconnect_wrapper.sv.tpl` (every `io_tcdmRsps_*_ready` and `io_memRsps_*_valid` 1, `io_memRsps_*_ready` and `io_memReqs_*_bits_priority` open). The zips are `rtl/xbar_mix/i<inputs>_b<banks>_r<ro>_w<wo>.zip` (`pixi run strm-rtl --set xbar_mix`, `strm/README.md`); `run` treats them as the xbar points, two files in the run's `filelist.f`, largest first by inputs x banks. A row adds `ro` and `wo`; `rtl_flop_bits` is the SparseInterconnect's (the wrapper declares no register), and `flops_removed` is `rtl_flop_bits` minus DC's flops: DC may remove the registers the ties make dead, so a removed flop is printed per point (`flops <point>: DC removed ...`) and does not fail the row. A row with more flops than the RTL declares, or with no count, is `failed: flop check (...)`.
 
 ```bash
-pixi run syn run '*' --source xbar_mix --tech nangate45 -j 4 --cores 4      # CSYN1 R3c
+pixi run syn run '*' --source xbar_mix --tech nangate45 -j 4 --cores 4
 ```

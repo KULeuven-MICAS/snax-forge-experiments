@@ -1,92 +1,77 @@
 # snax-forge-experiments
 
-This repo collects the data from all snax-forge experiments in one place. The data comes from
-several sources, and this repo also holds the scripts that depend on a technology: synthesis
-scripts and post-synthesis simulations.
+The measuring side of snax-forge: synthesis, power, memory and cost flows that depend on a technology, with their results committed. It measures snax-forge's generated accelerators and clusters, the HLS tools they are compared with, and the building blocks snax-forge's cost model (HWCOST) is priced from. Nangate 45 nm throughout (15 nm rows from before 6 Nov stay as data).
 
-The tools that generate RTL never depend on this repo:
+**Docs:** [`docs/`](docs/README.md): the decisions (`DECISIONS.md`, X1, X2, ...), the tool pitfalls (`PITFALLS.md`), the power flow (`power.md`) and the cost tables (`cost_tables.md`). Check new work against the decisions and pitfalls it touches.
 
-- [hls-exercises](https://github.com/rgantonio/hls-exercises) writes the Vitis and Bambu points.
-- [dslx-exercises](https://github.com/rgantonio/dslx-exercises) writes the Google XLS points.
-- [snax-forge](https://github.com/KULeuven-MICAS/snax-forge) writes the generated accelerators.
-- snax_cluster and snitch_cluster provide the clusters.
+## What changed
 
-Each source writes its RTL with a `filelist.f`. This repo reads those from checkouts placed next
-to it, hooked by hand, with no submodules. PDK files are never committed. They sit next to the
-repo too, or are pointed to with environment variables.
+| Date | Task | What it added | Decisions |
+|---|---|---|---|
+| 27–29 Oct | flow | Design Compiler on Nangate 45 and 15 nm; the power flow (zero-delay Questa, vcd2saif, PrimePower) | X1–X20 |
+| 31 Oct–2 Nov | SYN1, SYN2 | snax-forge's accelerators beside Vitis at one 2048-element task | X21–X25 |
+| 3 Nov | CHAR1 | snax-forge's blocks alone; `char.json`, the block model | X28–X37 |
+| 5 Nov | HSYN1 | Bambu and XLS beside Vitis; the comparison CSVs | X38–X45 |
+| 6 Nov | RAM1, ARC1 | SRAM banks from CACTI, as a table and as macros; every output zipped | X47–X51 |
+| 6–7 Nov | STRM1 | the streamer reader and the interconnect tables | X52–X54 |
+| 10 Nov | CSYN1 A | forge's untiered points, DaCe's buffers as macros, `results/compare/` | X55–X64 |
+| 11 Nov | CTRL2 | forge's leaner control; BUSY_COUNTER out of every figure | X65 |
+| 11 Nov | CSYN1 B | a snax-forge design through the whole cluster (RTL, synthesis, netlist); the interconnect's input kinds; the area in groups against HWCOST | X66–X72 |
+| 12 Nov | CORE1, PWR1 | the one-core cluster; the cluster's energy per program section | X73–X76 |
+| 12 Nov | docs | forge's ctrl + datapath figure per kernel; the docs trimmed (older wording in git history) | X77 |
+
+## Sibling repos
+
+Checked out next to this one, no submodules. PDK files are never committed.
 
 ```
 <parent>/
   snax-forge-experiments/   this repo
-  hls-exercises/            rtl/<tier>/<kernel>/<case>_w<W>/filelist.f (Vitis opt, dace; Bambu bambu); results_staging/bambu_cycles.csv
-  dslx-exercises/           rtl/<tier>/<kernel>/xls_w<W>/filelist.f (Google XLS); results/xls_cycles.csv
-  snax-forge/               recipes/, platforms/; forge/bundles.py runs its sandbox, design and bundle tasks
-  RTL_flow_Nangate15/       tech/nangate45/NangateOpenCellLibrary_typical.db
-                            tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db
+  snax-forge/               the generator: recipes, bundles, HWCOST
+  snax_cluster/             the cluster (CSYN1 Part B on)
+  hls-exercises/            Vitis and Bambu points: rtl/<tier>/<kernel>/<case>_w<W>/filelist.f
+  dslx-exercises/           Google XLS points: rtl/<tier>/<kernel>/xls_w<W>/filelist.f
+  RTL_flow_Nangate15/       tech/nangate45/, tech/nangate15/: the libraries and cell models
 ```
 
-**Docs:** [`docs/`](docs/README.md) holds the settled decisions (`DECISIONS.md`, X1, X2, ...) and the tool pitfalls (`PITFALLS.md`); check new work against both.
+Environment variables, tools and licences are in [`docs/README.md`](docs/README.md#environment).
 
 ## Layout
 
 | Folder | What it holds |
 |---|---|
-| `syn/` | ASIC synthesis with Design Compiler on the Nangate 45 nm and 15 nm Open Cell Libraries, one tech file per technology in `syn/tech/` ([`syn/README.md`](syn/README.md)); five sources (`--source hls`, Vitis, the default; `bambu`; `xls`; `forge`; `char`), the HLS ones at W <= 16 (X38, X39). Runs stay local in `syn/runs/<source>/`. |
-| `results/bambu/`, `results/xls/` | Bambu's and XLS's points: `bambu_cycles.csv` and `xls_cycles.csv`, copied byte for byte from hls-exercises and dslx-exercises by `report/import_cycles.py` (`pixi run import-cycles`, X42), each with a `SOURCE` file (repo, commit, path, date); and `<tech>/` with `synth_dc.csv` (bambu rows with `ctrl_um2`, `datapath_um2`, `glue_um2`, X41), `synth_dc_modules.csv` and `reports/` (`syn/syn.py --source bambu` or `xls`), and `power_pt.csv`, `power_pt_modules.csv` and `power_reports/` (`sim/pwr.py --source bambu` or `xls`, X44). |
-| `results/runs/` | Run notes of rounds that span several sources (HSYN1 on), named `<date>_<what>.md`. |
-| `results/compare_done.csv`, `results/compare_untiered.csv` | The raw comparison tables (X45): forge and the four HLS cases (Vitis opt and dace, Bambu, XLS), one row per tech, tier, kernel, W, tool, case and size, from `report/compare.py` (`pixi run compare`). No ratios or rankings. |
-| `results/compare/` | forge and the four HLS cases side by side (X46, X64): `README.md` (setup, the summary across kernels, the parts' basis, the nangate15 check) and one page per kernel in `done/` and `untiered/` (area, energy, latency and power against W with a figure, the insights, the parts at n2048), from `report/compare_hls.py` (`pixi run compare-hls`); the text between the generated parts is hand-written. |
-| `results/hls/` | Vitis's points (`hls` is Vitis, X38). hls-exercises' bench summaries (`hls_cycles.csv`, `hls_loops.csv`, `forge_cycles.csv`, `report_<tier>.md`) and the run notes in `runs/`. hls-exercises' `bench/bench.py` writes here. `forge_cycles.csv` (SNAX-GVSoC's and the RTL's counters for forge at the bench's sizes) stays unchanged. |
-| `sim/` | Gate-level simulation and PrimePower: `pwr.py` (the driver; `--source hls` or `forge`), `sources/` (tb.json adapters: `hls.py`, `forge.py`), `ref.py`, `tb/`, `scripts/`, and step 0's `probe/` ([`docs/power.md`](docs/power.md)). Runs stay local in `sim/runs/` (forge's in `sim/runs/forge/`). |
-| `forge/` | snax-forge's points (`points.json`: name, recipe, W), the driver that bundles them, `bundles.py` (`pixi run forge-rtl`), run in the snax-forge checkout next to this repo ([`syn/README.md`](syn/README.md#the-forge-source)), and `query.py`, which answers the power flow's questions with snax-forge's own code ([`docs/power.md`](docs/power.md#forge---source-forge)). |
-| `rtl/forge/` | The bundles, one folder per point (`bundle.json`, `point.json`, `rtl/sv/`, `rtl/files.f`); git ignores `rtl/`, a bundle is rebuilt from its commit. |
-| `results/forge/<tech>/` | snax-forge's accelerators per technology (`syn/syn.py --source forge`): `synth_dc.csv` (with `recipe`, `W`, `snax_forge_commit`), `synth_dc_modules.csv`, `reports/`; `power_pt.csv`, `power_pt_modules.csv`, `power_reports/` (`sim/pwr.py --source forge`); run notes in `results/forge/runs/`. |
-| `char/`, `rtl/char/`, `results/char/` | CHAR1: snax-forge's catalogue blocks alone (no csr, no ctrl), 27 points at int64 in `char/points.json`, area and dynamic energy on both technologies (X28 to X37): `char/blocks.py` (`pixi run char-rtl`) writes them with snax-forge's `gen-block` into `rtl/char/` (git ignores it), `syn/syn.py --source char` synthesizes them (`char_synth.csv`), `sim/pwr.py --source char` simulates their busy, idle and stream windows (`char_power.csv`), `report/char_export.py` (`pixi run char-export`) writes the table snax-forge reads, `results/char/<tech>/char.json`, and `report/char_table.py` (`pixi run char-table`) writes `results/char/char_table.md`, with the model checked against SYN2 ([`results/char/README.md`](results/char/README.md)). |
-| `report/` | `char_export.py` and `char_table.py` (CHAR1, above); `import_cycles.py` (`pixi run import-cycles`): the Bambu and XLS cycle CSVs copied with their provenance (X42); `compare.py` (`pixi run compare`): the two tier comparison CSVs (X45); `compare_hls.py` (`pixi run compare-hls`): the pages and figures in `results/compare/` (X46, X64). SYN1's and SYN2's analysis scripts and their results were retired in HSYN1 R3 (X43); git history keeps them. |
-| `results/hls/<tech>/` | The results per technology (`nangate45`, `nangate15`): `synth_dc.csv`, `synth_dc_modules.csv` and every run's reports in `reports/` (`syn/syn.py`); `power_pt.csv`, `power_pt_modules.csv` and `power_reports/` (`sim/pwr.py`). |
-| `ram/` | RAM1: SRAM bank area and dynamic energy per access from CACTI 7 at 45 nm (X47; OpenRAM was probed and dropped): `ram.py` (`pixi run ram`), CACTI built into `ram/cacti/` by `pixi run ram-build` (git-ignored, as are the runs in `ram/runs/`). See [`ram/README.md`](ram/README.md). |
-| `results/ram/nangate45/` | `ram_table.csv`: the lookup table, every depth 32 to 4096 in steps of 32 and width 8 to 256 in steps of 8 (X48); run notes in `results/ram/runs/`. |
-
-Planned:
-
-- `cost/`: the fitted area and energy tables per technology, for snax-forge's first-order estimates.
+| `syn/` | Design Compiler: `syn.py`, one tech file per library, the scripts; sources `hls` (Vitis), `bambu`, `xls`, `forge`, `char`, `streamer`, `xbar`, `xbar_mix`, `cluster` ([`syn/README.md`](syn/README.md)) |
+| `sim/` | the power flow: `pwr.py`, the TB adapters per source, the fixed TBs, PT's script ([`docs/power.md`](docs/power.md)) |
+| `forge/` | snax-forge's points (`points.json`) and their bundling (`bundles.py`, `query.py`) |
+| `char/` | CHAR1's block points and their generation ([`results/char/README.md`](results/char/README.md)) |
+| `ram/` | CACTI and the SRAM macros ([`ram/README.md`](ram/README.md)) |
+| `strm/` | the streamer and interconnect points ([`strm/README.md`](strm/README.md)) |
+| `cluster/` | a design through the whole cluster ([`cluster/README.md`](cluster/README.md)) |
+| `report/` | the scripts that turn results into tables and pages: `compare.py`, `compare_hls.py`, `char_export.py`, `char_table.py`, `strm_table.py`, `xbar_kinds.py`, `cluster_breakdown.py`, `cluster_energy.py`, `import_cycles.py` |
+| `arc/`, `tmp/` | the zip helpers (X51); `tmp/` holds one point unpacked at a time and is empty otherwise |
+| `rtl/` | the bundles, one zip per point (not committed; rebuilt from the commit their rows name) |
+| `results/<source>/<tech>/` | per source and technology: `synth_dc.csv`, `synth_dc_modules.csv`, `power_pt.csv`, `power_pt_modules.csv`, the report zips; run notes in `results/<source>/runs/` |
+| `results/compare*` | the comparison: `compare_done.csv`, `compare_untiered.csv` (raw rows, X45) and `compare/` (one page and two figures per kernel, X64, X77) |
+| `results/ram/`, `results/strm/`, `results/char/` | the tables snax-forge reads: `ram_table.csv`; `streamer.csv`, `xbar.csv`, `xbar_kinds.json` ([`docs/cost_tables.md`](docs/cost_tables.md)); `char.json` |
+| `results/hls/` | Vitis's points, plus hls-exercises' bench summaries (`hls_cycles.csv`, `report_<tier>.md`) |
+| `results/runs/` | run notes of rounds that span several sources |
 
 ## Run
 
 ```bash
-pixi install                                                  # once: the repo's Python (docs X15)
-pixi run syn list 'done/vecadd/*'                             # Vitis's points (opt, dace; W <= 16)
-pixi run syn list --source bambu                              # Bambu's points; --source xls for XLS's
-pixi run syn check-ports --source xls                         # the clock and reset port guard alone, no DC
-pixi run syn run done/vecadd/opt_w8 --tech nangate45          # one point at 10 ns on nangate45
-pixi run syn summary                                          # every run so far, both technologies
-pixi run pwr run 'done/vecadd/*' --tech nangate45             # dynamic energy of the synthesized points (docs/power.md)
-pixi run forge-rtl -j 2                                       # snax-forge's 48 bundles into rtl/forge/ (X21)
-pixi run syn run 'done/*/forge*' --source forge --tech nangate45      # synthesize the forge points (X22)
-pixi run pwr run 'done/*/forge*' --source forge --tech nangate45 --size n2048   # their power (X23)
-pixi run pwr run 'done/*/*_w*' --tech nangate45 --size n2048            # tier done's HLS points at n2048 (X24)
-pixi run char-rtl && pixi run syn run '*' --source char --tech nangate45 && pixi run pwr run '*' --source char --tech nangate45   # CHAR1: the blocks alone
-pixi run char-export                                          # CHAR1: results/char/<tech>/char.json, the table snax-forge reads
-pixi run char-table                                           # CHAR1: results/char/char_table.md, the model against SYN2
-pixi run import-cycles                                        # results/bambu/bambu_cycles.csv and results/xls/xls_cycles.csv with SOURCE (X42)
-pixi run compare                                              # results/compare_done.csv and compare_untiered.csv (X45); --check writes nothing
-pixi run compare-hls                                          # results/compare/README.md and one page and figure per kernel (X46, X64)
+pixi install                                                        # once (X15)
+pixi run syn list 'done/vecadd/*'                                   # a source's points (--source, default hls)
+pixi run syn run done/vecadd/opt_w8 --tech nangate45                # one point at 10 ns
+pixi run pwr run 'done/vecadd/*' --tech nangate45 --size n2048      # their energy at the reference task (docs/power.md)
+pixi run forge-rtl -j 2                                             # snax-forge's bundles into rtl/forge/
+pixi run syn run 'done/*/forge*' --source forge --tech nangate45    # and their synthesis; pwr likewise
+pixi run import-cycles                                              # Bambu's and XLS's cycle CSVs with SOURCE (X42)
+pixi run compare && pixi run compare-hls                            # the comparison CSVs and pages (X45, X64)
+pixi run char-export && pixi run char-table                         # CHAR1's char.json and table
+pixi run ram table                                                  # the SRAM table (ram/README.md)
+pixi run strm-table && pixi run xbar-kinds                          # the streamer and interconnect tables
+pixi run cluster rtl|syn|gls|pwr dot3_w16                           # the whole cluster (cluster/README.md)
+pixi run arc check                                                  # nothing left unzipped at the end of a round (X51)
 ```
 
-The pixi tasks (`pixi.toml`): `syn`, `pwr`, `forge-rtl`, `char-rtl`, `char-export`, `char-table`, `import-cycles`, `compare`, `compare-hls`. SYN1's and SYN2's analysis tasks (`table`, `analysis`, `split`, `control`, `syn2`) were retired in HSYN1 R3 (X43).
-
-## Synthesis
-
-A technology is a JSON file in `syn/tech/`: the library, its time and capacitance units, the driving cell (`INV_X4`), the output load (four `INV_X4` inputs: 25.0 fF on nangate45, 13.2 fF on nangate15), the max transition (0.25 ns) and the wire-load setting (none applies on either). The constraints are written in ns and fF and scaled to the library's units at run time (nangate15's time unit is 1 ps), and DC stops before reading any RTL if the library's name or units differ from the tech file. The clock is 10 ns.
-
-`results/<source>/<tech>/synth_dc.csv` has one row per point: area (total, combinational, sequential, buf/inv), cells, critical path, slack and `fmax_mhz` in ns and MHz, the worst slack of four path classes (in2reg, reg2reg, reg2out, in2out; X40), max-cap and max-transition violations, dynamic and leakage power in uW, energy per cycle per power group in pJ, leakage per group in uW, the library's md5 and DC's version. `synth_dc_modules.csv` has one row per hierarchical cell (area and power). The columns are described in [`syn/README.md`](syn/README.md#columns).
-
-Caveats:
-
-- `clock_network` is the flops' clock-pin power only, with an ideal clock and no clock tree.
-- Switching activity is DC's default, not simulated.
-- `fmax_mhz` is a lower bound: at 10 ns DC does not upsize for speed.
-- The HLS points are int64 only, at W <= 16 (X38).
-- Run notes in `results/hls/runs/` before 28 Oct 2026 are on gscl45nm (FreePDK45), now retired.
-
-Python comes from the repo's pixi workspace (`pixi.toml`); the EDA tools from PATH (docs/README.md).
+Parallel runs take their size from free licences and stay within 16 cores (X59).
