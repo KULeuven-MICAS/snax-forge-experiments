@@ -95,19 +95,31 @@ def ramcounts(text: str) -> list[tuple[str, int, int]]:
 
 def ram_compare(want_text: str, got_text: str, srams: dict[str, int]) -> tuple[bool, list[str], list[dict]]:
     """The run's RAMCOUNT lines against the reference run's: (pass, notes, extra writes). Per macro, the instances
-    are matched by their counts (the paths differ): equal (reads, writes) first, then the run's (r, w) to the
-    reference's (r, w - 1), each such one an extra write ({macro, reads, rtl_writes, gls_writes}). Anything left
-    unmatched (a read difference, more than one extra write, an instance missing or added) fails, as does a run
-    whose instances per macro are not `srams`."""
+    are matched by their counts (the paths differ): per (macro, reads), the run's writes and the reference's
+    sorted and paired in order, each pair equal or the run's one more, each such one an extra write ({macro,
+    reads, rtl_writes, gls_writes}). Sorted order finds such a pairing whenever one exists (PWR2 R1: two I-cache
+    sets at 235 and 236 writes, the netlist's at 236 and 237, which equal-first matching paired wrongly). A group
+    with none falls back to equal first, then +1, to name what is left unmatched (a read difference, more than
+    one extra write, an instance missing or added); that fails, as does a run whose instances per macro are not
+    `srams`."""
     want, got = ramcounts(want_text), ramcounts(got_text)
     notes: list[str] = []
     per = dict(sorted(Counter(m for m, _r, _w in got).items()))
     if per != dict(sorted(srams.items())):
         notes.append(f"instances {per}, want {dict(sorted(srams.items()))}")
-    left_w, left_g = Counter(want), Counter(got)
+    extra = []
+    left_w, left_g = Counter(), Counter()
+    for key in sorted({(m, r) for m, r, _w in want + got}):
+        ws = sorted(w for m, r, w in want if (m, r) == key)
+        gs = sorted(w for m, r, w in got if (m, r) == key)
+        if len(ws) == len(gs) and all(g - w in (0, 1) for w, g in zip(ws, gs)):
+            extra += [{"macro": key[0], "reads": key[1], "rtl_writes": w, "gls_writes": g}
+                      for w, g in zip(ws, gs) if g == w + 1]
+            continue
+        left_w.update((*key, w) for w in ws)
+        left_g.update((*key, g) for g in gs)
     same = left_w & left_g
     left_w, left_g = left_w - same, left_g - same
-    extra = []
     for (m, r, w), n in sorted(left_g.items()):
         k = min(n, left_w[(m, r, w - 1)])
         if k:

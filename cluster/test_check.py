@@ -152,6 +152,19 @@ def test_ram_pairing_without_paths():
     assert ok and extra == [{"macro": "m", "reads": 5, "rtl_writes": 3, "gls_writes": 4}], (notes, extra)
 
 
+def test_ram_pairing_both_plus_one():
+    # PWR2 R1 dot3_w4: two I-cache sets at 236 and 235 writes, the netlist's each +1 (237, 236); equal-first
+    # matching paired 236 with 236 and left 237 against 235
+    rtl = "RAMCOUNT a m reads 473 writes 236\nRAMCOUNT b m reads 473 writes 235\n"
+    gls = "RAMCOUNT x m reads 473 writes 237\nRAMCOUNT y m reads 473 writes 236\n"
+    ok, notes, extra = check.ram_compare(rtl, gls, {"m": 2})
+    assert ok and notes == [], notes
+    assert extra == [{"macro": "m", "reads": 473, "rtl_writes": 235, "gls_writes": 236},
+                     {"macro": "m", "reads": 473, "rtl_writes": 236, "gls_writes": 237}], extra
+    ok, notes, _ = check.ram_compare(rtl, gls.replace("writes 237", "writes 238"), {"m": 2})
+    assert not ok and notes, notes
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
