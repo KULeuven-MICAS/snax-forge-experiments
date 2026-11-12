@@ -207,13 +207,15 @@ $$A = c_{rw}\thinspace b\thinspace\big[n_{rw} + (1 - f_{ro})\thinspace n_{ro} + 
 
 so $n_{ro}/n$ is the share of the crosspoints that shrink, and the factor multiplies the table's all read-write area.
 
-### Example 5: the cluster's interconnect (36 inputs, 32 banks; 32 read-only, 1 write-only, 3 read-write)
+### Example 5: the two-core cluster's interconnect (36 inputs, 32 banks; 32 read-only, 1 write-only, 3 read-write)
 
 Factor form. $A_{table}(36, 32)$, linear between `i32_b32` and `i40_b32`: $164{,}650.3 + \frac{36 - 32}{40 - 32}(210{,}443.8 - 164{,}650.3) = 187{,}547.0$ µm². The factor: $1 - 0.3965 \cdot \frac{32}{36} - 0.4108 \cdot \frac{1}{36} = 1 - 0.3524 - 0.0114 = 0.6361$. So $A = 187{,}547.0 \times 0.6361 = 119{,}308$ µm².
 
 Crosspoint form. $159.34 \cdot 32 \cdot 3 + 95.06 \cdot 32 \cdot 32 + 93.65 \cdot 32 \cdot 1 + 26.30 \cdot 36 - 19.43 \cdot 32 - 201.0 = 15{,}296 + 97{,}346 + 2{,}997 + 947 - 622 - 201 = 115{,}763$ µm².
 
-Synthesized with the same ties: 118,952 µm² (factor +0.3 %, crosspoint −2.7 %). In the synthesized cluster: 107,685 µm² (factor +10.8 %, crosspoint +7.5 %; every input read-write would give +74 %).
+Synthesized with the same ties: 118,952 µm² (factor +0.3 %, crosspoint −2.7 %). In CSYN1's synthesized two-core cluster: 107,685 µm² (factor +10.8 %, crosspoint +7.5 %; every input read-write would give +74 %).
+
+The one-core cluster (snax-forge D170, CORE1 R4) has 35 inputs, 2 of them read-write: $A_{table}(35, 32) = 181{,}823$ µm², factor 0.6257, so 113,776 µm²; crosspoint form 110,638 µm². In the synthesized cluster: 102,884 µm² (factor +10.6 %, crosspoint +7.5 %).
 
 ### Example 6: 16 inputs, 16 banks, all read-only
 

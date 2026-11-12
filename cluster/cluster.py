@@ -16,9 +16,10 @@ podman_cmd, PITFALLS SC6).
 The bundle, rtl/cluster/<point>.zip (X51): `pixi run forge <recipe> --set W=<W> --set <sets...>` in
 snax-forge's image from the snax-forge checkout, the recipe found as forge/bundles.py finds it. A dirty
 bundle (bundle.json `dirty`, X21) or one whose commit is not the checkout's is refused. The zip holds
-bundle/ (the bundle folder, forge_expected.txt with it), sw/forge.elf (the ELF forge prints), forge.log,
-forge.txt (forge's terminal output) and provenance.json (snax-forge commit, image and id, the command, the
-ELF's sha256). A zip whose provenance has the same commit, image id and command is reused.
+bundle/ (the bundle folder, forge_expected.txt with it), sw/forge.elf (the ELF forge prints), the quiet
+build beside it (sw/forge_quiet.elf and its legend sw/obs_marks.json, snax-forge D135, for PWR1), forge.log,
+forge.txt (forge's terminal output) and provenance.json (snax-forge commit, image and id, the command, both
+ELFs' sha256). A zip whose provenance has the same commit, image id and command is reused.
 
 rtl, in tmp/cluster/<point>/ (the bundle zip unpacked there; the cluster file is the bundle's own
 snax_forge.hjson), from snax_cluster's target/snitch_cluster:
@@ -367,14 +368,21 @@ def make_bundle(p: dict, images: dict, repos: dict, steps: Steps) -> tuple[Path,
                                        f"{repos['snax_forge']}")
     if not (bdir / "forge_expected.txt").is_file() or not elf.is_file():
         raise StepFailed("forge", log, f"no {bdir}/forge_expected.txt or no {elf}")
+    quiet, marks = elf.parent / "forge_quiet.elf", elf.parent / "obs_marks.json"
+    if not quiet.is_file() or not marks.is_file():
+        raise StepFailed("forge", log, f"no {quiet} or no {marks}: the quiet build (snax-forge D135, "
+                                       "CORE1 R3 on)")
     forge_log = elf.parent.parent / "forge.log"
     prov = {"point": p["point"], "recipe": p["recipe"], "recipe_file": str(bundles.find_recipe(p["recipe"], FORGE)),
             "W": p["W"], "sets": p.get("sets", []), **key, "image": images["snax_forge"],
             "snax_forge_dirty": b.get("dirty"), "bundle": str(bdir.relative_to(FORGE)),
             "elf": str(elf.relative_to(FORGE)), "elf_sha256": hashlib.sha256(elf.read_bytes()).hexdigest(),
+            "quiet_elf_sha256": hashlib.sha256(quiet.read_bytes()).hexdigest(),
             "date": dt.datetime.now().isoformat(timespec="seconds")}
     members = {f"bundle/{rel}": f.read_bytes() for rel, f in arc.files_of(bdir).items()}
     members["sw/forge.elf"] = elf.read_bytes()
+    members["sw/forge_quiet.elf"] = quiet.read_bytes()
+    members["sw/obs_marks.json"] = marks.read_bytes()
     members["forge.txt"] = log.read_bytes()
     if forge_log.is_file():
         members["forge.log"] = forge_log.read_bytes()
