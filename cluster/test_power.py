@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 from pathlib import Path
@@ -304,6 +305,31 @@ def test_hierarchy_total():
     assert abs(top[3] - total) <= power.HIER_TOL * total
     top = power.hier_top(HIER.format(total="1.530000e-01"))
     assert abs(top[3] - total) > power.HIER_TOL * total
+
+
+def test_pack2_report_zip_size():
+    # the run zip's pt/pt_check.json has the report zip's size; the report zip's own pt_check.json has no report_zip
+    (power.ROOT / "tmp").mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=power.ROOT / "tmp") as d:
+        d = Path(d)
+        pt = d / "pt"
+        (pt / "reports" / "5_run").mkdir(parents=True)
+        for f in power.REPORT_FILES:
+            (pt / "reports" / "5_run" / f).write_text(f)
+        run_zip = d / "run.zip"
+        power.arc.write(run_zip, {"pwr/windows.json": b"[]\n"})
+        keep = power.POWER_REPORTS
+        power.POWER_REPORTS = d / "reports"
+        try:
+            res = {"status": "PASS"}
+            power.pack2(pt, "p", res, [{"mark": 5, "kind": "run"}], run_zip)
+        finally:
+            power.POWER_REPORTS = keep
+        z = d / "reports" / "p.zip"
+        inner = json.loads(power.arc.read(z, "pt_check.json"))
+        outer = json.loads(power.arc.read(run_zip, "pt/pt_check.json"))
+        assert "report_zip" not in inner and outer["report_zip"]["bytes"] == z.stat().st_size
+        assert outer["report_zip"]["members"] == 6 and power.arc.has(run_zip, "pwr/windows.json")
 
 
 if __name__ == "__main__":

@@ -959,7 +959,8 @@ def part2(p: dict, pre: dict, args, p1: dict) -> dict:
 def pack2(pt: Path, point: str, res: dict, wins: list[dict], run_zip: Path) -> None:
     """The report zip results/cluster/nangate45/power_reports/<point>.zip (per window the four reports; at the top
     wire_load.rpt, licenses.rpt, windows.json, pt_check.json) and pt/ of the run zip (the not-annotated lists,
-    pt_shell.log and the session's other files, logs/, pt_check.json)."""
+    pt_shell.log and the session's other files, logs/, pt_check.json). The report zip's pt_check.json has no
+    report_zip (it is written into that zip); the run zip's pt/pt_check.json, written after it, has its size."""
     rep = pt / "reports"
     check_json = (json.dumps(res, indent=2, default=str) + "\n").encode()
     members = {}
@@ -976,7 +977,7 @@ def pack2(pt: Path, point: str, res: dict, wins: list[dict], run_zip: Path) -> N
     z = POWER_REPORTS / f"{point}.zip"
     arc.write(z, members)
     res["report_zip"] = {"zip": str(z.relative_to(ROOT)), "bytes": z.stat().st_size, "members": len(members)}
-    new = {"pt/pt_check.json": check_json}
+    new = {"pt/pt_check.json": (json.dumps(res, indent=2, default=str) + "\n").encode()}
     for f in ("pt_shell.log", "time.txt", "windows.txt"):
         if (pt / f).is_file():
             new[f"pt/{f}"] = (pt / f).read_bytes()
