@@ -37,7 +37,7 @@ snax-forge's first-order cost model (HWCOST) prices a design from four files mad
 
 The reader and the interconnect come from snax_cluster's own Chisel generators at one pinned commit (`ea9c837`, `strm/grid.json`). Each grid point is generated, synthesized and simulated alone (X52):
 
-- **Synthesis:** Design Compiler on Nangate 45 nm (typical, 1.10 V, 25 °C), 10 ns clock, no wire-load model, hierarchy kept (X1–X4, X22). Every point met timing. A flop check compares DC's flops with the bits the RTL declares: all 195 points matched. No clock gating, as in the RTL.
+- **Synthesis:** Design Compiler on Nangate 45 nm (typical, 1.10 V, 25 °C), 10 ns clock, no wire-load model, hierarchy kept (X1–X4, X22). Every point met timing. A flop check compares DC's flops with the bits the RTL declares: all 195 points matched. No clock gating, as in the RTL. The clock-gated tables beside them, `streamer_cg.csv` and `xbar_cg.csv` (X83), come from the same RTL synthesized with DC's clock gating (X79); there an integrated gate counts as a sequential cell and the flop check is reported, not failed (X82).
 - **Power:** a zero-delay Questa simulation of the netlist; its window cut from the VCD, turned into a SAIF and read by PrimePower in averaged mode (X7–X9). Every SAIF checked, every net annotated. Random data with seed 0 (seed 1 moves a reader's energy by 0.15 %).
 
 Both stimuli are full rate: the case a design reaches when nothing stalls.

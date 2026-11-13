@@ -50,3 +50,5 @@ clk-gate-test = "python syn/test_clk_gate.py"
 # CG2: dot_3's HWCOST parts priced with the ungated or the clock-gated tables (X83), and its test
 cg2-reprice = "python report/cg2_reprice.py"
 cg2-reprice-test = "python report/test_cg2_reprice.py"
+# CG2: the gated runs' inventory, gated/ungated pairs and the xbar_mix factor check, for the run notes (X82)
+cg2-check = "python report/cg2_check.py"

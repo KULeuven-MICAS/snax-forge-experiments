@@ -35,6 +35,7 @@ Known limits (numbers in `char_table.md`): an isolated fire of an accumulator co
 |---|---|
 | `char_table.md` | The table (`pixi run char-table`), generated from the CSVs below and `char.json` (refused if not current). |
 | `<tech>/char.json` | The table snax-forge reads (`pixi run char-export`, X37): `flop` (`area_um2`, `e_load_fj`, `e_hold_fj`), `ctrl.counter_factor` ($f_{ctrl}$), and per block its params, `lanes_rule` and points (`lanes`, `depth`, `comb_um2`, `e_comb_pj`). |
+| `nangate45/char_cg.json` | The same table from the clock-gated runs (`pixi run char-export --clk-gate`, X83): an integrated clock gate counted as a sequential cell, `flop.area_um2` the mean of `seq_area / seq_cells`, ctrl's factor rescaled so E_ctrl stays `char.json`'s. Not read by snax-forge yet. |
 | `<tech>/char_synth.csv`, `char_synth_modules.csv` | One row per point and per hierarchical cell (`syn.py --source char`): `synth_dc.csv`'s columns plus `datapath`, `lanes`, `depth`, `op`, `form`, `snax_forge_commit` (X30). |
 | `<tech>/char_power.csv` | One row per point and window (`pwr.py --source char`, X33): cycles, fires, the energy groups per cycle, `e_flop_pj`, `e_dyn_pj`, `e_bit_pj`. |
 | `<tech>/reports/<point>.zip`, `power_reports/<point>.zip` | DC's kept reports; PT's reports per window and the point's `tb.json` (X51). |
@@ -49,6 +50,7 @@ pixi run char-rtl                                                      # all 27 
 pixi run syn run '*' --source char --tech nangate45 -j 4 --cores 4     # DC (X59)
 pixi run pwr run '*' --source char --tech nangate45 --cores 16 -j 4    # the windows' energy (docs/power.md, Char)
 pixi run char-export                                                   # <tech>/char.json
+pixi run char-export --clk-gate                                        # nangate45/char_cg.json from the gated rows (X83)
 pixi run char-table                                                    # char_table.md (after char-export)
 pixi run python char/checks.py [--power]                               # the synthesis and power checks, as Markdown
 ```
