@@ -4,6 +4,7 @@
   pixi run cg2-check inventory [--all]   the RTL zips the gated runs need, against the ungated rows' commits
   pixi run cg2-check pairs               each gated row beside its ungated row: provenance, area, cells, gating, power
   pixi run cg2-check mix                 the xbar_mix factor check at i36_b32 (topic 1's 1 % rule)
+  pixi run cg2-check todo SOURCE syn|pwr the grid points of SOURCE with no ok gated row yet, space-separated (R3)
 
 The points are CG2's probe (R2), or with --all every point of the four sources (R3): the streamer grid (168
 readers), the xbar grid (27) and the xbar_mix grid (29: 27 mixes and the two i36_b32 points) of strm/grid.json,
@@ -216,12 +217,31 @@ def mix() -> list[str]:
     return out
 
 
+# ---------------------------------------------------------------- todo
+def todo(source: str, step: str) -> list[str]:
+    """The grid points of `source` (--all's) with no ok gated synthesis (syn) or power (pwr) row, space-separated;
+    pwr leaves out xbar points with inputs > banks (no conflict-free stimulus, X52) and xbar_mix (area only)."""
+    if step == "pwr" and source == "xbar_mix":
+        return [""]
+    path = synth_csv(source) if step == "syn" else power_csv(source)
+    done = {r["point"] for r in rows(path) if gate(r) == "1" and r["status"].startswith("ok")}
+    left = [p for p in all_points(source) if p not in done]
+    if step == "pwr" and source == "xbar":
+        left = [p for p in left if int(re.match(r"i(\d+)_b(\d+)", p)[1]) <= int(re.match(r"i(\d+)_b(\d+)", p)[2])]
+    return [" ".join(left)]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("what", choices=("inventory", "pairs", "mix"))
+    ap.add_argument("what", choices=("inventory", "pairs", "mix", "todo"))
+    ap.add_argument("source", nargs="?", choices=SOURCES, help="todo: the source")
+    ap.add_argument("step", nargs="?", choices=("syn", "pwr"), help="todo: synthesis or power")
     ap.add_argument("--all", action="store_true", help="inventory: every point (R3), not the probe")
     args = ap.parse_args()
-    out = {"inventory": lambda: inventory(args.all), "pairs": pairs, "mix": mix}[args.what]()
+    if args.what == "todo" and not (args.source and args.step):
+        ap.error("todo needs SOURCE and syn or pwr")
+    out = {"inventory": lambda: inventory(args.all), "pairs": pairs, "mix": mix,
+           "todo": lambda: todo(args.source, args.step)}[args.what]()
     print("\n".join(out))
     return 0
 
