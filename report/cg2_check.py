@@ -6,7 +6,8 @@
   pixi run cg2-check mix                 the xbar_mix factor check at i36_b32 (topic 1's 1 % rule)
 
 The points are CG2's probe (R2), or with --all every point of the four sources (R3): the streamer grid (168
-readers) and the xbar grid (27) of strm/grid.json, xbar_mix's two i36_b32 points, the 27 of char/points.json.
+readers), the xbar grid (27) and the xbar_mix grid (29: 27 mixes and the two i36_b32 points) of strm/grid.json,
+the 27 of char/points.json.
 
 inventory: per point, its zip (rtl/streamer/, rtl/xbar/, rtl/xbar_mix/, rtl/char/) and the commit its point.json
 records (snax_cluster_commit; char: snax_forge_commit) against the ungated synthesis row's. A point with no zip or
@@ -21,8 +22,8 @@ fires, each equal to the ungated row's or not, and the energy ratio (e_beat, e_a
 
 mix: the area of i36_b32_r32_w1 (32 read-only, 1 write-only of 36 inputs) over i36_b32_r0_w0 (all read-write),
 ungated and gated, against xbar_kinds.json's factor form 1 - f_ro 32/36 - f_wo 1/36: if the gated ratio is within 1 %
-of the ungated one, f_ro and f_wo carry over (X83); else all 30 xbar_mix points are run gated (R3).
-Standard library and arc/arc.py only.
+of the ungated one, f_ro and f_wo carry over (X83); else all 29 xbar_mix points are run gated (R3).
+Standard library, arc/arc.py and strm/gen.py (the grid) only.
 """
 from __future__ import annotations
 
@@ -79,7 +80,9 @@ def all_points(source: str) -> list[str]:
     if source == "char":
         return [p["point"] for p in json.loads((ROOT / "char" / "points.json").read_text())]
     if source == "xbar_mix":
-        return PROBE["xbar_mix"]
+        sys.path.insert(0, str(ROOT / "strm"))
+        import gen  # strm/gen.py: the axes' mixes and the extra points (CSYN1 R3c)
+        return [p["point"] for p in gen.all_points(gen.load_grid()) if p["set"] == "xbar_mix"]
     g = json.loads((ROOT / "strm" / "grid.json").read_text())[source]
     ax = g["axes"]
     return [g["name"].format(**dict(zip(ax, v))) for v in itertools.product(*ax.values())]
