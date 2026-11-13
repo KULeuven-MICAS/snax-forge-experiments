@@ -110,6 +110,25 @@ def test_pwr_merge_keeps_gated_and_ungated_apart() -> None:
         assert got == [("", "5"), ("1", "3")], got
 
 
+
+def test_cluster_gate_leaves_out_the_libraries_icgs() -> None:
+    """CG1 R2: DC marks Nangate's CLKGATE (a statetable) a black box; the gate leaves out the integrated clock gates
+    clock_gating.tcl listed, only from the technology's library; an ungated log lists none."""
+    tj = {"resolved": {"cluster": {"srams": {"m1": 2}}}}
+    rpt = ("leaf_cells 10\nref CLKGATE_X1 L 5 1\nref m1 m1 2 1\nblack_box CLKGATE_X1 5\nblack_box m1 2\n"
+           "library L 8\nlibrary m1 2\nmacro_area 9.0\n")
+    get = lambda m: rpt if m == "reports/cluster_check.rpt" else None  # noqa: E731
+    gated = ('    puts "clock_gating.tcl: integrated clock gates [lsort [get_object_name $cg_cells]]"\n'
+             "clock_gating.tcl: integrated clock gates L/CLKGATE_X1 L/CLKGATE_X2\n")
+    row, bad = syn.cluster_extra(tj, get, gated, TECH)
+    assert bad == "" and row["macros"] == "m1=2" and row["macro_um2"] == "9.0", (row, bad)
+    row, bad = syn.cluster_extra(tj, get, "no clock gating here\n", TECH)       # ungated: as before
+    assert "black boxes" in bad and row["macros"] == "CLKGATE_X1=5;m1=2", (row, bad)
+    other = rpt.replace("ref CLKGATE_X1 L 5 1", "ref CLKGATE_X1 m1 5 1")          # not the technology's library
+    row, bad = syn.cluster_extra(tj, lambda m: other if m == "reports/cluster_check.rpt" else None, gated, TECH)
+    assert "black boxes" in bad, bad
+    assert syn.icg_cells(gated) == {"CLKGATE_X1", "CLKGATE_X2"}
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

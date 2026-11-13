@@ -843,6 +843,14 @@ def flops_removed(row: dict) -> int | str:
 
 
 LINK5 = re.compile(r"\(LINK-5\)|Unable to resolve reference", re.I)
+# X79: the library's integrated clock gates DC found (clock_gating.tcl's line, gated runs only). Nangate describes
+# them with a statetable, so DC marks them is_black_box; they are not the cluster's black boxes (CG1 R2).
+ICG_LINE = re.compile(r"^clock_gating\.tcl: integrated clock gates (.+)$", re.M)
+
+
+def icg_cells(log: str) -> set[str]:
+    """The integrated clock gates clock_gating.tcl listed in the log (lib/cell -> cell); empty when ungated."""
+    return {c.split("/")[-1] for m in ICG_LINE.finditer(log) for c in m.group(1).split()}
 
 
 def cluster_check(text: str) -> dict:
@@ -877,6 +885,10 @@ def cluster_extra(tj: dict, get, log: str, tech: dict) -> tuple[dict, str]:
     if text is None:
         return row, "no reports/cluster_check.rpt"
     cc = cluster_check(text)
+    # X79: the technology's integrated clock gates, which DC marks black boxes, are not macros (CG1 R2)
+    icg = icg_cells(log)
+    cc["black_box"] = {k: v for k, v in cc["black_box"].items()
+                       if not (k in icg and cc["refs"].get(k, ("",))[0] == tech["lib_name"])}
     row["macro_um2"] = cc["macro_area"]
     row["macros"] = ";".join(f"{k}={v}" for k, v in sorted(cc["black_box"].items()))
     bad = []
