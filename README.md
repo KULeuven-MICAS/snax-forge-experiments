@@ -19,6 +19,7 @@ The measuring side of snax-forge: synthesis, power, memory and cost flows that d
 | 11 Nov | CSYN1 B | a snax-forge design through the whole cluster (RTL, synthesis, netlist); the interconnect's input kinds; the area in groups against HWCOST | X66–X72 |
 | 12 Nov | CORE1, PWR1 | the one-core cluster; the cluster's energy per program section | X73–X76 |
 | 12 Nov | docs | forge's ctrl + datapath figure per kernel; the docs trimmed (older wording in git history) | X77 |
+| 12–13 Nov | PWR2 | dot 3 at W = 2 to 32 through the whole cluster flow overnight; the sweep beside HWCOST | X78 |
 
 ## Sibling repos
 
@@ -47,7 +48,7 @@ Environment variables, tools and licences are in [`docs/README.md`](docs/README.
 | `ram/` | CACTI and the SRAM macros ([`ram/README.md`](ram/README.md)) |
 | `strm/` | the streamer and interconnect points ([`strm/README.md`](strm/README.md)) |
 | `cluster/` | a design through the whole cluster ([`cluster/README.md`](cluster/README.md)) |
-| `report/` | the scripts that turn results into tables and pages: `compare.py`, `compare_hls.py`, `char_export.py`, `char_table.py`, `strm_table.py`, `xbar_kinds.py`, `cluster_breakdown.py`, `cluster_energy.py`, `import_cycles.py` |
+| `report/` | the scripts that turn results into tables and pages: `compare.py`, `compare_hls.py`, `char_export.py`, `char_table.py`, `strm_table.py`, `xbar_kinds.py`, `cluster_breakdown.py`, `cluster_energy.py`, `cluster_sweep.py`, `import_cycles.py` |
 | `arc/`, `tmp/` | the zip helpers (X51); `tmp/` holds one point unpacked at a time and is empty otherwise |
 | `rtl/` | the bundles, one zip per point (not committed; rebuilt from the commit their rows name) |
 | `results/<source>/<tech>/` | per source and technology: `synth_dc.csv`, `synth_dc_modules.csv`, `power_pt.csv`, `power_pt_modules.csv`, the report zips; run notes in `results/<source>/runs/` |

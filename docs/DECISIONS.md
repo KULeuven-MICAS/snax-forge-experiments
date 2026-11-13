@@ -77,6 +77,7 @@ A later choice that changes an entry takes the next number and says which one it
 | [X75](#x75-the-macros-in-cluster-measurements) | Cluster macros as PT measures them |
 | [X76](#x76-tb_bins-1-ns-clock-read-as-10-ns) | `tb_bin`'s 1 ns clock read as 10 ns |
 | [X77](#x77-a-second-figure-forges-ctrl-and-datapath) | A second figure per kernel: forge's ctrl + datapath |
+| [X78](#x78-a-recipes-cluster-points-side-by-side-over-w) | A recipe's cluster points side by side over W, beside HWCOST |
 
 ## Synthesis
 
@@ -383,6 +384,10 @@ snax_cluster's testbench clocks at 1 ns. Each cut VCD's header gets `$timescale 
 ### X77. A second figure: forge's ctrl and datapath
 
 `pixi run compare-hls` also writes `<tier>/<kernel>_ctrl_dp.png`: every forge case as its ctrl + datapath only (no csr, peripherals or glue) against the HLS totals, in the same layout as `<kernel>.png`, which is unchanged. **Why:** ctrl + datapath is the closest to what an HLS block holds; it differs from X63's total without csr only by the glue (at most 1.1 µm²). *12 Nov.*
+
+### X78. A recipe's cluster points side by side over W
+
+`pixi run cluster-sweep [--recipe dot_3]` reads `breakdown.json` and `energy.json` (X72, X74) for every point of the recipe and writes `results/cluster/<tech>/sweep.csv` (long form: point, W, source `gls`, `hwcost` or `alone`, window, group, metric, value), `sweep_energy.png` and `sweep_area.png`: per W the netlist's run window (`5_run`) and area in HWCOST's five parts plus what HWCOST does not price, beside HWCOST's five parts, absolute and in % of each side's five parts; `--md` prints the per-W tables with the shell alone. Raw data only: no normalization and no check on the trend. **Why:** the W sweep is an experiment read by hand (Ryan, 12 Nov); one file holds every number and the figures show the two sides together. *13 Nov (PWR2); `results/cluster/runs/2026-11-13_pwr2_r2.md`.*
 
 ## Retired
 

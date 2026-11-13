@@ -29,14 +29,31 @@ def test_within_fill():
 
 
 def test_beyond_fill():
+    # D123 as amended: e = (|c - 132| - 3) / 132; NEAR up to 10 %, WARNING up to 15 %, FAIL beyond
     ok, notes = check.compare(WANT, RUN.format(c=136))
-    assert not ok and "beyond its fill 3" in notes[0], notes
+    assert ok and notes == ["mult_dot: counter 136 against 132, 1 beyond its fill 3 (0.8 %, NEAR)"], notes
+    ok, notes = check.compare(WANT, RUN.format(c=112))           # 17 beyond: 12.9 %
+    assert ok and notes[0].endswith("(12.9 %, WARNING)"), notes
+    ok, notes = check.compare(WANT, RUN.format(c=154))           # 19 beyond: 14.4 %
+    assert ok and "WARNING" in notes[0], notes
+    ok, notes = check.compare(WANT, RUN.format(c=155))           # 20 beyond: 15.2 %
+    assert not ok and notes[0].endswith("(15.2 %, FAIL)"), notes
+
+
+def test_beyond_fill_dot3_w32():
+    # PWR2 R1: at W = 32 the streamers' 8-beat head start hides more than the fill (bank bound, 2 cycles a beat)
+    want = "forge counter mult_dot: 131\nforge data: 0 errors (1 words)\nforge fill mult_dot: 3\n"
+    ok, notes = check.compare(want, RUN.format(c=118).replace("forge cycles: 828", "forge cycles: 820"))
+    assert ok and notes == ["mult_dot: counter 118 against 131, 10 beyond its fill 3 (7.6 %, NEAR)"], notes
 
 
 def test_no_fill_needs_equal():
+    # no fill line: fill 0, so any difference is beyond it (NEAR, WARNING or FAIL by its share, D123)
     want = "forge counter mult_dot: 132\nforge data: 0 errors (1 words)\n"
-    assert check.compare(want, RUN.format(c=132))[0]
-    assert not check.compare(want, RUN.format(c=133))[0]
+    assert check.compare(want, RUN.format(c=132)) == (True, [])
+    ok, notes = check.compare(want, RUN.format(c=133))
+    assert ok and notes == ["mult_dot: counter 133 against 132, 1 beyond its fill 0 (0.8 %, NEAR)"], notes
+    assert not check.compare(want, RUN.format(c=152))[0]
 
 
 def test_data_differs():
@@ -150,6 +167,19 @@ def test_ram_pairing_without_paths():
     gls = "RAMCOUNT x m reads 5 writes 4\nRAMCOUNT y m reads 5 writes 4\n"
     ok, notes, extra = check.ram_compare(rtl, gls, {"m": 2})
     assert ok and extra == [{"macro": "m", "reads": 5, "rtl_writes": 3, "gls_writes": 4}], (notes, extra)
+
+
+def test_ram_pairing_both_plus_one():
+    # PWR2 R1 dot3_w4: two I-cache sets at 236 and 235 writes, the netlist's each +1 (237, 236); equal-first
+    # matching paired 236 with 236 and left 237 against 235
+    rtl = "RAMCOUNT a m reads 473 writes 236\nRAMCOUNT b m reads 473 writes 235\n"
+    gls = "RAMCOUNT x m reads 473 writes 237\nRAMCOUNT y m reads 473 writes 236\n"
+    ok, notes, extra = check.ram_compare(rtl, gls, {"m": 2})
+    assert ok and notes == [], notes
+    assert extra == [{"macro": "m", "reads": 473, "rtl_writes": 235, "gls_writes": 236},
+                     {"macro": "m", "reads": 473, "rtl_writes": 236, "gls_writes": 237}], extra
+    ok, notes, _ = check.ram_compare(rtl, gls.replace("writes 237", "writes 238"), {"m": 2})
+    assert not ok and notes, notes
 
 
 if __name__ == "__main__":

@@ -1,0 +1,73 @@
+{
+ "W": 4,
+ "cost": {
+  "area": 545312.7833159023,
+  "area_design": 112586.38331590232,
+  "energy": 70.999887315176,
+  "extrapolated": [],
+  "kernel_energy": 24.770409601176,
+  "memory": {
+   "area": 432726.4,
+   "banks": 32,
+   "depth": 512,
+   "e_rd": 3.53819,
+   "e_wr": 6.4677,
+   "energy": 14.49889394,
+   "found": true,
+   "reads": 4096,
+   "width": 64,
+   "writes": 1
+  },
+  "missing": [],
+  "not_costed": [],
+  "parts": {
+   "control": {
+    "area": 712.88,
+    "energy": 0.260410369176
+   },
+   "crossbar": {
+    "area": 37839.851665902264,
+    "energy": 11.223497971
+   },
+   "datapath": {
+    "area": 29293.25014,
+    "energy": 24.509999232
+   },
+   "memory": {
+    "area": 432726.4,
+    "energy": 14.49889394
+   },
+   "streamers": {
+    "area": 44740.40151,
+    "energy": 20.507085803000002
+   }
+  },
+  "source": {
+   "snax_forge": "e8611d51d5653e4c6e246184831136ec363727f5",
+   "snax_forge_experiments": "6c727da448a1f0b9a18d10e875c9f3fe8c6b5faa",
+   "stimulus": "rand64 seed 0"
+  },
+  "tech": "nangate45",
+  "xbar": {
+   "accesses": 4097,
+   "area": 37839.851665902264,
+   "banks": 32,
+   "e_access": 2.739443,
+   "energy": 11.223497971,
+   "extrapolated": [],
+   "form": "factor",
+   "inputs": 11,
+   "read_only": 8,
+   "write_only": 1
+  }
+ },
+ "platform": "platforms/snax_forge.json",
+ "point": "dot3_w4",
+ "recipe": "dot_3",
+ "sets": [
+  "N=2048"
+ ],
+ "snax_forge_clean": true,
+ "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+ "tech": "nangate45"
+}

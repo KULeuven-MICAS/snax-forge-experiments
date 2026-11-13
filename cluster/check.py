@@ -4,9 +4,10 @@
 
 Mirrors snax_cluster's target/snitch_cluster/snax_forge_check.sh `compare`: the run's `forge data:` line
 equals the expected one; its `forge counter <task>: <c>` lines, in order, name the expected tasks, each
-count within that task's `forge fill <task>: <n>` of the expected count (the group's streamer fill: the
-counter counts the streamer's head start before START, which SNAX-GVSoC does not model); a file without
-fill lines asks for equal counts. Also reads the run's `forge cycles:` and its `[tc_sram_impl] <path>: <macro>`
+count's gap beyond that task's `forge fill <task>: <n>` (the group's streamer fill: the counter counts the
+streamer's head start before START, which SNAX-GVSoC does not model; 0 without a fill line), as a share of the
+expected count, e = max(0, |got - want| - fill) / want, at most WARN_PCT (D123 as amended 11 Nov: NEAR up to
+NEAR_PCT, WARNING up to WARN_PCT, FAIL beyond; snax_cluster's script since #694). Also reads the run's `forge cycles:` and its `[tc_sram_impl] <path>: <macro>`
 prints (cluster/mem.py's, one per instance at time 0, `<path>.gen_<macro>: <macro>`), and the macro models'
 `RAMCOUNT <path> <macro> reads N writes M` lines (ram/ram.py's final block): the netlist run (R4) and the RTL macro
 run, compared without the paths (they differ; the netlist's hold escaped identifiers with spaces), must give the same
@@ -28,6 +29,7 @@ CYCLES = re.compile(r"forge cycles: (\d+)")
 SRAM_MARK = "[tc_sram_impl] "
 SRAM_END = re.compile(r"\.gen_(\w+): (\w+)[ \t]*$", re.M)
 SUCCESS = "[SUCCESS] Program finished successfully"
+NEAR_PCT, WARN_PCT = 10, 15   # D123: a counter's gap beyond its fill, in % of its count
 # the path may hold spaces: a netlist's escaped identifiers end in one (`\gen_banks[0].i_data_mem .\gen_...`)
 RAMCOUNT = re.compile(r"RAMCOUNT (\S.*?)\s+(\w+) reads (\d+) writes (\d+)")
 
@@ -68,9 +70,12 @@ def compare(want_text: str, got_text: str) -> tuple[bool, list[str]]:
             continue
         fill = want["fills"].get(wn, 0)
         d = abs(gv - wv)
-        if d > fill:
-            ok = False
-            notes.append(f"{wn}: counter {gv} against {wv}, beyond its fill {fill}")
+        over = max(0, d - fill)
+        e = 0.0 if over == 0 else (100 * over / wv if wv > 0 else 100.0)
+        if over:
+            verdict = "NEAR" if e <= NEAR_PCT else "WARNING" if e <= WARN_PCT else "FAIL"
+            ok = ok and verdict != "FAIL"
+            notes.append(f"{wn}: counter {gv} against {wv}, {over} beyond its fill {fill} ({e:.1f} %, {verdict})")
         elif d:
             notes.append(f"{wn}: counter {gv} against {wv}, within its fill {fill}")
     return ok, notes
@@ -95,19 +100,31 @@ def ramcounts(text: str) -> list[tuple[str, int, int]]:
 
 def ram_compare(want_text: str, got_text: str, srams: dict[str, int]) -> tuple[bool, list[str], list[dict]]:
     """The run's RAMCOUNT lines against the reference run's: (pass, notes, extra writes). Per macro, the instances
-    are matched by their counts (the paths differ): equal (reads, writes) first, then the run's (r, w) to the
-    reference's (r, w - 1), each such one an extra write ({macro, reads, rtl_writes, gls_writes}). Anything left
-    unmatched (a read difference, more than one extra write, an instance missing or added) fails, as does a run
-    whose instances per macro are not `srams`."""
+    are matched by their counts (the paths differ): per (macro, reads), the run's writes and the reference's
+    sorted and paired in order, each pair equal or the run's one more, each such one an extra write ({macro,
+    reads, rtl_writes, gls_writes}). Sorted order finds such a pairing whenever one exists (PWR2 R1: two I-cache
+    sets at 235 and 236 writes, the netlist's at 236 and 237, which equal-first matching paired wrongly). A group
+    with none falls back to equal first, then +1, to name what is left unmatched (a read difference, more than
+    one extra write, an instance missing or added); that fails, as does a run whose instances per macro are not
+    `srams`."""
     want, got = ramcounts(want_text), ramcounts(got_text)
     notes: list[str] = []
     per = dict(sorted(Counter(m for m, _r, _w in got).items()))
     if per != dict(sorted(srams.items())):
         notes.append(f"instances {per}, want {dict(sorted(srams.items()))}")
-    left_w, left_g = Counter(want), Counter(got)
+    extra = []
+    left_w, left_g = Counter(), Counter()
+    for key in sorted({(m, r) for m, r, _w in want + got}):
+        ws = sorted(w for m, r, w in want if (m, r) == key)
+        gs = sorted(w for m, r, w in got if (m, r) == key)
+        if len(ws) == len(gs) and all(g - w in (0, 1) for w, g in zip(ws, gs)):
+            extra += [{"macro": key[0], "reads": key[1], "rtl_writes": w, "gls_writes": g}
+                      for w, g in zip(ws, gs) if g == w + 1]
+            continue
+        left_w.update((*key, w) for w in ws)
+        left_g.update((*key, g) for g in gs)
     same = left_w & left_g
     left_w, left_g = left_w - same, left_g - same
-    extra = []
     for (m, r, w), n in sorted(left_g.items()):
         k = min(n, left_w[(m, r, w - 1)])
         if k:
