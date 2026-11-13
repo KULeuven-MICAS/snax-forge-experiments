@@ -80,6 +80,7 @@ A later choice that changes an entry takes the next number and says which one it
 | [X78](#x78-a-recipes-cluster-points-side-by-side-over-w) | A recipe's cluster points side by side over W, beside HWCOST |
 | [X79](#x79-clock-gating-as-a-synthesis-switch) | Clock gating as a synthesis switch: `CLK_GATE_ENABLE`, off by default |
 | [X80](#x80-chosen-cluster-points-side-by-side) | `cluster-sweep --points`: chosen cluster points side by side, variants out of the W sweep |
+| [X81](#x81-ramcount-one-more-access-per-instance) | RAMCOUNT: one more read or write per instance than the RTL, each listed |
 
 ## Synthesis
 
@@ -393,11 +394,15 @@ snax_cluster's testbench clocks at 1 ns. Each cut VCD's header gets `$timescale 
 
 ### X79. Clock gating as a synthesis switch
 
-`dc_syn.tcl`'s `CLK_GATE_ENABLE` (from `SYN_CLK_GATE_ENABLE`, default 0) turns on DC's clock gating for one run: `syn/scripts/clock_gating.tcl` (stop if the library has no `latch_posedge` integrated gate; latch-based integrated gates, positive edge, `-minimum_bitwidth 2`, through the hierarchy; no test control point, no negedge logic, no operand isolation), `compile_ultra -no_autoungroup -gate_clock`, and `clock_gating.rpt`, `clock_gating_elements.rpt` and `clock_gating_ungated.rpt`, kept whatever their size. `syn.py run --clk-gate` and `pwr.py run --clk-gate` tag a source's run `_cg` and give its rows `clk_gate` 1, merged apart from the ungated rows (an empty `clk_gate` reads as 0); a cluster point sets it with `"syn": {"clk_gate": true}` under its own name. The reports and the cluster breakdowns read the ungated rows of a source point (`alone`, the HLS comparison). **Why:** the cluster's idle floor is mostly the clock of flops that are never gated (PWR1, PWR2), which HWCOST does not price; one switch through every flow lets a gated run sit beside the ungated one without changing either. *13 Nov (CG1); `results/cluster/runs/2026-11-13_cg1_r1.md`.*
+`dc_syn.tcl`'s `CLK_GATE_ENABLE` (from `SYN_CLK_GATE_ENABLE`, default 0) turns on DC's clock gating for one run: `syn/scripts/clock_gating.tcl` (stop if the library has no `latch_posedge` integrated gate; latch-based integrated gates, positive edge, `-minimum_bitwidth 2`, through the hierarchy; no test control point, no negedge logic, no operand isolation), `compile_ultra -no_autoungroup -gate_clock`, and `clock_gating.rpt`, `clock_gating_elements.rpt` and `clock_gating_ungated.rpt`, kept whatever their size. Nangate's `CLKGATE` cells, which DC marks black boxes (a statetable), are not counted as the cluster's macros. `syn.py run --clk-gate` and `pwr.py run --clk-gate` tag a source's run `_cg` and give its rows `clk_gate` 1, merged apart from the ungated rows (an empty `clk_gate` reads as 0); a cluster point sets it with `"syn": {"clk_gate": true}` under its own name. The reports and the cluster breakdowns read the ungated rows of a source point (`alone`, the HLS comparison). **Why:** the cluster's idle floor is mostly the clock of flops that are never gated (PWR1, PWR2), which HWCOST does not price; one switch through every flow lets a gated run sit beside the ungated one without changing either. On `dot3_w8_cg` DC gates 98.6 % of the registers with 1,653 `CLKGATE_X1`; area −6.5 %, the idle floor from 376.7 to 31.5 pJ per cycle, the run window from 161.43 to 62.23 nJ. *13 Nov (CG1); `results/cluster/runs/2026-11-13_cg1_r1.md`, `_r2.md`, `_r3.md`.*
 
 ### X80. Chosen cluster points side by side
 
 `pixi run cluster-sweep --points A,B,... --out NAME` lays out the named points in the order given (variants included) with X78's tables, `sweep.csv` and figures, into `results/cluster/<tech>/NAME/`, each pair of bars labelled by point and W. The recipe's W sweep leaves out variant points (those with a `syn` field), so `sweep.csv` stays one point per W. **Why:** a variant such as `dot3_w8_cg` shares its W with another point; the same figures, one folder per comparison. *13 Nov (CG1).*
+
+### X81. RAMCOUNT: one more access per instance
+
+A cluster point's `gls` compares each memory instance's RAMCOUNT reads and writes with the RTL macro run's and passes when they are equal but for at most one more read or one more write per instance in the netlist run; each such instance is listed in `gls/check.json` (`ram_extra_writes`, `ram_extra_reads`) and named in the summary line. Amends X67's `gls` step, which allowed only the extra write. **Why:** under `+initreg+0` a netlist can access a memory once at the time-0 edge, during reset and before every window (PITFALLS Q8, Q14): the I-cache's write since CSYN1, the clock-gated netlist's TCDM read since CG1. D123 and the cycle count stay the gates; RAMCOUNT may become a report only later (Ryan, 13 Nov). *13 Nov (CG1 R2).*
 
 ## Retired
 

@@ -10,7 +10,8 @@
 #
 # Not set, on purpose: -control_point and a test_mode port (DC would add a port to the top; no scan here),
 # -negative_edge_logic (no negedge ICG in Nangate; every flop of these designs is posedge), operand isolation
-# (it changes the datapath's logic, a different effect).
+# (it changes the datapath's logic, a different effect), power_cg_designware (obsolete in DC Y-2026.03, which
+# ignores it with INFO-100; CG1 R2).
 #-----------------------------
 
 set cg_cells [get_lib_cells -quiet */* -filter "clock_gating_integrated_cell == latch_posedge"]
@@ -24,7 +25,6 @@ set power_cg_derive_related_clock true
 set power_remove_redundant_clock_gates true
 set power_cg_reconfig_stages true
 set compile_clock_gating_through_hierarchy true
-set power_cg_designware true
 
 # One ICG (latch, then AND) per bank of at least two flops that share an enable; the bank's muxes go
 set_clock_gating_style -sequential_cell latch -positive_edge_logic {integrated} -minimum_bitwidth 2
