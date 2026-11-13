@@ -147,8 +147,30 @@ def test_ram_fewer_writes_fail():
 
 
 def test_ram_read_difference_fail():
-    ok, notes, _ = check.ram_compare(RTL_LINES, GLS_LINES.replace("reads 139", "reads 140"), SRAMS1)
-    assert not ok and "('sram_d512_w64_m8', 140, 139)" in notes[0], notes
+    # two more reads, one fewer, or one more read and one more write on one instance: fail
+    for old, new in (("reads 139", "reads 141"), ("reads 139", "reads 138"), ("reads 139 writes 139", "reads 140 writes 140")):
+        ok, notes, _ = check.ram_compare(RTL_LINES, GLS_LINES.replace(old, new), SRAMS1)
+        assert not ok and "('sram_d512_w64_m8'," in notes[0], (old, new, notes)
+
+
+def test_ram_one_extra_read_allowed():
+    # CG1 R2 dot3_w8_cg: the clock-gated netlist's TCDM banks of super bank 0 each read once at time 0
+    ok, notes, extra = check.ram_compare(RTL_LINES, GLS_LINES.replace("reads 139", "reads 140"), SRAMS1)
+    assert ok and notes == [], notes
+    assert extra == [{"macro": "sram_d128_w39", "reads": 487, "rtl_writes": 237, "gls_writes": 238},
+                     {"macro": "sram_d512_w64_m8", "writes": 139, "rtl_reads": 139, "gls_reads": 140}], extra
+    assert check.ram_summary(2, ok, extra) == ("RAMCOUNT 2: reads equal but 1 macros +1 at time 0 (PITFALLS Q14), "
+                                               "writes equal but 1 macros +1 at reset (PITFALLS Q8)")
+
+
+def test_ram_extra_reads_the_banks_of_cg1_r2():
+    # the eight banks of dot3_w8_cg's super bank 0, beside a bank read as in the RTL (139/139) that must stay exact
+    rtl = "".join(f"RAMCOUNT b{i} m reads {r} writes {w}\n" for i, (r, w) in enumerate(
+        [(139, 139), (139, 138), (139, 138), (139, 138), (129, 128), (129, 128), (129, 132), (143, 141), (139, 139)]))
+    gls = "".join(f"RAMCOUNT g{i} m reads {r} writes {w}\n" for i, (r, w) in enumerate(
+        [(140, 139), (140, 138), (140, 138), (140, 138), (130, 128), (130, 128), (130, 132), (144, 141), (139, 139)]))
+    ok, notes, extra = check.ram_compare(rtl, gls, {"m": 9})
+    assert ok and notes == [] and len(extra) == 8 and all("rtl_reads" in e for e in extra), (notes, extra)
 
 
 def test_ram_missing_or_extra_macro_fail():

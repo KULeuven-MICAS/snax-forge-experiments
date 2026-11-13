@@ -86,7 +86,9 @@ work-vsim/gls, and vopt takes -Lf work-vsim/gls, +initreg+0, +acc=n; vsim +nospe
      cells from work-vsim/gls, its command has +initreg+0 and +acc=n; the run prints no [tc_sram_impl]); RAMCOUNT
      (one line per instance of points.json's srams; against step 1's macro run, without the paths: reads equal on
      every instance, writes equal but for at most one more on an instance, the netlist's write at time 0 under
-     +initreg+0, listed as ram_extra_writes; PITFALLS Q14); [SUCCESS] in both runs
+     +initreg+0, listed as ram_extra_writes, or, with writes equal, one more read, listed as ram_extra_reads (the
+     clock-gated netlist's TCDM banks, CG1 R2); at most one extra access per instance; PITFALLS Q14); [SUCCESS] in
+     both runs
   5. under gls/ of sim/runs/cluster/nangate45/<point>.zip (other members kept): snax-forge-vsim.txt, vlog.log,
      vopt.log, logs/, check.json; then vsim.wlf (VSIM_FLAGS' `log -r /*`) deleted with its size in check.json,
      tmp/cluster/<point>/ deleted and make clean-vsim clean-generated in snax_cluster, also on a failure. One line
@@ -819,7 +821,9 @@ def gls_checks(work: Path, p: dict, rtl_res: dict, rtl_run: str, netlist: Path, 
     c["swap"] = swap_check(vopt, vlog, run, netlist, cell_names)
     ok, notes, extra = check.ram_compare(rtl_run, run, p["srams"])
     c["ramcount"] = {"status": "PASS" if ok else "FAIL", "notes": notes, "lines": len(check.ramcounts(run)),
-                     "extra_writes": extra, "gls": check.ramcounts(run), "rtl": check.ramcounts(rtl_run)}
+                     "extra_writes": [e for e in extra if "rtl_writes" in e],
+                     "extra_reads": [e for e in extra if "rtl_reads" in e],
+                     "gls": check.ramcounts(run), "rtl": check.ramcounts(rtl_run)}
     succ = {"gls": check.success(run), "rtl": check.success(rtl_run)}
     c["success"] = {"status": "PASS" if all(succ.values()) else "FAIL", **succ}
     return c
@@ -921,6 +925,7 @@ def gls(p: dict, images: dict, args) -> int:
         res["checks"] = gls_checks(work, p, rtl_res, rtl_run, netlist, cell_names)
         # the netlist's one write at time 0 per macro, allowed by the check (PITFALLS Q8, Q14)
         res["ram_extra_writes"] = res["checks"]["ramcount"]["extra_writes"]
+        res["ram_extra_reads"] = res["checks"]["ramcount"]["extra_reads"]    # CG1 R2: the gated netlist's, Q14
         bad = [k for k, v in res["checks"].items() if v["status"] != "PASS"]
         res["status"] = "PASS" if not bad else "FAIL"
         res["failed"] = ", ".join(bad) or None
@@ -1003,7 +1008,8 @@ def gls_summary(point: str, res: dict) -> None:
     cyc, sw, rc = c.get("cycles", {}), c.get("swap", {}), c.get("ramcount", {})
     line = (f"cluster gls {point}: {res['status']}, {cyc.get('gls')} cycles (rtl {cyc.get('rtl')}), netlist swap "
             f"{'ok' if sw.get('status') == 'PASS' else 'FAIL'}, "
-            + check.ram_summary(rc.get("lines", 0), rc.get("status") == "PASS", rc.get("extra_writes", [])))
+            + check.ram_summary(rc.get("lines", 0), rc.get("status") == "PASS",
+                                rc.get("extra_writes", []) + rc.get("extra_reads", [])))
     if res["status"] != "PASS":
         line += f"; failed: {res['failed']}"
     print(line, flush=True)
