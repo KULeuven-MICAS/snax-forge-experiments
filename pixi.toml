@@ -40,3 +40,6 @@ cluster-breakdown-test = "python report/test_cluster_breakdown.py"
 # PWR1 R3: the cluster's energy per window in groups, the run phase against HWCOST (X74)
 cluster-energy = "python report/cluster_energy.py"
 cluster-energy-test = "python report/test_cluster_energy.py"
+# PWR2 R2: a recipe's cluster points side by side over W, the run window and area beside HWCOST (X78)
+cluster-sweep = "python report/cluster_sweep.py"
+cluster-sweep-test = "python report/test_cluster_sweep.py"

@@ -1,6 +1,6 @@
 # cluster
 
-A snax-forge design built into snax_cluster's whole cluster, synthesized, run on its netlist and powered per program section (X66–X76). A point is one entry of `points.json` (`point`, `recipe`, `W`, `sets`, `srams` the macro instances it holds, `alone` its accelerator synthesized alone; and the two container images). The first point is `dot3_w16`, dot 3 at W = 16, N = 2048.
+A snax-forge design built into snax_cluster's whole cluster, synthesized, run on its netlist and powered per program section (X66–X76). A point is one entry of `points.json` (`point`, `recipe`, `W`, `sets`, `srams` the macro instances it holds, `alone` its accelerator synthesized alone; and the two container images). Points so far: dot 3 at N = 2048 and W = 2, 4, 8, 16 and 32 (`dot3_w<W>`, PWR1 and PWR2).
 
 ## Commands
 
@@ -12,6 +12,7 @@ pixi run cluster pwr dot3_w16            # PrimePower per program section on the
 pixi run cluster-hwcost dot3_w16         # snax-forge's HWCOST for the point (X72)
 pixi run cluster-breakdown --md          # the area in groups, against HWCOST and the accelerator alone (X72)
 pixi run cluster-energy --md             # the energy per window in groups, against HWCOST (X74)
+pixi run cluster-sweep --md              # a recipe's points over W: run window and area beside HWCOST, sweep.csv and figures (X78)
 ```
 
 Each step takes snax_cluster from `SNAX_CLUSTER` (default `../snax_cluster`), clean and on `origin/main` unless `--allow-branch`, and records its commit. snax_cluster's make targets run in its container (`podman run --rm -v "$PWD":"$PWD" -w "$PWD" <image>`, the mount the parent folder of the sibling repos). The point's work folder is `tmp/cluster/<point>/`, deleted when the step ends, also on a failure.
@@ -41,4 +42,4 @@ Each step takes snax_cluster from `SNAX_CLUSTER` (default `../snax_cluster`), cl
 | `eqv_tb.sv` | the Verilator bench of `tc_sram_impl.sv` against tech_cells_generic's (result in its header) |
 | `test_*.py` | `pixi run python cluster/test_<name>.py` |
 
-Results in `results/cluster/nangate45/`: `synth_dc.csv`, `reports/`, `power_pt.csv`, `power_reports/`, `hwcost/<point>.json`, `breakdown.json`, `energy.json`; run notes in `results/cluster/runs/`.
+Results in `results/cluster/nangate45/`: `synth_dc.csv`, `reports/`, `power_pt.csv`, `power_reports/`, `hwcost/<point>.json`, `breakdown.json`, `energy.json`, `sweep.csv`, `sweep_energy.png`, `sweep_area.png`; run notes in `results/cluster/runs/`.
