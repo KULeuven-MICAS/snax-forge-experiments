@@ -99,14 +99,16 @@ def ramcounts(text: str) -> list[tuple[str, int, int]]:
 
 
 def ram_compare(want_text: str, got_text: str, srams: dict[str, int]) -> tuple[bool, list[str], list[dict]]:
-    """The run's RAMCOUNT lines against the reference run's: (pass, notes, extra writes). Per macro, the instances
+    """The run's RAMCOUNT lines against the reference run's: (pass, notes, extra accesses). Per macro, the instances
     are matched by their counts (the paths differ): per (macro, reads), the run's writes and the reference's
     sorted and paired in order, each pair equal or the run's one more, each such one an extra write ({macro,
     reads, rtl_writes, gls_writes}). Sorted order finds such a pairing whenever one exists (PWR2 R1: two I-cache
     sets at 235 and 236 writes, the netlist's at 236 and 237, which equal-first matching paired wrongly). A group
-    with none falls back to equal first, then +1, to name what is left unmatched (a read difference, more than
-    one extra write, an instance missing or added); that fails, as does a run whose instances per macro are not
-    `srams`."""
+    with none falls back to equal first, then +1 write, then +1 read with writes equal, an extra read ({macro,
+    writes, rtl_reads, gls_reads}; CG1 R2: the clock-gated netlist's TCDM banks read once at time 0, PITFALLS
+    Q14). At most one extra access per instance, a read or a write: the one edge at time 0. What is left unmatched
+    (more than one extra access, fewer, an instance missing or added) fails, as does a run whose instances per
+    macro are not `srams`."""
     want, got = ramcounts(want_text), ramcounts(got_text)
     notes: list[str] = []
     per = dict(sorted(Counter(m for m, _r, _w in got).items()))
@@ -131,6 +133,12 @@ def ram_compare(want_text: str, got_text: str, srams: dict[str, int]) -> tuple[b
             left_w[(m, r, w - 1)] -= k
             left_g[(m, r, w)] -= k
             extra += [{"macro": m, "reads": r, "rtl_writes": w - 1, "gls_writes": w}] * k
+    for (m, r, w), n in sorted(left_g.items()):          # CG1 R2: one more read, writes equal (time 0, Q14)
+        k = min(n, left_w[(m, r - 1, w)])
+        if k:
+            left_w[(m, r - 1, w)] -= k
+            left_g[(m, r, w)] -= k
+            extra += [{"macro": m, "writes": w, "rtl_reads": r - 1, "gls_reads": r}] * k
     only_g, only_w = sorted((+left_g).elements()), sorted((+left_w).elements())
     if only_g or only_w:
         notes.append(f"{len(got)} lines against {len(want)}; unmatched in the run {only_g[:5]}, "
@@ -139,11 +147,14 @@ def ram_compare(want_text: str, got_text: str, srams: dict[str, int]) -> tuple[b
 
 
 def ram_summary(lines: int, ok: bool, extra: list[dict]) -> str:
-    """The summary's RAMCOUNT part."""
+    """The summary's RAMCOUNT part; extra holds ram_compare's extra writes and extra reads."""
     if not ok:
         return f"RAMCOUNT {lines} differ"
-    more = f" but {len(extra)} macros +1 at reset (PITFALLS Q8)" if extra else ""
-    return f"RAMCOUNT {lines}: reads equal, writes equal{more}"
+    n_w = sum(1 for e in extra if "rtl_writes" in e)
+    n_r = sum(1 for e in extra if "rtl_reads" in e)
+    reads = f"reads equal but {n_r} macros +1 at time 0 (PITFALLS Q14)" if n_r else "reads equal"
+    more = f" but {n_w} macros +1 at reset (PITFALLS Q8)" if n_w else ""
+    return f"RAMCOUNT {lines}: {reads}, writes equal{more}"
 
 
 def success(text: str) -> bool:

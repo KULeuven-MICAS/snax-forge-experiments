@@ -3,7 +3,7 @@
 
   pixi run pwr tbjson      POINT [--source hls|forge|char|bambu|xls|streamer|xbar] [--tech T]
   pixi run pwr run         PATTERN ... --tech T [--source hls|forge|char|bambu|xls|streamer|xbar] [--stim rand64|forge]
-                                       [--size TAG|all] [--seed N] [-j N]
+                                       [--size TAG|all] [--seed N] [-j N] [--clk-gate]
   pixi run pwr setup-check --tech T [--source hls|forge|bambu|xls] [--point P]
   pixi run pwr summary     [PATTERN ...] [--source ...] [--tech T]
 
@@ -64,6 +64,9 @@ syn/runs/hls/<tech>/<point>.zip (syn/syn.py). Per point, one worker runs, start 
              other runs), test-read and deleted with the rest, and tmp/ is cleaned (X51)
 Results: results/hls/<tech>/power_pt.csv (one row per point, size and seed), power_pt_modules.csv
 (per point and size: the default run and every n2048 run, X60) and power_reports/<point>.zip (X20, X51).
+--clk-gate (X79) measures the clock-gated netlists instead (syn.py run --clk-gate, syn/runs/<source>/<tech>/<point>_cg.zip):
+the point's folder in sim/runs/ and its power_reports zip are tagged _cg, and its rows have clk_gate 1; every CSV merges
+gated and ungated rows apart (an empty clk_gate, a row from before X79, reads as 0).
   pixi run pwr modules --source S --tech T   X60's one-off: fills power_pt_modules.csv's size column on old
                                               rows and adds the n2048 runs' rows from sim/runs/ (their kept
                                               power_hierarchy.rpt and units.rpt), checked against power_pt.csv
@@ -135,7 +138,7 @@ TOGGLE_BEATS = 64           # the input-toggle check fails a run from this many 
 # Questa cell models, next to each technology's .db, with the vlog options they need
 CELL_MODELS = {"nangate45": ("NangateOpenCellLibrary.v", []),
                "nangate15": ("NanGate_15nm_OCL_functional.v", ["-timescale", "1ns/1ps"])}
-COLUMNS = ["point", "top", "tech", "clock_ns", "W", "size", "config", "beats", "seed", "cycles",
+COLUMNS = ["point", "top", "tech", "clock_ns", "clk_gate", "W", "size", "config", "beats", "seed", "cycles",
            "expected_cycles", "expected_diff",
            "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw",
            "e_comb_fire_pj", "e_flop_fire_pj", "e_run_pj", "flop_bits", "e_bit_pj", "status"]
@@ -147,7 +150,7 @@ HLS_PWR_COLUMNS = ["ram_kind", "ram_reads", "ram_writes", "e_ram_pj", "e_ram_pt_
 # X56: the window is the measurement; the expected count (and forge's BUSY_COUNTER) is recorded beside it, with its
 # difference (expected - window), and fails the run only when it is more than this far from the window
 CYCLES_TOL = 0.05
-MODULE_COLUMNS = ["point", "tech", "size", "path", "design", "e_dyn_pj"]
+MODULE_COLUMNS = ["point", "tech", "clk_gate", "size", "path", "design", "e_dyn_pj"]
 # X60: power_pt_modules.csv holds the modules of each point's default run and of every n2048 run (the reference
 # task, X24, X55), one set of rows per point and size; the default run stays where it is (b64, rowsum m8_n64)
 MODULE_SIZES = ("n2048",)
@@ -161,6 +164,20 @@ MASK64 = (1 << 64) - 1
 # nangate15's) for randomization, and vsim +initreg+<N> seeds it. Such runs get the run tag suffix _r<N> and are
 # not written to results/ (their SAIFs and PT reports stay in the point's zip in sim/runs/).
 INITREG_SEED: int | None = None
+# X79: --clk-gate measures the clock-gated netlist of each point (syn.py --clk-gate's run, <point>_cg.zip): the
+# point's folder and power_reports zip get the same _cg tag, and its rows have clk_gate 1, merged apart from the
+# ungated rows. Off by default.
+CLK_GATE = False
+
+
+def gtag(point: str) -> str:
+    """The point as its runs and zips are named: <point>, or <point>_cg with --clk-gate (X79)."""
+    return point + (syn.CG_TAG if CLK_GATE else "")
+
+
+def gate() -> str:
+    """This invocation's clk_gate column value (X79)."""
+    return "1" if CLK_GATE else "0"
 
 
 class Fail(Exception):
@@ -243,12 +260,12 @@ SYN_MEMBERS = ("tech.json", "reports/lib_info.txt")
 
 
 def syn_run(tech: str, point: str) -> Path:
-    """The DC run's folder name (as the CSVs' run column); what is kept of it is syn_zip()."""
-    return SYN_RUNS / tech / point
+    """The DC run's folder name (as the CSVs' run column); what is kept of it is syn_zip(). _cg with --clk-gate."""
+    return SYN_RUNS / tech / gtag(point)
 
 
 def syn_zip(tech: str, point: str) -> Path:
-    return SYN_RUNS / tech / f"{point}.zip"
+    return SYN_RUNS / tech / f"{gtag(point)}.zip"
 
 
 def point_zip(pdir: Path) -> Path:
@@ -798,7 +815,8 @@ def flop_bits_of(tech: str, point: str) -> int | None:
     f = RESULTS / tech / "synth_dc.csv"
     with f.open(newline="") as fh:
         for r in csv.DictReader(fh):
-            if r["point"] == point and float(r["clock_ns"]) == CLOCK_NS and r["seq_cells"]:
+            if (r["point"] == point and float(r["clock_ns"]) == CLOCK_NS and syn.gate_flag(r) == gate()
+                    and r["seq_cells"]):
                 return int(r["seq_cells"])
     return None
 
@@ -1084,7 +1102,7 @@ def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict
 
 
 def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, threads: int) -> list[tuple[dict, dict]]:
-    pdir = tech_runs(tech) / point
+    pdir = tech_runs(tech) / gtag(point)
     out = []
     try:
         rams = syn.rams_of(point) if SOURCE in HLS_TOOLS else []
@@ -1095,7 +1113,8 @@ def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, th
                 rams = []
         if rams:
             row = {c: "" for c in COLUMNS}
-            row.update({"point": point, "top": syn.top_of(point), "tech": tech, "clock_ns": _num(CLOCK_NS), "size": "",
+            row.update({"point": point, "top": syn.top_of(point), "tech": tech, "clock_ns": _num(CLOCK_NS),
+                        "clk_gate": gate(), "size": "",
                         "seed": "", "status": f"skipped: needs a RAM macro ({', '.join(rams)}); "
                                               f"{tech} has no RAM cells, RAM1 builds one (OpenRAM)"})
             return [(row, {})]
@@ -1140,7 +1159,8 @@ def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, th
         for size, stim, seed in expanded:
             times = dict(compile_times) if not out else {}
             base = {c: "" for c in columns()}
-            base.update({"point": point, "top": tb["top"], "tech": tech, "clock_ns": _num(CLOCK_NS), "W": tb["W"],
+            base.update({"point": point, "top": tb["top"], "tech": tech, "clock_ns": _num(CLOCK_NS), "clk_gate": gate(),
+                         "W": tb["W"],
                          "size": size, "seed": "forge" if stim == "forge" else seed})
             if SOURCE == "forge":
                 base.update({"recipe": tb["recipe"], "snax_forge_commit": tb["snax_forge_commit"]})
@@ -1178,7 +1198,8 @@ def _merge(path: Path, columns: list[str], key, rows: list[dict], drop: set) -> 
         with path.open(newline="") as fh:
             table = [r for r in csv.DictReader(fh) if key(r) not in drop]
     table += [{c: _num(r.get(c, "")) for c in columns} for r in rows]
-    table.sort(key=lambda r: (r["point"], r.get("size", ""), str(r.get("seed", "")), r.get("path", "")))
+    table.sort(key=lambda r: (r["point"], syn.gate_flag(r), r.get("size", ""), str(r.get("seed", "")),
+                              r.get("path", "")))
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=columns, extrasaction="ignore")
@@ -1188,11 +1209,11 @@ def _merge(path: Path, columns: list[str], key, rows: list[dict], drop: set) -> 
 
 def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
     out = RESULTS / tech
-    key = lambda r: (r["point"], r["size"], str(r["seed"]))  # noqa: E731
+    key = lambda r: (r["point"], syn.gate_flag(r), r["size"], str(r["seed"]))  # noqa: E731  X79: gated apart
     rows = [r for r, _ in results]
     # a point that ran replaces its parked row (size and seed empty: 'skipped: needs a RAM macro', X62)
-    ran = {r["point"] for r in rows if r.get("size")}
-    _merge(out / "power_pt.csv", columns(), key, rows, {key(r) for r in rows} | {(p, "", "") for p in ran})
+    ran = {(r["point"], syn.gate_flag(r)) for r in rows if r.get("size")}
+    _merge(out / "power_pt.csv", columns(), key, rows, {key(r) for r in rows} | {(p, g, "", "") for p, g in ran})
     mods, mod_keys = [], set()
     reports: dict[str, dict] = {}       # point -> the members of results/<source>/<tech>/power_reports/<point>.zip
 
@@ -1207,13 +1228,14 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
                 del have[k]
         elif r["size"] not in MODULE_SIZES or str(r["seed"]) != "0" or INITREG_SEED is not None:
             continue
-        mod_keys.add((r["point"], r["size"]))           # X60: the modules of this point and size are replaced
+        mod_keys.add((r["point"], gate(), r["size"]))   # X60: the modules of this point and size are replaced
         if r["status"] != "ok":
             continue
         for mod in info.get("modules", []):
-            mods.append({"point": r["point"], "tech": tech, "size": r["size"], "path": mod["path"],
+            mods.append({"point": r["point"], "tech": tech, "clk_gate": gate(), "size": r["size"], "path": mod["path"],
                          "design": mod["design"], "e_dyn_pj": mod["dyn_uw"] * CLOCK_NS / 1000.0})
-    _merge(out / "power_pt_modules.csv", MODULE_COLUMNS, lambda r: (r["point"], r["size"]), mods, mod_keys)
+    _merge(out / "power_pt_modules.csv", MODULE_COLUMNS, lambda r: (r["point"], syn.gate_flag(r), r["size"]), mods,
+           mod_keys)
     for r, info in results:
         if r["status"] != "ok":
             continue
@@ -1235,12 +1257,12 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
 
 
 def power_zip(tech: str, point: str) -> Path:
-    """The committed PT reports of a point: results/<source>/<tech>/power_reports/<point>.zip (X20, X51)."""
-    return RESULTS / tech / "power_reports" / f"{point}.zip"
+    """The committed PT reports of a point: results/<source>/<tech>/power_reports/<point>[_cg].zip (X20, X51, X79)."""
+    return RESULTS / tech / "power_reports" / f"{gtag(point)}.zip"
 
 
 # ---------------------------------------------------------------- char (CHAR1): a block alone, per window
-CHAR_COLUMNS = ["point", "datapath", "lanes", "depth", "op", "form", "tech", "clock_ns", "window", "cycles", "fires",
+CHAR_COLUMNS = ["point", "datapath", "lanes", "depth", "op", "form", "tech", "clock_ns", "clk_gate", "window", "cycles", "fires",
                 "seed", "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "e_bit_pj", "status",
                 "snax_forge_commit"]
 CHAR_KEPT = ("power.rpt", "switching_activity.rpt")
@@ -1285,7 +1307,7 @@ def char_seq_cells(tech: str, point: str) -> int | None:
     f = RESULTS / tech / "char_synth.csv"
     with f.open(newline="") as fh:
         for r in csv.DictReader(fh):
-            if r["point"] == point and float(r["clock_ns"]) == CLOCK_NS:
+            if r["point"] == point and float(r["clock_ns"]) == CLOCK_NS and syn.gate_flag(r) == gate():
                 return int(r["seq_cells"] or 0)
     return None
 
@@ -1427,7 +1449,7 @@ def _do_point_char(stack: contextlib.ExitStack, point: str, tech: str, seed: int
     t_point = time.time()
     extra = syn.char_extra(point)
     base = {c: "" for c in CHAR_COLUMNS}
-    base.update({"point": point, "tech": tech, "clock_ns": _num(CLOCK_NS), "seed": seed,
+    base.update({"point": point, "tech": tech, "clock_ns": _num(CLOCK_NS), "clk_gate": gate(), "seed": seed,
                  **{k: extra[k] for k in ("datapath", "lanes", "depth", "op", "form", "snax_forge_commit")}})
     try:
         syn_d, netlist, bundle = point_inputs(stack, tech, point)
@@ -1436,7 +1458,7 @@ def _do_point_char(stack: contextlib.ExitStack, point: str, tech: str, seed: int
         return [({**base, "window": "", "status": f"failed: tb.json: {e}"}, {})]
     rows = {w["name"]: {**base, "window": w["name"]} for w in tb["windows"]}
     infos = {w: {} for w in rows}
-    pdir = tech_runs(tech) / point
+    pdir = tech_runs(tech) / gtag(point)
     rdir = pdir / f"s{seed}"
     for stale in ("work", "logs", rdir.name):
         shutil.rmtree(pdir / stale, ignore_errors=True)
@@ -1566,18 +1588,19 @@ def write_results_char(tech: str, results: list[tuple[dict, dict]]) -> None:
     """char_power.csv (merged on point, window and seed, in each kind's window order), and per ok window its
     reports in power_reports/<point>.zip as <window>/..., the point's tb.json once at its top (X51)."""
     out = RESULTS / tech
-    key = lambda r: (r["point"], r["window"], str(r["seed"]))  # noqa: E731
+    key = lambda r: (r["point"], syn.gate_flag(r), r["window"], str(r["seed"]))  # noqa: E731  X79: gated apart
     rows = [r for r, _ in results]
     done = {key(r) for r in rows}
     table = []
     f = out / "char_power.csv"
     if f.is_file():
         with f.open(newline="") as fh:
-            table = [r for r in csv.DictReader(fh) if key(r) not in done and (r["point"], "", r["seed"]) not in
-                     {(x["point"], "", str(x["seed"])) for x in rows if not x["window"]}]
+            table = [r for r in csv.DictReader(fh) if key(r) not in done and
+                     (r["point"], syn.gate_flag(r), "", r["seed"]) not in
+                     {(x["point"], syn.gate_flag(x), "", str(x["seed"])) for x in rows if not x["window"]}]
     table += [{c: _num(r.get(c, "")) for c in CHAR_COLUMNS} for r in rows]
     order = {w: i for ws in char_src.WINDOWS.values() for i, w in enumerate(ws)}
-    table.sort(key=lambda r: (r["point"], str(r["seed"]), order.get(r["window"], -1)))
+    table.sort(key=lambda r: (r["point"], syn.gate_flag(r), str(r["seed"]), order.get(r["window"], -1)))
     out.mkdir(parents=True, exist_ok=True)
     with f.open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=CHAR_COLUMNS, extrasaction="ignore")
@@ -1631,10 +1654,10 @@ def run_char(points: list[str], tech: str, seed: int, j: int, threads: int) -> i
 
 # ---------------------------------------------------------------- streamer and xbar (STRM1, X52): one busy window
 STRM_COLUMNS = {
-    "streamer": ["point", "depth", "loops", "channels", "tech", "clock_ns", "seed", "bounds", "cycles", "fill",
+    "streamer": ["point", "depth", "loops", "channels", "tech", "clock_ns", "clk_gate", "seed", "bounds", "cycles", "fill",
                  "stalls", "beats", "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj",
                  "e_window_pj", "e_beat_pj", "p_dyn_uw", "annotated", "status", "snax_cluster_commit"],
-    "xbar": ["point", "inputs", "banks", "tech", "clock_ns", "seed", "cycles", "grants", "e_clk_pj", "e_reg_pj",
+    "xbar": ["point", "inputs", "banks", "tech", "clock_ns", "clk_gate", "seed", "cycles", "grants", "e_clk_pj", "e_reg_pj",
              "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "e_window_pj", "e_access_pj", "p_dyn_uw",
              "annotated", "status", "snax_cluster_commit"]}
 STRM_KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
@@ -1667,12 +1690,12 @@ def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int
     t_point = time.time()
     cfg = syn.forge_json(point, "config.json")
     row = {c: "" for c in STRM_COLUMNS[SOURCE]}
-    row.update({"point": point, "tech": tech, "clock_ns": _num(CLOCK_NS), "seed": seed,
+    row.update({"point": point, "tech": tech, "clock_ns": _num(CLOCK_NS), "clk_gate": gate(), "seed": seed,
                 "snax_cluster_commit": cfg.get("snax_cluster_commit", ""),
                 **{k: cfg.get("params", {}).get(v, "") for k, v in syn.STRM_PARAMS[SOURCE].items()}})
     times: dict = {}
     info: dict = {"times": times}
-    pdir = tech_runs(tech) / point
+    pdir = tech_runs(tech) / gtag(point)
     rdir = pdir / f"s{seed}"
     shutil.rmtree(pdir, ignore_errors=True)
     try:
@@ -1784,7 +1807,7 @@ def write_results_strm(tech: str, results: list[tuple[dict, dict]]) -> None:
     """power_pt.csv (merged on point and seed) and per ok point its PT reports and tb.json in
     power_reports/<point>.zip (X51)."""
     out = RESULTS / tech
-    key = lambda r: (r["point"], str(r["seed"]))  # noqa: E731
+    key = lambda r: (r["point"], syn.gate_flag(r), str(r["seed"]))  # noqa: E731  X79: gated apart
     rows = [r for r, _ in results]
     _merge(out / "power_pt.csv", STRM_COLUMNS[SOURCE], key, rows, {key(r) for r in rows})
     for r, info in results:
@@ -1837,8 +1860,10 @@ def cmd_tbjson(args) -> int:
 
 
 def cmd_run(args) -> int:
-    global INITREG_SEED
+    global INITREG_SEED, CLK_GATE
     INITREG_SEED = args.initreg_seed
+    CLK_GATE = args.clk_gate          # X79: the _cg netlists (syn.py --clk-gate), rows with clk_gate 1
+    syn.use_clk_gate(CLK_GATE)
     if INITREG_SEED is not None and args.source in ("char", *STRM):
         sys.exit("--initreg-seed: not built for --source char (its windows run one simulation per point)")
     use_source(args.source)
@@ -1988,7 +2013,8 @@ def cmd_modules(args) -> int:
     with f.open(newline="") as fh:
         rows = list(csv.DictReader(fh))
     with (RESULTS / args.tech / "power_pt.csv").open(newline="") as fh:
-        power = {(r["point"], r["size"]): r for r in csv.DictReader(fh) if r["seed"] == "0"}
+        power = {(r["point"], r["size"]): r for r in csv.DictReader(fh)
+                 if r["seed"] == "0" and syn.gate_flag(r) == "0"}   # X60's migration: ungated rows only (X79)
     filled = 0
     defaults: dict[str, str] = {}
     for r in rows:
@@ -2074,6 +2100,9 @@ def main() -> int:
     p.add_argument("--initreg-seed", type=int, default=None,
                    help="a check, never the default: random register start (vopt +initreg=ru, vsim +initreg+N) "
                         "in place of +initreg+0; results/ is not written")
+    p.add_argument("--clk-gate", action="store_true",
+                   help="the clock-gated netlists (syn.py --clk-gate, <point>_cg.zip): runs and power_reports tagged "
+                        "_cg, rows with clk_gate 1, apart from the ungated ones; off by default (X79)")
     p.set_defaults(fn=cmd_run)
     p = sub.add_parser("setup-check", help="diagnostic: PT against DC with forced activity, per power group (X25)")
     p.add_argument("--tech", required=True, choices=syn.tech_names())

@@ -11,7 +11,11 @@
       power_reports/<point>.zip (cluster/power.py, whose docstring holds the steps)
 
 A point is an entry of cluster/points.json (point, recipe, W, sets, and srams: the macro instances the
-cluster holds, per macro); the file also names the two images. snax_cluster is read from SNAX_CLUSTER
+cluster holds, per macro; optional syn: DC settings of the point, today only {"clk_gate": true}, X79); the file
+also names the two images. A point with syn.clk_gate is a variant of another (the same recipe, W, sets and srams,
+its own name, e.g. dot3_w8_cg): every step runs on it as on any point, and syn turns on dc_syn.tcl's
+CLK_GATE_ENABLE (SYN_CLK_GATE_ENABLE=1: the clock-gating style, compile_ultra -no_autoungroup -gate_clock and the
+clock_gating*.rpt reports). snax_cluster is read from SNAX_CLUSTER
 (default ../snax_cluster): clean, HEAD on origin/main (`git merge-base --is-ancestor HEAD origin/main`)
 unless --allow-branch. snax-forge is read from SNAX_FORGE (default ../snax-forge): clean (PITFALLS E7).
 Both commits are recorded. The folder holding the three repos is mounted at its own path in every
@@ -56,7 +60,8 @@ syn (X67 step 2, X68), from the same bundle zip, in tmp/cluster/<point>/:
      tc_sram_impl.sv, and the macros' .db (from ram/runs/lib/<name>.zip) for SYN_RAM_DBS; dc_syn.tcl sources
      the list (SYN_FLIST_TCL), elaborates snax_forge_cluster_wrapper (SYN_TOP), adds cluster.sdc after
      constraints.sdc (SYN_EXTRA_SDC) and runs cluster/cluster_check.tcl after the reports (SYN_POST_TCL);
-     no SDF (X69); SYN_IGNORE_LOAD=1, so DC keeps --cores under a loaded host (UIO-231). DC's stdout goes to logs/dc_stdout.log as it runs; its path is printed first.
+     no SDF (X69); SYN_IGNORE_LOAD=1, so DC keeps --cores under a loaded host (UIO-231); with the point's
+     syn.clk_gate, SYN_CLK_GATE_ENABLE=1 (X79). DC's stdout goes to logs/dc_stdout.log as it runs; its path is printed first.
   4. tree.txt (cluster/tree.py, area_hierarchy.rpt to depth 4) beside the reports; the run zip
      syn/runs/cluster/nangate45/<point>.zip keeps syn.py's KEEP_RUN and the cluster's files; a row in
      results/cluster/nangate45/synth_dc.csv and the report zip results/cluster/nangate45/reports/<point>.zip.
@@ -81,7 +86,9 @@ work-vsim/gls, and vopt takes -Lf work-vsim/gls, +initreg+0, +acc=n; vsim +nospe
      cells from work-vsim/gls, its command has +initreg+0 and +acc=n; the run prints no [tc_sram_impl]); RAMCOUNT
      (one line per instance of points.json's srams; against step 1's macro run, without the paths: reads equal on
      every instance, writes equal but for at most one more on an instance, the netlist's write at time 0 under
-     +initreg+0, listed as ram_extra_writes; PITFALLS Q14); [SUCCESS] in both runs
+     +initreg+0, listed as ram_extra_writes, or, with writes equal, one more read, listed as ram_extra_reads (the
+     clock-gated netlist's TCDM banks, CG1 R2); at most one extra access per instance; PITFALLS Q14); [SUCCESS] in
+     both runs
   5. under gls/ of sim/runs/cluster/nangate45/<point>.zip (other members kept): snax-forge-vsim.txt, vlog.log,
      vopt.log, logs/, check.json; then vsim.wlf (VSIM_FLAGS' `log -r /*`) deleted with its size in check.json,
      tmp/cluster/<point>/ deleted and make clean-vsim clean-generated in snax_cluster, also on a failure. One line
@@ -155,11 +162,27 @@ class StepFailed(Exception):
         self.step, self.log, self.why = step, log, why
 
 
+SYN_KEYS = {"clk_gate": bool}     # a point's optional "syn" settings (X79) and their types
+
+
+def syn_settings(p: dict) -> dict:
+    """The point's "syn" settings, checked: only SYN_KEYS, each of its type; {} when the point has none."""
+    syn = p.get("syn", {})
+    if not isinstance(syn, dict):
+        sys.exit(f"{POINTS}: {p['point']}: syn must be an object, not {syn!r}")
+    bad = [k for k, v in syn.items() if k not in SYN_KEYS or not isinstance(v, SYN_KEYS[k])]
+    if bad:
+        sys.exit(f"{POINTS}: {p['point']}: syn {bad} not understood (known: "
+                 f"{', '.join(f'{k} ({t.__name__})' for k, t in SYN_KEYS.items())})")
+    return syn
+
+
 def load(point: str) -> tuple[dict, dict]:
     cfg = json.loads(POINTS.read_text())
     pts = {p["point"]: p for p in cfg["points"]}
     if point not in pts:
         sys.exit(f"no point {point!r} in {POINTS} (points: {', '.join(pts)})")
+    syn_settings(pts[point])
     return cfg["images"], pts[point]
 
 
@@ -653,6 +676,10 @@ def syn(p: dict, images: dict, args) -> int:
                         "SYN_EXTRA_SDC": str(rdir / "cluster.sdc"), "SYN_POST_TCL": str(CHECK_TCL),
                         "SYN_RAM_DBS": " ".join(str(d) for d in dbs),
                         "SYN_IGNORE_LOAD": "1"})   # X68: the cores asked for, whatever the host's load (UIO-231)
+        clk_gate = syn_settings(p).get("clk_gate", False)
+        if clk_gate:                                       # X79: dc_syn.tcl's CLK_GATE_ENABLE
+            syn_env["SYN_CLK_GATE_ENABLE"] = "1"
+        print(f"  clock gating                 {'on (SYN_CLK_GATE_ENABLE=1, X79)' if clk_gate else 'off'}", flush=True)
 
         def prepare() -> None:
             (rdir / "syn_flist.tcl").write_text(flist)
@@ -677,7 +704,7 @@ def syn(p: dict, images: dict, args) -> int:
                         "snax_forge_commit": repos["snax_forge"], "snax_cluster_commit": repos["snax_cluster"],
                         "snax_cluster_on_main": repos["snax_cluster_on_main"], "images": images,
                         "bundle_zip": str(z.relative_to(ROOT)), "elf_sha256": prov["elf_sha256"],
-                        "srams": p["srams"], "macros": macros, "step_seconds": steps.times}
+                        "srams": p["srams"], "macros": macros, "syn": syn_settings(p), "step_seconds": steps.times}
         row = synpy.finish_run(point, rdir, tech, res, sargs, syn_env, rc, {"ram": None, "cluster": cluster_info},
                                before_pack=write_tree)
         synpy.write_summary(tech, [row])
@@ -794,7 +821,9 @@ def gls_checks(work: Path, p: dict, rtl_res: dict, rtl_run: str, netlist: Path, 
     c["swap"] = swap_check(vopt, vlog, run, netlist, cell_names)
     ok, notes, extra = check.ram_compare(rtl_run, run, p["srams"])
     c["ramcount"] = {"status": "PASS" if ok else "FAIL", "notes": notes, "lines": len(check.ramcounts(run)),
-                     "extra_writes": extra, "gls": check.ramcounts(run), "rtl": check.ramcounts(rtl_run)}
+                     "extra_writes": [e for e in extra if "rtl_writes" in e],
+                     "extra_reads": [e for e in extra if "rtl_reads" in e],
+                     "gls": check.ramcounts(run), "rtl": check.ramcounts(rtl_run)}
     succ = {"gls": check.success(run), "rtl": check.success(rtl_run)}
     c["success"] = {"status": "PASS" if all(succ.values()) else "FAIL", **succ}
     return c
@@ -896,6 +925,7 @@ def gls(p: dict, images: dict, args) -> int:
         res["checks"] = gls_checks(work, p, rtl_res, rtl_run, netlist, cell_names)
         # the netlist's one write at time 0 per macro, allowed by the check (PITFALLS Q8, Q14)
         res["ram_extra_writes"] = res["checks"]["ramcount"]["extra_writes"]
+        res["ram_extra_reads"] = res["checks"]["ramcount"]["extra_reads"]    # CG1 R2: the gated netlist's, Q14
         bad = [k for k, v in res["checks"].items() if v["status"] != "PASS"]
         res["status"] = "PASS" if not bad else "FAIL"
         res["failed"] = ", ".join(bad) or None
@@ -978,7 +1008,8 @@ def gls_summary(point: str, res: dict) -> None:
     cyc, sw, rc = c.get("cycles", {}), c.get("swap", {}), c.get("ramcount", {})
     line = (f"cluster gls {point}: {res['status']}, {cyc.get('gls')} cycles (rtl {cyc.get('rtl')}), netlist swap "
             f"{'ok' if sw.get('status') == 'PASS' else 'FAIL'}, "
-            + check.ram_summary(rc.get("lines", 0), rc.get("status") == "PASS", rc.get("extra_writes", [])))
+            + check.ram_summary(rc.get("lines", 0), rc.get("status") == "PASS",
+                                rc.get("extra_writes", []) + rc.get("extra_reads", [])))
     if res["status"] != "PASS":
         line += f"; failed: {res['failed']}"
     print(line, flush=True)

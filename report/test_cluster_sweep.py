@@ -80,6 +80,31 @@ def test_figure_writes() -> None:
             assert path.with_name(f"{kind}_five.png").stat().st_size > 1000
 
 
+def test_select_variants() -> None:
+    cfg = [{"point": "a_w8", "recipe": "r", "W": 8}, {"point": "a_w2", "recipe": "r", "W": 2},
+           {"point": "a_w8_cg", "recipe": "r", "W": 8, "syn": {"clk_gate": True}}, {"point": "b_w4", "recipe": "s", "W": 4}]
+    assert [p["point"] for p in cs.select(cfg, "r")] == ["a_w2", "a_w8"]          # the variant left out (X79)
+    assert [p["point"] for p in cs.select(cfg, "r", ["a_w8", "a_w8_cg"])] == ["a_w8", "a_w8_cg"]   # X80
+    try:
+        cs.select(cfg, "r", ["nope"])
+    except SystemExit:
+        pass
+    else:
+        raise AssertionError("an unknown point must stop")
+
+
+def test_figure_by_point() -> None:
+    pts = []
+    for name in ("x_w2", "x_w2_cg"):
+        p, e, b = entries(2)
+        p["point"] = name
+        pts.append(cs.point_data(p, {name: e}, {name: b}))
+    with tempfile.TemporaryDirectory() as t:
+        path = Path(t) / "e.png"
+        cs.figure(pts, "energy", path, panels=(False,), by_point=True)
+        assert path.stat().st_size > 1000
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

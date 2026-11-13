@@ -2453,5 +2453,496 @@
     "nj": 23.22846
    }
   }
+ },
+ "dot3_w8_cg": {
+  "windows": [
+   {
+    "name": "1_dma_in",
+    "mark": 1,
+    "kind": "dma_in",
+    "label": "dma load_A",
+    "cycles": 305,
+    "clock_ns": 10.0,
+    "pj_cycle": 149.06737999999999,
+    "nj": 45.4655509,
+    "groups": {
+     "tcdm_banks": 27.88574720000001,
+     "icache_macros": 0.2119777509,
+     "acc_datapath": 0.004901021,
+     "acc_control": 0.02413936,
+     "acc_csr": 0.30851662999999996,
+     "streamers": 2.5231641299999876,
+     "acc_interface": 0.07622447400000064,
+     "tcdm_interconnect": 2.6545118000000025,
+     "tcdm_logic": 13.218224970000012,
+     "dma": 48.50572699999999,
+     "cores": 3.057984350000007,
+     "icache_logic": 0.7270050590999997,
+     "axi": 42.67209505700024,
+     "peripherals": 7.133025159000004,
+     "others": 0.06413603900003469
+    },
+    "check": {
+     "power_pt_e_dyn_pj": 149.0674,
+     "ok": true
+    }
+   },
+   {
+    "name": "2_dma_in",
+    "mark": 2,
+    "kind": "dma_in",
+    "label": "dma load_B",
+    "cycles": 291,
+    "clock_ns": 10.0,
+    "pj_cycle": 158.77855,
+    "nj": 46.20455805,
+    "groups": {
+     "tcdm_banks": 29.435462399999988,
+     "icache_macros": 0.11077030854000001,
+     "acc_datapath": 0.004901021,
+     "acc_control": 0.02413936,
+     "acc_csr": 0.30851662999999996,
+     "streamers": 2.5231641299999876,
+     "acc_interface": 0.07672753100000017,
+     "tcdm_interconnect": 2.6545118000000025,
+     "tcdm_logic": 14.345126220000015,
+     "dma": 51.87251799999998,
+     "cores": 3.0370758100000117,
+     "icache_logic": 0.67793474146,
+     "axi": 46.50492765700029,
+     "peripherals": 7.136734859000004,
+     "others": 0.06603953199998665
+    },
+    "check": {
+     "power_pt_e_dyn_pj": 158.7786,
+     "ok": true
+    }
+   },
+   {
+    "name": "3_streamer_config",
+    "mark": 3,
+    "kind": "streamer_config",
+    "label": "streamer config dot",
+    "cycles": 33,
+    "clock_ns": 10.0,
+    "pj_cycle": 35.117142,
+    "nj": 1.1588656860000002,
+    "groups": {
+     "tcdm_banks": 0.0,
+     "icache_macros": 2.7201992989,
+     "acc_datapath": 0.004901021,
+     "acc_control": 0.02413936,
+     "acc_csr": 0.30851662999999996,
+     "streamers": 2.7534176599999918,
+     "acc_interface": 0.28080382900000017,
+     "tcdm_interconnect": 2.6545118000000025,
+     "tcdm_logic": 2.0739338879999956,
+     "dma": 3.3401687399999993,
+     "cores": 4.378078360000014,
+     "icache_logic": 1.8153155010999982,
+     "axi": 7.630828507000031,
+     "peripherals": 7.108186159000005,
+     "others": 0.024141245999970064
+    },
+    "check": {
+     "power_pt_e_dyn_pj": 35.11714,
+     "ok": true
+    }
+   },
+   {
+    "name": "4_acc_config",
+    "mark": 4,
+    "kind": "acc_config",
+    "label": "acc config dot",
+    "cycles": 14,
+    "clock_ns": 10.0,
+    "pj_cycle": 31.464499,
+    "nj": 0.44050298600000004,
+    "groups": {
+     "tcdm_banks": 0.0,
+     "icache_macros": 0.8115313811,
+     "acc_datapath": 0.004901021,
+     "acc_control": 0.026098537900000007,
+     "acc_csr": 0.3581538900000001,
+     "streamers": 2.5713534499999904,
+     "acc_interface": 0.35660340109999983,
+     "tcdm_interconnect": 2.6545118000000025,
+     "tcdm_logic": 2.0739338879999956,
+     "dma": 3.3739405399999987,
+     "cores": 3.602586060000009,
+     "icache_logic": 1.4067698188999993,
+     "axi": 7.088392067000026,
+     "peripherals": 7.111579759000005,
+     "others": 0.024143385999987534
+    },
+    "check": {
+     "power_pt_e_dyn_pj": 31.4645,
+     "ok": true
+    }
+   },
+   {
+    "name": "5_run",
+    "mark": 5,
+    "kind": "run",
+    "label": "run dot",
+    "cycles": 322,
+    "clock_ns": 10.0,
+    "pj_cycle": 193.25146,
+    "nj": 62.226970120000004,
+    "groups": {
+     "tcdm_banks": 45.48962544,
+     "icache_macros": 0.26759660671,
+     "acc_datapath": 46.06397,
+     "acc_control": 0.26373811,
+     "acc_csr": 0.52278673,
+     "streamers": 36.89042999999995,
+     "acc_interface": 0.3290486000000029,
+     "tcdm_interconnect": 24.96631000000002,
+     "tcdm_logic": 15.977840760000008,
+     "dma": 4.81343519,
+     "cores": 3.71652360000001,
+     "icache_logic": 0.7733800232899998,
+     "axi": 6.034962546700032,
+     "peripherals": 7.113430459000004,
+     "others": 0.02838193430001807
+    },
+    "check": {
+     "power_pt_e_dyn_pj": 193.2515,
+     "ok": true
+    }
+   },
+   {
+    "name": "6_dma_out",
+    "mark": 6,
+    "kind": "dma_out",
+    "label": "dma store_out",
+    "cycles": 90,
+    "clock_ns": 10.0,
+    "pj_cycle": 33.10518,
+    "nj": 2.9794662,
+    "groups": {
+     "tcdm_banks": 0.3147063043,
+     "icache_macros": 2.0441712501,
+     "acc_datapath": 0.004901021,
+     "acc_control": 0.02413936,
+     "acc_csr": 0.30855185,
+     "streamers": 2.60643138999999,
+     "acc_interface": 0.13119553899999975,
+     "tcdm_interconnect": 2.6933579000000023,
+     "tcdm_logic": 2.2707222599999954,
+     "dma": 4.130202626200004,
+     "cores": 2.3624064699999976,
+     "icache_logic": 1.4771561398999997,
+     "axi": 7.583914803300033,
+     "peripherals": 7.121687259000005,
+     "others": 0.031635827199977984
+    },
+    "check": {
+     "power_pt_e_dyn_pj": 33.10518,
+     "ok": true
+    }
+   }
+  ],
+  "labels": {
+   "tcdm_banks": "TCDM banks (macros)",
+   "icache_macros": "I-cache macros (data and tag)",
+   "acc_datapath": "accelerator datapath",
+   "acc_control": "accelerator control",
+   "acc_csr": "accelerator csr (with its peripherals)",
+   "streamers": "streamers",
+   "acc_interface": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+   "tcdm_interconnect": "TCDM sparse interconnect",
+   "tcdm_logic": "TCDM bank logic (AMO shims, muxes)",
+   "dma": "DMA (iDMA, its AXI-to-memory and interconnect)",
+   "cores": "RISC-V cores (Snitch, with the shared mul/div)",
+   "icache_logic": "I-cache logic (the hive without its macros and mul/div)",
+   "axi": "AXI: the external cuts, both crossbars, the converters",
+   "peripherals": "cluster peripherals (with the barrier)",
+   "others": "others (what no rule names)"
+  },
+  "span": {
+   "cycles": 1055,
+   "nj": 158.47591394199998,
+   "groups": [
+    {
+     "name": "tcdm_banks",
+     "nj": 31.746855413467,
+     "share_pct": 20.03260598016549
+    },
+    {
+     "name": "icache_macros",
+     "nj": 0.46815690987836,
+     "share_pct": 0.29541202712337666
+    },
+    {
+     "name": "acc_datapath",
+     "nj": 14.836190788392999,
+     "share_pct": 9.361795379090125
+    },
+    {
+     "name": "acc_control",
+     "nj": 0.1026452507906,
+     "share_pct": 0.06477025324376218
+    },
+    {
+     "name": "acc_csr",
+     "nj": 0.39517810829,
+     "share_pct": 0.24936162124588207
+    },
+    {
+     "name": "streamers",
+     "nj": 13.743964837659977,
+     "share_pct": 8.672589099369436
+    },
+    {
+     "name": "acc_interface",
+     "nj": 0.17759639777340117,
+     "share_pct": 0.11206523020173212
+    },
+    {
+     "name": "tcdm_interconnect",
+     "nj": 9.988405118400008,
+     "share_pct": 6.302790670168104
+    },
+    {
+     "name": "tcdm_logic",
+     "nj": 13.65269496672601,
+     "share_pct": 8.614996832719141
+    },
+    {
+     "name": "dma",
+     "nj": 31.96825457651799,
+     "share_pct": 20.17231122466846
+    },
+    {
+     "name": "cores",
+     "nj": 3.4207242596800094,
+     "share_pct": 2.158513665951753
+    },
+    {
+     "name": "icache_logic",
+     "nj": 0.8805881618816397,
+     "share_pct": 0.5556605669451592
+    },
+    {
+     "name": "axi",
+     "nj": 29.524788042575572,
+     "share_pct": 18.630457656411586
+    },
+    {
+     "name": "peripherals",
+     "nj": 7.517971238445004,
+     "share_pct": 4.743920417582498
+    },
+    {
+     "name": "others",
+     "nj": 0.05189987152160937,
+     "share_pct": 0.0327493751136239
+    }
+   ]
+  },
+  "run": [
+   {
+    "window": "5_run",
+    "cycles": 322,
+    "idle_window": "4_acc_config",
+    "groups": [
+     {
+      "group": "tcdm_banks",
+      "run_pj_cycle": 45.48962544,
+      "idle_pj_cycle": 0.0,
+      "run_nj": 14.64765939168,
+      "above_idle_nj": 14.64765939168
+     },
+     {
+      "group": "icache_macros",
+      "run_pj_cycle": 0.26759660671,
+      "idle_pj_cycle": 0.8115313811,
+      "run_nj": 0.08616610736062,
+      "above_idle_nj": -0.17514699735358003
+     },
+     {
+      "group": "acc_datapath",
+      "run_pj_cycle": 46.06397,
+      "idle_pj_cycle": 0.004901021,
+      "run_nj": 14.832598339999999,
+      "above_idle_nj": 14.831020211238
+     },
+     {
+      "group": "acc_control",
+      "run_pj_cycle": 0.26373811,
+      "idle_pj_cycle": 0.026098537900000007,
+      "run_nj": 0.08492367142,
+      "above_idle_nj": 0.07651994221620001
+     },
+     {
+      "group": "acc_csr",
+      "run_pj_cycle": 0.52278673,
+      "idle_pj_cycle": 0.3581538900000001,
+      "run_nj": 0.16833732706,
+      "above_idle_nj": 0.05301177447999996
+     },
+     {
+      "group": "streamers",
+      "run_pj_cycle": 36.89042999999995,
+      "idle_pj_cycle": 2.5713534499999904,
+      "run_nj": 11.878718459999986,
+      "above_idle_nj": 11.050742649099988
+     },
+     {
+      "group": "acc_interface",
+      "run_pj_cycle": 0.3290486000000029,
+      "idle_pj_cycle": 0.35660340109999983,
+      "run_nj": 0.10595364920000094,
+      "above_idle_nj": -0.008872645954199008
+     },
+     {
+      "group": "tcdm_interconnect",
+      "run_pj_cycle": 24.96631000000002,
+      "idle_pj_cycle": 2.6545118000000025,
+      "run_nj": 8.039151820000006,
+      "above_idle_nj": 7.184399020400006
+     },
+     {
+      "group": "tcdm_logic",
+      "run_pj_cycle": 15.977840760000008,
+      "idle_pj_cycle": 2.0739338879999956,
+      "run_nj": 5.144864724720002,
+      "above_idle_nj": 4.477058012784004
+     },
+     {
+      "group": "dma",
+      "run_pj_cycle": 4.81343519,
+      "idle_pj_cycle": 3.3739405399999987,
+      "run_nj": 1.5499261311799999,
+      "above_idle_nj": 0.46351727730000036
+     },
+     {
+      "group": "cores",
+      "run_pj_cycle": 3.71652360000001,
+      "idle_pj_cycle": 3.602586060000009,
+      "run_nj": 1.1967205992000034,
+      "above_idle_nj": 0.03668788788000036
+     },
+     {
+      "group": "icache_logic",
+      "run_pj_cycle": 0.7733800232899998,
+      "idle_pj_cycle": 1.4067698188999993,
+      "run_nj": 0.24902836749937993,
+      "above_idle_nj": -0.20395151418641985
+     },
+     {
+      "group": "axi",
+      "run_pj_cycle": 6.034962546700032,
+      "idle_pj_cycle": 7.088392067000026,
+      "run_nj": 1.9432579400374104,
+      "above_idle_nj": -0.33920430553659797
+     },
+     {
+      "group": "peripherals",
+      "run_pj_cycle": 7.113430459000004,
+      "idle_pj_cycle": 7.111579759000005,
+      "run_nj": 2.2905246077980013,
+      "above_idle_nj": 0.0005959253999998158
+     },
+     {
+      "group": "others",
+      "run_pj_cycle": 0.02838193430001807,
+      "idle_pj_cycle": 0.024143385999987534,
+      "run_nj": 0.009138982844605818,
+      "above_idle_nj": 0.0013648125526098329
+     }
+    ]
+   }
+  ],
+  "failed": [],
+  "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+  "snax_cluster_commit": "ac231e42876526cdf4182ffdb3a41a914b2c49e1",
+  "hwcost": {
+   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "platform": "platforms/snax_forge.json",
+   "stimulus": "rand64 seed 0",
+   "parts": [
+    {
+     "part": "datapath",
+     "groups": [
+      "acc_datapath"
+     ],
+     "hwcost_nj": 24.2507020032,
+     "hwcost_share_pct": 34.44040389271446,
+     "run_nj": 14.832598339999999,
+     "run_share_pct": 29.975108315855536,
+     "above_idle_nj": 14.831020211238,
+     "above_idle_share_pct": 31.033509772674517
+    },
+    {
+     "part": "control",
+     "groups": [
+      "acc_control"
+     ],
+     "hwcost_nj": 0.130458995864,
+     "hwcost_share_pct": 0.1852754822685646,
+     "run_nj": 0.08492367142,
+     "run_share_pct": 0.17162173417247845,
+     "above_idle_nj": 0.07651994221620001,
+     "above_idle_share_pct": 0.16011591520666593
+    },
+    {
+     "part": "streamers",
+     "groups": [
+      "streamers"
+     ],
+     "hwcost_nj": 20.309970923,
+     "hwcost_share_pct": 28.84384961495574,
+     "run_nj": 11.878718459999986,
+     "run_share_pct": 24.005630323840634,
+     "above_idle_nj": 11.050742649099988,
+     "above_idle_share_pct": 23.123380934798742
+    },
+    {
+     "part": "crossbar",
+     "groups": [
+      "tcdm_interconnect"
+     ],
+     "hwcost_nj": 11.223497971,
+     "hwcost_share_pct": 15.939406750340472,
+     "run_nj": 8.039151820000006,
+     "run_share_pct": 16.246273312900037,
+     "above_idle_nj": 7.184399020400006,
+     "above_idle_share_pct": 15.033161173998948
+    },
+    {
+     "part": "memory",
+     "groups": [
+      "tcdm_banks"
+     ],
+     "hwcost_nj": 14.49889394,
+     "hwcost_share_pct": 20.59106425972076,
+     "run_nj": 14.64765939168,
+     "run_share_pct": 29.601366313231306,
+     "above_idle_nj": 14.64765939168,
+     "above_idle_share_pct": 30.649832203321125
+    }
+   ],
+   "hwcost_nj": 70.413523833064,
+   "run_nj": 49.483051683099994,
+   "above_idle_nj": 47.790341214634196
+  },
+  "alone": {
+   "point": "done/dot/forge3_w8",
+   "snax_forge_commit": "3c7ea0055c7f1f42fe30c1204439003f2b177632",
+   "seed": "0",
+   "shell": "i_snax_core_0_acc_0_snax_forge_dot_3/i_snax_forge_dot_3_shell_wrapper",
+   "cluster": {
+    "cycles": 322,
+    "pj_cycle": 46.85049,
+    "nj": 15.08585778
+   },
+   "alone": {
+    "cycles": 257,
+    "pj_cycle": 92.71792,
+    "nj": 23.828509999999998
+   }
+  }
  }
 }

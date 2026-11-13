@@ -2,11 +2,15 @@
 """report/cluster_sweep.py - the cluster points of one recipe side by side over W, the netlist beside HWCOST (X78).
 
     pixi run cluster-sweep [--tech nangate45] [--recipe dot_3] [--md]
+    pixi run cluster-sweep --points dot3_w8,dot3_w8_cg --out cg1 [--tech nangate45] [--md]
     pixi run cluster-sweep-test                     report/test_cluster_sweep.py
 
 Reads what cluster-breakdown and cluster-energy already wrote (results/cluster/<tech>/breakdown.json and
 energy.json, X72, X74) for every point of cluster/points.json with the recipe, in order of W, and lays out the run
-window only (`5_run`, the busy section, X73) per point:
+window only (`5_run`, the busy section, X73) per point. A variant point (one with a `syn` field, such as the
+clock-gated dot3_w8_cg, X79) is left out of the recipe's sweep. --points names the points instead, in the order
+given (variants included), and --out NAME then writes into results/cluster/<tech>/NAME/, the bars labelled by point
+(X80):
 
   energy  the netlist's run-window energy in HWCOST's five parts (datapath, control, streamers, crossbar, memory;
           the groups cluster/groups.json's `hwcost` maps to each), the groups HWCOST does not price as one more
@@ -78,15 +82,27 @@ def point_data(p: dict, energy: dict, breakdown: dict) -> dict:
     }
 
 
-def load(tech: str, recipe: str) -> list[dict]:
+def select(cfg_points: list[dict], recipe: str, names: list[str] | None = None) -> list[dict]:
+    """The points laid out: `names` in their order (any point of points.json, a variant too, X80), or else the
+    recipe's points but its variants (a `syn` field, X79), in order of W."""
+    if names:
+        by = {p["point"]: p for p in cfg_points}
+        unknown = [n for n in names if n not in by]
+        if unknown:
+            raise SystemExit(f"no point {unknown} in {POINTS}")
+        return [by[n] for n in names]
+    return sorted((p for p in cfg_points if p["recipe"] == recipe and "syn" not in p), key=lambda p: int(p["W"]))
+
+
+def load(tech: str, recipe: str, names: list[str] | None = None) -> list[dict]:
     base = ROOT / "results" / "cluster" / tech
     energy = json.loads((base / "energy.json").read_text())
     breakdown = json.loads((base / "breakdown.json").read_text())
-    pts = [p for p in json.loads(POINTS.read_text())["points"] if p["recipe"] == recipe]
+    pts = select(json.loads(POINTS.read_text())["points"], recipe, names)
     missing = [p["point"] for p in pts if p["point"] not in energy or p["point"] not in breakdown]
     if missing:
         raise SystemExit(f"no energy.json or breakdown.json entry for {missing}: run cluster-breakdown and cluster-energy")
-    return sorted((point_data(p, energy, breakdown) for p in pts), key=lambda d: d["W"])
+    return [point_data(p, energy, breakdown) for p in pts]
 
 
 def rows(pts: list[dict]) -> list[list]:
@@ -182,10 +198,12 @@ def markdown(pts: list[dict]) -> str:
     return "\n".join(out) + "\n"
 
 
-def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (False, True)) -> None:
+def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (False, True),
+           by_point: bool = False) -> None:
     """Per W the netlist's bar beside HWCOST's, stacked by part: absolute (left), % of the five parts (right).
     panels=(False,) draws the absolute panel alone with the five parts only (the netlist's not-priced part left
-    out, so both bars hold what HWCOST prices), each bar's total written above it."""
+    out, so both bars hold what HWCOST prices), each bar's total written above it. by_point labels each pair by
+    its point and W (--points, X80) in place of W alone."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -217,7 +235,8 @@ def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (F
                             ha="center", va="bottom", fontsize=7.5, color="#0b0b0b")
                 ax.text(x + dx, -0.02, "GLS" if side == "netlist" else "HW", transform=ax.get_xaxis_transform(),
                         ha="center", va="top", fontsize=7.5, color="#52514e")
-        ax.set_xticks(xs, [f"\n\nW = {d['W']}" for d in pts], fontsize=9)
+        ax.set_xticks(xs, [f"\n\n{d['point']}\nW = {d['W']}" if by_point else f"\n\nW = {d['W']}" for d in pts],
+                      fontsize=9)
         ax.tick_params(axis="x", length=0)
         ax.set_ylabel("% of the five parts" if share else unit, fontsize=9, color="#52514e")
         ax.set_title(f"{what}, {'shares of the five parts' if share else 'absolute'}"
@@ -249,20 +268,29 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tech", default="nangate45")
     ap.add_argument("--recipe", default="dot_3")
+    ap.add_argument("--points", default=None,
+                    help="comma-separated points, in this order, variants included (X80); needs --out")
+    ap.add_argument("--out", default=None, help="with --points: write into results/cluster/<tech>/OUT/")
     ap.add_argument("--md", action="store_true", help="print the tables as Markdown")
     ap.add_argument("--no-figures", action="store_true", help=argparse.SUPPRESS)
     a = ap.parse_args()
-    pts = load(a.tech, a.recipe)
-    base = ROOT / "results" / "cluster" / a.tech
+    names = [n.strip() for n in a.points.split(",") if n.strip()] if a.points else None
+    if bool(names) != bool(a.out):
+        ap.error("--points and --out go together (the recipe's sweep.csv stays the W sweep)")
+    pts = load(a.tech, a.recipe, names)
+    base = ROOT / "results" / "cluster" / a.tech / (a.out or "")
+    base.mkdir(parents=True, exist_ok=True)
     write_csv(base / "sweep.csv", rows(pts))
     if not a.no_figures:
-        figure(pts, "energy", base / "sweep_energy.png")
-        figure(pts, "area", base / "sweep_area.png")
-        figure(pts, "energy", base / "sweep_energy_five.png", panels=(False,))
-        figure(pts, "area", base / "sweep_area_five.png", panels=(False,))
-    ws = ", ".join(f"W = {d['W']}" for d in pts)
+        by_point = bool(names)
+        figure(pts, "energy", base / "sweep_energy.png", by_point=by_point)
+        figure(pts, "area", base / "sweep_area.png", by_point=by_point)
+        figure(pts, "energy", base / "sweep_energy_five.png", panels=(False,), by_point=by_point)
+        figure(pts, "area", base / "sweep_area_five.png", panels=(False,), by_point=by_point)
+    ws = ", ".join(f"{d['point']} (W = {d['W']})" if names else f"W = {d['W']}" for d in pts)
+    rel = base.relative_to(ROOT).as_posix()
     print(f"{len(pts)} points ({ws}): "
-          f"results/cluster/{a.tech}/sweep.csv{'' if a.no_figures else ', sweep_energy.png, sweep_area.png and their _five panels'}")
+          f"{rel}/sweep.csv{'' if a.no_figures else ', sweep_energy.png, sweep_area.png and their _five panels'}")
     if a.md:
         print(markdown(pts))
     return 0

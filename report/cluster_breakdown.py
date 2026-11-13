@@ -112,11 +112,13 @@ def alone_rows(rows: list[dict], alone: dict) -> dict:
                       "diff_pct": diff(inside[k], there[k]) if there[k] >= GLUE_MIN else None} for k in inside]}
 
 
-def csv_row(path: Path, point: str) -> dict | None:
+def csv_row(path: Path, point: str, ungated: bool = False) -> dict | None:
+    """The point's row; with `ungated`, its ungated one (clk_gate not 1, X79): the `alone` point as X22 ran it."""
     if not path.is_file():
         return None
     with path.open(newline="") as fh:
-        return next((r for r in csv.DictReader(fh) if r["point"] == point), None)
+        return next((r for r in csv.DictReader(fh)
+                     if r["point"] == point and not (ungated and r.get("clk_gate", "") == "1")), None)
 
 
 def point_breakdown(point: dict, tech: str, cfg: dict) -> dict | None:
@@ -143,7 +145,7 @@ def point_breakdown(point: dict, tech: str, cfg: dict) -> dict | None:
         out["hwcost"] = {"snax_forge_commit": h["snax_forge_commit"], "snax_forge_clean": h["snax_forge_clean"],
                          "platform": h["platform"], **hwcost_rows(h["cost"], areas, cfg)}
     if point.get("alone"):
-        a = csv_row(ROOT / "results" / "forge" / tech / "synth_dc.csv", point["alone"])
+        a = csv_row(ROOT / "results" / "forge" / tech / "synth_dc.csv", point["alone"], ungated=True)
         if a is not None:
             out["alone"] = alone_rows(rows, a)
     return out

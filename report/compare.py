@@ -114,8 +114,8 @@ COLUMNS = KEY + TASK + AREA + TIMING + ENERGY + PART_E + PROV
 def read(path: Path) -> list[dict]:
     if not path.is_file():
         return []
-    with path.open(newline="") as fh:
-        return list(csv.DictReader(fh))
+    with path.open(newline="") as fh:     # X79: a clock-gated row (clk_gate 1) is not part of the comparison
+        return [r for r in csv.DictReader(fh) if r.get("clk_gate", "") != "1"]
 
 
 def parse(point: str) -> dict | None:
