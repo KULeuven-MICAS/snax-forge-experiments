@@ -15,6 +15,9 @@
      "alone": "done/dot/forge3_w2"},
     {"point": "dot3_w32", "recipe": "dot_3", "W": 32, "sets": ["N=2048"],
      "srams": {"sram_d512_w64_m8": 32, "sram_d128_w256_m8": 2, "sram_d128_w39": 2},
-     "alone": "done/dot/forge3_w32"}
+     "alone": "done/dot/forge3_w32"},
+    {"point": "dot3_w8_cg", "recipe": "dot_3", "W": 8, "sets": ["N=2048"],
+     "srams": {"sram_d512_w64_m8": 32, "sram_d128_w256_m8": 2, "sram_d128_w39": 2},
+     "alone": "done/dot/forge3_w8", "syn": {"clk_gate": true}}
   ]
 }

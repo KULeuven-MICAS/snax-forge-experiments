@@ -6,7 +6,8 @@ hardware point: case and W, every size runs on it) holding an HLS tool's Verilog
 filelist.f ('# top: <module>', then the files). Patterns are shell globs over those names.
 
   pixi run syn list         [PATTERN ...] [--tech T] [--source S]
-  pixi run syn run          PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run] [--sdf] [--source S]
+  pixi run syn run          PATTERN ... --tech T [--clock NS] [--cores N] [-j N] [--dry-run] [--sdf] [--clk-gate]
+                            [--source S]
   pixi run syn summary      [PATTERN ...] [--tech T] [--source S]
   pixi run syn check-ports  [PATTERN ...] [--source S]
 
@@ -127,8 +128,8 @@ any RTL if the library's own name or units differ from the tech file.
   syn/tech/nangate45.json  ../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db
   syn/tech/nangate15.json  ../RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db
 
-Each run works in syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/ (the
-clock tag only for a clock other than the default): WORK/, logs/, reports/,
+Each run works in syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>][_cg]/ (the
+clock tag only for a clock other than the default, _cg only with --clk-gate): WORK/, logs/, reports/,
 out/ (the mapped netlist; the sdf only with --sdf, docs X69) and tech.json (the tech file, the resolved
 values, the .db's md5 and what DC read from the library). When DC ends, the
 folder is packed into <point>[_c<clock>].zip next to it (KEEP_RUN: the mapped
@@ -139,8 +140,18 @@ syn/runs/<source>/<tech>/summary.csv, whose run column names the folder (its
 zip is <run>.zip). git ignores syn/runs/ entirely; results/<source>/<tech>/
 keeps what is committed: synth_dc.csv (a copy of the summary),
 synth_dc_modules.csv (one row per hierarchical cell) and per run one zip
-reports/<tier>/<kernel>/<point>[_c<clock>].zip (KEPT_REPORTS: area, power,
-reference, qor, path classes, tech.json, lib_info.txt).
+reports/<tier>/<kernel>/<point>[_c<clock>][_cg].zip (KEPT_REPORTS: area, power,
+reference, qor, path classes, tech.json, lib_info.txt; with clock gating the three
+clock_gating*.rpt, whatever their size).
+
+--clk-gate (X79) turns on dc_syn.tcl's CLK_GATE_ENABLE (SYN_CLK_GATE_ENABLE=1):
+clock_gating.tcl's style, compile_ultra -no_autoungroup -gate_clock and the
+clock-gating reports. Such a run is tagged _cg, its rows (synth_dc.csv and the
+modules CSV) have clk_gate 1, and it never replaces the ungated run of the same
+point: the CSVs merge on point, clock_ns and clk_gate (empty reads as 0). A
+cluster point turns it on with points.json's "syn": {"clk_gate": true}
+(cluster/cluster.py); its own name tells it apart, so it gets no _cg tag, and its
+row's clk_gate comes from the environment DC ran with (tech.json).
 
 A point whose filelist.f has '# ram:' lines holds a memory Vitis built (e.g.
 DaCe's dot buffer). Neither library has RAM cells. On nangate45 (hls source) each
@@ -174,7 +185,7 @@ source SYN_FORMAT (verilog; forge, char, streamer, xbar and xbar_mix sverilog),
 SYN_CLK_PORT (ap_clk; bambu clock; xls clk; forge clk_i; char, streamer, xbar
 and xbar_mix clock) and SYN_RST_PORT (ap_rst_n; bambu reset; xls rst; forge
 rst_ni; char, streamer, xbar and xbar_mix reset); with --sdf, SYN_WRITE_SDF=1 (dc_syn.tcl
-writes the SDF only then, X69). The cluster source also sets SYN_FLIST_TCL,
+writes the SDF only then, X69); with --clk-gate, SYN_CLK_GATE_ENABLE=1 (X79). The cluster source also sets SYN_FLIST_TCL,
 SYN_TOP, SYN_EXTRA_SDC, SYN_POST_TCL and SYN_RAM_DBS in place of SYN_FILELIST,
 and SYN_IGNORE_LOAD=1 (dc_syn.tcl's optional hooks).
 Standard library and arc/arc.py only.
@@ -251,12 +262,27 @@ def use_source(name: str) -> None:
 
 SCRIPT = SYN / "scripts" / "dc_syn.tcl"
 DEFAULT_CLOCK = "10"
+# X79: clock gating for this invocation (--clk-gate): runs tagged _cg, rows with clk_gate 1. use_clk_gate() sets it.
+CLK_GATE = False
+CG_TAG = "_cg"
+# dc_syn.tcl's clock-gating reports (X79): kept with the others, whatever their size, where the run wrote them
+CG_REPORTS = ("clock_gating.rpt", "clock_gating_elements.rpt", "clock_gating_ungated.rpt")
+
+
+def use_clk_gate(on: bool) -> None:
+    global CLK_GATE
+    CLK_GATE = on
+
+
+def gate_flag(row: dict) -> str:
+    """A row's clk_gate as a key: '1' or '0' (empty, a row from before X79, reads as 0)."""
+    return "1" if str(row.get("clk_gate", "")) == "1" else "0"
 MAX_REPORT_BYTES = 1 << 20  # reports copied to results/ above this size are skipped
 # What results/<source>/<tech>/reports/ keeps of a run: what the area and energy model reads (area and
 # power, per level of hierarchy and per cell type), the QoR, the path classes, and what the run ran on. The rest
 # (timing, constraints, ports, clocks, verbose power) stays in syn/runs/.
 KEPT_REPORTS = ("area.rpt", "area_hierarchy.rpt", "reference.rpt", "power.rpt", "power_hierarchy.rpt",
-                "qor.rpt", "path_classes.rpt", "tech.json", "lib_info.txt")
+                "qor.rpt", "path_classes.rpt", "tech.json", "lib_info.txt", *CG_REPORTS)
 # What a run's zip, syn/runs/<source>/<tech>/<point>[_c<clock>].zip, keeps of its folder (X51): the mapped netlist
 # (sim/pwr.py and pt_power.tcl read it), KEPT_REPORTS (tech.json at the top, the rest in reports/) and the two DC
 # logs (errors and licence lines). The rest (WORK/, alib-*/, the .sdf if --sdf wrote one, default.svf, the other reports, command logs,
@@ -286,7 +312,7 @@ def keep_run() -> tuple:
 # dc_syn.tcl's path classes (X40), in reports/path_classes.rpt and the slack_<class>_ns columns
 PATH_CLASSES = ("in2reg", "reg2reg", "reg2out", "in2out")
 
-COLUMNS = ["point", "top", "tech", "clock_ns", "status", "errors", "area_um2", "comb_area_um2", "seq_area_um2",
+COLUMNS = ["point", "top", "tech", "clock_ns", "clk_gate", "status", "errors", "area_um2", "comb_area_um2", "seq_area_um2",
            "buf_inv_area_um2", "cells", "seq_cells", "crit_path_ns", "slack_ns", "fmax_mhz",
            *(f"slack_{c}_ns" for c in PATH_CLASSES), "maxcap_nets",
            "maxtrans_nets", "dyn_power_uw", "leak_power_uw", "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj",
@@ -314,7 +340,7 @@ GLUE_MAX = 0.01   # a glue share above this (or below 0) is reported, not failed
 # DesignWare table 'Licensed DW Building Blocks'.
 LICENCE_ERROR = re.compile(r"^.*(licensing error|unable to obtain feature|is not enabled\. \(DCSH-1\)"
                            r"|^(error|fatal):.*licen[cs]e).*$", re.I | re.M)
-MODULE_COLUMNS = ["point", "tech", "clock_ns", "path", "design", "area_um2", "comb_um2", "seq_um2", "bbox_um2",
+MODULE_COLUMNS = ["point", "tech", "clock_ns", "clk_gate", "path", "design", "area_um2", "comb_um2", "seq_um2", "bbox_um2",
                   "dyn_power_uw", "leak_power_uw"]
 # power.rpt group -> CSV suffix
 POWER_GROUPS = {"clock_network": "clk", "register": "reg", "sequential": "seq", "combinational": "comb"}
@@ -596,13 +622,15 @@ def parked_row(tech: str, point: str, clock: str, rams: list[str]) -> dict:
 def no_run_row(tech: str, point: str, clock: str, status: str) -> dict:
     """A summary row for a point DC does not run (parked, or failed by the port guard)."""
     row = {c: "" for c in columns()}
-    row.update({"point": point, "top": top_of(point), "tech": tech, "clock_ns": clock, "status": status,
+    row.update({"point": point, "top": top_of(point), "tech": tech, "clock_ns": clock,
+                "clk_gate": "1" if CLK_GATE else "0", "status": status,
                 "date": dt.datetime.now().isoformat(timespec="seconds")})
     return row
 
 
 def point_tag(point: str, clock: str) -> str:
-    return point + ("" if clock == DEFAULT_CLOCK else "_c" + clock.replace(".", "p"))
+    """<point>[_c<clock>][_cg]: the clock tag for a clock other than the default, _cg with --clk-gate (X79)."""
+    return point + ("" if clock == DEFAULT_CLOCK else "_c" + clock.replace(".", "p")) + (CG_TAG if CLK_GATE else "")
 
 
 def run_dir(tech: str, point: str, clock: str) -> Path:
@@ -611,7 +639,7 @@ def run_dir(tech: str, point: str, clock: str) -> Path:
 
 
 def run_zip(tech: str, point: str, clock: str) -> Path:
-    """What is kept of a run: syn/runs/<source>/<tech>/<point>[_c<clock>].zip (KEEP_RUN)."""
+    """What is kept of a run: syn/runs/<source>/<tech>/<point>[_c<clock>][_cg].zip (KEEP_RUN)."""
     d = run_dir(tech, point, clock)
     return d.with_name(d.name + ".zip")
 
@@ -679,6 +707,14 @@ def power_groups(power: str, groups=None) -> dict:
     return out
 
 
+def run_clk_gate(tech_json: str | None) -> str:
+    """X79: '1' when the run's DC environment (tech.json) had SYN_CLK_GATE_ENABLE=1, else '0' ('' with no tech.json)."""
+    if tech_json is None:
+        return ""
+    env = json.loads(tech_json).get("resolved", {}).get("dc_env", {})
+    return "1" if env.get("SYN_CLK_GATE_ENABLE") == "1" else "0"
+
+
 def read_run(tech: dict, point: str, clock: str) -> dict:
     """The summary row of a run, from its zip."""
     rdir = run_dir(tech["name"], point, clock)
@@ -697,6 +733,7 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
     row = {c: "" for c in columns()}
     row.update({
         "point": point, "top": top_of(point), "tech": tech["name"], "clock_ns": clock,
+        "clk_gate": run_clk_gate(tj),
         "errors": len(re.findall(r"^Error:", log_text, re.M)) if log is not None else "",
         "area_um2": _first(area, r"Total cell area:\s*([0-9.]+)"),
         "comb_area_um2": _first(area, r"Combinational area:\s*([0-9.]+)"),
@@ -959,13 +996,13 @@ def read_modules(tech: dict, point: str, clock: str) -> list[dict]:
     out = []
     for r in rows:
         p = pw.get(r["path"])
-        out.append({"point": point, "tech": tech["name"], "clock_ns": clock, **r,
+        out.append({"point": point, "tech": tech["name"], "clock_ns": clock, "clk_gate": "1" if CLK_GATE else "0", **r,
                     "dyn_power_uw": _num(p[0]) if p else "", "leak_power_uw": _num(p[1]) if p else ""})
     return out
 
 
 def report_zip(tech: str, point: str, clock: str) -> Path:
-    """The committed reports of a run: results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>].zip."""
+    """The committed reports of a run: results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>][_cg].zip."""
     return RESULTS / tech / "reports" / f"{point_tag(point, clock)}.zip"
 
 
@@ -980,7 +1017,7 @@ def copy_reports(tech: str, point: str, clock: str) -> list[str]:
         if m not in have:
             continue
         data = arc.read(z, m)
-        if len(data) > MAX_REPORT_BYTES and name not in UNLIMITED_REPORTS.get(SOURCE, ()):
+        if len(data) > MAX_REPORT_BYTES and name not in (*UNLIMITED_REPORTS.get(SOURCE, ()), *CG_REPORTS):
             skipped.append(f"{name} ({len(data)} B)")
             continue
         members[name] = data
@@ -1000,7 +1037,7 @@ def _merge(path: Path, columns: list[str], key, rows: list[dict], drop: set) -> 
         with path.open(newline="") as fh:
             table = [r for r in csv.DictReader(fh) if key(r) not in drop]
     table += rows
-    table.sort(key=lambda r: (r["point"], float(r["clock_ns"] or 0), r.get("path", "")))
+    table.sort(key=lambda r: (r["point"], float(r["clock_ns"] or 0), gate_flag(r), r.get("path", "")))
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=columns, extrasaction="ignore")
@@ -1008,10 +1045,15 @@ def _merge(path: Path, columns: list[str], key, rows: list[dict], drop: set) -> 
         w.writerows(table)
 
 
+def summary_key(r: dict) -> tuple:
+    """The CSVs' merge key: point, clock and clk_gate (X79), so a gated run never replaces the ungated one."""
+    return (r["point"], r["clock_ns"], gate_flag(r))
+
+
 def write_summary(tech: dict, rows: list[dict]) -> None:
     """The run summary, its copy in results/, the modules CSV and the reports, all in step."""
     name = tech["name"]
-    key = lambda r: (r["point"], r["clock_ns"])  # noqa: E731
+    key = summary_key
     done = {key(r) for r in rows}
     _merge(summary_of(name), columns(), key, rows, done)
     out = RESULTS / name
@@ -1035,7 +1077,7 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
 
 
 def print_rows(rows: list[dict]) -> None:
-    cols = ["point", "tech", "clock_ns", "status", "area_um2", "cells", "crit_path_ns", "slack_ns", "fmax_mhz",
+    cols = ["point", "tech", "clock_ns", "clk_gate", "status", "area_um2", "cells", "crit_path_ns", "slack_ns", "fmax_mhz",
             "dyn_power_uw", "leak_power_uw", "e_total_pj"]
     t = [[str(r.get(c, "")) for c in cols] for r in rows]
     w = [max(len(c), *(len(x[i]) for x in t)) for i, c in enumerate(cols)] if t else [len(c) for c in cols]
@@ -1087,6 +1129,7 @@ def dc_env(tech: dict, res: dict, point: str, args) -> dict:
         "SYN_CLK_PORT": src["clk"],
         "SYN_RST_PORT": src["rst"],
         **({"SYN_WRITE_SDF": "1"} if getattr(args, "sdf", False) else {}),   # X69: no SDF unless asked
+        **({"SYN_CLK_GATE_ENABLE": "1"} if CLK_GATE else {}),               # X79: clock gating only when asked
     }
 
 
@@ -1283,12 +1326,16 @@ def main() -> int:
             p.add_argument("-j", "--jobs", type=int, default=1, help="DC runs at once (each takes a license)")
             p.add_argument("--dry-run", action="store_true", help="print the commands, run nothing")
             p.add_argument("--sdf", action="store_true", help="also write the SDF (SYN_WRITE_SDF=1); off by default (X69)")
+            p.add_argument("--clk-gate", action="store_true",
+                           help="clock gating (SYN_CLK_GATE_ENABLE=1, dc_syn.tcl's CLK_GATE_ENABLE): runs tagged _cg, "
+                                "rows with clk_gate 1; off by default (X79)")
             p.add_argument("--with-ram", action="store_true",
                            help="also run points with a '# ram:' line (parked by default)")
         else:
             p.add_argument("--tech", choices=techs, help="only this technology's runs")
     args = ap.parse_args()
     use_source(args.source)
+    use_clk_gate(getattr(args, "clk_gate", False))
     if args.cmd == "run" and not args.patterns:
         ap.error("run needs at least one pattern, e.g. done/vecadd/opt_w8")
     return {"list": cmd_list, "run": cmd_run, "summary": cmd_summary, "check-ports": cmd_check_ports}[args.cmd](args)

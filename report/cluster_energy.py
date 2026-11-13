@@ -144,11 +144,13 @@ def alone_row(rows: list[dict], cycles: int, clock_ns: float, alone: dict) -> di
                       "nj": float(alone["e_run_pj"]) / 1e3}}
 
 
-def csv_rows(path: Path, point: str) -> list[dict]:
+def csv_rows(path: Path, point: str, ungated: bool = False) -> list[dict]:
+    """The point's rows; with `ungated`, its ungated ones (clk_gate not 1, X79): the `alone` point as X23 ran it."""
     if not path.is_file():
         return []
     with path.open(newline="") as fh:
-        return [r for r in csv.DictReader(fh) if r["point"] == point]
+        return [r for r in csv.DictReader(fh)
+                if r["point"] == point and not (ungated and r.get("clk_gate", "") == "1")]
 
 
 def point_energy(point: dict, tech: str, cfg: dict) -> dict | None:
@@ -193,7 +195,8 @@ def point_energy(point: dict, tech: str, cfg: dict) -> dict | None:
                          "stimulus": h["cost"].get("source", {}).get("stimulus"),
                          **hwcost_rows(h["cost"], out["run"], cfg)}
     if point.get("alone") and len(run_rows) == 1:
-        a = next((r for r in csv_rows(ROOT / "results" / "forge" / tech / "power_pt.csv", point["alone"])), None)
+        a = next((r for r in csv_rows(ROOT / "results" / "forge" / tech / "power_pt.csv", point["alone"], ungated=True)),
+                 None)
         if a is not None:
             rows, c, clock_ns = next(iter(run_rows.values()))
             out["alone"] = alone_row(rows, c, clock_ns, a)

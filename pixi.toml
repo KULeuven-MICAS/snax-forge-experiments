@@ -43,3 +43,5 @@ cluster-energy-test = "python report/test_cluster_energy.py"
 # PWR2 R2: a recipe's cluster points side by side over W, the run window and area beside HWCOST (X78)
 cluster-sweep = "python report/cluster_sweep.py"
 cluster-sweep-test = "python report/test_cluster_sweep.py"
+# CG1: the clock-gating switch (X79) in syn.py and pwr.py, without the tools
+clk-gate-test = "python syn/test_clk_gate.py"

@@ -42,6 +42,8 @@
 #   SYN_WRITE_SDF      1: write the SDF beside the netlist (syn.py --sdf); otherwise none (X69)
 #   SYN_IGNORE_LOAD    1: take SYN_CORES whatever the host's load (disable_multicore_resource_checks set before
 #                      set_host_options); otherwise DC lowers the cores under load once, at the start (UIO-231)
+#   SYN_CLK_GATE_ENABLE 1: CLK_GATE_ENABLE, clock gating (X79): clock_gating.tcl sourced before the compile,
+#                      compile_ultra -no_autoungroup -gate_clock, and reports/clock_gating*.rpt; otherwise 0, none
 #
 # The constraints are physical (ns, fF) and scaled to the library's units here; the
 # library's own name and units are checked against the tech file before any RTL is read.
@@ -69,6 +71,8 @@ set clock_ns     $::env(SYN_CLOCK_NS)
 set hdl_format   [env_or SYN_FORMAT verilog]
 set clk_port     [env_or SYN_CLK_PORT ap_clk]
 set rst_port     [env_or SYN_RST_PORT ap_rst_n]
+# X79: the clock-gating switch, off unless SYN_CLK_GATE_ENABLE is 1 (syn.py --clk-gate, a cluster point's syn.clk_gate)
+set CLK_GATE_ENABLE [expr {[env_or SYN_CLK_GATE_ENABLE 0] eq "1" ? 1 : 0}]
 
 #-----------------------------
 # Setting up multiple cores
@@ -239,9 +243,14 @@ if {$extra_sdc ne ""} {
 }
 
 #-----------------------------
-# Compile
+# Compile; with CLK_GATE_ENABLE (X79) the clock-gating style first, and -gate_clock
 #-----------------------------
-compile_ultra -no_autoungroup
+if {$CLK_GATE_ENABLE} {
+    source [file join $script_dir clock_gating.tcl]
+    compile_ultra -no_autoungroup -gate_clock
+} else {
+    compile_ultra -no_autoungroup
+}
 
 #-----------------------------
 # Reports
@@ -283,6 +292,12 @@ close $fh
 report_power -significant_digits 6 > reports/power.rpt
 report_power -hierarchy -nosplit -significant_digits 6 > reports/power_hierarchy.rpt
 report_power -verbose -hierarchy -nosplit -significant_digits 6 > reports/power_verbose_hierarchy.rpt
+# X79: what clock gating did: the summary, each ICG with the bits it gates, and every ungated register with why
+if {$CLK_GATE_ENABLE} {
+    report_clock_gating -nosplit > reports/clock_gating.rpt
+    report_clock_gating -gating_elements -nosplit > reports/clock_gating_elements.rpt
+    report_clock_gating -ungated -nosplit > reports/clock_gating_ungated.rpt
+}
 
 #-----------------------------
 # Path classes (docs X40): the worst setup slack from inputs or registers to registers or

@@ -53,12 +53,13 @@ def fail(msg: str) -> None:
 
 
 def read_csv(path: Path, at: str | None = None) -> list[dict]:
+    """The CSV's rows, but a clock-gated row (clk_gate 1, X79): the tables are of the ungated runs."""
     if at is None:
         with path.open(newline="") as fh:
-            return list(csv.DictReader(fh))
+            return [r for r in csv.DictReader(fh) if r.get("clk_gate", "") != "1"]
     rel = path.relative_to(ROOT).as_posix()
     text = subprocess.run(["git", "show", f"{at}:{rel}"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
-    return list(csv.DictReader(io.StringIO(text)))
+    return [r for r in csv.DictReader(io.StringIO(text)) if r.get("clk_gate", "") != "1"]
 
 
 def git(*args: str) -> str:
