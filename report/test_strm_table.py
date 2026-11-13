@@ -7,13 +7,16 @@ On synthetic tables over the real grids: grid points come back exactly; a functi
 (a + b d + c l + e ch + f d ch + ...) is reproduced exactly anywhere inside; queries outside the grid and missing
 values are refused; the interconnect's energy for inputs > banks is its value at inputs = banks; a query between
 grid values stays between the corner values; the interconnect's energy, linear in 1/inputs, reproduces
-a + b / inputs exactly while its area stays linear in inputs. Standard library only.
+a + b / inputs exactly while its area stays linear in inputs. CG2 (X83): build() takes only the rows of the clk_gate
+asked for, and ratios() pairs gated and ungated rows by point. Standard library only.
 """
 from __future__ import annotations
 
+import csv
 import itertools
 import random
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -111,6 +114,47 @@ class TestInterpolation(unittest.TestCase):
         self.assertAlmostEqual(st.xbar_cost(t, 28, 16)[0], (area[(24, 16)] + area[(32, 16)]) / 2)
         mid = st.xbar_cost(t, 48, 24)[1]                                            # banks between 16 and 32
         self.assertAlmostEqual(mid, (e[(16, 16)] + e[(32, 32)]) / 2)
+
+
+SYNTH = ["point", "clk_gate", "status", "area_um2", "seq_cells", "slack_ns", "fmax_mhz", "depth", "loops", "channels"]
+POWER = ["point", "clk_gate", "status", "e_beat_pj"]
+
+
+def _csv(path: Path, cols: list[str], rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=cols)
+        w.writeheader()
+        w.writerows(rows)
+
+
+class TestGated(unittest.TestCase):
+    def test_build_takes_one_gate(self):
+        with tempfile.TemporaryDirectory() as t:
+            d = Path(t) / "results" / "streamer" / "nangate45"
+            # a row from before X79 (no clk_gate) reads as ungated; the gated rows of the same points sit beside it
+            _csv(d / "synth_dc.csv", SYNTH, [
+                {"point": "d8_l1_c4", "clk_gate": "", "status": "ok", "area_um2": "100", "seq_cells": "50",
+                 "slack_ns": "7", "fmax_mhz": "300", "depth": "8", "loops": "1", "channels": "4"},
+                {"point": "d8_l1_c4", "clk_gate": "1", "status": "ok", "area_um2": "80", "seq_cells": "53",
+                 "slack_ns": "7.5", "fmax_mhz": "400", "depth": "8", "loops": "1", "channels": "4"},
+                {"point": "d2_l1_c1", "clk_gate": "0", "status": "ok, timing violated", "area_um2": "20",
+                 "seq_cells": "10", "slack_ns": "-1", "fmax_mhz": "90", "depth": "2", "loops": "1", "channels": "1"}])
+            _csv(d / "power_pt.csv", POWER, [
+                {"point": "d8_l1_c4", "clk_gate": "1", "status": "ok", "e_beat_pj": "10"},
+                {"point": "d8_l1_c4", "clk_gate": "", "status": "ok", "e_beat_pj": "20"},
+                {"point": "d2_l1_c1", "clk_gate": "", "status": "ok", "e_beat_pj": "2"}])
+            un = st.build("streamer", "nangate45", "0", Path(t))
+            cg = st.build("streamer", "nangate45", "1", Path(t))
+            self.assertEqual([(r["channels"], r["area_um2"], r["e_beat_pj"], r["flops"]) for r in un],
+                             [("1", "20", "2", "10"), ("4", "100", "20", "50")])
+            self.assertEqual([(r["channels"], r["area_um2"], r["e_beat_pj"], r["flops"], r["status"]) for r in cg],
+                             [("4", "80", "10", "53", "ok")])
+            got = st.ratios(cg, un, st.READER_AXES, ("area_um2", "e_beat_pj", "flops"))
+            self.assertEqual(len(got), 1)
+            self.assertAlmostEqual(got[0]["area_um2"], 0.8)
+            self.assertAlmostEqual(got[0]["e_beat_pj"], 0.5)
+            self.assertAlmostEqual(got[0]["flops"], 53 / 50)
 
 
 if __name__ == "__main__":

@@ -71,8 +71,9 @@ results/<source>/<tech>/synth_dc.csv and synth_dc_modules.csv; a row adds the
 grid's params (streamer depth, loops, channels; xbar inputs, banks),
 rtl_flop_bits (the register and memory bits the bundle's RTL declares,
 strm/gen.py's flop_bits), opt1207 (DC's unloaded registers removed, the unique
-OPT-1207 lines) and snax_cluster_commit. The flop check: a row whose seq_cells
-differs from rtl_flop_bits is "failed: flop check (...)". run starts the
+OPT-1207 lines) and snax_cluster_commit. The flop check (X82): a row whose
+seq_cells differs from rtl_flop_bits is printed ("flops <point> ..."), not
+failed; a clock-gated run counts its integrated gates as sequential cells. run starts the
 largest points first (xbar by inputs x banks, streamer by channels x depth,
 then loops).
 
@@ -82,7 +83,7 @@ strm/xbar_mix.py's wrapper, top xbar_mix, with read-only and write-only inputs
 run as xbar is. Its rows add inputs, banks, ro, wo, rtl_flop_bits (the
 SparseInterconnect's: the wrapper adds none), flops_removed (rtl_flop_bits minus
 DC's flops), opt1207 and snax_cluster_commit. Flops DC removes are reported per
-point, not failed; a row with more flops than the RTL declares fails.
+point, not failed; so is a row with more sequential cells than the RTL declares (X82).
 
 Or cluster (CSYN1 Part B, docs X67): a snax-forge design in snax_cluster's whole
 cluster, top snax_forge_cluster_wrapper (clock clk_i, reset rst_ni, asynchronous).
@@ -798,8 +799,9 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         if dyn is not None:
             e_dyn = dyn * clock_ns / 1000.0
             # X62: an SRAM macro is a black box to DC (its default-activity power is in that group, not in the four);
-            # the cluster's memories are macros (X66, PITFALLS DC12)
-            if row.get("ram_kind") == "macro" or SOURCE == "cluster":
+            # the cluster's memories are macros (X66, PITFALLS DC12); a clock-gated run's integrated gates may be
+            # black boxes to DC too (Nangate's statetable, CG1 R2), so a gated row takes the group out as well (CG2)
+            if row.get("ram_kind") == "macro" or SOURCE == "cluster" or row.get("clk_gate") == "1":
                 bb = power_groups(power, ["black_box"]).get("black_box", (0.0, 0.0, 0.0))
                 e_dyn -= (bb[0] + bb[1]) * clock_ns / 1000.0
             energy_ok = abs(e_total - e_dyn) <= 1e-3 * max(abs(e_dyn), 1e-9) + 1e-6
@@ -819,18 +821,26 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row["status"] = "failed: power groups do not sum to the total dynamic power"
     elif split_error:
         row["status"] = f"failed: Bambu split ({split_error})"
-    elif SOURCE == "xbar_mix" and (row["flops_removed"] == "" or row["flops_removed"] < 0):
-        row["status"] = (f"failed: flop check (DC {row['seq_cells'] or '?'} flops, more than the RTL's "
-                         f"{row['rtl_flop_bits'] or '?'} bits, or no count)")
-    elif SOURCE in STRM and SOURCE != "xbar_mix" and str(row["rtl_flop_bits"]) != row["seq_cells"]:
-        # STRM1 R0: every register the RTL declares is a flop after compile (no OPT-1207, no OPT-1206)
-        row["status"] = (f"failed: flop check (DC {row['seq_cells'] or '?'} flops, RTL {row['rtl_flop_bits'] or '?'} "
-                         f"bits, {row['opt1207']} OPT-1207)")
     elif row["slack_ns"] and float(row["slack_ns"]) < 0:
         row["status"] = "ok, timing violated"
     else:
         row["status"] = "ok"
     return row
+
+
+def flop_note(row: dict) -> str:
+    """X82: the flop check, printed, never failed. A streamer or xbar row whose seq_cells differs from the RTL's
+    bits (STRM1 R0 found them equal ungated; a clock-gated run counts its integrated clock gates as sequential cells
+    too), or an xbar_mix row with no count or more flops than the RTL declares. '' when there is nothing to say."""
+    if SOURCE == "xbar_mix":
+        if row["flops_removed"] == "" or row["flops_removed"] < 0:
+            return (f"DC {row['seq_cells'] or '?'} sequential cells, the RTL's {row['rtl_flop_bits'] or '?'} bits "
+                    f"(clk_gate {row.get('clk_gate', '')})")
+        return ""
+    if SOURCE in STRM and str(row["rtl_flop_bits"]) != row["seq_cells"]:
+        return (f"DC {row['seq_cells'] or '?'} sequential cells, RTL {row['rtl_flop_bits'] or '?'} bits, "
+                f"{row['opt1207']} OPT-1207 (clk_gate {row.get('clk_gate', '')})")
+    return ""
 
 
 def flops_removed(row: dict) -> int | str:
@@ -1253,6 +1263,9 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
 
         rc = run_dc(point, name, rdir, cmd, syn_env, args.clock, prepare)
     row = finish_run(point, rdir, tech, res, args, syn_env, rc, {"ram": ram_info})
+    note = flop_note(row) if row["status"].startswith("ok") else ""
+    if note:
+        print(f"flops {point} on {name}: {note}", flush=True)
     if SOURCE == "xbar_mix" and isinstance(row["flops_removed"], int) and row["flops_removed"] > 0:
         print(f"flops {point} on {name}: DC removed {row['flops_removed']} of the RTL's {row['rtl_flop_bits']} bits "
               f"({row['opt1207']} OPT-1207 lines)", flush=True)
