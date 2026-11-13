@@ -21,8 +21,8 @@ trend: the data is laid out, its reading is the user's.
 Writes results/cluster/<tech>/sweep.csv in long form (point, W, source, window, group, metric, value; source
 `gls` the netlist, `hwcost` snax-forge's estimate, `alone` the shell alone), and two figures beside it,
 sweep_energy.png and sweep_area.png: per W the netlist's bar beside HWCOST's, stacked by part, absolute on the
-left and in % of the five parts on the right; sweep_energy_abs.png and sweep_area_abs.png hold the absolute panel
-alone, the netlist's not-priced part on top and each bar's total above it. --md prints the tables as Markdown.
+left and in % of the five parts on the right; sweep_energy_five.png and sweep_area_five.png hold the absolute panel
+alone with the five parts only (the netlist's not-priced part left out), each bar's total above it. --md prints the tables as Markdown.
 """
 
 from __future__ import annotations
@@ -184,7 +184,8 @@ def markdown(pts: list[dict]) -> str:
 
 def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (False, True)) -> None:
     """Per W the netlist's bar beside HWCOST's, stacked by part: absolute (left), % of the five parts (right).
-    panels=(False,) draws the absolute panel alone, each bar's total written above it."""
+    panels=(False,) draws the absolute panel alone with the five parts only (the netlist's not-priced part left
+    out, so both bars hold what HWCOST prices), each bar's total written above it."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -204,7 +205,7 @@ def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (F
             for side, key, dx in (("netlist", gk, -(width + gap) / 2), ("HWCOST", hk, (width + gap) / 2)):
                 vals = d[key]
                 five = sum(vals[k] for k in PARTS)
-                parts = PARTS + ([REST] if side == "netlist" and not share else [])
+                parts = PARTS + ([REST] if side == "netlist" and not share and not alone else [])
                 bottom = 0.0
                 for k in parts:
                     v = pct(vals[k], five) if share else vals[k] * scale
@@ -220,7 +221,7 @@ def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (F
         ax.tick_params(axis="x", length=0)
         ax.set_ylabel("% of the five parts" if share else unit, fontsize=9, color="#52514e")
         ax.set_title(f"{what}, {'shares of the five parts' if share else 'absolute'}"
-                     f"{', with what HWCOST does not price' if alone else ''}", fontsize=10)
+                     f"{', the five parts HWCOST prices' if alone else ''}", fontsize=10)
         ax.grid(axis="y", alpha=0.25)
         ax.set_axisbelow(True)
         for s in ("top", "right"):
@@ -232,13 +233,14 @@ def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (F
     for h, lab in zip(handles, labels):
         seen.setdefault(lab, h)
     names = {REST: "not priced by HWCOST (netlist only)"}
-    fig.legend([seen[k] for k in [*PARTS, REST]], [names.get(k, k) for k in [*PARTS, REST]], loc="lower center",
-               ncol=3 if alone else 6, fontsize=8.5, frameon=False)
+    keys = PARTS if alone else [*PARTS, REST]
+    fig.legend([seen[k] for k in keys], [names.get(k, k) for k in keys], loc="lower center",
+               ncol=len(keys), fontsize=8.5, frameon=False)
     src = "run window 5_run" if kind == "energy" else "DC area per group"
     head = "dot_3 in the one-core cluster, N = 2048, nangate45, 10 ns"
     fig.suptitle(f"{head}\nGLS: netlist, {src}; HW: HWCOST" if alone else
                  f"{head}: {what} (GLS: netlist, {src}; HW: HWCOST)", fontsize=10.5)
-    fig.tight_layout(rect=(0, 0.12 if alone else 0.07, 1, 0.97))
+    fig.tight_layout(rect=(0, 0.08 if alone else 0.07, 1, 0.97))
     fig.savefig(path, dpi=130, facecolor=SURFACE, metadata={"Software": None})
     plt.close(fig)
 
@@ -256,11 +258,11 @@ def main() -> int:
     if not a.no_figures:
         figure(pts, "energy", base / "sweep_energy.png")
         figure(pts, "area", base / "sweep_area.png")
-        figure(pts, "energy", base / "sweep_energy_abs.png", panels=(False,))
-        figure(pts, "area", base / "sweep_area_abs.png", panels=(False,))
+        figure(pts, "energy", base / "sweep_energy_five.png", panels=(False,))
+        figure(pts, "area", base / "sweep_area_five.png", panels=(False,))
     ws = ", ".join(f"W = {d['W']}" for d in pts)
     print(f"{len(pts)} points ({ws}): "
-          f"results/cluster/{a.tech}/sweep.csv{'' if a.no_figures else ', sweep_energy.png, sweep_area.png and their _abs panels'}")
+          f"results/cluster/{a.tech}/sweep.csv{'' if a.no_figures else ', sweep_energy.png, sweep_area.png and their _five panels'}")
     if a.md:
         print(markdown(pts))
     return 0

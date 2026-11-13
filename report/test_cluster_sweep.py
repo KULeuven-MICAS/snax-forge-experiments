@@ -76,8 +76,8 @@ def test_figure_writes() -> None:
             path = Path(t) / f"{kind}.png"
             cs.figure(pts, kind, path)
             assert path.stat().st_size > 1000
-            cs.figure(pts, kind, path.with_name(f"{kind}_abs.png"), panels=(False,))
-            assert path.with_name(f"{kind}_abs.png").stat().st_size > 1000
+            cs.figure(pts, kind, path.with_name(f"{kind}_five.png"), panels=(False,))
+            assert path.with_name(f"{kind}_five.png").stat().st_size > 1000
 
 
 if __name__ == "__main__":

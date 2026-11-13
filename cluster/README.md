@@ -42,4 +42,4 @@ Each step takes snax_cluster from `SNAX_CLUSTER` (default `../snax_cluster`), cl
 | `eqv_tb.sv` | the Verilator bench of `tc_sram_impl.sv` against tech_cells_generic's (result in its header) |
 | `test_*.py` | `pixi run python cluster/test_<name>.py` |
 
-Results in `results/cluster/nangate45/`: `synth_dc.csv`, `reports/`, `power_pt.csv`, `power_reports/`, `hwcost/<point>.json`, `breakdown.json`, `energy.json`, `sweep.csv`, `sweep_energy.png`, `sweep_area.png`, `sweep_energy_abs.png`, `sweep_area_abs.png`; run notes in `results/cluster/runs/`.
+Results in `results/cluster/nangate45/`: `synth_dc.csv`, `reports/`, `power_pt.csv`, `power_reports/`, `hwcost/<point>.json`, `breakdown.json`, `energy.json`, `sweep.csv`, `sweep_energy.png`, `sweep_area.png`, `sweep_energy_five.png`, `sweep_area_five.png`; run notes in `results/cluster/runs/`.
