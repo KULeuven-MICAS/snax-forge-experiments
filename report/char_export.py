@@ -31,11 +31,24 @@ lanes x depth x the output's width, checked against seq_cells here.
 
 SYN2's synth_dc_modules.csv has no seq_cells per module: ctrl's flops are its seq_um2 / flop.area_um2, which must be
 an integer at every point.
+
+  pixi run char-export --clk-gate          (CG2, X83; nangate45)
+
+writes results/char/nangate45/char_cg.json from the clock-gated rows (clk_gate 1) of the same CSVs, in char.json's
+format. An integrated clock gate is a sequential cell: flop.area_um2 is the mean of seq_area / seq_cells (not one
+constant once gates are in), e_load and e_hold are per sequential cell as before (pwr.py's e_bit = e_flop /
+seq_cells), and a block's seq_cells against its bits is printed, not checked (X82). ctrl stays ungated: its factor is
+char.json's times char.json's e_hold over this e_hold, so E_ctrl is unchanged. The params are checked against
+blocks.json at the rows' snax-forge commit (git show in the sibling checkout; printed and skipped when that commit is
+not there). Then, per point, the gated value over the ungated one: area, comb area, seq_cells, the busy (stream)
+e_comb and e_dyn, and the busy and idle e_bit.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -155,14 +168,19 @@ def check_params(datapath: str, params: dict, cat: dict, where: str) -> None:
             fail(f"{where}: {k} = {v!r} not allowed by blocks.json ({s})")
 
 
-def blocks(d: dict, points: list[dict], cat: dict) -> dict:
+def blocks(d: dict, points: list[dict], cat: dict | None, strict: bool = True) -> dict:
+    """char.json's blocks. strict (char.json): params checked against blocks.json, seq_cells = bits or exit;
+    not strict (char_cg.json, X82): params checked when cat is given, seq_cells against bits printed."""
     out: dict = {}
     for p in points:
         name, dp, params = p["point"], p["datapath"], p["params"]
-        check_params(dp, params, cat, name)
+        if cat is not None:
+            check_params(dp, params, cat, name)
         flops = int(d[name]["synth"]["seq_cells"])
         if flops != n_bits(dp, params):
-            fail(f"{name}: {flops} flops, its bits are {n_bits(dp, params)}")
+            if strict:
+                fail(f"{name}: {flops} flops, its bits are {n_bits(dp, params)}")
+            print(f"{name}: {flops} sequential cells, its bits are {n_bits(dp, params)}")
         key = {k: v for k, v in params.items() if k not in SHAPE}
         win = "stream" if dp == "LinkBuffer" else "busy"
         pt = {"lanes": params["lanes"], **({"depth": params["depth"]} if dp == "LinkBuffer" else {}),
@@ -202,6 +220,88 @@ def build(tech: str, d: dict, points: list[dict], cat: dict) -> tuple[dict, dict
          "ctrl": {"counter_factor": cf["value"]},
          "blocks": blocks(d, points, cat)}
     return j, {"load": load, "hold": hold, "ctrl": cf}
+
+
+# ---------------------------------------------------------------- the clock-gated table (CG2, X83)
+CG_TECH = "nangate45"
+CTRL_NOTE = "ctrl ungated: counter_factor is char.json's x char.json's e_hold / this e_hold (CG2, X83)"
+
+
+def path_cg(tech: str) -> Path:
+    return ct.CHAR / tech / "char_cg.json"
+
+
+def catalogue_at(commit: str) -> dict | None:
+    """blocks.json at snax-forge `commit` (git show in the sibling checkout, read only), None when not there."""
+    done = subprocess.run(["git", "-C", str(BLOCKS_JSON.parents[2]), "show", f"{commit}:hw/chisel/blocks.json"],
+                          capture_output=True, text=True)
+    return json.loads(done.stdout) if done.returncode == 0 else None
+
+
+def flop_area_mean(d: dict) -> dict:
+    """The mean of seq_area / seq_cells over the points with sequential cells, and its spread (X83)."""
+    a = {p: float(v["synth"]["seq_area_um2"]) / int(v["synth"]["seq_cells"]) for p, v in d.items()
+         if int(v["synth"]["seq_cells"])}
+    return {**stats(list(a.values())), "points": a}
+
+
+def build_cg(tech: str, d: dict, points: list[dict], base: dict) -> tuple[dict, dict]:
+    """(char_cg.json, its spreads) from the gated rows `d`, with ctrl's factor rescaled from `base` (char.json)."""
+    commit = next(iter(d.values()))["synth"]["snax_forge_commit"]
+    cat = catalogue_at(commit)
+    if cat is None:
+        print(f"{tech}: no blocks.json at snax-forge {commit} in {BLOCKS_JSON.parents[2]}: params not checked")
+    area = flop_area_mean(d)
+    load, hold = e_load(d), e_hold(d)
+    hold_fj = round(hold["mean"], 4)
+    factor = round(base["ctrl"]["counter_factor"] * base["flop"]["e_hold_fj"] / hold_fj, 2)
+    j = {"tech": tech, "clock_ns": float(ct.CLOCK),
+         "units": {"area": "um2", "energy": "pJ", "flop_energy": "fJ per flop per cycle"},
+         "source": {"snax_forge": commit, "snax_forge_experiments": sfe_commit(tech),
+                    "stimulus": f"rand64 seed {ct.SEED}", "clk_gate": "1", "ctrl": CTRL_NOTE},
+         "flop": {"area_um2": round(area["mean"], 6), "e_load_fj": round(load["mean"], 4), "e_hold_fj": hold_fj},
+         "ctrl": {"counter_factor": factor},
+         "blocks": blocks(d, points, cat, strict=False)}
+    return j, {"area": area, "load": load, "hold": hold}
+
+
+def gated_ratios(g: dict, u: dict) -> list[tuple[str, dict]]:
+    """Per point in both: the gated value over the ungated one (synthesis and the busy or stream window)."""
+    out = []
+    for p in g:
+        if p not in u:
+            continue
+        gs, us = g[p]["synth"], u[p]["synth"]
+        r = {k: float(gs[k]) / float(us[k]) for k in ("area_um2", "comb_area_um2", "seq_cells") if float(us[k] or 0)}
+        win = "stream" if g[p]["datapath"] == "LinkBuffer" else "busy"
+        for w, cols in ((win, ("e_comb_pj", "e_dyn_pj", "e_bit_pj")), ("idle", ("e_bit_pj",))):
+            if w in g[p]["windows"] and w in u[p]["windows"]:
+                for c in cols:
+                    a, b = g[p]["windows"][w].get(c, ""), u[p]["windows"][w].get(c, "")
+                    if a not in ("", None) and b not in ("", None) and float(b):
+                        r[f"{w} {c}"] = float(a) / float(b)
+        out.append((p, r))
+    return out
+
+
+def main_cg(points: list[dict]) -> int:
+    t = CG_TECH
+    d = ct.load(t, points, gate="1")
+    j, s = build_cg(t, d, points, json.loads(path(t).read_text()))
+    path_cg(t).write_text(dumps(j))
+    a = s["area"]
+    print(f"{t}: flop area {j['flop']['area_um2']} um2, the mean of seq_area / seq_cells over {a['n']} points, "
+          f"{a['min']:.4f} to {a['max']:.4f} (range {a['range_pct']:.2f} %)")
+    for k, name in (("load", "e_load"), ("hold", "e_hold")):
+        x = s[k]
+        print(f"{t}: {name} {x['mean']:.4f} fJ over {x['n']} points, {x['min']:.4f} to {x['max']:.4f} "
+              f"(range {x['range_pct']:.2f} %, sd {x['sd']:.4f})")
+    print(f"{t}: counter factor {j['ctrl']['counter_factor']:.2f} (ctrl ungated, rescaled from char.json)")
+    print(f"wrote {path_cg(t).relative_to(ct.ROOT)}")
+    print(f"{t}: gated / ungated per point")
+    for p, r in gated_ratios(d, ct.load(t, points, gate="0")):
+        print(f"  {p}: " + ", ".join(f"{k} {v:.4f}" for k, v in r.items()))
+    return 0
 
 
 # ---------------------------------------------------------------- the model, read from char.json
@@ -278,7 +378,12 @@ def dumps(j: dict) -> str:
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--clk-gate", action="store_true", help="char_cg.json from the clock-gated rows (X83)")
+    args = ap.parse_args()
     points = json.loads(ct.POINTS.read_text())
+    if args.clk_gate:
+        return main_cg(points)
     cat = catalogue()
     for t in ct.TECHS:
         d = ct.load(t, points)

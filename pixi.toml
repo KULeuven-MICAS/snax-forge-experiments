@@ -14,6 +14,8 @@ pwr = "python sim/pwr.py"
 forge-rtl = "python forge/bundles.py"
 char-rtl = "python char/blocks.py"
 char-export = "python report/char_export.py"
+# CG2: char_export.py --clk-gate on synthetic gated rows (X83)
+char-export-test = "python report/test_char_export.py"
 char-table = "python report/char_table.py"
 import-cycles = "python report/import_cycles.py"
 compare = "python report/compare.py"
