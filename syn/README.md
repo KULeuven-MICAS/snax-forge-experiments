@@ -99,18 +99,21 @@ pixi run syn list --tech nangate45                                          # th
 pixi run syn list --source bambu                                            # Bambu's points
 pixi run syn run done/dot/xls_w16 --source xls --tech nangate45 --dry-run   # an XLS point
 pixi run syn check-ports --source bambu                                     # the port guard alone, every point
+pixi run syn run done/dot/forge3_w8 --source forge --tech nangate45 --clk-gate   # the same point, clock-gated (X79)
 ```
 
 `--source hls|bambu|xls|forge|char` picks the points (default `hls`); `list`, `run`, `summary` and `check-ports` all take it. `--clock` is the ASIC clock period in ns (default 10). `--cores` is the cores per DC run (default 16). `-j` is the number of DC runs at once, each of which holds a license. Without `--tech`, `list` lists the points and `summary` shows every technology.
 
 syn.py passes DC: `SYN_FILELIST`, `SYN_LIB_DB` and `SYN_LIB_NAME`, `SYN_TIME_UNIT` and `SYN_CAP_UNIT` (the units to expect), `SYN_T_SCALE` and `SYN_C_SCALE`, `SYN_DRIVE_CELL`, `SYN_OUT_LOAD_FF`, `SYN_MAX_TRANS_NS`, `SYN_WIRE_LOAD`, `SYN_CLOCK_NS` and `SYN_CORES`, and from the source `SYN_FORMAT`, `SYN_CLK_PORT` and `SYN_RST_PORT` ([Sources](#sources)). `dc_syn.tcl` takes the hls values when the three are not set. The dry run prints the port guard's result and these variables.
 
+**Clock gating (X79).** `--clk-gate` sets `SYN_CLK_GATE_ENABLE=1`, which turns on `dc_syn.tcl`'s `CLK_GATE_ENABLE`: `scripts/clock_gating.tcl` is sourced before the compile (it stops the run if the library has no `latch_posedge` integrated clock gate, then sets the style: latch-based integrated gates, positive edge, at least 2 bits a bank, through the hierarchy), the compile is `compile_ultra -no_autoungroup -gate_clock`, and three reports join the others: `clock_gating.rpt` (`report_clock_gating`), `clock_gating_elements.rpt` (each gate with the bits it gates) and `clock_gating_ungated.rpt` (each ungated register and why), kept whatever their size. The run is tagged `_cg` after the clock tag (`<point>[_c<clock>]_cg.zip`), and its rows have `clk_gate` 1; the CSVs merge on point, clock and `clk_gate`, so it sits beside the ungated run and never replaces it. A cluster point turns it on with `"syn": {"clk_gate": true}` in `cluster/points.json` instead: its own name tells it apart (no `_cg` tag), and its row's `clk_gate` comes from the environment DC ran with. Off by default; every other run is as before.
+
 ## What a run leaves
 
 Everything under `syn/runs/` stays local; git ignores it. Each source and technology has its own tree and summary (`<source>` is `hls`, `bambu`, `xls`, `forge` or `char`). DC works in the point's run folder; when it ends, `syn.py` packs what is kept into the point's zip next to it (`KEEP_RUN` at the top of `syn.py`, docs X51), test-reads the zip and deletes the folder, scratch with it. Everything that reads a run afterwards (the summary row, `synth_dc_modules.csv`, the committed reports, `sim/pwr.py` and `pt_power.tcl`) reads the zip; `pixi run arc ls <zip>` lists it and `pixi run arc cat <zip> <member>` prints a member.
 
 ```
-syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>].zip   (clock tag only when not 10 ns)
+syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>][_cg].zip   (clock tag only when not 10 ns, _cg with --clk-gate)
   out/<top>_mapped.v, tech.json, logs/dc_shell.log, logs/dc_stdout.log,
   reports/{area,area_hierarchy,reference,power,power_hierarchy,qor,path_classes}.rpt, reports/lib_info.txt
 syn/runs/<source>/<tech>/summary.csv   one row per point and clock
@@ -135,10 +138,11 @@ Every `run` keeps `results/<source>/<tech>/` in step, and that is what is commit
 ```
 results/<source>/<tech>/synth_dc.csv            a copy of the summary
 results/<source>/<tech>/synth_dc_modules.csv    one row per hierarchical cell
-results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>].zip
+results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>][_cg].zip
                                            area.rpt, area_hierarchy.rpt, reference.rpt, power.rpt,
                                            power_hierarchy.rpt, qor.rpt, path_classes.rpt, tech.json,
-                                           lib_info.txt; a file over 1 MB is left out and named in
+                                           lib_info.txt (and with --clk-gate the three clock_gating*.rpt,
+                                           whatever their size); a file over 1 MB is left out and named in
                                            skipped.txt
 ```
 

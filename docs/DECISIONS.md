@@ -78,6 +78,8 @@ A later choice that changes an entry takes the next number and says which one it
 | [X76](#x76-tb_bins-1-ns-clock-read-as-10-ns) | `tb_bin`'s 1 ns clock read as 10 ns |
 | [X77](#x77-a-second-figure-forges-ctrl-and-datapath) | A second figure per kernel: forge's ctrl + datapath |
 | [X78](#x78-a-recipes-cluster-points-side-by-side-over-w) | A recipe's cluster points side by side over W, beside HWCOST |
+| [X79](#x79-clock-gating-as-a-synthesis-switch) | Clock gating as a synthesis switch: `CLK_GATE_ENABLE`, off by default |
+| [X80](#x80-chosen-cluster-points-side-by-side) | `cluster-sweep --points`: chosen cluster points side by side, variants out of the W sweep |
 
 ## Synthesis
 
@@ -388,6 +390,14 @@ snax_cluster's testbench clocks at 1 ns. Each cut VCD's header gets `$timescale 
 ### X78. A recipe's cluster points side by side over W
 
 `pixi run cluster-sweep [--recipe dot_3]` reads `breakdown.json` and `energy.json` (X72, X74) for every point of the recipe and writes `results/cluster/<tech>/sweep.csv` (long form: point, W, source `gls`, `hwcost` or `alone`, window, group, metric, value), `sweep_energy.png` and `sweep_area.png`: per W the netlist's run window (`5_run`) and area in HWCOST's five parts plus what HWCOST does not price, beside HWCOST's five parts, absolute and in % of each side's five parts, and `sweep_energy_five.png` and `sweep_area_five.png` with the absolute panel alone, the five parts only on both sides, each bar's total above it; `--md` prints the per-W tables with the shell alone. Raw data only: no normalization and no check on the trend. **Why:** the W sweep is an experiment read by hand (Ryan, 12 Nov); one file holds every number and the figures show the two sides together. *13 Nov (PWR2); `results/cluster/runs/2026-11-13_pwr2_r2.md`.*
+
+### X79. Clock gating as a synthesis switch
+
+`dc_syn.tcl`'s `CLK_GATE_ENABLE` (from `SYN_CLK_GATE_ENABLE`, default 0) turns on DC's clock gating for one run: `syn/scripts/clock_gating.tcl` (stop if the library has no `latch_posedge` integrated gate; latch-based integrated gates, positive edge, `-minimum_bitwidth 2`, through the hierarchy; no test control point, no negedge logic, no operand isolation), `compile_ultra -no_autoungroup -gate_clock`, and `clock_gating.rpt`, `clock_gating_elements.rpt` and `clock_gating_ungated.rpt`, kept whatever their size. `syn.py run --clk-gate` and `pwr.py run --clk-gate` tag a source's run `_cg` and give its rows `clk_gate` 1, merged apart from the ungated rows (an empty `clk_gate` reads as 0); a cluster point sets it with `"syn": {"clk_gate": true}` under its own name. The reports and the cluster breakdowns read the ungated rows of a source point (`alone`, the HLS comparison). **Why:** the cluster's idle floor is mostly the clock of flops that are never gated (PWR1, PWR2), which HWCOST does not price; one switch through every flow lets a gated run sit beside the ungated one without changing either. *13 Nov (CG1); `results/cluster/runs/2026-11-13_cg1_r1.md`.*
+
+### X80. Chosen cluster points side by side
+
+`pixi run cluster-sweep --points A,B,... --out NAME` lays out the named points in the order given (variants included) with X78's tables, `sweep.csv` and figures, into `results/cluster/<tech>/NAME/`, each pair of bars labelled by point and W. The recipe's W sweep leaves out variant points (those with a `syn` field), so `sweep.csv` stays one point per W. **Why:** a variant such as `dot3_w8_cg` shares its W with another point; the same figures, one folder per comparison. *13 Nov (CG1).*
 
 ## Retired
 
