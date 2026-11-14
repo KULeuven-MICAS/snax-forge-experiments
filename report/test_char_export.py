@@ -3,8 +3,8 @@
 
   pixi run char-export-test
 
-The committed nangate45 CSVs and char.json are copied into a temporary results/char/, and every row gets a gated
-twin: integrated clock gates added as sequential cells (one CLKGATE_X1 per 64 bits), the combinational area and
+The committed nangate45 CSVs and char.json are copied into a temporary results/char/ (their ungated rows only), and
+every row gets a gated twin: integrated clock gates added as sequential cells (one CLKGATE_X1 per 64 bits), the combinational area and
 energy a little lower, the idle flop energy far lower. Checked: the ungated rows still load as before (the gated
 twins left out); char_cg.json keeps char.json's format and blocks; flop.area_um2 is the mean of seq_area /
 seq_cells; e_hold is the gated mean idle e_bit; ctrl's factor is rescaled so that E_ctrl is char.json's (within the
@@ -77,6 +77,9 @@ class TestCharExportGated(unittest.TestCase):
         shutil.copy(cls.old / TECH / "char.json", char / TECH / "char.json")
         scols, srows = rows(cls.old / TECH / "char_synth.csv")
         pcols, prows = rows(cls.old / TECH / "char_power.csv")
+        # the twins are made from the ungated rows; committed gated rows (CG2 R2) are left out
+        srows = [r for r in srows if r.get("clk_gate", "") != "1"]
+        prows = [r for r in prows if r.get("clk_gate", "") != "1"]
         gs = [gated_synth(r) for r in srows]
         cells = {r["point"]: int(r["seq_cells"]) for r in gs}
         gp = [gated_power(r, cells) for r in prows]
