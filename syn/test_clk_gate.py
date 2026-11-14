@@ -129,6 +129,26 @@ def test_cluster_gate_leaves_out_the_libraries_icgs() -> None:
     assert "black boxes" in bad, bad
     assert syn.icg_cells(gated) == {"CLKGATE_X1", "CLKGATE_X2"}
 
+
+def test_flop_note_reports_not_fails() -> None:
+    """X82 (CG2): the streamer and xbar flop check and xbar_mix's count are printed, never a failed row; a gated
+    run's ICGs count as sequential cells, so its seq_cells exceed the RTL's bits."""
+    try:
+        syn.use_source("streamer")
+        assert syn.flop_note({"rtl_flop_bits": 223, "seq_cells": "223", "opt1207": 0, "clk_gate": "0"}) == ""
+        note = syn.flop_note({"rtl_flop_bits": 223, "seq_cells": "231", "opt1207": 0, "clk_gate": "1"})
+        assert "231" in note and "223" in note, note
+        syn.use_source("xbar_mix")
+        row = {"rtl_flop_bits": 256, "seq_cells": "260", "opt1207": 0, "clk_gate": "1"}
+        row["flops_removed"] = syn.flops_removed(row)
+        assert row["flops_removed"] == -4 and "260" in syn.flop_note(row)
+        row = {"rtl_flop_bits": 256, "seq_cells": "250", "opt1207": 6, "clk_gate": "0"}
+        row["flops_removed"] = syn.flops_removed(row)
+        assert syn.flop_note(row) == ""                   # flops removed: printed by run as before, not a note
+    finally:
+        syn.use_source("hls")
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

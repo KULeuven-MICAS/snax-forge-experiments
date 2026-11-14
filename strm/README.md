@@ -14,6 +14,7 @@ pixi run syn run '*' --source streamer --tech nangate45 -j 4 --cores 4
 pixi run pwr run '*' --source xbar --tech nangate45                      # zero-delay sim, SAIF, PT (inputs <= banks)
 pixi run pwr run '*' --source streamer --tech nangate45
 pixi run strm-table [--loo]                                              # results/strm/nangate45/streamer.csv, xbar.csv
+pixi run strm-table --clk-gate                                           # streamer_cg.csv, xbar_cg.csv from the gated rows (X83)
 pixi run strm-table-test
 ```
 

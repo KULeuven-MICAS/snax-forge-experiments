@@ -81,6 +81,8 @@ A later choice that changes an entry takes the next number and says which one it
 | [X79](#x79-clock-gating-as-a-synthesis-switch) | Clock gating as a synthesis switch: `CLK_GATE_ENABLE`, off by default |
 | [X80](#x80-chosen-cluster-points-side-by-side) | `cluster-sweep --points`: chosen cluster points side by side, variants out of the W sweep |
 | [X81](#x81-ramcount-one-more-access-per-instance) | RAMCOUNT: one more read or write per instance than the RTL, each listed |
+| [X82](#x82-characterization-checks-reported-not-failed) | Characterization checks are reported, not failed, but where there is no data |
+| [X83](#x83-the-clock-gated-block-tables) | The clock-gated block tables: `streamer_cg.csv`, `xbar_cg.csv`, `char_cg.json`, in the ungated formats |
 
 ## Synthesis
 
@@ -212,7 +214,7 @@ A block has no CSRs, so `sim/pwr.py --source char` drives it through fixed 128-c
 
 ### X33. char_power.csv's columns and e_hold
 
-`char_power.csv` has one row per point and window with X20's per-cycle energies. e_hold is the mean idle energy per flop bit of the registered blocks: 7.1476 fJ on nangate45, 1.8911 fJ on nangate15. A LinkBuffer that is not loading costs its flops x e_hold. **Why:** a held flop costs the same in every block (14 points within 0.2 %). *3 Nov.*
+`char_power.csv` has one row per point and window with X20's per-cycle energies. e_hold is the mean idle energy per flop bit of the registered blocks: 7.1476 fJ on nangate45, 1.8911 fJ on nangate15. A LinkBuffer that is not loading costs its flops x e_hold. **Why:** a held flop costs the same in every block (14 points within 0.2 %). *3 Nov; a clock-gated run's spread reported, not checked (X82).*
 
 ### X34. busy_t1 and duty50 dropped
 
@@ -280,7 +282,7 @@ Every point's bulky outputs are one deterministic zip, read and written through 
 
 ### X52. The streamer reader and the sparse interconnect, characterized
 
-snax_cluster's streamer reader (`strm__C0_Reader`, as the Streamer instantiates it) and its TCDM sparse interconnect are synthesized and powered over their parameters, totals only, Nangate 45 nm: readers over depth {2, 4, 8, 16} x loops 1–7 x channels {1, 2, 4, 6, 8, 16} (168), the interconnect over inputs 4–64 x banks {16, 32, 64} (27, energy only where inputs ≤ banks). A writer is priced as a reader. Stimuli, windows and settings in [`power.md`](power.md#streamer-and-interconnect---source-streamer---source-xbar) and [`cost_tables.md`](cost_tables.md). **Why:** the cost model needs these costs by their design parameters; the full-rate stimuli are the cases the model scales from. *6 Nov (STRM1); `results/strm/runs/2026-11-06_strm1_r1.md`.*
+snax_cluster's streamer reader (`strm__C0_Reader`, as the Streamer instantiates it) and its TCDM sparse interconnect are synthesized and powered over their parameters, totals only, Nangate 45 nm: readers over depth {2, 4, 8, 16} x loops 1–7 x channels {1, 2, 4, 6, 8, 16} (168), the interconnect over inputs 4–64 x banks {16, 32, 64} (27, energy only where inputs ≤ banks). A writer is priced as a reader. Stimuli, windows and settings in [`power.md`](power.md#streamer-and-interconnect---source-streamer---source-xbar) and [`cost_tables.md`](cost_tables.md). **Why:** the cost model needs these costs by their design parameters; the full-rate stimuli are the cases the model scales from. *6 Nov (STRM1); `results/strm/runs/2026-11-06_strm1_r1.md`; the flop check reported, not failed, by X82.*
 
 ### X53. The STRM tables and their interpolation
 
@@ -358,7 +360,7 @@ DC writes an SDF only with `syn.py --sdf`. **Why:** energy is from a zero-delay 
 
 ### X70. The interconnect with read-only and write-only inputs (xbar_mix)
 
-The `xbar_mix` source synthesizes STRM1's interconnect with some inputs tied as the cluster ties them (a reader's channel read-only, a writer's write-only) plus the cluster template's ties: inputs {16, 32, 64} x banks {16, 32, 64}, each all read-write, all read-only and all write-only, plus two 36-input points. Area only. **Why:** HWCOST priced the cluster's interconnect at +74 % with every input read-write; DC removes what the constants make dead. *11 Nov; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`.*
+The `xbar_mix` source synthesizes STRM1's interconnect with some inputs tied as the cluster ties them (a reader's channel read-only, a writer's write-only) plus the cluster template's ties: inputs {16, 32, 64} x banks {16, 32, 64}, each all read-write, all read-only and all write-only, plus two 36-input points. Area only. **Why:** HWCOST priced the cluster's interconnect at +74 % with every input read-write; DC removes what the constants make dead. *11 Nov; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`; its flop count reported, not failed, by X82.*
 
 ### X71. The interconnect's read-only and write-only inputs in the cost: factor form by default, crosspoint form as an option
 
@@ -403,6 +405,16 @@ snax_cluster's testbench clocks at 1 ns. Each cut VCD's header gets `$timescale 
 ### X81. RAMCOUNT: one more access per instance
 
 A cluster point's `gls` compares each memory instance's RAMCOUNT reads and writes with the RTL macro run's and passes when they are equal but for at most one more read or one more write per instance in the netlist run; each such instance is listed in `gls/check.json` (`ram_extra_writes`, `ram_extra_reads`) and named in the summary line. Amends X67's `gls` step, which allowed only the extra write. **Why:** under `+initreg+0` a netlist can access a memory once at the time-0 edge, during reset and before every window (PITFALLS Q8, Q14): the I-cache's write since CSYN1, the clock-gated netlist's TCDM read since CG1. D123 and the cycle count stay the gates; RAMCOUNT may become a report only later (Ryan, 13 Nov). *13 Nov (CG1 R2).*
+
+## CG2: the clock-gated block tables
+
+### X82. Characterization checks reported, not failed
+
+A characterization row (`--source streamer`, `xbar`, `xbar_mix`, `char`) fails only when it has no data: a tool or licence error, an empty report, no power run, or a simulation whose data mismatch. `syn.py`'s flop check (`seq_cells` against `rtl_flop_bits`) and `xbar_mix`'s count are printed (`flops <point> on <tech>: ...`) and the row stays `ok`; window cycles, fill, stalls and fires against the ungated row, `clock_gating.rpt`'s counts, the e_hold spread and the gated/ungated provenance go into the run note. Amends X52's flop check, X70's and X33's spread. **Why:** a clock-gated run counts its integrated gates as sequential cells, and Ryan prefers these numbers logged and read rather than gated (13 Nov). *13 Nov (CG2).*
+
+### X83. The clock-gated block tables
+
+`pixi run strm-table --clk-gate` writes `results/strm/<tech>/streamer_cg.csv` and `xbar_cg.csv`, and `pixi run char-export --clk-gate` writes `results/char/nangate45/char_cg.json`, from the `clk_gate` 1 rows, in the ungated tables' formats and read with X53's and X54's rules. An integrated clock gate is a sequential cell: no column of its own, `flops` is `seq_cells`, `flop.area_um2` the mean of `seq_area / seq_cells`, e_load and e_hold per sequential cell; the gate is not priced on its own. `xbar_kinds.json`'s f_ro and f_wo carry over. ctrl stays ungated: `char_cg.json`'s counter factor is `char.json`'s times `char.json`'s e_hold over its own, so E_ctrl is unchanged. Each writer prints the gated value over the ungated one per point. `pixi run cg2-reprice` prices dot_3's five HWCOST parts with either set, as snax-forge does, into `results/cluster/<tech>/hwcost_cg.csv`. **Why:** HWCOST's tables come from ungated blocks, while a gated cluster has almost no idle clock (CG1); the gated tables sit beside the ungated ones until snax-forge imports them (a later D-number). The per-cell constants undercount a register's bits by its gates' share (about 1/65 for 64 bits behind one gate), a first assumption (Ryan, 13 Nov). A gated register's idle energy is its ICG's, about 4.9 fJ per cycle shared by the bits behind it, so `char_cg.json`'s e_hold, the mean per cell (0.0655 fJ), spreads from 0.0024 (2,048 bits per gate) to 0.0754 fJ (64); taking the 64-bit value instead would only ever overprice. *13–14 Nov (CG2); `results/strm/runs/2026-11-14_cg2_r4.md`.*
 
 ## Retired
 

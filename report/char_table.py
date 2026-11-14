@@ -52,14 +52,16 @@ def fail(msg: str) -> None:
     sys.exit(f"char_table: {msg}")
 
 
-def read_csv(path: Path, at: str | None = None) -> list[dict]:
-    """The CSV's rows, but a clock-gated row (clk_gate 1, X79): the tables are of the ungated runs."""
+def read_csv(path: Path, at: str | None = None, gate: str = "0") -> list[dict]:
+    """The CSV's rows whose clk_gate is `gate` (X79; empty reads as 0): the tables are of the ungated runs, the
+    clock-gated rows only for char_export.py --clk-gate (X83)."""
+    keep = lambda r: ("1" if r.get("clk_gate", "") == "1" else "0") == gate  # noqa: E731
     if at is None:
         with path.open(newline="") as fh:
-            return [r for r in csv.DictReader(fh) if r.get("clk_gate", "") != "1"]
+            return [r for r in csv.DictReader(fh) if keep(r)]
     rel = path.relative_to(ROOT).as_posix()
     text = subprocess.run(["git", "show", f"{at}:{rel}"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
-    return [r for r in csv.DictReader(io.StringIO(text)) if r.get("clk_gate", "") != "1"]
+    return [r for r in csv.DictReader(io.StringIO(text)) if keep(r)]
 
 
 def git(*args: str) -> str:
@@ -85,11 +87,12 @@ def lsq(xs: list[float], ys: list[float]) -> tuple[float, float]:
     return m, my - m * mx
 
 
-def load(tech: str, points: list[dict]) -> dict:
-    """{point: {datapath, params, synth row, windows: {name: power row}}} for `tech`, checked."""
-    synth = {r["point"]: r for r in read_csv(CHAR / tech / "char_synth.csv")}
+def load(tech: str, points: list[dict], gate: str = "0") -> dict:
+    """{point: {datapath, params, synth row, windows: {name: power row}}} for `tech`, checked; the rows whose
+    clk_gate is `gate`."""
+    synth = {r["point"]: r for r in read_csv(CHAR / tech / "char_synth.csv", gate=gate)}
     power: dict = {}
-    for r in read_csv(CHAR / tech / "char_power.csv"):
+    for r in read_csv(CHAR / tech / "char_power.csv", gate=gate):
         power.setdefault(r["point"], {})[r["window"]] = r
     out = {}
     for p in points:
