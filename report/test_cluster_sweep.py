@@ -105,6 +105,39 @@ def test_figure_by_point() -> None:
         assert path.stat().st_size > 1000
 
 
+def test_gated_tables() -> None:
+    pts = []
+    for w in (2, 4):
+        p, e, b = entries(w)
+        pts.append(cs.point_data(p, {p["point"]: e}, {p["point"]: b}))
+    with tempfile.TemporaryDirectory() as t:
+        path = Path(t) / "hwcost_cg.csv"
+        lines = ["point,W,tables,part,area_um2,energy_nj"]
+        for w in (2, 4):
+            for i, k in enumerate(PARTS):
+                lines.append(f"x_w{w},{w},ungated,{k},1,1")
+                lines.append(f"x_w{w},{w},gated,{k},{(i + 1) * 100.0 * w},{(i + 1) * 0.5}")
+        lines.append("x_w8,8,gated,datapath,1,")          # an empty value: W = 8 is not complete
+        path.write_text("\n".join(lines) + "\n")
+        table = cs.gated_hwcost(path)
+        assert sorted(table) == [2, 4], table
+        cs.use_gated(pts, table)
+        assert pts[1]["hw_e"]["control"] == 1.0 and pts[1]["hw_a"]["memory"] == 2000.0, pts[1]
+        rows = cs.rows(pts)
+        assert {r[2] for r in rows if r[3] in ("task", "area") and r[2] not in ("gls", "alone")} == {"hwcost_cg"}
+        assert "hwcost_cg.csv" in cs.markdown(pts)
+        p, e, b = entries(8)
+        try:
+            cs.use_gated([cs.point_data(p, {p["point"]: e}, {p["point"]: b})], table)
+        except SystemExit:
+            pass
+        else:
+            raise AssertionError("a W without a complete gated row set must stop")
+        png = Path(t) / "e.png"
+        cs.figure(pts, "energy", png, panels=(False,), by_point=True)
+        assert png.stat().st_size > 1000
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

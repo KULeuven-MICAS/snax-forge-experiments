@@ -25,14 +25,16 @@ results/cluster/<tech>/hwcost/dot3_w<W>.json. Per part (area um2, energy nJ):
   memory     the committed json's
 
 The tables are read with X53's and X54's rules (report/strm_table.py); a block's comb area and e_comb at W are the
-point itself when the table has it, else its lanes rule (copy or interpolate), as char.json's model. W = 32 is left
-out (outside the streamer grid's 16 channels). A field the gated tables cannot give yet (a point not measured) is
-left empty and named.
+point itself when the table has it, else its lanes rule (copy or interpolate), as char.json's model. A query beyond
+a table's grid (W = 32: the readers' 32 channels, the crossbar's 67 inputs) is extrapolated as snax-forge's estimate
+does, along the two outermost grid values and clamped at 0, and named (X85). A field the gated tables cannot give
+yet (a point not measured) is left empty and named.
 
 The ungated set must give back the committed HWCOST json (printed per W; report/test_cg2_reprice.py checks it).
 Writes results/cluster/<tech>/hwcost_cg.csv (point, W, tables, part, area_um2, energy_nj) and prints a Markdown
-table per W (ungated, gated, gated / ungated), then at W = 8 the gated parts against dot3_w8_cg's run window
-(energy.json's run and above-idle energy per part, breakdown.json's area per part). Standard library only.
+table per W (ungated, gated, gated / ungated), then for every W with a gated cluster point dot3_w<W>_cg the gated
+parts against its run window and area (energy.json's run and above-idle energy per part, breakdown.json's area per
+part), beside snax-forge's HWCOST against the ungated dot3_w<W>. Standard library only.
 """
 from __future__ import annotations
 
@@ -48,7 +50,7 @@ import strm_table as st  # noqa: E402
 
 ROOT = st.ROOT
 PARTS = ("datapath", "control", "streamers", "crossbar", "memory")
-WS = (2, 4, 8, 16)
+WS = (2, 4, 8, 16, 32)
 N, DEPTH, LOOPS, OUT_BITS, CTRL_BITS = 2048, 8, 1, 64, 67
 MUL = ("ElementwiseLanes", {"inTypes": ["int64", "int64"], "opType": "int64", "outType": "int64", "op": "mul"})
 TREE = ("TreeAccumulate", {"inType": "int64", "outType": "int64", "op": "add"})
@@ -73,12 +75,20 @@ class Tables:
         self.char = json.loads((ROOT / "results" / "char" / tech / c).read_text())
 
 
-def _at(t: st.Table, field: str, gaps: list[str], what: str, **q: float) -> float | None:
+def _at(t: st.Table, field: str, gaps: list[str], what: str, outside: list[str] | None = None,
+        **q: float) -> float | None:
+    """t's field at q, extrapolated beyond the grid as snax-forge does (named in outside); None and a gap when a
+    value the query needs is missing."""
     try:
-        return t.at(field, **q)
+        v = t.at(field, extrapolate=True, **q)
     except ValueError as e:
         gaps.append(f"{what}: {e}")
         return None
+    if t.last_outside and outside is not None:
+        note = f"{what} {field} on {', '.join(t.last_outside)}"
+        if note not in outside:
+            outside.append(note)
+    return v
 
 
 def _sum(*xs: float | None, scale: float = 1.0) -> float | None:
@@ -98,19 +108,20 @@ def comb_at(j: dict, datapath: str, params: dict) -> float:
     return at[lo] + (at[hi] - at[lo]) * (w - lo) / (hi - lo)
 
 
-def price(t: Tables, w: int, cost: dict) -> tuple[dict, list[str]]:
-    """{part: (area_um2, energy_nj)} of dot3_w<w> on table set t, and the fields it could not price."""
+def price(t: Tables, w: int, cost: dict, outside: list[str] | None = None) -> tuple[dict, list[str]]:
+    """{part: (area_um2, energy_nj)} of dot3_w<w> on table set t, and the fields it could not price; a query
+    beyond a table's grid is extrapolated as snax-forge does and named in outside."""
     gaps: list[str] = []
     fires, c_acc = N // w, N // w + 1
-    r = t.reader
-    a_rd = _at(r, "area_um2", gaps, f"reader d{DEPTH}_l{LOOPS}_c{w}", depth=DEPTH, loops=LOOPS, channels=w)
-    a_wr = _at(r, "area_um2", gaps, f"writer d{DEPTH}_l{LOOPS}_c1", depth=DEPTH, loops=LOOPS, channels=1)
-    e_rd = _at(r, "e_beat_pj", gaps, f"reader d{DEPTH}_l{LOOPS}_c{w}", depth=DEPTH, loops=LOOPS, channels=w)
-    e_wr = _at(r, "e_beat_pj", gaps, f"writer d{DEPTH}_l{LOOPS}_c1", depth=DEPTH, loops=LOOPS, channels=1)
+    r, o = t.reader, outside
+    a_rd = _at(r, "area_um2", gaps, f"reader d{DEPTH}_l{LOOPS}_c{w}", o, depth=DEPTH, loops=LOOPS, channels=w)
+    a_wr = _at(r, "area_um2", gaps, f"writer d{DEPTH}_l{LOOPS}_c1", o, depth=DEPTH, loops=LOOPS, channels=1)
+    e_rd = _at(r, "e_beat_pj", gaps, f"reader d{DEPTH}_l{LOOPS}_c{w}", o, depth=DEPTH, loops=LOOPS, channels=w)
+    e_wr = _at(r, "e_beat_pj", gaps, f"writer d{DEPTH}_l{LOOPS}_c1", o, depth=DEPTH, loops=LOOPS, channels=1)
     xb = cost["xbar"]
     n, b, k = xb["inputs"], xb["banks"], t.kinds
-    a_tab = _at(t.xbar, "area_um2", gaps, f"xbar i{n}_b{b}", inputs=n, banks=b)
-    e_acc = _at(t.xbar, "e_access_pj", gaps, f"xbar i{b}_b{b}", inputs=b, banks=b)
+    a_tab = _at(t.xbar, "area_um2", gaps, f"xbar i{n}_b{b}", o, inputs=n, banks=b)
+    e_acc = _at(t.xbar, "e_access_pj", gaps, f"xbar i{b}_b{b}", o, inputs=b, banks=b)
     j = t.char
     mul, tree = {**MUL[1], "lanes": w}, {**TREE[1], "lanes": w}
     a_flop = j["flop"]["area_um2"]
@@ -131,22 +142,23 @@ def hwcost(tech: str, w: int) -> dict:
     return json.loads((ROOT / "results" / "cluster" / tech / "hwcost" / f"dot3_w{w}.json").read_text())["cost"]
 
 
-def run(tech: str) -> tuple[list[dict], dict, dict]:
-    """(the CSV rows, {(set, W): parts}, {(set, W): gaps}) for the table sets that exist."""
-    rows, priced, gaps = [], {}, {}
+def run(tech: str) -> tuple[list[dict], dict, dict, dict]:
+    """(the CSV rows, {(set, W): parts}, {(set, W): gaps}, {(set, W): extrapolated}) for the table sets that exist."""
+    rows, priced, gaps, outside = [], {}, {}, {}
     for name in SETS:
         t = Tables(tech, name)
         if t.missing:
             print(f"{name}: no {', '.join(t.missing)}; not priced")
             continue
         for w in WS:
-            parts, g = price(t, w, hwcost(tech, w))
-            priced[(name, w)], gaps[(name, w)] = parts, g
+            out: list[str] = []
+            parts, g = price(t, w, hwcost(tech, w), out)
+            priced[(name, w)], gaps[(name, w)], outside[(name, w)] = parts, g, out
             for p in PARTS:
                 a, e = parts[p]
                 rows.append({"point": f"dot3_w{w}", "W": w, "tables": name, "part": p,
                              "area_um2": "" if a is None else f"{a:.6f}", "energy_nj": "" if e is None else f"{e:.9f}"})
-    return rows, priced, gaps
+    return rows, priced, gaps, outside
 
 
 def _v(x: float | None, nd: int) -> str:
@@ -157,7 +169,8 @@ def _r(a: float | None, b: float | None) -> str:
     return "" if a is None or not b else f"{a / b:.3f}"
 
 
-def report(tech: str, priced: dict, gaps: dict) -> list[str]:
+def report(tech: str, priced: dict, gaps: dict, outside: dict | None = None) -> list[str]:
+    outside = outside or {}
     out = []
     for w in WS:
         if ("ungated", w) in priced:
@@ -176,31 +189,54 @@ def report(tech: str, priced: dict, gaps: dict) -> list[str]:
                        f"{_v(g[p][1], 2)} | {_r(g[p][1], u[p][1])} |")
         for x in gaps[("gated", w)]:
             out.append(f"- not priced: {x}")
-    if ("gated", 8) in priced:
-        out += vs_cluster(tech, priced[("gated", 8)])
+        for x in outside.get(("gated", w), []):
+            out.append(f"- extrapolated beyond the grid: {x}")
+    for w in WS:
+        if ("gated", w) in priced:
+            out += vs_cluster(tech, w, priced[("gated", w)])
     return out
 
 
-def vs_cluster(tech: str, g: dict) -> list[str]:
-    """The gated parts at W = 8 against dot3_w8_cg's run window and area (energy.json, breakdown.json)."""
+def vs_cluster(tech: str, w: int, g: dict) -> list[str]:
+    """The gated parts at W against dot3_w<W>_cg's run window and area, beside snax-forge's HWCOST (ungated tables)
+    against dot3_w<W>'s (energy.json, breakdown.json); nothing when there is no gated point at W."""
     res = ROOT / "results" / "cluster" / tech
+    gp, up = f"dot3_w{w}_cg", f"dot3_w{w}"
     try:
-        en = {x["part"]: x for x in json.loads((res / "energy.json").read_text())["dot3_w8_cg"]["hwcost"]["parts"]}
-        ar = {x["part"]: x for x in json.loads((res / "breakdown.json").read_text())["dot3_w8_cg"]["hwcost"]["parts"]}
-    except (OSError, KeyError) as e:
-        return ["", f"no dot3_w8_cg in energy.json or breakdown.json ({e})"]
-    out = ["", "dot3_w8_cg: the gated HWCOST against the gated cluster's run window (energy) and area", "",
-           "| part | HWCOST gated nJ | run nJ | above idle nJ | HWCOST / run | HWCOST gated um2 | cluster um2 | HWCOST / cluster |",
+        energy = json.loads((res / "energy.json").read_text())
+        area = json.loads((res / "breakdown.json").read_text())
+    except OSError as e:
+        return ["", f"no energy.json or breakdown.json ({e})"]
+    if gp not in energy or gp not in area:
+        return []
+    eg = {x["part"]: x for x in energy[gp]["hwcost"]["parts"]}
+    ag = {x["part"]: x for x in area[gp]["hwcost"]["parts"]}
+    eu = {x["part"]: x for x in energy[up]["hwcost"]["parts"]} if up in energy else {}
+    au = {x["part"]: x for x in area[up]["hwcost"]["parts"]} if up in area else {}
+    out = ["", f"{gp}: the gated tables' HWCOST against the gated cluster, beside snax-forge's HWCOST against {up}", "",
+           "| part | gated: HWCOST nJ | run nJ | above idle nJ | ratio | ungated: HWCOST nJ | run nJ | ratio |",
            "|---|---:|---:|---:|---:|---:|---:|---:|"]
-    tot = [0.0, 0.0, 0.0, 0.0, 0.0]
+    tot = {k: 0.0 for k in ("h", "r", "i", "uh", "ur")}
     for p in PARTS:
-        a, e = g[p]
-        run_nj, above, cl = en[p]["run_nj"], en[p]["above_idle_nj"], ar[p]["cluster_um2"]
-        out.append(f"| {p} | {_v(e, 2)} | {run_nj:.2f} | {above:.2f} | {_r(e, run_nj)} | {_v(a, 0)} | {cl:,.0f} | {_r(a, cl)} |")
-        for i, x in enumerate((e, run_nj, above, a, cl)):
-            tot[i] = tot[i] + x if x is not None and tot[i] is not None else None
-    out.append(f"| five parts | {_v(tot[0], 2)} | {tot[1]:.2f} | {tot[2]:.2f} | {_r(tot[0], tot[1])} | {_v(tot[3], 0)} | "
-               f"{tot[4]:,.0f} | {_r(tot[3], tot[4])} |")
+        e = g[p][1]
+        r, i = eg[p]["run_nj"], eg[p]["above_idle_nj"]
+        uh, ur = (eu[p]["hwcost_nj"], eu[p]["run_nj"]) if p in eu else (None, None)
+        out.append(f"| {p} | {_v(e, 2)} | {r:.2f} | {i:.2f} | {_r(e, r)} | {_v(uh, 2)} | {_v(ur, 2)} | {_r(uh, ur)} |")
+        for k, x in (("h", e), ("r", r), ("i", i), ("uh", uh), ("ur", ur)):
+            tot[k] = None if x is None or tot[k] is None else tot[k] + x
+    out += [f"| five parts | {_v(tot['h'], 2)} | {tot['r']:.2f} | {tot['i']:.2f} | {_r(tot['h'], tot['r'])} | "
+            f"{_v(tot['uh'], 2)} | {_v(tot['ur'], 2)} | {_r(tot['uh'], tot['ur'])} |", "",
+            "| part | gated: HWCOST um2 | cluster um2 | ratio | ungated: HWCOST um2 | cluster um2 | ratio |",
+            "|---|---:|---:|---:|---:|---:|---:|"]
+    ta = {k: 0.0 for k in ("h", "c", "uh", "uc")}
+    for p in PARTS:
+        a, c = g[p][0], ag[p]["cluster_um2"]
+        uh, uc = (au[p]["hwcost_um2"], au[p]["cluster_um2"]) if p in au else (None, None)
+        out.append(f"| {p} | {_v(a, 0)} | {c:,.0f} | {_r(a, c)} | {_v(uh, 0)} | {_v(uc, 0)} | {_r(uh, uc)} |")
+        for k, x in (("h", a), ("c", c), ("uh", uh), ("uc", uc)):
+            ta[k] = None if x is None or ta[k] is None else ta[k] + x
+    out.append(f"| five parts | {_v(ta['h'], 0)} | {ta['c']:,.0f} | {_r(ta['h'], ta['c'])} | {_v(ta['uh'], 0)} | "
+               f"{_v(ta['uc'], 0)} | {_r(ta['uh'], ta['uc'])} |")
     return out
 
 
@@ -208,11 +244,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tech", default="nangate45")
     args = ap.parse_args()
-    rows, priced, gaps = run(args.tech)
+    rows, priced, gaps, outside = run(args.tech)
     path = ROOT / "results" / "cluster" / args.tech / "hwcost_cg.csv"
     st.write(rows, path, COLUMNS)
     print(f"wrote {path.relative_to(ROOT)}: {len(rows)} rows")
-    print("\n".join(report(args.tech, priced, gaps)))
+    print("\n".join(report(args.tech, priced, gaps, outside)))
     return 0
 
 
