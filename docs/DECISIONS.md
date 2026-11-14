@@ -83,6 +83,8 @@ A later choice that changes an entry takes the next number and says which one it
 | [X81](#x81-ramcount-one-more-access-per-instance) | RAMCOUNT: one more read or write per instance than the RTL, each listed |
 | [X82](#x82-characterization-checks-reported-not-failed) | Characterization checks are reported, not failed, but where there is no data |
 | [X83](#x83-the-clock-gated-block-tables) | The clock-gated block tables: `streamer_cg.csv`, `xbar_cg.csv`, `char_cg.json`, in the ungated formats |
+| [X84](#x84-a-netlist-run-gated-on-data-and-timing-the-rest-reported) | A netlist run gated on data and timing (within 10 % of the RTL); D123 and RAMCOUNT reported |
+| [X85](#x85-the-gated-tables-hwcost-in-the-sweep-and-at-w--32) | The gated tables' HWCOST in the sweep (`--tables gated`) and at W = 32, extrapolated as snax-forge does |
 
 ## Synthesis
 
@@ -415,6 +417,16 @@ A characterization row (`--source streamer`, `xbar`, `xbar_mix`, `char`) fails o
 ### X83. The clock-gated block tables
 
 `pixi run strm-table --clk-gate` writes `results/strm/<tech>/streamer_cg.csv` and `xbar_cg.csv`, and `pixi run char-export --clk-gate` writes `results/char/nangate45/char_cg.json`, from the `clk_gate` 1 rows, in the ungated tables' formats and read with X53's and X54's rules. An integrated clock gate is a sequential cell: no column of its own, `flops` is `seq_cells`, `flop.area_um2` the mean of `seq_area / seq_cells`, e_load and e_hold per sequential cell; the gate is not priced on its own. `xbar_kinds.json`'s f_ro and f_wo carry over. ctrl stays ungated: `char_cg.json`'s counter factor is `char.json`'s times `char.json`'s e_hold over its own, so E_ctrl is unchanged. Each writer prints the gated value over the ungated one per point. `pixi run cg2-reprice` prices dot_3's five HWCOST parts with either set, as snax-forge does, into `results/cluster/<tech>/hwcost_cg.csv`. **Why:** HWCOST's tables come from ungated blocks, while a gated cluster has almost no idle clock (CG1); the gated tables sit beside the ungated ones until snax-forge imports them (a later D-number). The per-cell constants undercount a register's bits by its gates' share (about 1/65 for 64 bits behind one gate), a first assumption (Ryan, 13 Nov). A gated register's idle energy is its ICG's, about 4.9 fJ per cycle shared by the bits behind it, so `char_cg.json`'s e_hold, the mean per cell (0.0655 fJ), spreads from 0.0024 (2,048 bits per gate) to 0.0754 fJ (64); taking the 64-bit value instead would only ever overprice. *13–14 Nov (CG2); `results/strm/runs/2026-11-14_cg2_r4.md`.*
+
+## CG3: the gated sweep
+
+### X84. A netlist run gated on data and timing, the rest reported
+
+A cluster point's `gls` fails only when its data line differs from the expected one or from the RTL macro run's, when its `forge cycles` or any of its counters is more than 10 % (`check.TIMING_PCT`) from the RTL macro run's, when the netlist was not the thing simulated (the swap check), or without `[SUCCESS]` in both runs. D123 against SNAX-GVSoC (still the `rtl` step's gate) and RAMCOUNT against the RTL macro run are reported in `check.json` (`"gate": false`) and the summary line, never failed; the exact cycles and counters are kept in `check.json`'s `cycles.rows` and go into run notes. Amends X67's `gls` step and X81, for every cluster point. **Why:** a netlist run is checked for being right, not for matching exactly: the output data and the timing of the windows say that; an exact memory access count does not, and Ryan prefers such numbers logged and read rather than gated (14 Nov), as the project's rule for SNAX-GVSoC runs (errors 0 exactly, timing within 10 %). *14 Nov (CG3).*
+
+### X85. The gated tables' HWCOST in the sweep and at W = 32
+
+`pixi run cluster-sweep ... --tables gated` lays the points out beside HWCOST priced on the clock-gated tables (`hwcost_cg.csv`'s `gated` rows at each point's W, X83) instead of snax-forge's estimate on the ungated tables; `sweep.csv` names that source `hwcost_cg` and the figures say "HWCOST, gated tables". `cg2-reprice` prices W = 32 too: a query beyond a table's grid (the readers' 32 channels, the crossbar's 67 inputs) continues the line through the axis's two outermost grid values, clamped at 0, as snax-forge's estimate does (`strm_table.Table.at(..., extrapolate=True)`; without it a query outside the grid is still refused, X53), and each extrapolated field is named; the ungated set gives back the committed `hwcost/dot3_w32.json` exactly. `cg2-reprice` sets the gated tables against every gated cluster point it finds, beside snax-forge's HWCOST against the ungated twin. **Why:** the gated sweep (W = 2 to 32) is read beside the HWCOST that prices the same kind of blocks, with the ungated sweep's figures; W = 32 is extrapolated on the same axes in both table sets. *14 Nov (CG3).*
 
 ## Retired
 

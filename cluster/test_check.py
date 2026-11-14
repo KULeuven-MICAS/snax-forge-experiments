@@ -204,6 +204,40 @@ def test_ram_pairing_both_plus_one():
     assert not ok and notes, notes
 
 
+def test_data_gate():
+    ok, notes = check.data_compare(WANT, RUN.format(c=132), RUN.format(c=140))
+    assert ok and notes == [], notes
+    bad = RUN.format(c=132).replace("0 errors", "3 errors")
+    ok, notes = check.data_compare(WANT, RUN.format(c=132), bad)
+    assert not ok and len(notes) == 2, notes                     # against the expected and the RTL run
+    ok, notes = check.data_compare(WANT, bad, RUN.format(c=132))
+    assert not ok and notes == ["data: the RTL run has 'forge data: 3 errors (1 words)', the netlist run "
+                                "'forge data: 0 errors (1 words)'"], notes
+
+
+def test_timing_gate_within_ten_pct():
+    ok, notes, rows = check.timing_compare(RUN.format(c=132), RUN.format(c=140).replace("828", "900"))
+    assert ok and notes == [], notes                              # 6.1 % and 8.7 %
+    assert [r["what"] for r in rows] == ["cycles", "counter mult_dot"], rows
+    assert rows[0] == {"what": "cycles", "rtl": 828, "gls": 900, "diff_pct": 8.696}, rows[0]
+    ok, notes, _ = check.timing_compare(RUN.format(c=132), RUN.format(c=132).replace("828", "920"))
+    assert not ok and notes == ["cycles: netlist 920 against RTL 828, 11.1 % (more than 10 %)"], notes
+    ok, notes, _ = check.timing_compare(RUN.format(c=132), RUN.format(c=146))
+    assert not ok and notes[0].startswith("counter mult_dot: netlist 146 against RTL 132"), notes
+
+
+def test_timing_gate_counter_names():
+    other = RUN.format(c=132).replace("mult_dot", "add_dot")
+    ok, notes, _ = check.timing_compare(RUN.format(c=132), other)
+    assert not ok and notes[0].startswith("counters ['add_dot']"), notes
+    ok, notes, _ = check.timing_compare(RUN.format(c=132), "# forge data: 0 errors (1 words)\n")
+    assert not ok and "cycles: RTL 828, netlist None" in notes, notes
+
+
+def test_ram_summary_reported():
+    assert check.ram_summary(36, False, []) == "RAMCOUNT 36 differ (reported, X84)"
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

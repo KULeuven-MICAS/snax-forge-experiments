@@ -82,13 +82,14 @@ work-vsim/gls, and vopt takes -Lf work-vsim/gls, +initreg+0, +acc=n; vsim +nospe
      three with the same SRAM_IMPL, SRAM_MODELS, SIM_TYPE, GLS_NETLIST, GLS_CELLS. The two host steps' Questa
      processes are sampled from /proc every PEAK_EVERY s (peak resident memory, first and last seen); Questa's own
      elapsed times are read from vlog.log (the netlist's vlog), vopt.log and the run's output.
-  4. the checks: D123; forge cycles equal step 1's; the swap (vopt loaded snax_forge_cluster_wrapper and Nangate
-     cells from work-vsim/gls, its command has +initreg+0 and +acc=n; the run prints no [tc_sram_impl]); RAMCOUNT
-     (one line per instance of points.json's srams; against step 1's macro run, without the paths: reads equal on
-     every instance, writes equal but for at most one more on an instance, the netlist's write at time 0 under
-     +initreg+0, listed as ram_extra_writes, or, with writes equal, one more read, listed as ram_extra_reads (the
-     clock-gated netlist's TCDM banks, CG1 R2); at most one extra access per instance; PITFALLS Q14); [SUCCESS] in
-     both runs
+  4. the checks (X84). Gates: the data line equal to the expected one and to step 1's macro run (data); forge cycles
+     and every counter within check.TIMING_PCT (10 %) of the macro run's (cycles, exact values kept); the swap
+     (vopt loaded snax_forge_cluster_wrapper and Nangate cells from work-vsim/gls, its command has +initreg+0 and
+     +acc=n; the run prints no [tc_sram_impl]); [SUCCESS] in both runs. Reported, not gates (gate false in
+     check.json): D123 against SNAX-GVSoC (the rtl step's gate), and RAMCOUNT (one line per instance of
+     points.json's srams; against step 1's macro run, without the paths: reads equal, writes equal but for at most
+     one more on an instance, the netlist's access at time 0 under +initreg+0, listed as ram_extra_writes or
+     ram_extra_reads; PITFALLS Q14)
   5. under gls/ of sim/runs/cluster/nangate45/<point>.zip (other members kept): snax-forge-vsim.txt, vlog.log,
      vopt.log, logs/, check.json; then vsim.wlf (VSIM_FLAGS' `log -r /*`) deleted with its size in check.json,
      tmp/cluster/<point>/ deleted and make clean-vsim clean-generated in snax_cluster, also on a failure. One line
@@ -533,7 +534,7 @@ def rtl(p: dict, images: dict, args) -> int:
                         if (TB_DIR / "work-vsim" / f).is_file():
                             shutil.copy(TB_DIR / "work-vsim" / f, work / r / f)
         res["checks"] = run_checks(work, p, ms)
-        bad = [k for k, v in res["checks"].items() if v["status"] != "PASS"]
+        bad = gates_failed(res["checks"])
         res["status"] = "PASS" if not bad else "FAIL"
         res["failed"] = ", ".join(bad) or None
         if bad:
@@ -812,21 +813,32 @@ def gls_checks(work: Path, p: dict, rtl_res: dict, rtl_run: str, netlist: Path, 
     vopt = (g / "vopt.log").read_text(errors="replace") if (g / "vopt.log").is_file() else ""
     vlog = (g / "vlog.log").read_text(errors="replace") if (g / "vlog.log").is_file() else ""
     c = {}
-    ok, notes = check.compare((work / "bundle" / "forge_expected.txt").read_text(), run) if run else \
-        (False, ["no run output"])
-    c["d123"] = {"status": "PASS" if ok else "FAIL", "notes": notes}
+    expected = (work / "bundle" / "forge_expected.txt").read_text()
+    ok, notes = check.data_compare(expected, rtl_run, run) if run else (False, ["no run output"])
+    c["data"] = {"status": "PASS" if ok else "FAIL", "notes": notes}
     want = rtl_res["checks"]["cycles"]["macro"]
     got = check.parse(run)["cycles"]
-    c["cycles"] = {"status": "PASS" if got is not None and got == want else "FAIL", "gls": got, "rtl": want}
+    ok, notes, rows = check.timing_compare(rtl_run, run) if run else (False, ["no run output"], [])
+    c["cycles"] = {"status": "PASS" if ok else "FAIL", "gls": got, "rtl": want, "pct": check.TIMING_PCT,
+                   "notes": notes, "rows": rows}
     c["swap"] = swap_check(vopt, vlog, run, netlist, cell_names)
+    succ = {"gls": check.success(run), "rtl": check.success(rtl_run)}
+    c["success"] = {"status": "PASS" if all(succ.values()) else "FAIL", **succ}
+    # reported, not gates (X84): D123 against SNAX-GVSoC (the rtl step's gate) and the RAMCOUNT comparison
+    ok, notes = check.compare(expected, run) if run else (False, ["no run output"])
+    c["d123"] = {"status": "PASS" if ok else "FAIL", "gate": False, "notes": notes}
     ok, notes, extra = check.ram_compare(rtl_run, run, p["srams"])
-    c["ramcount"] = {"status": "PASS" if ok else "FAIL", "notes": notes, "lines": len(check.ramcounts(run)),
+    c["ramcount"] = {"status": "PASS" if ok else "FAIL", "gate": False, "notes": notes,
+                     "lines": len(check.ramcounts(run)),
                      "extra_writes": [e for e in extra if "rtl_writes" in e],
                      "extra_reads": [e for e in extra if "rtl_reads" in e],
                      "gls": check.ramcounts(run), "rtl": check.ramcounts(rtl_run)}
-    succ = {"gls": check.success(run), "rtl": check.success(rtl_run)}
-    c["success"] = {"status": "PASS" if all(succ.values()) else "FAIL", **succ}
     return c
+
+
+def gates_failed(checks: dict) -> list[str]:
+    """The gls checks that fail the step (X84): every check but those marked gate False."""
+    return [k for k, v in checks.items() if v.get("gate", True) and v["status"] != "PASS"]
 
 
 def gls(p: dict, images: dict, args) -> int:
@@ -926,7 +938,7 @@ def gls(p: dict, images: dict, args) -> int:
         # the netlist's one write at time 0 per macro, allowed by the check (PITFALLS Q8, Q14)
         res["ram_extra_writes"] = res["checks"]["ramcount"]["extra_writes"]
         res["ram_extra_reads"] = res["checks"]["ramcount"]["extra_reads"]    # CG1 R2: the gated netlist's, Q14
-        bad = [k for k, v in res["checks"].items() if v["status"] != "PASS"]
+        bad = gates_failed(res["checks"])
         res["status"] = "PASS" if not bad else "FAIL"
         res["failed"] = ", ".join(bad) or None
         if bad:
@@ -1017,8 +1029,9 @@ def gls_summary(point: str, res: dict) -> None:
         print(f"  last {TAIL} lines of {res['failed_log']}:\n{res['failed_tail']}", flush=True)
     for k, v in c.items():
         if v.get("status") != "PASS":
-            skip = {"status"} | ({"gls", "rtl"} if k == "ramcount" else set())
-            print(f"  {k}: {json.dumps({x: y for x, y in v.items() if x not in skip})}", flush=True)
+            skip = {"status", "gate"} | ({"gls", "rtl"} if k == "ramcount" else set())
+            how = "reported" if v.get("gate", True) is False else "gate"
+            print(f"  {k} ({how}): {json.dumps({x: y for x, y in v.items() if x not in skip})}", flush=True)
 
 
 def main() -> int:
