@@ -1,80 +1,13 @@
 #!/usr/bin/env python3
 """cluster/power.py - the cluster's dynamic energy per program section, `pixi run cluster pwr <point>`.
 
-  pixi run cluster pwr <point> [--allow-branch]
-
-Part 1: the quiet build (sw/forge_quiet.elf of rtl/cluster/<point>.zip, snax-forge D135) on step 3's netlist
-with our own vsim command and do-file, which dump a VCD of the cluster's design scopes and log every change of the
-wrapper's obs_o (the program section's mark, sw/obs_marks.json); the log is turned into one window per section, every
-window is cut from the VCD in one pass, vcd2saif makes a SAIF of each cut, and each SAIF is checked.
-Part 2 (PT) reads the SAIFs from the point's zip. snax-forge, snax_cluster and snax-gvsoc are read, never changed.
-
-tb_bin's clock is 1 ns (TCK = 1ns, -t 1ps), the flow's clock 10 ns (sim/pwr.py's CLOCK_NS, PT's constraints.sdc). The
-activity of a zero-delay run does not depend on the period, so each cut's header gets `$timescale 10ps $end` in place
-of Questa's 1ps: every time reads ten times longer, as if the run were at 10 ns, and the SAIF checks and PT's
-clock hold unchanged.
-
-  1. checks before anything runs, as gls: the repos (clean, snax_cluster on origin/main unless --allow-branch); step 1
-     (rtl/check.json) and step 3 (gls/check.json) PASS; the netlist in syn/runs/cluster/nangate45/<point>.zip; the
-     bundle zip's forge.elf the one the steps used; sw/forge_quiet.elf's sha256 equal to provenance's
-     quiet_elf_sha256; no RTL change in snax_cluster between the netlist's commit and HEAD (cluster.rtl_changes)
-  2. in tmp/cluster/<point>/, as gls: the bundle and the netlist unpacked; image: make clean-generated clean-vsim,
-     rtl-gen; clustergen --memories; cluster/mem.py, whose tc_sram_impl.sv must equal step 1's; the cell models
-     (pwr.cell_model); vsim_preparation in the image and snax-forge-sim SIM=vsim on the host with gls's options
-     (SRAM_IMPL, SRAM_MODELS, SIM_TYPE=gate_level_sim, GLS_NETLIST, GLS_CELLS), Questa's peak memory sampled
-     (cluster.Peak). No snax-forge-run. vopt and vlog are checked as gls's swap check (cluster.swap_check).
-  3. the vsim command: bin/snitch_cluster.vsim's vsim line, its one `-do "log -r /*; run -a"` (VSIM_FLAGS) replaced by
-     `-do <work>/pwr/pwr.do`, -batch where snax-forge-run puts it ($3), the quiet ELF as the binary ($1, realpath)
-     and $2 empty; written to pwr/vsim_cmd.sh and run from target/snitch_cluster, its output in pwr/vsim.txt. It
-     passes with `[SUCCESS] Program finished successfully` and no program output (no line outside Questa's `#`
-     transcript but fesvr's).
-  4. pwr/pwr.do: onbreak {resume}, onfinish stop; `vcd file pwr/dut.vcd` and pwr/vcd_add.do (sourced): one
-     non-recursive `vcd add` per design scope (designs, not cells; LIB2), the wrapper's own nets, then every path
-     of pwr.scopes(netlist, top) under the wrapper's instance, each in braces with its escaped identifiers kept
-     (PITFALLS Q15); a `when` on the wrapper's obs_o (a port, visible under +acc=n, Q16) writes `<ps> <value>` per
-     change to pwr/obs_log.txt, flushed, and at the check's mark runs `vcd off` and `vcd flush`; the run goes on to
-     the program's exit. The dump runs from time 0 (a `when` can only turn it on at the mark's edge, a quarter cycle
-     after the window opens). `run -all`, `quit -f`; no `log`, no `power`. The windows come from obs_o
-     only.
-  5. the windows (pwr/windows.json): the marks of obs_log.txt in order, each once, from the legend's first up to the
-     check's mark; section k from t_k - 250 ps to t_{k+1} - 250 ps (a quarter cycle before the edge where its mark
-     appears, a time with no events), (t_{k+1} - t_k) / 1000 cycles, a non-integer count failing. Each window's
-     cycles against the quiet vsim run on the RTL (REF_CYCLES); beyond REF_TOL on any window the run stops.
-  6. the cut: one pwr.vcd_windows pass over dut.vcd for every window, the cuts' $timescale 10ps (timescale_10ps;
-     the VCD's must be 1ps), the window bounds the ps numbers; dut.vcd deleted right after the pass, whatever the
-     result, its size recorded first.
-  7. vcd2saif per window as pwr.py's char source (-instance tb_bin/i_dut/i_snax_forge_cluster -time t0 t1), each cut
-     deleted after its vcd2saif; at most min(nproc, windows) jobs at once, with no more cuts on disk than jobs; then
-     pwr.saif_check(saif, cycles, "clk_i") per window (DURATION = cycles x 10 ns, clk_i TC = 2 x cycles).
-  8. under pwr/ of sim/runs/cluster/nangate45/<point>.zip (other members kept): pwr.do, vcd_add.do, vsim_cmd.sh,
-     vsim.txt, obs_log.txt, windows.json, <mark>_<kind>/w.saif and vcd2saif.log per window, logs/,
-     check.json; also on a failure. Then vsim.wlf (none expected) dropped, tmp/cluster/<point>/ deleted, make
-     clean-vsim clean-generated in snax_cluster. The SAIFs live only in this zip (sim/runs/ is git-ignored).
-One line at the end; a failure names the check or step and prints at most 30 lines of its log.
-
-Part 2, run by the same command; part 1 is skipped when the zip's pwr/check.json is PASS for the same netlist
-sha256, quiet ELF sha256 and snax_cluster commit (--again reruns it):
-  1. PT's threads from --cores (default 16), lowered to the host's free cores (nproc minus the load); a session
-     takes one PrimeTime and one PrimePower (L2), and one of each must stay free
-  2. in tmp/cluster/<point>/pt/: the DC run's tech.json, reports/lib_info.txt, the netlist and cluster.sdc; the
-     macros' .db (ram/runs/lib/<name>.zip, points.json's srams); every window's SAIF from pwr/ of the run zip
-  3. one pt_shell (sim/scripts/pt_power.tcl, PWR_MODE=cluster): the library and the macros linked with the netlist,
-     the wire load zeroed (PT1), constraints.sdc then cluster.sdc (PWR_EXTRA_SDC), then per window of
-     PWR_WINDOWS reset_switching_activity, read_saif -strip_path tb_bin/i_dut/i_snax_forge_cluster, update_power,
-     the reports and a done file; a licence error is retried once; peak memory from /usr/bin/time
-  4. per window, each check failing the window and the run: the wire-load counts 0 (PT1); at least ANN_MIN %
-     of the driven nets annotated, the driven nets PT's nets minus the not-annotated ones the window's SAIF has at Z
-     for the whole window (PT6, DC18; the SAIF streamed, names compared with backslashes and trailing spaces
-     dropped); the SAIF's entries as part 1 counted them; every row of power.rpt parsed, no group but PT_GROUPS;
-     the hierarchy's top total equal to power.rpt's
-  5. results/cluster/nangate45/power_pt.csv, one row per window merged on (point, mark): the per-cycle energies of sim/pwr.py
-     plus e_macro_pj (black_box + memory, the macros as PT measures them in averaged mode, PITFALLS PT7) and
-     e_io_pj, e_dyn_pj, p_dyn_uw, e_win_pj = e_dyn x cycles, the annotation, tx_nets (part 1), the commits, status;
-     no leakage
-  6. results/cluster/nangate45/power_reports/<point>.zip: per window power.rpt, power_hierarchy.rpt,
-     switching_activity.rpt, units.rpt; wire_load.rpt, licenses.rpt, windows.json, pt_check.json. pt/ of the run
-     zip: the not-annotated lists, pt_shell.log, the done files, logs/, pt_check.json; also on a failure. Then
-     tmp/cluster/<point>/ is deleted. One line at the end.
+Part 1: the quiet build (sw/forge_quiet.elf of rtl/cluster/<point>.zip) on step 3's netlist with our own vsim
+command and do-file, which dump one VCD of the cluster's design scopes and log every change of the wrapper's obs_o;
+the log gives one window per program section, every window is cut from the VCD in one pass, and vcd2saif makes and
+checks one SAIF per cut, kept under pwr/ of sim/runs/cluster/nangate45/<point>.zip. Part 2: one PrimePower
+session in averaged mode over the windows, into results/cluster/nangate45/power_pt.csv (one row per window) and
+power_reports/<point>.zip. Part 1 is skipped when its check.json is PASS for the same netlist, quiet ELF and
+snax_cluster (--again reruns it). The steps and checks are in cluster/README.md, "pwr".
 """
 
 from __future__ import annotations

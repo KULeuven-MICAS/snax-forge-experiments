@@ -2,21 +2,12 @@
 """report/cluster_breakdown.py - a synthesized cluster's area in groups, against HWCOST and the accelerator alone.
 
     pixi run cluster-breakdown [--tech nangate45] [--md]
-    pixi run cluster-breakdown-test                 report/test_cluster_breakdown.py
 
-For every point of cluster/points.json that has its DC reports (results/cluster/<tech>/reports/<point>.zip, step 2
-of cluster/cluster.py), reads area_hierarchy.rpt (cluster/tree.py's parse) and sums it into cluster/groups.json's groups: a node
-belongs to the first group with a rule it matches, else to its parent's group, and its own area (total minus its
-children's) goes there, so the groups add up to the top's total. Then, where they exist:
-
-  hwcost  snax-forge's five parts (results/cluster/<tech>/hwcost/<point>.json, cluster/hwcost.py) against the groups
-          groups.json maps them to; the parts' sum against those groups' sum, and HWCOST's shares of its own total
-          beside the groups' shares of theirs (the viewer's bar, D167)
-  alone   the accelerator's shell inside the cluster (csr, ctrl, dp, the rest, the whole) against its point
-          synthesized alone (points.json's `alone`, a row of results/forge/<tech>/synth_dc.csv)
-
-Writes results/cluster/<tech>/breakdown.json; --md also prints the tables as Markdown. The macros' area is checked
-against synth_dc.csv's `macro_um2` (the TCDM banks and I-cache macros together). Standard library and arc/arc.py.
+For every point of cluster/points.json with its DC reports, sums area_hierarchy.rpt into cluster/groups.json's
+groups (a node's own area to the first group it matches, else its parent's), then sets HWCOST's five parts
+(results/cluster/<tech>/hwcost/<point>.json) and the shell synthesized alone beside them. Writes
+results/cluster/<tech>/breakdown.json; --md prints the tables. The rules are in cluster/README.md, "The reports".
+Standard library and arc/arc.py.
 """
 
 from __future__ import annotations

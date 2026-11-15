@@ -3,21 +3,10 @@
     pixi run python cluster/mem.py MEMORIES_JSON OUT_DIR             # macros, models, tc_sram_impl.sv
     pixi run python cluster/mem.py MEMORIES_JSON OUT_DIR --text-only # tc_sram_impl.sv alone (no lc_shell)
 
-MEMORIES_JSON is snax_cluster's memory list, `util/clustergen.py -c <cluster file> -o <dir> --memories`
-(clustergen's `memory_cfg`, `<dir>/memories.json`): one entry per memory size, with its words, width,
-byte width, ports, latency, byte enable and the memories it stands for. Each entry becomes one SRAM macro
-(`ram/ram.py` `make_macro`): `sram_d<words>_w<width>`, with `_m8` where the list sets byte enable.
-OUT_DIR gets:
-
-    tc_sram_impl.sv   snax_cluster's tc_sram_impl (parameters and ports of tech_cells_generic's), one
-                      branch per macro, read through snax_cluster's SRAM_IMPL
-    models/<name>.v   the macros' behavioural models, out of ram/runs/lib/<name>.zip
-    sram_models.f     -sv, then the models' absolute paths, read through snax_cluster's SRAM_MODELS (vsim
-                      only); the models are SystemVerilog in .v files, which vlog reads as Verilog-2001
-                      without -sv (PITFALLS Q12); snax_cluster's list of SRAM_MODELS files skips option lines
-    mem.json          the macros and the list entries they come from
-
-None of it is committed; a run zips OUT_DIR's files with its outputs.
+MEMORIES_JSON is clustergen's memory list (`util/clustergen.py -c <cluster file> -o <dir> --memories`); each entry
+becomes one macro of ram/ram.py's make_macro, `sram_d<words>_w<width>[_m8]`. OUT_DIR gets tc_sram_impl.sv (one
+branch per macro, read through snax_cluster's SRAM_IMPL), models/<name>.v, sram_models.f (-sv first, PITFALLS
+Q12; read through SRAM_MODELS) and mem.json. None of it is committed; a run zips it with its outputs.
 """
 
 from __future__ import annotations

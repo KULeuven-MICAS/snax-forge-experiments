@@ -2,20 +2,11 @@
 
     pixi run python cluster/check.py FORGE_EXPECTED RUN_OUTPUT
 
-Mirrors snax_cluster's target/snitch_cluster/snax_forge_check.sh `compare`: the run's `forge data:` line
-equals the expected one; its `forge counter <task>: <c>` lines, in order, name the expected tasks, each
-count's gap beyond that task's `forge fill <task>: <n>` (the group's streamer fill: the counter counts the
-streamer's head start before START, which SNAX-GVSoC does not model; 0 without a fill line), as a share of the
-expected count, e = max(0, |got - want| - fill) / want, at most WARN_PCT (D123 as amended 11 Nov: NEAR up to
-NEAR_PCT, WARNING up to WARN_PCT, FAIL beyond; snax_cluster's script since #694). Also reads the run's `forge cycles:` and its `[tc_sram_impl] <path>: <macro>`
-prints (cluster/mem.py's, one per instance at time 0, `<path>.gen_<macro>: <macro>`), and the macro models'
-`RAMCOUNT <path> <macro> reads N writes M` lines (ram/ram.py's final block): the netlist run and the RTL macro
-run, compared without the paths (they differ; the netlist's hold escaped identifiers with spaces): the same reads on
-every instance and the same writes, but for one more write allowed on an instance of the netlist run: the write at
-time 0 under +initreg+0 (PITFALLS Q8, Q14). The netlist run's gates against the RTL run are data_compare (the
-data line equal to the expected one and to the RTL run's) and timing_compare (cycles and each counter within
-TIMING_PCT of the RTL run's); ram_compare and compare (D123 against SNAX-GVSoC) are then reported, not gates.
-Standard library only.
+Mirrors snax_cluster's snax_forge_check.sh `compare`: the run's `forge data:` line equals the expected one, and
+each `forge counter <task>: <c>` is within WARN_PCT of the expected count beyond the task's streamer fill (NEAR up
+to NEAR_PCT, WARNING up to WARN_PCT, FAIL beyond). Also the run's `forge cycles:`, its `[tc_sram_impl]` prints and
+the macro models' RAMCOUNT lines. The netlist run's gates against the RTL run are data_compare and timing_compare
+(TIMING_PCT); ram_compare and compare (D123 against SNAX-GVSoC) are reported. Standard library only.
 """
 
 from __future__ import annotations

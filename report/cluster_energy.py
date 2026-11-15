@@ -1,33 +1,13 @@
 #!/usr/bin/env python3
-"""report/cluster_energy.py - a cluster's dynamic energy per program section in groups, the run phase against HWCOST.
+"""report/cluster_energy.py - a cluster's dynamic energy per program section in groups, the run against HWCOST.
 
     pixi run cluster-energy [--tech nangate45] [--md]
-    pixi run cluster-energy-test                    report/test_cluster_energy.py
 
-For every point of cluster/points.json that has its PrimePower reports (results/cluster/<tech>/power_reports/
-<point>.zip, `pixi run cluster pwr` part 2), reads each window's power_hierarchy.rpt and sums each node's own
-dynamic power (internal + switching, its total minus its children's; leakage out) into cluster/groups.json's
-groups by the same rules (report/cluster_breakdown.py's `groups`), so the groups add up to the top's dynamic power.
-A window w of C_w cycles at t_clk (10 ns as the cuts read the run) gives each group g
-
-    E_g,w = (P_int + P_sw)_g,w * C_w * t_clk,    E_w = sum_g E_g,w,    E_span = sum_w E_w
-
-over the span's windows (the first mark to the end of the last DMA out). Then, where they exist:
-
-  run     the run phase: each run window against the acc_config window before it (the idle reference, the same
-          cluster with nothing moving but the clock): per group the energy per cycle in both, the run window's
-          energy, and its part above idle, (e_run - e_idle) * C_run, which may be negative where the clock's
-          booking moves (PITFALLS PT10's run note)
-  hwcost  snax-forge's five energy parts (results/cluster/<tech>/hwcost/<point>.json, nJ per task) against the
-          groups groups.json's `hwcost` maps them to, in the run window(s): the run's energy and its part above
-          idle, each side's shares of its own five-part sum. HWCOST is an estimate with no bit-level switching;
-          the shares are what is compared, not the absolute numbers
-  alone   the accelerator's shell in the run window against its point measured alone (points.json's `alone`, a
-          row of results/forge/<tech>/power_pt.csv, its busy window): energy and energy per cycle
-
-Each window's top dynamic power must equal power_pt.csv's `e_dyn_pj` (the same report, PT's groups) within
-0.01 %, or the point fails. Writes results/cluster/<tech>/energy.json; --md also prints the tables as Markdown.
-Standard library and arc/arc.py.
+For every point of cluster/points.json with its PrimePower reports, sums each window's power_hierarchy.rpt into
+cluster/groups.json's groups (report/cluster_breakdown.py's rules), E_g,w = (P_int + P_sw)_g,w x C_w x t_clk, then
+sets the run window against the idle window before it, HWCOST's five parts and the shell measured alone. Each
+window's total must equal power_pt.csv's e_dyn_pj within 0.01 %. Writes results/cluster/<tech>/energy.json; --md
+prints the tables. The rules are in cluster/README.md, "The reports". Standard library and arc/arc.py.
 """
 
 from __future__ import annotations

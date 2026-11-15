@@ -4,96 +4,14 @@
   pixi run cluster rtl <point> [--allow-branch]    step 1: the RTL with every memory as an SRAM macro
   pixi run cluster syn <point> [--cores N] [--allow-branch]   step 2: DC on the whole cluster
   pixi run cluster gls <point> [--allow-branch]    step 3: the netlist in the same testbench
-  pixi run cluster pwr <point> [--cores N] [--again] [--allow-branch]   step 4: the energy per program section; part 1
-      runs the quiet build on the netlist and cuts its VCD into one SAIF per section (skipped when the zip's
-      pwr/check.json is PASS for the same netlist, quiet ELF and snax_cluster; --again reruns it), part 2 runs
-      PrimePower once on the netlist, window after window, into results/cluster/nangate45/power_pt.csv and
-      power_reports/<point>.zip (cluster/power.py, whose docstring holds the steps)
+  pixi run cluster pwr <point> [--cores N] [--again] [--allow-branch]   step 4: the energy per program section
 
-A point is an entry of cluster/points.json (point, recipe, W, sets, and srams: the macro instances the
-cluster holds, per macro; optional syn: DC settings of the point, today only {"clk_gate": true}); the file
-also names the two images. A point with syn.clk_gate is a variant of another (the same recipe, W, sets and srams,
-its own name, e.g. dot3_w8_cg): every step runs on it as on any point, and syn turns on dc_syn.tcl's
-CLK_GATE_ENABLE (SYN_CLK_GATE_ENABLE=1: the clock-gating style, compile_ultra -no_autoungroup -gate_clock and the
-clock_gating*.rpt reports). snax_cluster is read from SNAX_CLUSTER
-(default ../snax_cluster): clean, HEAD on origin/main (`git merge-base --is-ancestor HEAD origin/main`)
-unless --allow-branch. snax-forge is read from SNAX_FORGE (default ../snax-forge): clean (PITFALLS E7).
-Both commits are recorded. The folder holding the three repos is mounted at its own path in every
-`podman run --rm` (no -it, stdin closed), with the home folder's Scala caches at /root (strm/gen.py's
-podman_cmd, PITFALLS SC6).
-
-The bundle, rtl/cluster/<point>.zip: `pixi run forge <recipe> --set W=<W> --set <sets...>` in
-snax-forge's image from the snax-forge checkout, the recipe found as forge/bundles.py finds it. A dirty
-bundle (bundle.json `dirty`) or one whose commit is not the checkout's is refused. The zip holds
-bundle/ (the bundle folder, forge_expected.txt with it), sw/forge.elf (the ELF forge prints), the quiet
-build beside it (sw/forge_quiet.elf and its legend sw/obs_marks.json, snax-forge D135, for step 4), forge.log,
-forge.txt (forge's terminal output) and provenance.json (snax-forge commit, image and id, the command, both
-ELFs' sha256). A zip whose provenance has the same commit, image id and command is reused.
-
-rtl, in tmp/cluster/<point>/ (the bundle zip unpacked there; the cluster file is the bundle's own
-snax_forge.hjson), from snax_cluster's target/snitch_cluster:
-  1. image: make clean-generated clean-vsim, then make rtl-gen CFG_OVERRIDE=<cluster file>; a separate
-     call: util/clustergen.py -c <cluster file> -o <point tmp> --memories (memories.json)
-  2. cluster/mem.py memories.json -> mem/ (tc_sram_impl.sv, models/, sram_models.f, mem.json)
-  3. the plain run: vsim_preparation in the image, snax-forge-sim SIM=vsim and snax-forge-run SIM=vsim
-     ELF=<elf> outside it (Questa on PATH, bender from snax_cluster's .pixi/envs/default/bin)
-  4. the macro run: the same three calls with SRAM_IMPL=mem/tc_sram_impl.sv SRAM_MODELS=mem/sram_models.f
-     (the vsim stamp rebuilds work-vsim/; no second rtl-gen)
-  5. the checks (cluster/check.py): D123 on both runs against forge_expected.txt, equal forge cycles, the
-     [tc_sram_impl] prints (their number, and the macro at each one's end) against the point's srams, the macro run's vlog.log (tc_sram_impl.sv and every
-     macro compiled, nothing of tech_cells_generic's tc_sram), [SUCCESS] in both runs
-  6. sim/runs/cluster/nangate45/<point>.zip, under rtl/ (other members kept): memories.json, mem.json,
-     tc_sram_impl.sv, sram_models.f, plain/ and macro/ (each run's snax-forge-vsim.txt; the macro run's
-     vlog.log and vopt.log), logs/ (every step's log), check.json. Packed also when a step failed. Then
-     tmp/cluster/<point>/ is deleted and `make clean-vsim clean-generated` runs in snax_cluster,
-     also on a failure.
-Each step's log path is printed when it starts. One line at the end: PASS or FAIL with the cycles and the
-instances; a failure names the check or step and prints at most 30 lines of its log.
-
-syn (step 2), from the same bundle zip, in tmp/cluster/<point>/:
-  1. image: make clean-generated clean-syn, make rtl-gen CFG_OVERRIDE=<cluster file>; clustergen --memories;
-     cluster/mem.py --text-only: its tc_sram_impl.sv must equal step 1's (rtl/tc_sram_impl.sv in
-     sim/runs/cluster/nangate45/<point>.zip), or the run stops
-  2. image: make gen-syn CFG_OVERRIDE=<cluster file> SRAM_IMPL=<that file> (work-syn/syn_flist.tcl)
-  3. DC through syn/syn.py's source `cluster` (dc_env, run_dc with its licence retry, finish_run, write_summary):
-     the run folder syn/runs/cluster/nangate45/<point>/ gets syn_flist.tcl, cluster/cluster.sdc and
-     tc_sram_impl.sv, and the macros' .db (from ram/runs/lib/<name>.zip) for SYN_RAM_DBS; dc_syn.tcl sources
-     the list (SYN_FLIST_TCL), elaborates snax_forge_cluster_wrapper (SYN_TOP), adds cluster.sdc after
-     constraints.sdc (SYN_EXTRA_SDC) and runs cluster/cluster_check.tcl after the reports (SYN_POST_TCL);
-     no SDF; SYN_IGNORE_LOAD=1, so DC keeps --cores under a loaded host (UIO-231); with the point's
-     syn.clk_gate, SYN_CLK_GATE_ENABLE=1. DC's stdout goes to logs/dc_stdout.log as it runs; its path is printed first.
-  4. tree.txt (cluster/tree.py, area_hierarchy.rpt to depth 4) beside the reports; the run zip
-     syn/runs/cluster/nangate45/<point>.zip keeps syn.py's KEEP_RUN and the cluster's files; a row in
-     results/cluster/nangate45/synth_dc.csv and the report zip results/cluster/nangate45/reports/<point>.zip.
-  5. after DC ends, also on a failure: tmp/cluster/<point>/ deleted, make clean-syn clean-generated in snax_cluster.
-
-gls (step 3): step 2's netlist (out/snax_forge_cluster_wrapper_mapped.v of syn/runs/cluster/nangate45/<point>.zip)
-in step 1's testbench, with step 1's ELF and check; zero delay, functional. snax_cluster's hook SIM_TYPE=gate_level_sim
-(GLS_NETLIST, GLS_CELLS, with SRAM_IMPL and SRAM_MODELS) compiles the cells, the macro models and the netlist into
-work-vsim/gls, and vopt takes -Lf work-vsim/gls, +initreg+0, +acc=n; vsim +nospecify +notimingchecks.
-  1. checks before anything runs: the repos as rtl and syn; step 1 PASS, step 2's netlist there; the bundle zip's
-     ELF the one both steps used (the bundle is reused, never made again: the netlist is of it); no file changed
-     under hw/, util/, target/snitch_cluster/cfg/ or Bender.yml between the netlist's snax_cluster commit and HEAD
-     but Makefiles, .mk and docs (RTL_CHANGE)
-  2. in tmp/cluster/<point>/: the bundle and the netlist unpacked; image: make clean-generated clean-vsim, rtl-gen;
-     clustergen --memories; cluster/mem.py, whose tc_sram_impl.sv must equal step 1's; the cell models as sim/pwr.py
-     finds them (pwr.cell_model)
-  3. vsim_preparation in the image, snax-forge-sim SIM=vsim and snax-forge-run SIM=vsim ELF=<elf> outside it, all
-     three with the same SRAM_IMPL, SRAM_MODELS, SIM_TYPE, GLS_NETLIST, GLS_CELLS. The two host steps' Questa
-     processes are sampled from /proc every PEAK_EVERY s (peak resident memory, first and last seen); Questa's own
-     elapsed times are read from vlog.log (the netlist's vlog), vopt.log and the run's output.
-  4. the checks. Gates: the data line equal to the expected one and to step 1's macro run (data); forge cycles
-     and every counter within check.TIMING_PCT (10 %) of the macro run's (cycles, exact values kept); the swap
-     (vopt loaded snax_forge_cluster_wrapper and Nangate cells from work-vsim/gls, its command has +initreg+0 and
-     +acc=n; the run prints no [tc_sram_impl]); [SUCCESS] in both runs. Reported, not gates (gate false in
-     check.json): D123 against SNAX-GVSoC (the rtl step's gate), and RAMCOUNT (one line per instance of
-     points.json's srams; against step 1's macro run, without the paths: reads equal, writes equal but for at most
-     one more on an instance, the netlist's access at time 0 under +initreg+0, listed as ram_extra_writes or
-     ram_extra_reads; PITFALLS Q14)
-  5. under gls/ of sim/runs/cluster/nangate45/<point>.zip (other members kept): snax-forge-vsim.txt, vlog.log,
-     vopt.log, logs/, check.json; then vsim.wlf (VSIM_FLAGS' `log -r /*`) deleted with its size in check.json,
-     tmp/cluster/<point>/ deleted and make clean-vsim clean-generated in snax_cluster, also on a failure. One line
-     at the end.
+A point is an entry of cluster/points.json; snax_cluster is read from SNAX_CLUSTER (default ../snax_cluster),
+clean and on origin/main unless --allow-branch, snax-forge from SNAX_FORGE (default ../snax-forge), clean. Every
+step works in tmp/cluster/<point>/ and keeps what it made under its own folder of
+sim/runs/cluster/nangate45/<point>.zip (syn: syn/runs/cluster/nangate45/<point>.zip and a synth_dc.csv row),
+also on a failure. The steps, their checks and what each keeps are in cluster/README.md; step 4 is
+cluster/power.py.
 """
 
 from __future__ import annotations

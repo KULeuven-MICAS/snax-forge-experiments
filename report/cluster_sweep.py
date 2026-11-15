@@ -1,42 +1,14 @@
 #!/usr/bin/env python3
 """report/cluster_sweep.py - the cluster points of one recipe side by side over W, the netlist beside HWCOST.
 
-    pixi run cluster-sweep [--tech nangate45] [--recipe dot_3] [--md]      the ungated sweep
-    pixi run cluster-sweep --gated [--md]                                  the clock-gated sweep
-    pixi run cluster-sweep --points dot3_w8,dot3_w8_cg --out NAME [--tables gated] [--md]
-    pixi run cluster-sweep-test                     report/test_cluster_sweep.py
+    pixi run cluster-sweep [--tech nangate45] [--recipe dot_3] [--md]
+    pixi run cluster-sweep --points A,B,... --out NAME [--md]
 
-Reads what cluster-breakdown and cluster-energy already wrote (results/cluster/<tech>/breakdown.json and
-energy.json) and lays out the run window only (`5_run`, the busy section) per point. Two sweeps,
-side by side in results/cluster/<tech>/:
-
-  ungated  the recipe's points of cluster/points.json but its variants (a `syn` field), in order of W, beside
-           snax-forge's HWCOST (the ungated tables, as energy.json and breakdown.json carry it); files *_ungated
-  gated    the recipe's clock-gated variants (`"syn": {"clk_gate": true}`), in order of W, beside HWCOST on
-           the clock-gated tables (results/cluster/<tech>/hwcost_cg.csv's `gated` rows at each W, pixi run
-           cg2-reprice); files *_gated
-
---points names any points instead, in the order given (variants included), and --out NAME writes into
-results/cluster/<tech>/NAME/, the bars labelled by point; for a look, not committed. --tables gated
-takes HWCOST from the gated tables there too.
-
-  energy  the netlist's run-window energy in HWCOST's five parts (datapath, control, streamers, crossbar, memory;
-          the groups cluster/groups.json's `hwcost` maps to each), the groups HWCOST does not price as one more
-          line, and HWCOST's five parts (nJ per task); shares of each side's own five-part sum, the netlist's also
-          of its whole run window
-  area    the same layout in um2: the cluster's groups (breakdown.json) beside HWCOST's five parts
-  alone   the accelerator's shell in the run window and alone (points.json's `alone`): cycles, pJ/cycle, nJ, um2
-
-A part's share is s_p = E_p / sum over the five parts of E_q, on each side. No normalization, no check on the
-trend: the data is laid out, its reading is the user's.
-
-Writes sweep_<label>.csv in long form (point, W, source, window, group, metric, value; source `gls` the netlist,
-`hwcost` snax-forge's estimate, `hwcost_cg` the gated tables', `alone` the shell alone), and figures beside it:
-sweep_energy_<label>.png and sweep_area_<label>.png, per W the netlist's bar beside HWCOST's, absolute on the left
-and in % of the five parts on the right; sweep_energy_five_<label>.png and sweep_area_five_<label>.png, the
-absolute panel alone with the five parts only, each bar's total above it. The bars stack the parts that change
-least at the bottom (STACK: memory, control, streamers, crossbar, datapath) and the netlist's not-priced part on
-top. --md prints the tables as Markdown.
+Reads breakdown.json and energy.json and lays out the run window (`5_run`) of the recipe's points, one per W, or
+of the named points into results/cluster/<tech>/NAME/: sweep.csv (long form: point, W, source, window, group,
+metric, value) and sweep_energy.png, sweep_area.png, sweep_energy_five.png and sweep_area_five.png, the bars
+stacked in STACK's order with the netlist's not-priced part on top. The layout is in cluster/README.md, "The
+reports".
 """
 
 from __future__ import annotations
