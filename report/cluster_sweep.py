@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""report/cluster_sweep.py - the cluster points of one recipe side by side over W, the netlist beside HWCOST (X78).
+"""report/cluster_sweep.py - the cluster points of one recipe side by side over W, the netlist beside HWCOST.
 
     pixi run cluster-sweep [--tech nangate45] [--recipe dot_3] [--md]      the ungated sweep
     pixi run cluster-sweep --gated [--md]                                  the clock-gated sweep
@@ -7,17 +7,17 @@
     pixi run cluster-sweep-test                     report/test_cluster_sweep.py
 
 Reads what cluster-breakdown and cluster-energy already wrote (results/cluster/<tech>/breakdown.json and
-energy.json, X72, X74) and lays out the run window only (`5_run`, the busy section, X73) per point. Two sweeps,
-side by side in results/cluster/<tech>/ (X86):
+energy.json) and lays out the run window only (`5_run`, the busy section) per point. Two sweeps,
+side by side in results/cluster/<tech>/:
 
   ungated  the recipe's points of cluster/points.json but its variants (a `syn` field), in order of W, beside
            snax-forge's HWCOST (the ungated tables, as energy.json and breakdown.json carry it); files *_ungated
-  gated    the recipe's clock-gated variants (`"syn": {"clk_gate": true}`, X79), in order of W, beside HWCOST on
+  gated    the recipe's clock-gated variants (`"syn": {"clk_gate": true}`), in order of W, beside HWCOST on
            the clock-gated tables (results/cluster/<tech>/hwcost_cg.csv's `gated` rows at each W, pixi run
-           cg2-reprice, X83, X85); files *_gated
+           cg2-reprice); files *_gated
 
 --points names any points instead, in the order given (variants included), and --out NAME writes into
-results/cluster/<tech>/NAME/, the bars labelled by point (X80); for a look, not committed (X86). --tables gated
+results/cluster/<tech>/NAME/, the bars labelled by point; for a look, not committed. --tables gated
 takes HWCOST from the gated tables there too.
 
   energy  the netlist's run-window energy in HWCOST's five parts (datapath, control, streamers, crossbar, memory;
@@ -51,7 +51,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 POINTS = ROOT / "cluster" / "points.json"
 PARTS = ["datapath", "control", "streamers", "crossbar", "memory"]
-STACK = ["memory", "control", "streamers", "crossbar", "datapath"]    # the figures' bars, bottom to top (X86)
+STACK = ["memory", "control", "streamers", "crossbar", "datapath"]    # the figures' bars, bottom to top
 REST = "not_priced"      # the netlist's groups HWCOST does not price
 RUN = "5_run"
 FIELDS = ["point", "W", "source", "window", "group", "metric", "value"]
@@ -84,7 +84,7 @@ def point_data(p: dict, energy: dict, breakdown: dict) -> dict:
     return {
         "point": p["point"], "W": int(p["W"]), "run_cycles": run["cycles"], "run_nj": run["nj"],
         "span_cycles": e["span"]["cycles"], "span_nj": e["span"]["nj"],
-        "groups_pj": dict(run["groups"]),       # pJ per cycle per X72 group in the run window
+        "groups_pj": dict(run["groups"]),       # pJ per cycle per group in the run window
         "groups_um2": {g["name"]: g["area_um2"] for g in b["groups"]},
         "gls_e": gls_e, "hw_e": {k: eh[k]["hwcost_nj"] for k in PARTS},
         "gls_a": gls_a, "hw_a": {k: ah[k]["hwcost_um2"] for k in PARTS}, "area_um2": b["total_um2"],
@@ -122,7 +122,7 @@ def load(tech: str, recipe: str, names: list[str] | None = None) -> list[dict]:
 
 
 def rows(pts: list[dict]) -> list[list]:
-    """sweep.csv's rows: every number of the tables, plus the run window's and the area's X72 groups."""
+    """sweep.csv's rows: every number of the tables, plus the run window's and the area's groups."""
     out: list[list] = []
     for d in pts:
         pw, hs = [d["point"], d["W"]], "hwcost"
@@ -219,7 +219,7 @@ def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (F
     """Per W the netlist's bar beside HWCOST's, stacked by part: absolute (left), % of the five parts (right).
     panels=(False,) draws the absolute panel alone with the five parts only (the netlist's not-priced part left
     out, so both bars hold what HWCOST prices), each bar's total written above it. by_point labels each pair by
-    its point and W (--points, X80) in place of W alone."""
+    its point and W (--points) in place of W alone."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt

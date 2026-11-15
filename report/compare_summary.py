@@ -37,7 +37,7 @@ def main():
         for w in (1, 2, 4, 8, 16):
             r = d[(k, c, w)]
             cyc, el = int(r["cycles"]), int(r["elements"])
-            a_cell, e_cell = forge_csr_cell(r)     # X65: the whole csr cell, peripherals in no figure
+            a_cell, e_cell = forge_csr_cell(r)     # the whole csr cell, peripherals in no figure
             e_nocsr = (f(r, "e_run_pj") - e_cell * cyc) / el
             a_nocsr = f(r, "area_um2") - a_cell
             e_cd = (f(r, "e_dyn_ctrl_pj") + f(r, "e_dyn_datapath_pj")) * cyc / el

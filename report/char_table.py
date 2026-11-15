@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-"""report/char_table.py - CHAR1: snax-forge's blocks alone, the table (docs/DECISIONS.md X28 to X37).
+"""report/char_table.py - snax-forge's blocks alone, the table.
 
   pixi run char-table          (after pixi run char-export)
 
-Reads, per technology (nangate45, nangate15), results/char/<tech>/char_synth.csv (R0) and char_power.csv (R2),
+Reads, per technology (nangate45, nangate15), results/char/<tech>/char_synth.csv and char_power.csv,
 and char/points.json (the params as hw/chisel/blocks.json names them); writes results/char/char_table.md. Every
 number is computed from those files, or, for the Model section and the known limits, from the files they cite:
 
   the model            results/char/<tech>/char.json (report/char_export.py, checked equal to what it builds now
-                       from the same CSVs), and SYN2's results/forge/<tech>/power_pt.csv (cycles, config),
+                       from the same CSVs), and the forge points' results/forge/<tech>/power_pt.csv (cycles, config),
                        power_pt_modules.csv (the units', ctrl's and the datapath's e_dyn per cycle) and
                        synth_dc_modules.csv (ctrl's flops)
-  the free first       SYN2's results/forge/<tech>/synth_dc_modules.csv (TreeAccumulate inside dot 4)
+  the free first       the forge points' results/forge/<tech>/synth_dc_modules.csv (TreeAccumulate inside dot 4)
   the isolated fire    R1's char_power.csv at the pushed commit R1_COMMIT (`git show`, not a copy): duty50
                        against (busy + idle) / 2
   LinkBuffer's slope   the R2 run note's diagnostic table (results/char/runs/2026-11-03_char1_r2.md), the two
                        netlists' e_flop and e_bit
-  the dot 4 to 6 Mac   SYN2's results/forge/<tech>/power_pt.csv (cycles) and power_pt_modules.csv (the Mac's
+  the dot 4 to 6 Mac   the forge points' results/forge/<tech>/power_pt.csv (cycles) and power_pt_modules.csv (the Mac's
                        e_dyn per cycle): (fires E_busy + (cycles - fires) E_idle) / cycles with fires = N / W
 
 Checks, each a failure: every point of char/points.json present on both technologies, every row ok, one
@@ -37,11 +37,11 @@ RES = ROOT / "results"
 CHAR = RES / "char"
 OUT = CHAR / "char_table.md"
 POINTS = ROOT / "char" / "points.json"
-R1_COMMIT = "03b7a835eec358ceee94e3a4fc7ed82617489659"   # ry/char1 after CHAR1 R1 (tag char1-r1), pushed
+R1_COMMIT = "03b7a835eec358ceee94e3a4fc7ed82617489659"   # the commit holding the duty50 rows, pushed
 R2_NOTE = CHAR / "runs" / "2026-11-03_char1_r2.md"
 R1_NOTE = "results/char/runs/2026-11-03_char1_r1.md"
 TECHS = ["nangate45"]
-N = 2048                      # SYN2's task, the dot 4 to 6 Mac comparison
+N = 2048                      # the forge points' task, the dot 4 to 6 Mac comparison
 CLOCK, SEED, CYCLES = "10", "0", 128
 BLOCKS = [("ElementwiseLanes", "lanes"), ("Mac", "mac"), ("TreeAccumulate", "tree"),
           ("SerialAccumulate", "serial"), ("LinkBuffer", "link")]
@@ -53,8 +53,8 @@ def fail(msg: str) -> None:
 
 
 def read_csv(path: Path, at: str | None = None, gate: str = "0") -> list[dict]:
-    """The CSV's rows whose clk_gate is `gate` (X79; empty reads as 0): the tables are of the ungated runs, the
-    clock-gated rows only for char_export.py --clk-gate (X83)."""
+    """The CSV's rows whose clk_gate is `gate` (empty reads as 0): the tables are of the ungated runs, the
+    clock-gated rows only for char_export.py --clk-gate."""
     keep = lambda r: ("1" if r.get("clk_gate", "") == "1" else "0") == gate  # noqa: E731
     if at is None:
         with path.open(newline="") as fh:
@@ -276,7 +276,7 @@ def limit_mac(D: dict) -> list[str]:
                    "busy / inside", "model / inside"], rows)]
 
 
-# ---------------------------------------------------------------- the model (char.json against SYN2)
+# ---------------------------------------------------------------- the model (char.json against the forge points)
 MODEL_DESIGNS = [("vecmul", "done/vecmul/forge_w{}"), ("vsum", "done/vsum/forge_w{}"), ("dot 4", "done/dot/forge4_w{}"),
                  ("dot 5", "done/dot/forge5_w{}")]
 MODEL_WS = (8, 32)
@@ -338,7 +338,7 @@ def model_points(D: dict, J: dict) -> list[str]:
 
 
 def syn2_units(t: str, D: dict, point: str, w: int, mods: list[dict]) -> list[dict]:
-    """SYN2's units of `point` in block order: {name (the unit), design (the block module), char (the char point at
+    """The forge point's units of `point` in block order: {name (the unit), design (the block module), char (the char point at
     W whose top it is), datapath, params, e (pJ per cycle)}."""
     out = []
     for m in mods:

@@ -64,7 +64,7 @@ def test_against_ref():
     assert not ok and rows[2]["diff"] == 35
 
 
-# bin/snitch_cluster.vsim as snax_cluster ac231e42 wrote it for the netlist build (SIM_TYPE=gate_level_sim), PWR1 R1
+# bin/snitch_cluster.vsim as snax_cluster ac231e42 wrote it for the netlist build (SIM_TYPE=gate_level_sim)
 VSIM_SCRIPT_TEXT = '#!/bin/bash\nbinary=$(realpath $1)\nmkdir -p logs\necho $binary > logs/.rtlbinary\n vsim +permissive -64 -t 1ps +nospecify +notimingchecks -do "log -r /*; run -a" $3 -work /users/micas/rantonio/no_backup/kul_main/snax_cluster/target/snitch_cluster//work-vsim -c -ldflags "-Wl,-rpath,/users/micas/rantonio/no_backup/kul_main/snax_cluster/target/snitch_cluster/work/lib -L/users/micas/rantonio/no_backup/kul_main/snax_cluster/target/snitch_cluster/work/lib -lfesvr -lutil" tb_bin_opt +permissive-off ++$binary ++$2\n'
 
 
@@ -163,7 +163,7 @@ def test_program_output():
     assert power.program_output(run + "forge cycles: 810\n") == ["forge cycles: 810"]
 
 
-# ---------------------------------------------------------------- part 2 (R2)
+# ---------------------------------------------------------------- part 2
 def test_windows_file():
     w = power.windows(LOG, MARKS)
     saifs = {power.window_name(x): Path(f"/w/pt/saifs/{power.window_name(x)}.saif") for x in w}

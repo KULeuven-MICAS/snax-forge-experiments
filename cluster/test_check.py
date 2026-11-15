@@ -41,7 +41,7 @@ def test_beyond_fill():
 
 
 def test_beyond_fill_dot3_w32():
-    # PWR2 R1: at W = 32 the streamers' 8-beat head start hides more than the fill (bank bound, 2 cycles a beat)
+    # at W = 32 the streamers' 8-beat head start hides more than the fill (bank bound, 2 cycles a beat)
     want = "forge counter mult_dot: 131\nforge data: 0 errors (1 words)\nforge fill mult_dot: 3\n"
     ok, notes = check.compare(want, RUN.format(c=118).replace("forge cycles: 828", "forge cycles: 820"))
     assert ok and notes == ["mult_dot: counter 118 against 131, 10 beyond its fill 3 (7.6 %, NEAR)"], notes
@@ -154,7 +154,7 @@ def test_ram_read_difference_fail():
 
 
 def test_ram_one_extra_read_allowed():
-    # CG1 R2 dot3_w8_cg: the clock-gated netlist's TCDM banks of super bank 0 each read once at time 0
+    # dot3_w8_cg: the clock-gated netlist's TCDM banks of super bank 0 each read once at time 0
     ok, notes, extra = check.ram_compare(RTL_LINES, GLS_LINES.replace("reads 139", "reads 140"), SRAMS1)
     assert ok and notes == [], notes
     assert extra == [{"macro": "sram_d128_w39", "reads": 487, "rtl_writes": 237, "gls_writes": 238},
@@ -192,7 +192,7 @@ def test_ram_pairing_without_paths():
 
 
 def test_ram_pairing_both_plus_one():
-    # PWR2 R1 dot3_w4: two I-cache sets at 236 and 235 writes, the netlist's each +1 (237, 236); equal-first
+    # dot3_w4: two I-cache sets at 236 and 235 writes, the netlist's each +1 (237, 236); equal-first
     # matching paired 236 with 236 and left 237 against 235
     rtl = "RAMCOUNT a m reads 473 writes 236\nRAMCOUNT b m reads 473 writes 235\n"
     gls = "RAMCOUNT x m reads 473 writes 237\nRAMCOUNT y m reads 473 writes 236\n"
@@ -235,7 +235,7 @@ def test_timing_gate_counter_names():
 
 
 def test_ram_summary_reported():
-    assert check.ram_summary(36, False, []) == "RAMCOUNT 36 differ (reported, X84)"
+    assert check.ram_summary(36, False, []) == "RAMCOUNT 36 differ (reported)"
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""arc/arc.py - outputs zipped one per point (docs X51, CLAUDE.md "Files are zipped").
+"""arc/arc.py - outputs zipped one per point (CLAUDE.md, "Files are zipped").
 
   pixi run arc check                 unpacked run folders, report folders not zipped, tmp/ leftovers, inodes
   pixi run arc ls ZIP                a zip's members and sizes

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""report/compare.py - the raw comparison tables: forge and the four HLS cases, one CSV per tier (X38 to X44).
+"""report/compare.py - the raw comparison tables: forge and the four HLS cases, one CSV per tier.
 
   pixi run compare            # writes results/compare_done.csv and results/compare_untiered.csv
   pixi run compare --check    # checks only, writes nothing
@@ -8,45 +8,45 @@ Reads only committed CSVs in this repo (no tool, no licence, no checkout next to
 
   results/<source>/<tech>/synth_dc.csv          area, timing, path-class slacks, the forge and bambu splits
   results/<source>/<tech>/power_pt.csv          one row per point, size and seed: window cycles and energy
-  results/<source>/<tech>/power_pt_modules.csv  energy per hierarchical cell, per point and size (X60)
+  results/<source>/<tech>/power_pt_modules.csv  energy per hierarchical cell, per point and size
   results/hls/hls_cycles.csv, results/bambu/bambu_cycles.csv, results/xls/xls_cycles.csv   provenance
 
-for the sources forge, hls (Vitis opt and dace), bambu and xls, on nangate45 and nangate15, W <= MAX_W (X38).
-Forge's W = 32 rows are left out like every other W > MAX_W; its untiered points (CSYN1) are nangate45 only
+for the sources forge, hls (Vitis opt and dace), bambu and xls, on nangate45 and nangate15, W <= MAX_W.
+Forge's W = 32 rows are left out like every other W > MAX_W; its untiered points are nangate45 only
 (snax-forge D159), every other point is on both technologies.
 
 One row per tech, tier, kernel, W, tool, case and size. The data is laid out, not compared: no ratios, no
-ranking (the comparison is brainstormed on top of these tables). Parked points (a RAM macro, X15) are rows
+ranking (the comparison is brainstormed on top of these tables). Parked points (a RAM macro) are rows
 with their status and no numbers.
 
 Columns:
   key        tech, tier, kernel, W, tool (forge, vitis, bambu, xls), case (forge, forge2..6, forge_baked, opt,
              dace, bambu, xls), point, size, status (ok, or the synthesis or power status that is not)
   task       beats (per input stream), elements (beats * W), cycles (the power window), window (how the
-             window is defined for the tool: X12, X44)
+             window is defined for the tool)
   area       area_um2, comb_area_um2, seq_area_um2, buf_inv_area_um2, cells, seq_cells, and the split where
-             the RTL declares it as hierarchy (X41): csr_um2 (forge), ctrl_um2, datapath_um2, glue_um2
+             the RTL declares it as hierarchy: csr_um2 (forge), ctrl_um2, datapath_um2, glue_um2
              (forge, bambu); empty for vitis and xls; forge's csr_um2 is the csr cell without its child
-             <tag>_peripherals (BUSY_COUNTER, snax-forge D168; X65), whose area is peripherals_um2 (for the
+             <tag>_peripherals (BUSY_COUNTER, snax-forge D168), whose area is peripherals_um2 (for the
              record, in no figure: forge's total without csr is area_um2 - csr_um2 - peripherals_um2; empty
-             where the bundle has none: every point before CTRL2 R5); ram_kind and ram_um2 for a Vitis point with a RAM (X62:
+             where the bundle has none: every point before the leaner control unit); ram_kind and ram_um2 for a Vitis point with a RAM (
              an SRAM macro or flops, inside area_um2)
   timing     crit_path_ns, slack_ns, fmax_mhz, slack_in2reg_ns, slack_reg2reg_ns, slack_reg2out_ns,
-             slack_in2out_ns (X40; empty on forge rows, synthesized before X40)
+             slack_in2out_ns (empty on forge rows, synthesized before these columns)
   energy     e_clk_pj, e_reg_pj, e_seq_pj, e_comb_pj, e_flop_pj, e_dyn_pj (per cycle of the window),
              p_dyn_uw, e_run_pj (the task), pj_per_elem (e_run_pj / elements), flop_bits, e_bit_pj,
-             leak_dc_uw (DC's leakage estimate, X7); ram_reads, ram_writes, e_ram_pj (the RAM's share of
-             e_run_pj, X62: counted accesses x CACTI's energies for a macro, X50; PT's for flops)
+             leak_dc_uw (DC's leakage estimate); ram_reads, ram_writes, e_ram_pj (the RAM's share of
+             e_run_pj: counted accesses x CACTI's energies for a macro, PT's for flops)
   parts      e_dyn_csr_pj, e_dyn_ctrl_pj, e_dyn_datapath_pj, e_dyn_glue_pj (per cycle, forge and bambu
-             only; forge's csr without its _peripherals child, whose energy is e_dyn_peripherals_pj, for the record, X65), parts_size (the run they come from: the row's own run where power_pt_modules.csv has it
-             (X60: every n2048 run; X63), else the point's default run: tier done b64 (rowsum m8_n64), forge
-             n2048, untiered on nangate45 n2048 (X55), on nangate15 the default run (X61))
+             only; forge's csr without its _peripherals child, whose energy is e_dyn_peripherals_pj, for the record), parts_size (the run they come from: the row's own run where power_pt_modules.csv has it
+             (every n2048 run), else the point's default run: tier done b64 (rowsum m8_n64), forge
+             n2048, untiered on nangate45 n2048, on nangate15 the default run)
   provenance rtl_commit (the tool repo commit the RTL was measured at; forge: snax_forge_commit),
              tool_version, dc_version, syn_date
 
 Checks (any failure: exit 1, nothing written): every listed point has a synthesis row on both technologies
 (an untiered forge point on nangate45 only); every ok point has the same sizes as the other points of its
-kernel, n2048 among them (X24; X55 on nangate45, X61), each with an ok power row; no duplicate key; the split columns (csr, ctrl, datapath, glue and, for forge since CTRL2 R5, peripherals) sum to the area where they exist; a point with parts has an ok
+kernel, n2048 among them, each with an ok power row; no duplicate key; the split columns (csr, ctrl, datapath, glue and, for forge's leaner control unit, peripherals) sum to the area where they exist; a point with parts has an ok
 run at its default size. A glue energy within 1e-5 of the total (PT's rounding) is written as 0.
 """
 from __future__ import annotations
@@ -75,24 +75,24 @@ WINDOW = {
 CYCLES_CSV = {"hls": "hls/hls_cycles.csv", "bambu": "bambu/bambu_cycles.csv", "xls": "xls/xls_cycles.csv"}
 VERSION_COL = {"hls": "vitis", "bambu": "bambu_version", "xls": "xls_version"}
 # Parts by the design name of the hierarchical cell (synth_dc_modules.csv, power_pt_modules.csv): a regex on
-# the design, matched among the top's children. forge: snax_forge_<part> (SYN1, SYN2), or snax_forge_<design>_<part>
+# the design, matched among the top's children. forge: snax_forge_<part>, or snax_forge_<design>_<part>
 # since snax-forge names modules after the design (PITFALLS E5); bambu: the controller_ and datapath_ prefixes
 PARTS = {
     "forge": {"csr": r"snax_forge_(?:\w+_)?csr", "ctrl": r"snax_forge_(?:\w+_)?ctrl",
               "datapath": r"snax_forge_(?:\w+_)?datapath"},
     "bambu": {"ctrl": r"(?i)controller_.*", "datapath": r"(?i)datapath_.*"},
 }
-# X65: forge's csr holds <tag>_peripherals (BUSY_COUNTER, snax-forge D168), neither interface nor control and in no
+# NB (X65): forge's csr holds <tag>_peripherals (BUSY_COUNTER, snax-forge D168), neither interface nor control and in no
 # figure: the csr part is the csr cell minus this child (one level below it), kept apart for the record, and the
-# total without csr (compare_hls.py) subtracts the whole csr cell, as in Part A; a bundle without it (every point
-# before CTRL2 R5) subtracts nothing
+# total without csr (compare_hls.py) subtracts the whole csr cell; a bundle without it (every point
+# before the leaner control unit) subtracts nothing
 PERIPHERALS = r"snax_forge_(?:\w+_)?peripherals"
-# The size of a point's default run (power_pt_modules.csv has it, X60): b64 (X19), but rowsum's default is its
-# m8_n64 task, and forge runs n2048 only. Untiered rows take their parts from n2048 (X55).
+# The size of a point's default run (power_pt_modules.csv has it): b64, but rowsum's default is its
+# m8_n64 task, and forge runs n2048 only. Untiered rows take their parts from n2048.
 DEFAULT_SIZE = {"rowsum": "m8_n64"}
 REF_SIZE = "n2048"
-REF_TECH_UNTIERED = "nangate45"           # X61: untiered n2048 runs on nangate45 only (CSYN1)
-# X62: Vitis dace cases rebuilt for the n2048 task only (hls-exercises' params.json gives the case its own sizes)
+REF_TECH_UNTIERED = "nangate45"           # untiered n2048 runs on nangate45 only
+# Vitis dace cases rebuilt for the n2048 task only (hls-exercises' params.json gives the case its own sizes)
 N2048_ONLY = {("done", "dot", "dace"), ("untiered", "axpy", "dace"), ("untiered", "rowsum", "dace")}
 POINT = re.compile(r"^(?P<tier>[^/]+)/(?P<kernel>[^/]+)/(?P<case>[a-z]+[0-9]*(?:_[a-z]+)?)_w(?P<w>\d+)$")
 
@@ -113,7 +113,7 @@ COLUMNS = KEY + TASK + AREA + TIMING + ENERGY + PART_E + PROV
 def read(path: Path) -> list[dict]:
     if not path.is_file():
         return []
-    with path.open(newline="") as fh:     # X79: a clock-gated row (clk_gate 1) is not part of the comparison
+    with path.open(newline="") as fh:     # a clock-gated row (clk_gate 1) is not part of the comparison
         return [r for r in csv.DictReader(fh) if r.get("clk_gate", "") != "1"]
 
 
@@ -123,7 +123,7 @@ def parse(point: str) -> dict | None:
 
 
 def listed(source: str, point: str) -> bool:
-    """The points HSYN1 compares: W <= MAX_W, and for the HLS sources the case filter of syn.py."""
+    """The points compared: W <= MAX_W, and for the HLS sources the case filter of syn.py."""
     p = parse(point)
     if not p or int(p["w"]) > syn.MAX_W:
         return False
@@ -144,7 +144,7 @@ def provenance(source: str) -> dict:
 
 
 def part_energy(source: str, mods: list[dict]) -> dict:
-    """e_dyn per cycle of each declared part, from the point's power_pt_modules rows (X41)."""
+    """e_dyn per cycle of each declared part, from the point's power_pt_modules rows."""
     if source not in PARTS or not mods:
         return {}
     top = min(mods, key=lambda r: r["path"].count("/"))
@@ -166,7 +166,7 @@ def part_energy(source: str, mods: list[dict]) -> dict:
     # PT prints about 7 significant digits, so a wrapper with nothing but its parts leaves a glue of
     # +-1e-6 of the total: that is rounding, written as 0
     out["e_dyn_glue_pj"] = 0.0 if abs(glue) <= 1e-5 * abs(total) else glue
-    if source == "forge":       # X65: the glue above counts the whole csr; the csr part leaves its peripherals out
+    if source == "forge":       # the glue above counts the whole csr; the csr part leaves its peripherals out
         per = peripherals(mods, csr_path, f"{top['point']} {top['size']}")
         if per is not None:
             e_per = float(per["e_dyn_pj"])
@@ -176,7 +176,7 @@ def part_energy(source: str, mods: list[dict]) -> dict:
 
 
 def peripherals(mods: list[dict], csr_path: str, what: str) -> dict | None:
-    """X65: the csr's <tag>_peripherals child (one level below the csr cell at csr_path), or None (a bundle before
+    """The csr's <tag>_peripherals child (one level below the csr cell at csr_path), or None (a bundle before
     snax-forge D168)."""
     hits = [r for r in mods if re.fullmatch(PERIPHERALS, r["design"])]
     if not hits:
@@ -222,7 +222,7 @@ def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
                 row[c] = ""
             out.append(row)
             continue
-        if source == "forge" and s.get("csr_um2"):     # X65: the csr part without its peripherals child
+        if source == "forge" and s.get("csr_um2"):     # the csr part without its peripherals child
             csr = [r for r in synth_mods[point] if re.fullmatch(PARTS["forge"]["csr"], r["design"])]
             try:
                 if len(csr) != 1:
@@ -252,7 +252,7 @@ def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
             if not any(r["size"] == psize and r.get("status") == "ok" for r in power[point]):
                 problems.append(f"{tech} {point}: no ok run at its parts size {psize}")
         elif source in PARTS and any(r["size"] == psize and r.get("status") == "ok" for r in power[point]):
-            problems.append(f"{tech} {point}: an ok run at {psize} but no module rows for it (X60)")
+            problems.append(f"{tech} {point}: an ok run at {psize} but no module rows for it")
         runs = power.get(point, [])
         if not runs:
             problems.append(f"{tech} {point}: synthesized but no power row")
@@ -269,7 +269,7 @@ def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
                 row["pj_per_elem"] = f"{float(r['e_run_pj']) / int(row['elements']):.6g}"
             if row["status"] == "ok":
                 row.update(parts)
-                # X63: a row whose own size has module rows (X60: every n2048 run) takes its parts from them
+                # a row whose own size has module rows (every n2048 run) takes its parts from them
                 if source in PARTS and r["size"] != psize and (point, r["size"]) in mods:
                     try:
                         row.update(part_energy(source, mods[(point, r["size"])]), parts_size=r["size"])
@@ -282,7 +282,7 @@ def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
 
 
 def check_sizes(rows: list[dict], problems: list[str]) -> None:
-    """Every ok point of a kernel has the same sizes; tier done has n2048 (X24)."""
+    """Every ok point of a kernel has the same sizes; tier done has n2048."""
     sizes = defaultdict(set)
     want = defaultdict(set)
     for r in rows:
@@ -292,7 +292,7 @@ def check_sizes(rows: list[dict], problems: list[str]) -> None:
         if r["tool"] != "forge":
             want[(r["tech"], r["tier"], r["kernel"])].add(r["size"])
     for r in rows:
-        if r["tier"] == "done" or r["tech"] == REF_TECH_UNTIERED:      # X24 (tier done), X55 and X61 (untiered)
+        if r["tier"] == "done" or r["tech"] == REF_TECH_UNTIERED:      # tier done; untiered on nangate45
             want[(r["tech"], r["tier"], r["kernel"])].add(REF_SIZE)
     for (tech, point), have in sorted(sizes.items()):
         tier, kernel = point.split("/")[:2]

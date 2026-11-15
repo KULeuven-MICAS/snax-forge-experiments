@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""report/strm_table.py - STRM1: the reader and interconnect tables snax-forge's HW cost model reads, and the
-reference interpolation it copies (docs/DECISIONS.md X53).
+"""report/strm_table.py - the reader and interconnect tables snax-forge's HW cost model reads, and the
+reference interpolation it copies.
 
   pixi run strm-table [--tech nangate45] [--loo] [--clk-gate]
   pixi run strm-table-test                       report/test_strm_table.py
@@ -10,20 +10,20 @@ same two of results/xbar/<tech>/, and writes results/strm/<tech>/:
 
   streamer.csv  depth, loops, channels, area_um2, e_beat_pj, flops, slack_ns, fmax_mhz, status
                 one row per grid point (FIFO depth x loops x channels): DC's total area, PT's dynamic energy over
-                the busy window / beats, DC's flop count, worst slack and fmax (a lower bound, X2)
+                the busy window / beats, DC's flop count, worst slack and fmax (a lower bound)
   xbar.csv      inputs, banks, area_um2, e_access_pj, flops, slack_ns, fmax_mhz, status
                 one row per grid point (inputs x banks); e_access_pj is PT's energy over the window / grants and is
-                empty where inputs > banks (not measured: no conflict-free stimulus, X52)
+                empty where inputs > banks (not measured: no conflict-free stimulus)
 status is "ok" or the failing step's status (DC's, then PT's); a failed point keeps its row with the numbers it
-has. A reader's cost also stands for a writer's (X52). Only the ungated rows are read (an empty clk_gate reads as 0,
+has. A reader's cost also stands for a writer's. Only the ungated rows are read (an empty clk_gate reads as 0,
 X79).
 
---clk-gate (CG2, X83) reads the clock-gated rows (clk_gate 1) instead and writes streamer_cg.csv and xbar_cg.csv
+--clk-gate reads the clock-gated rows (clk_gate 1) instead and writes streamer_cg.csv and xbar_cg.csv
 beside them, in the same columns: flops is DC's seq_cells, which counts the integrated clock gates too (an ICG is a
 sequential cell; the gate is not priced on its own). The grid is whatever points have gated rows. It then prints,
 per point in both tables, the gated value over the ungated one for area and energy, and their spread.
 
-The reference interpolation (X53), for a query inside the grid:
+The reference interpolation, for a query inside the grid:
   reader  trilinear over (depth, loops, channels), linear in each raw value between the two grid values around
           it (a grid value is matched exactly); area and energy alike
   xbar    bilinear over (inputs, banks): area linear in inputs and banks; energy linear in 1/inputs (its shape is
@@ -32,7 +32,7 @@ The reference interpolation (X53), for a query inside the grid:
           then interpolated as the rest
   A query outside the grid's range on any axis is refused (ValueError), as is one that needs a missing value;
   Table.at(..., extrapolate=True) instead continues the line through the two outermost grid values, clamped at 0,
-  as snax-forge's estimate does (report/cg2_reprice.py at W = 32, X85).
+  as snax-forge's estimate does (report/cg2_reprice.py at W = 32).
 
 --loo prints the leave-one-out check (for information): each interior grid point predicted from its neighbours
 with its own value on every interpolated axis left out (reader: depth 4 and 8, loops 2 to 6, channels 2, 4, 6, 8,
@@ -58,11 +58,11 @@ STREAMER_COLUMNS = ["depth", "loops", "channels", "area_um2", "e_beat_pj", "flop
 XBAR_COLUMNS = ["inputs", "banks", "area_um2", "e_access_pj", "flops", "slack_ns", "fmax_mhz", "status"]
 
 
-# ---------------------------------------------------------------- the reference interpolation (X53)
+# ---------------------------------------------------------------- the reference interpolation
 # How an axis is measured for one field: "lin" (the raw value) or "inv" (1 / value). The weight between two grid
 # values lo < x < hi is (g(x) - g(lo)) / (g(hi) - g(lo)), so an "inv" axis reproduces a + b / x exactly.
 SCALES = {"lin": lambda x: x, "inv": lambda x: 1.0 / x}
-XBAR_SCALES = {"e_access_pj": {"inputs": "inv"}}
+XBAR_SCALES = {"e_access_pj": {"inputs": "inv"}}   # NB (X54): energy per access is a + b / inputs
 
 
 class Table:
@@ -136,8 +136,9 @@ def load(path: Path, axes: tuple[str, ...], fields: tuple[str, ...],
     return Table(ax, fv, scales)
 
 
+# NB (X53): no conflict-free stimulus where inputs > banks, so the value at inputs = banks stands in
 def complete_xbar(t: Table) -> Table:
-    """xbar's energy where inputs > banks: each bank count's value at inputs = banks (X53)."""
+    """xbar's energy where inputs > banks: each bank count's value at inputs = banks."""
     e = dict(t.fields["e_access_pj"])
     for (i, b) in itertools.product(t.axes["inputs"], t.axes["banks"]):
         if i > b and (i, b) not in e and (b, b) in e:
@@ -146,7 +147,7 @@ def complete_xbar(t: Table) -> Table:
 
 
 def reader_cost(t: Table, depth: float, loops: float, channels: float) -> tuple[float, float]:
-    """(area_um2, e_beat_pj) of a reader (or a writer, X52)."""
+    """(area_um2, e_beat_pj) of a reader (or a writer)."""
     return (t.at("area_um2", depth=depth, loops=loops, channels=channels),
             t.at("e_beat_pj", depth=depth, loops=loops, channels=channels))
 
@@ -165,7 +166,7 @@ def read_csv(path: Path) -> list[dict]:
 
 
 def gate_of(row: dict) -> str:
-    """A row's clk_gate as '1' or '0' (empty, a row from before X79, reads as 0)."""
+    """A row's clk_gate as '1' or '0' (empty, a row from before the switch, reads as 0)."""
     return "1" if str(row.get("clk_gate", "")) == "1" else "0"
 
 
@@ -209,7 +210,7 @@ def write(rows: list[dict], path: Path, columns: list[str]) -> None:
         w.writerows(rows)
 
 
-# ---------------------------------------------------------------- leave-one-out (step 5 of STRM1 R1)
+# ---------------------------------------------------------------- leave-one-out
 def _neighbours(vals: list[int], x: int) -> tuple[int, int]:
     i = vals.index(x)
     return vals[i - 1], vals[i + 1]

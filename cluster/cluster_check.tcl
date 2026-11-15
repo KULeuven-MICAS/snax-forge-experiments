@@ -1,5 +1,5 @@
 ################################
-# cluster/cluster_check.tcl: the cluster run's gates (X67), sourced by dc_syn.tcl after the reports
+# cluster/cluster_check.tcl: the cluster run's gates, sourced by dc_syn.tcl after the reports
 # (SYN_POST_TCL). Writes reports/cluster_check.rpt, one fact per line, which syn/syn.py's read_run reads:
 #   leaf_cells <n>                         every non-hierarchical cell of the design, constants included
 #   constant <reference> <cells>           DC's pseudo-cells for a tied net (**logic_0**, **logic_1**): no

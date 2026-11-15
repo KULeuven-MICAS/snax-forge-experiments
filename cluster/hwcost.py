@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cluster/hwcost.py - snax-forge's HWCOST for a cluster point, to compare with its synthesized cluster (X72).
+"""cluster/hwcost.py - snax-forge's HWCOST for a cluster point, to compare with its synthesized cluster.
 
     pixi run cluster-hwcost <point> [--tech nangate45] [--platform platforms/snax_forge.json]
 

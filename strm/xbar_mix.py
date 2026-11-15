@@ -1,6 +1,6 @@
-"""strm/xbar_mix.py - the TCDM sparse interconnect as the cluster drives it: read-only and write-only inputs (CSYN1 R3c).
+"""strm/xbar_mix.py - the TCDM sparse interconnect as the cluster drives it: read-only and write-only inputs.
 
-STRM1's xbar points (strm/gen.py) synthesize SparseInterconnect alone, every input a full read-write port. In the
+The xbar points (strm/gen.py) synthesize SparseInterconnect alone, every input a full read-write port. In the
 cluster most inputs are streamer channels that only read or only write (snax_cluster's DataRequestor ties a reader's
 write and data to 0; a writer drives write 1 and never reads its response data; no streamer drives amo), and
 sparse_interconnect_wrapper.sv.tpl ties every response ready to 1 and every bank response valid to 1. DC drops what
@@ -99,6 +99,6 @@ def wrapper(sv_text: str, ro: int, wo: int, top: str = "xbar_mix", module: str =
     kinds = ", ".join(f"{a}..{b - 1} {k}" if b > a else f"no {k} input"
                       for a, b, k in ((0, ro, "read-only"), (ro, ro + wo, "write-only"), (ro + wo, n, "read-write")))
     head = (f"// {top}: {module} with {kinds}, and snax_cluster's sparse_interconnect_wrapper ties\n"
-            f"// (strm/xbar_mix.py, CSYN1 R3c). Generated; never edited by hand.\n")
+            f"// (strm/xbar_mix.py). Generated; never edited by hand.\n")
     return (head + f"module {top} (\n" + ",\n".join(kept) + "\n);\n"
             f"  {module} i_xbar (\n" + ",\n".join(conns) + "\n  );\nendmodule\n")

@@ -1,4 +1,4 @@
-"""X79's clock-gating switch in syn/syn.py and sim/pwr.py, without DC, Questa or PT.
+"""syn/test_clk_gate.py - the clock-gating switch in syn/syn.py and sim/pwr.py, without DC, Questa or PT.
 
     pixi run clk-gate-test
 """
@@ -50,7 +50,7 @@ def test_merge_keeps_gated_and_ungated_apart() -> None:
     cols = ["point", "clock_ns", "clk_gate", "area_um2"]
     with tempfile.TemporaryDirectory() as t:
         f = Path(t) / "s.csv"
-        f.write_text("point,clock_ns,area_um2\na,10,100\nb,10,7\n")          # rows from before X79: no column
+        f.write_text("point,clock_ns,area_um2\na,10,100\nb,10,7\n")          # rows from before the switch: no column
         gated = [{"point": "a", "clock_ns": "10", "clk_gate": "1", "area_um2": "90"}]
         syn._merge(f, cols, syn.summary_key, gated, {syn.summary_key(r) for r in gated})
         got = [(r["point"], r["clk_gate"], r["area_um2"]) for r in csv.DictReader(f.open())]
@@ -112,7 +112,7 @@ def test_pwr_merge_keeps_gated_and_ungated_apart() -> None:
 
 
 def test_cluster_gate_leaves_out_the_libraries_icgs() -> None:
-    """CG1 R2: DC marks Nangate's CLKGATE (a statetable) a black box; the gate leaves out the integrated clock gates
+    """DC marks Nangate's CLKGATE (a statetable) a black box; the gate leaves out the integrated clock gates
     clock_gating.tcl listed, only from the technology's library; an ungated log lists none."""
     tj = {"resolved": {"cluster": {"srams": {"m1": 2}}}}
     rpt = ("leaf_cells 10\nref CLKGATE_X1 L 5 1\nref m1 m1 2 1\nblack_box CLKGATE_X1 5\nblack_box m1 2\n"
@@ -131,7 +131,7 @@ def test_cluster_gate_leaves_out_the_libraries_icgs() -> None:
 
 
 def test_flop_note_reports_not_fails() -> None:
-    """X82 (CG2): the streamer and xbar flop check and xbar_mix's count are printed, never a failed row; a gated
+    """The streamer and xbar flop check and xbar_mix's count are printed, never a failed row; a gated
     run's ICGs count as sequential cells, so its seq_cells exceed the RTL's bits."""
     try:
         syn.use_source("streamer")

@@ -23,7 +23,7 @@ whether snax-forge's work tree was dirty; a dirty bundle is refused (its folder
 emptied but for the log) unless --allow-dirty. A bundle that is kept gets
 point.json: point, recipe, W, snax_forge_commit, dirty, date. Each point's
 task output is in forge-rtl.log. When the point is done, its folder is packed
-into <DIR>/<point>.zip, test-read and deleted (docs X51): syn/syn.py and
+into <DIR>/<point>.zip, test-read and deleted: syn/syn.py and
 sim/pwr.py read the zip, a failed or refused point's zip holds the log only.
 
 The tasks run inside this repo's `pixi run`, whose PIXI_* and CONDA_*
@@ -43,7 +43,7 @@ recipes/custom/ (the editor's), as snax-forge keeps them by category
 (recipes/reduce/rowsum_2.json); a name found in no folder or in several is
 refused (find_recipe, also used by forge/query.py).
 
-A point's `dtypes` (points.json, e.g. {"A": "int64", "B": "int64"}; X57) are the
+A point's `dtypes` (points.json, e.g. {"A": "int64", "B": "int64"}) are the
 recipe's `dtypes` field (snax-forge's recipe.py, D113): the driver writes the
 recipe it found with that field set into tmp/forge_recipes/<work name>.json,
 gives the sandbox that file, and deletes it when the point ends. snax-forge's
@@ -70,7 +70,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "arc"))
-import arc  # noqa: E402  arc/arc.py: a bundle is one zip (X51)
+import arc  # noqa: E402  arc/arc.py: a bundle is one zip
 
 POINTS = ROOT / "forge" / "points.json"
 FORGE = Path(os.environ.get("SNAX_FORGE", ROOT.parent / "snax-forge")).resolve()
@@ -256,7 +256,7 @@ def run_point(p: dict, args) -> dict:
         for f in dest.iterdir():
             if f.name != LOG:
                 shutil.rmtree(f) if f.is_dir() else f.unlink()
-    arc.pack_bundle(dest)                   # <DIR>/<point>.zip, test-read; the folder goes (X51)
+    arc.pack_bundle(dest)                   # <DIR>/<point>.zip, test-read; the folder goes
     res["seconds"] = time.monotonic() - t0
     print(f"{res['status']:<10}  {p['point']}  {res['seconds']:.1f} s", flush=True)
     if res["error"]:

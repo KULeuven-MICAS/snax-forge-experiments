@@ -1,4 +1,4 @@
-"""sim/sources/xls.py - a Google XLS point -> tb.json (docs/DECISIONS.md X44).
+"""sim/sources/xls.py - a Google XLS point -> tb.json.
 
 dslx-exercises is not changed for this: the adapter reads what it writes and the netlist.
   - rtl/<tier>/<kernel>/xls_w<W>/filelist.f   the top module ('# top:')
@@ -18,7 +18,7 @@ tb.json for the generated TB top (sim/pwr.py), as sources/hls.py's with:
           order, the first in the high bits (XLS flattens a tuple MSB first; dslx-exercises tb/: cfg carries
           {loop_count, len}, loop_count in bits [63:32]); widths from CFG_BITS, their sum must be _cfg_TDATA's
           width; config fields from the cfg expressions at the size, alpha drawn as a rand64 data pin after the
-          streams (X19)
+          streams
   streams [{arg, xls_arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   _<xls_arg>_TDATA/_TVALID/
           _TREADY, inputs then outputs; arg is the hls-exercises name (sim/ref.py, the plusargs)
   pins    []

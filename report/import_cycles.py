@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""report/import_cycles.py - the Bambu and XLS cycle CSVs, copied with their provenance (docs/DECISIONS.md X42).
+"""report/import_cycles.py - the Bambu and XLS cycle CSVs, copied with their provenance.
 
   pixi run import-cycles
 
@@ -12,7 +12,7 @@ Copies, byte for byte,
 commit (HEAD of the checkout), the last commit that changed the file, the file's path in that repo, its sha256
 and the date of the import. It refuses a file that is missing, not tracked by git, or with uncommitted
 changes in its checkout, before it copies anything. The rows stay exactly as produced (W = 32 and failed rows
-included): readers filter W <= MAX_W (syn/syn.py, X38). Standard library only.
+included): readers filter W <= MAX_W (syn/syn.py). Standard library only.
 """
 
 from __future__ import annotations

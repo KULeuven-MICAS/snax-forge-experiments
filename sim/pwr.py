@@ -10,25 +10,25 @@
 --source hls (the default) takes hls-exercises' points, as below; --source forge takes snax-forge's bundles in
 rtl/forge/ (forge/bundles.py) and their netlists in syn/runs/forge/<tech>/: tb.json from sim/sources/forge.py
 (control forge_csr: the wrapper driven through its CSRs by sim/tb/csr_seq.sv: JOBS, the JOB_BEATS and a scalar's
-CSRs as snax-forge's LOWER writes them, then START), the size n2048 (the point's sets, X55), the window from the
+CSRs as snax-forge's LOWER writes them, then START), the size n2048 (the point's sets), the window from the
 edge accepting START to the run's end, with BUSY_COUNTER read back and the group's cycles from snax-forge's model
-beside it (X56); the stimulus rand64, fed and collected in the order the bundle's streamers visit each container;
+beside it; the stimulus rand64, fed and collected in the order the bundle's streamers visit each container;
 the reference sim/ref.py, checked once per kernel, size, seed and scalar against snax-forge's kernel body; runs
 in sim/runs/forge/<tech>/, results in results/forge/<tech>/ with the columns recipe, snax_forge_commit, counter
 and counter_diff added (docs/power.md, Forge).
 
-Every source (X56): the window is the measurement; expected_cycles (cosim's line, the bambu or xls line, or
+Every source: the window is the measurement; expected_cycles (cosim's line, the bambu or xls line, or
 snax-forge's model) and expected_diff = expected - window are columns beside it, and a run fails only when the
 expected count (or forge's BUSY_COUNTER) is more than 5 % of the window away.
 
---source char (CHAR1) takes snax-forge's catalogue blocks alone in rtl/char/ (char/blocks.py) and their netlists
+--source char takes snax-forge's catalogue blocks alone in rtl/char/ (char/blocks.py) and their netlists
 in syn/runs/char/<tech>/: tb.json from sim/sources/char.py (control char_<kind>: the block's data and pins driven
 by the kind's sequencer sim/tb/char_<kind>_seq.sv through fixed windows, every output compared at every falling
 edge against sim/ref.py's char_ref), the stimulus rand64 (one stream per data input port), one vcd2saif and one
 PT run per window, the windows' energies per cycle in results/char/<tech>/char_power.csv, one row per point and
 window (docs/power.md, Char). --size does not apply.
 
---source streamer and --source xbar (STRM1, docs X52) take snax_cluster's streamer reader alone and its TCDM sparse
+--source streamer and --source xbar take snax_cluster's streamer reader alone and its TCDM sparse
 interconnect, rtl/streamer/ and rtl/xbar/ (strm/gen.py), and their netlists in syn/runs/<source>/<tech>/: tb.json
 and a TB generated whole per point by sim/sources/strm.py (the reader streams 1,024 beats from a TCDM model that
 grants at once and answers the next cycle; the interconnect gets every input on its own bank every cycle for 1,024
@@ -36,19 +36,19 @@ cycles, only where inputs <= banks), one busy window cut out of the VCD (vcd_win
 -sv_seed <seed>; results/<source>/<tech>/power_pt.csv with e_beat_pj or e_access_pj, the energy over the window
 per beat or grant (docs/power.md, Streamer and interconnect). --size does not apply.
 
---source bambu and --source xls (HSYN1, docs X44) take Bambu's points (hls-exercises' rtl/, <case>_w<W> with
+--source bambu and --source xls take Bambu's points (hls-exercises' rtl/, <case>_w<W> with
 case bambu) and Google XLS's (dslx-exercises' rtl/, case xls), as syn/syn.py lists them (its case filters and
 MAX_W), and their netlists in syn/runs/<source>/<tech>/: tb.json from sim/sources/bambu.py (control bambu_ctl:
 start_port pulsed by sim/tb/bambu_seq.sv, the run-time pins plain inputs held from time 0) or sim/sources/xls.py
 (control xls_cfg: one cfg beat on _cfg_TDATA by sim/tb/xls_seq.sv); the streams through axis_src and axis_sink as
-for hls; sizes b64, the point's sizes.txt (--size all) and n2048 (X24, X55); the expected cycles from the
+for hls; sizes b64, the point's sizes.txt (--size all) and n2048; the expected cycles from the
 line through results/<source>/<source>_cycles.csv (bambu: cycles_done; xls: cycles, plus 1 for the window); runs
-in sim/runs/<source>/<tech>/, results in results/<source>/<tech>/ with X20's columns (docs/power.md, Bambu, XLS).
+in sim/runs/<source>/<tech>/, results in results/<source>/<tech>/ with the hls columns (docs/power.md, Bambu, XLS).
 
 A point is an hls-exercises rtl/ folder, <tier>/<kernel>/<point>, whose mapped netlist is already in
 syn/runs/hls/<tech>/<point>.zip (syn/syn.py). Per point, one worker runs, start to end:
   inputs     the DC zip's netlist, tech.json and lib_info.txt (and a forge or char bundle) unpacked into tmp/
-  tb.json    sim/sources/hls.py (docs/DECISIONS.md X14), written into the point's folder
+  tb.json    sim/sources/hls.py, written into the point's folder
   compile    the fixed TB (sim/tb/) and a generated top (tb.sv), vlog; vopt +initreg+0 +acc=n
   per run (size, stimulus):
     stimulus rand64 (seed 0, 64 beats; rowsum at m8_n64) or forge (data.h at a cosim size, validation)
@@ -56,24 +56,24 @@ syn/runs/hls/<tech>/<point>.zip (syn/syn.py). Per point, one worker runs, start 
     vsim     functional, zero delay: no SDF, +nospecify +notimingchecks; the TB dumps the DUT scopes
              to a VCD between $dumpon and $dumpoff around the busy window and checks every output beat
     cycles   against cosim's line cycles = a x loop_count + b (results/hls/hls_cycles.csv)
-    vcd2saif the busy window, in the VCD's time unit; the VCD is deleted at once (X8, X18)
-    saif     T0 + T1 + TX = DURATION on every net, DURATION = cycles x clock, clock TC = 2 x cycles (X9)
+    vcd2saif the busy window, in the VCD's time unit; the VCD is deleted at once
+    saif     T0 + T1 + TX = DURATION on every net, DURATION = cycles x clock, clock TC = 2 x cycles
     pt       sim/scripts/pt_power.tcl: read_saif, >= 99% of nets annotated, report_power
-  cleanup    the compiled design library and vsim.wlf are deleted (X18); the point's folder is packed into
+  cleanup    the compiled design library and vsim.wlf are deleted; the point's folder is packed into
              sim/runs/.../<point>.zip (tb.json, per run tag the SAIF and PT's reports, merged with the zip's
-             other runs), test-read and deleted with the rest, and tmp/ is cleaned (X51)
+             other runs), test-read and deleted with the rest, and tmp/ is cleaned
 Results: results/hls/<tech>/power_pt.csv (one row per point, size and seed), power_pt_modules.csv
-(per point and size: the default run and every n2048 run, X60) and power_reports/<point>.zip (X20, X51).
---clk-gate (X79) measures the clock-gated netlists instead (syn.py run --clk-gate, syn/runs/<source>/<tech>/<point>_cg.zip):
+(per point and size: the default run and every n2048 run) and power_reports/<point>.zip.
+--clk-gate measures the clock-gated netlists instead (syn.py run --clk-gate, syn/runs/<source>/<tech>/<point>_cg.zip):
 the point's folder in sim/runs/ and its power_reports zip are tagged _cg, and its rows have clk_gate 1; every CSV merges
-gated and ungated rows apart (an empty clk_gate, a row from before X79, reads as 0).
-  pixi run pwr modules --source S --tech T   X60's one-off: fills power_pt_modules.csv's size column on old
+gated and ungated rows apart (an empty clk_gate, a row from before the switch, reads as 0).
+  pixi run pwr modules --source S --tech T   a one-off: fills power_pt_modules.csv's size column on old
                                               rows and adds the n2048 runs' rows from sim/runs/ (their kept
                                               power_hierarchy.rpt and units.rpt), checked against power_pt.csv
 
 Parallel workers J = min(free msimhdlsim, free PrimePower, free PrimeTime, nproc) from lmutil lmstat;
-PT threads per run = max(1, nproc // J) (X16); --cores C puts C in place of nproc, a budget for the whole run. A tool that fails on a licence error is retried once (X17).
-setup-check: a diagnostic (X25): PT against DC with the same forced activity, per power group, printed and kept in
+PT threads per run = max(1, nproc // J); --cores C puts C in place of nproc, a budget for the whole run. A tool that fails on a licence error is retried once.
+setup-check: a diagnostic: PT against DC with the same forced activity, per power group, printed and kept in
 check.json; it fails only on the wire-load check (PITFALLS PT1), never on the groups' differences.
 
 Environment, all optional:
@@ -110,8 +110,8 @@ from sources import char as char_src  # noqa: E402
 from sources import strm as strm_src  # noqa: E402
 from ref import char_ref, ref  # noqa: E402
 
-syn = _syn()      # syn/syn.py, loaded once (sim/sources/__init__.py): its SOURCES is the one port table (X44)
-arc = syn.arc     # arc/arc.py (X51), as syn/syn.py imports it
+syn = _syn()      # syn/syn.py, loaded once (sim/sources/__init__.py): its SOURCES is the one port table
+arc = syn.arc     # arc/arc.py, as syn/syn.py imports it
 
 RUNS = SIM / "runs"
 SOURCE = "hls"
@@ -124,7 +124,7 @@ TB_FILES = {"hls": ["ap_ctrl_hs_seq.sv", "axis_src.sv", "axis_sink.sv"],
             "xls": ["xls_seq.sv", "axis_src.sv", "axis_sink.sv"]}
 # The sources: each a tb.json adapter sim/sources/<name>.py, imported when used
 SOURCES = ("hls", "forge", "char", "bambu", "xls", "streamer", "xbar")
-STRM = ("streamer", "xbar")             # STRM1 (X52): generated TBs, one busy window, results per point
+STRM = ("streamer", "xbar")             # generated TBs, one busy window, results per point
 HLS_TOOLS = ("hls", "bambu", "xls")     # an HLS tool's points: rtl/ folders with filelist.f and sizes.txt
 PT_SCRIPT = SIM / "scripts" / "pt_power.tcl"
 RUN_DO = SIM / "scripts" / "run.do"
@@ -132,7 +132,7 @@ DC_READBACK = SIM / "scripts" / "dc_readback.tcl"
 TB_TOP, DUT = "tb", "dut"
 CLOCK_NS = 10.0
 SETUP_POINTS = {"hls": "done/vecadd/opt_w8", "forge": "done/vecadd/forge_w4", "bambu": "done/dot/bambu_w8",
-                "xls": "done/dot/xls_w16"}     # setup-check's default point per source (X25)
+                "xls": "done/dot/xls_w16"}     # setup-check's default point per source
 MIN_ANNOTATED = 99.0        # percent of nets annotated from the SAIF
 TOGGLE_BEATS = 64           # the input-toggle check fails a run from this many beats up
 # Questa cell models, next to each technology's .db, with the vlog options they need
@@ -142,16 +142,16 @@ COLUMNS = ["point", "top", "tech", "clock_ns", "clk_gate", "W", "size", "config"
            "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw",
            "e_comb_fire_pj", "e_flop_fire_pj", "e_run_pj", "flop_bits", "e_bit_pj", "status"]
 FORGE_COLUMNS = ["recipe", "snax_forge_commit", "counter", "counter_diff"]
-# X62: an hls point with a RAM (a Vitis dace buffer): the memory's share of the task, inside e_run_pj. macro: e_ram_pj =
-# ram_reads x e_rd + ram_writes x e_wr (RAMCOUNT and the macro's CACTI numbers, X50), e_ram_pt_pj PT's own averaged
+# an hls point with a RAM (a Vitis dace buffer): the memory's share of the task, inside e_run_pj. macro: e_ram_pj =
+# ram_reads x e_rd + ram_writes x e_wr (RAMCOUNT and the macro's CACTI numbers), e_ram_pt_pj PT's own averaged
 # figure for the macro cells (PITFALLS PT7, a check, not used); flops: e_ram_pj PT's energy of the RAM instances
 HLS_PWR_COLUMNS = ["ram_kind", "ram_reads", "ram_writes", "e_ram_pj", "e_ram_pt_pj"]
-# X56: the window is the measurement; the expected count (and forge's BUSY_COUNTER) is recorded beside it, with its
-# difference (expected - window), and fails the run only when it is more than this far from the window
+# NB (X56): the window is the measurement; the expected count (and forge's BUSY_COUNTER) is recorded beside it,
+# with its difference (expected - window), and fails the run only when it is more than this far from the window
 CYCLES_TOL = 0.05
 MODULE_COLUMNS = ["point", "tech", "clk_gate", "size", "path", "design", "e_dyn_pj"]
-# X60: power_pt_modules.csv holds the modules of each point's default run and of every n2048 run (the reference
-# task, X24, X55), one set of rows per point and size; the default run stays where it is (b64, rowsum m8_n64)
+# power_pt_modules.csv holds the modules of each point's default run and of every n2048 run (the reference
+# task), one set of rows per point and size; the default run stays where it is (b64, rowsum m8_n64)
 MODULE_SIZES = ("n2048",)
 KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
 LICENCE_ERR = re.compile(r"(?i)(licen[sc]\w*\s+(error|fail\w*|not available|denied|checkout)|unable to check\s*out"
@@ -163,19 +163,19 @@ MASK64 = (1 << 64) - 1
 # nangate15's) for randomization, and vsim +initreg+<N> seeds it. Such runs get the run tag suffix _r<N> and are
 # not written to results/ (their SAIFs and PT reports stay in the point's zip in sim/runs/).
 INITREG_SEED: int | None = None
-# X79: --clk-gate measures the clock-gated netlist of each point (syn.py --clk-gate's run, <point>_cg.zip): the
+# --clk-gate measures the clock-gated netlist of each point (syn.py --clk-gate's run, <point>_cg.zip): the
 # point's folder and power_reports zip get the same _cg tag, and its rows have clk_gate 1, merged apart from the
 # ungated rows. Off by default.
 CLK_GATE = False
 
 
 def gtag(point: str) -> str:
-    """The point as its runs and zips are named: <point>, or <point>_cg with --clk-gate (X79)."""
+    """The point as its runs and zips are named: <point>, or <point>_cg with --clk-gate."""
     return point + (syn.CG_TAG if CLK_GATE else "")
 
 
 def gate() -> str:
-    """This invocation's clk_gate column value (X79)."""
+    """This invocation's clk_gate column value."""
     return "1" if CLK_GATE else "0"
 
 
@@ -236,7 +236,7 @@ def licences() -> dict:
 
 
 def run_tool(cmd: list[str], log: Path, cwd: Path, env: dict | None = None, stdin_null=False) -> int:
-    """Run a tool with its output in `log`; on a licence error, once more (X17)."""
+    """Run a tool with its output in `log`; on a licence error, once more."""
     for attempt in (1, 2):
         with log.open("w") as fh:
             r = subprocess.run(cmd, cwd=cwd, env=env, stdout=fh, stderr=subprocess.STDOUT,
@@ -250,7 +250,7 @@ def run_tool(cmd: list[str], log: Path, cwd: Path, env: dict | None = None, stdi
 
 
 # ---------------------------------------------------------------- points, tb.json, top
-# What a point keeps (X51): sim/runs/.../<point>.zip with tb.json and, per run tag, the SAIF and PT's reports
+# What a point keeps: sim/runs/.../<point>.zip with tb.json and, per run tag, the SAIF and PT's reports
 # (char: per window); setup-check's check.json and reports. The rest of the point's folder (Questa's work/ and
 # logs, tb.sv, stim/, transcripts, vsim and vcd2saif logs, PT's logs, result.json) is scratch, deleted.
 KEEP_POINT = ("tb.json", "check.json", "*.saif", "*/pt/*.rpt", "*/reports/*.rpt")
@@ -273,7 +273,7 @@ def point_zip(pdir: Path) -> Path:
 
 def point_inputs(stack: contextlib.ExitStack, tech: str, point: str) -> tuple[Path, Path, Path | None]:
     """The DC run's netlist, tech.json and lib_info.txt unpacked into tmp/ (PWR_RUN), the netlist, and for forge and
-    char the bundle unpacked as well; all deleted when `stack` closes (X51)."""
+    char the bundle unpacked as well; all deleted when `stack` closes."""
     z = syn_zip(tech, point)
     have = arc.names(z) if z.is_file() else []
     nets = sorted(n for n in have if re.fullmatch(r"out/[^/]*_mapped\.v", n))
@@ -285,7 +285,7 @@ def point_inputs(stack: contextlib.ExitStack, tech: str, point: str) -> tuple[Pa
 
 
 def ram_inputs(stack: contextlib.ExitStack, syn_d: Path) -> dict | None:
-    """X62: the DC run's RAM plan (tech.json, syn.py): None for a point without one; for macros each macro's .v and
+    """The DC run's RAM plan (tech.json, syn.py): None for a point without one; for macros each macro's .v and
     .db unpacked into tmp/ (deleted with `stack`) and its CACTI energies."""
     tj = syn_d / "tech.json"
     ram = json.loads(tj.read_text()).get("resolved", {}).get("ram") if tj.is_file() else None
@@ -400,7 +400,7 @@ def _dut(tb: dict, ports: list[str]) -> list[str]:
 
 
 def tb_top_bambu(tb: dict, netlist: Path) -> str:
-    """The Bambu top (X44): bambu_seq pulses start_port; the run-time pins are plain inputs, driven from time 0
+    """The Bambu top: bambu_seq pulses start_port; the run-time pins are plain inputs, driven from time 0
     (before reset is released) and held; the streams as for HLS. idle_port is connected and not read."""
     c, clk, rst, L = tb["control"], tb["clock"]["port"], tb["reset"]["port"], []
     L += ["// Generated by sim/pwr.py from tb.json (source bambu): do not edit.", "`timescale 1ns/1ps", "",
@@ -428,7 +428,7 @@ def tb_top_bambu(tb: dict, netlist: Path) -> str:
 
 
 def tb_top_xls(tb: dict, netlist: Path) -> str:
-    """The XLS top (X44): xls_seq presents the cfg beat; XLS's active-high reset is the TB's ~rst_n; the streams
+    """The XLS top: xls_seq presents the cfg beat; XLS's active-high reset is the TB's ~rst_n; the streams
     as for HLS, the sinks on the TB's rst_n."""
     c, clk, rst, L = tb["control"], tb["clock"]["port"], tb["reset"]["port"], []
     L += ["// Generated by sim/pwr.py from tb.json (source xls): do not edit.", "`timescale 1ns/1ps", "",
@@ -524,7 +524,7 @@ def untoggled_bits(x: np.ndarray, beats: int, lanes: int) -> int:
 
 
 def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
-    """rand64 (X19): every input container full-range int64 at its shape (the design point's), seed `seed`, stream
+    """rand64: every input container full-range int64 at its shape (the design point's), seed `seed`, stream
     by stream in tb.json order (a container once), then each scalar a CSR takes (axpy's alpha) as a data pin; a
     scalar the recipe bakes takes the baked value (axpy_baked's alpha = 3). The reference from sim/ref.py, an
     in-place output (axpy's y) its <container>_out. Each stream's data in the order its streamer visits the
@@ -631,7 +631,7 @@ def stimulus(tb: dict, size: str, stim: str, seed: int) -> dict:
                 raise Fail(f"sim/ref.py differs from data.h EXP for {arg}")
     # Every input bit toggles at least once (from the 0 the TB holds before go). Enforced from TOGGLE_BEATS
     # beats up: with B random beats a bit stays 0 with probability 2^-B, so a task of a few beats (n64 at
-    # W = 32 is 2 beats) cannot pass with any seed; below that the count is recorded (docs X19).
+    # W = 32 is 2 beats) cannot pass with any seed; below that the count is recorded.
     untoggled = {}
     for s in ins_s:
         x = ins[s["arg"]].view(np.uint64).reshape(beats, s["lanes"])
@@ -680,7 +680,7 @@ def expected_cycles(tb: dict, size: str) -> tuple[int | None, str]:
 
 # ---------------------------------------------------------------- activity and power
 def saif_check(saif: Path, cycles: int, clock: str) -> dict:
-    """X9: T0 + T1 + TX = DURATION on every net, DURATION = cycles x clock, the clock toggles 2 x cycles.
+    """T0 + T1 + TX = DURATION on every net, DURATION = cycles x clock, the clock toggles 2 x cycles.
 
     vcd2saif adds (TZ t) for time at Z. DC leaves undriven bits in declared vector wires (b_fu_76[1] when
     only the flop's QN is used); they are Z for the whole window, are not nets in PT, and are counted
@@ -866,7 +866,7 @@ def compile_point(tb: dict, tech: str, pdir: Path, netlist: Path, cells: Path, r
                           *(str(TB_DIR / f) for f in tb_files),
                           str(pdir / "tb.sv")]),
              ("vlog_netlist", [tool("vlog"), "-timescale", "1ns/1ps", "-work", str(work), str(netlist)]),
-             # X62: the SRAM macros' behavioural models (contents, read address and rdata start 0, as Vitis's .dat)
+             # the SRAM macros' behavioural models (contents, read address and rdata start 0, as Vitis's .dat)
              *([("vlog_macros", [tool("vlog"), "-sv", "+define+SRAM_INIT_ZERO", "-work", str(work),
                                  *(str(m["v"]) for m in ram["macros"])])] if ram and ram["macros"] else []),
              ("vopt", [tool("vopt"), "-work", str(work), "-L", str(cells), TB_TOP,
@@ -922,7 +922,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         plus += [f"+{sname(s)}_HEX={f}", f"+{sname(s)}_BEATS={len(x) // s['lanes']}"]
     for p in tb["pins"]:
         plus.append(f"+PIN_{p['port']}={st['pins'][p['port']] & ((1 << p['bits']) - 1):x}")
-    if tb["control"]["kind"] == "xls_cfg":      # the one cfg beat, fields packed first-high (X44)
+    if tb["control"]["kind"] == "xls_cfg":      # the one cfg beat, fields packed first-high
         plus.append(f"+CFG={src().cfg_word(tb, st['pins']):x}")
     (rdir / "stim" / "pins.json").write_text(json.dumps(st["pins"], indent=1) + "\n")
     info["untoggled_bits"] = st["untoggled"]
@@ -930,7 +930,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         exp, how = cfg["expected_cycles"], f"snax-forge's group_counter: {cfg['expected_from']}"
     elif SOURCE == "hls":
         exp, how = expected_cycles(tb, size)
-    else:       # bambu, xls: the line through the tool's own cycle CSV (X44)
+    else:       # bambu, xls: the line through the tool's own cycle CSV
         exp, how = src().expected_cycles(tb, size, RESULTS)
     info["expected_cycles"], info["expected_from"] = exp, how
     row["expected_cycles"] = exp if exp is not None else ""
@@ -960,7 +960,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         cycles = int(win.group(3))
         row["cycles"] = cycles
         info["window_ns"] = [float(win.group(1)), float(win.group(2))]
-        if ram and ram["macros"]:       # X50, X62: each macro instance's RAMCOUNT line (the whole run: idle outside it)
+        if ram and ram["macros"]:       # each macro instance's RAMCOUNT line (the whole run: idle outside it)
             counts = re.findall(r"RAMCOUNT\s+(\S+)\s+(\S+)\s+reads\s+(\d+)\s+writes\s+(\d+)", log)
             cells = {m["cell"]: m for m in ram["macros"]}
             if not counts or any(c not in cells for _, c, _, _ in counts):
@@ -968,7 +968,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
             info["ramcount"] = [{"inst": i, "cell": c, "reads": int(r), "writes": int(w)} for i, c, r, w in counts]
         if forge and "TB: FAIL" in log:
             raise Fail("sim: " + re.search(r"TB: FAIL: (.*)", log).group(1))
-        # X56: the window is the measurement; the expected count (and forge's BUSY_COUNTER) beside it, failing only
+        # the window is the measurement; the expected count (and forge's BUSY_COUNTER) beside it, failing only
         # past CYCLES_TOL of the window
         if forge:
             cnt = re.search(r"TB: busy_counter (\d+)", log)
@@ -977,13 +977,13 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
                 raise Fail("cycles: no BUSY_COUNTER read back")
             row["counter"], row["counter_diff"] = info["counter"], info["counter"] - cycles
             if abs(info["counter"] - cycles) > CYCLES_TOL * cycles:
-                raise Fail(f"cycles: window {cycles}, BUSY_COUNTER {info['counter']}, over {CYCLES_TOL:.0%} apart (X56)")
+                raise Fail(f"cycles: window {cycles}, BUSY_COUNTER {info['counter']}, over {CYCLES_TOL:.0%} apart")
         if exp is None:
             raise Fail(f"cycles: no expected value ({how})")
         row["expected_diff"] = exp - cycles
         info["expected_diff"] = exp - cycles
         if abs(exp - cycles) > CYCLES_TOL * cycles:
-            raise Fail(f"cycles: window {cycles}, expected {exp} ({how}), over {CYCLES_TOL:.0%} apart (X56)")
+            raise Fail(f"cycles: window {cycles}, expected {exp} ({how}), over {CYCLES_TOL:.0%} apart")
 
         t = time.time()
         head = vcd.open().read(4096)
@@ -998,7 +998,7 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
         if rc or not saif.is_file():
             raise Fail("vcd2saif (vcd2saif.log)")
     finally:
-        vcd.unlink(missing_ok=True)      # X18: no VCD is kept, whatever the result
+        vcd.unlink(missing_ok=True)      # no VCD is kept, whatever the result
 
     t = time.time()
     info["saif"] = saif_check(saif, cycles, tb["clock"]["port"])
@@ -1037,8 +1037,8 @@ def run_one(tb: dict, tech: str, pdir: Path, size: str, stim: str, seed: int, th
     info["modules"] = pt_hierarchy(ptd)
     e_ram = None
     if ram and ram["macros"]:
-        # X62: the macros are PT's black_box group; their internal energy is PT7's averaged figure (kept as a check),
-        # replaced by the counted accesses (X50); their output nets' switching stays the logic's, with the
+        # the macros are PT's black_box group; their internal energy is PT7's averaged figure (kept as a check),
+        # replaced by the counted accesses; their output nets' switching stays the logic's, with the
         # combinational group (the loads it drives)
         bb_int, bb_sw, _ = pt_groups(ptd, ["black_box"])["black_box"]
         i, s_, l = groups["combinational"]
@@ -1094,7 +1094,7 @@ def build_tb(point: str, netlist: Path, bundle: Path | None) -> dict:
 
 def do_point(point: str, tech: str, runs: list, threads: int) -> list[tuple[dict, dict]]:
     """One worker: the DC run (and bundle) unpacked, tb.json, compile, every requested run, cleanup, then the
-    point's folder packed into its zip (X51). Returns [(row, info)]."""
+    point's folder packed into its zip. Returns [(row, info)]."""
     with contextlib.ExitStack() as stack:
         rows = _do_point(stack, point, tech, runs, threads)
     return rows
@@ -1106,7 +1106,7 @@ def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, th
     try:
         rams = syn.rams_of(point) if SOURCE in HLS_TOOLS else []
         ram = None
-        if rams and SOURCE == "hls" and syn_zip(tech, point).is_file():     # X62: a macro or flops, from DC's plan
+        if rams and SOURCE == "hls" and syn_zip(tech, point).is_file():     # a macro or flops, from DC's plan
             tj = json.loads(arc.read(syn_zip(tech, point), "tech.json"))
             if tj.get("resolved", {}).get("ram"):
                 rams = []
@@ -1115,7 +1115,7 @@ def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, th
             row.update({"point": point, "top": syn.top_of(point), "tech": tech, "clock_ns": _num(CLOCK_NS),
                         "clk_gate": gate(), "size": "",
                         "seed": "", "status": f"skipped: needs a RAM macro ({', '.join(rams)}); "
-                                              f"{tech} has no RAM cells, RAM1 builds one (OpenRAM)"})
+                                              f"{tech} has no RAM cells, ram/ram.py builds one"})
             return [(row, {})]
         try:
             syn_d, netlist, bundle = point_inputs(stack, tech, point)
@@ -1179,12 +1179,12 @@ def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, th
             info["row"] = base
             out.append((base, info))
     finally:
-        shutil.rmtree(pdir / "work", ignore_errors=True)        # X18: no compiled design is kept
+        shutil.rmtree(pdir / "work", ignore_errors=True)        # no compiled design is kept
         for f in pdir.rglob("vsim.wlf"):
             f.unlink()
         for f in pdir.rglob("*.vcd"):
             f.unlink()
-        pack_point(pdir)                                         # X51: tb.json, SAIFs, PT reports; the rest goes
+        pack_point(pdir)                                         # tb.json, SAIFs, PT reports; the rest goes
     for _, info in out:
         info.setdefault("times", {})["point_total"] = time.time() - t_point
     return out
@@ -1210,7 +1210,7 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
     out = RESULTS / tech
     key = lambda r: (r["point"], syn.gate_flag(r), r["size"], str(r["seed"]))  # gated rows apart  # noqa: E731
     rows = [r for r, _ in results]
-    # a point that ran replaces its parked row (size and seed empty: 'skipped: needs a RAM macro', X62)
+    # a point that ran replaces its parked row (size and seed empty: 'skipped: needs a RAM macro')
     ran = {(r["point"], syn.gate_flag(r)) for r in rows if r.get("size")}
     _merge(out / "power_pt.csv", columns(), key, rows, {key(r) for r in rows} | {(p, g, "", "") for p, g in ran})
     mods, mod_keys = [], set()
@@ -1227,7 +1227,7 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
                 del have[k]
         elif r["size"] not in MODULE_SIZES or str(r["seed"]) != "0" or INITREG_SEED is not None:
             continue
-        mod_keys.add((r["point"], gate(), r["size"]))   # X60: the modules of this point and size are replaced
+        mod_keys.add((r["point"], gate(), r["size"]))   # the modules of this point and size are replaced
         if r["status"] != "ok":
             continue
         for mod in info.get("modules", []):
@@ -1256,11 +1256,11 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
 
 
 def power_zip(tech: str, point: str) -> Path:
-    """The committed PT reports of a point: results/<source>/<tech>/power_reports/<point>[_cg].zip (X20, X51, X79)."""
+    """The committed PT reports of a point: results/<source>/<tech>/power_reports/<point>[_cg].zip."""
     return RESULTS / tech / "power_reports" / f"{gtag(point)}.zip"
 
 
-# ---------------------------------------------------------------- char (CHAR1): a block alone, per window
+# ---------------------------------------------------------------- char: a block alone, per window
 CHAR_COLUMNS = ["point", "datapath", "lanes", "depth", "op", "form", "tech", "clock_ns", "clk_gate", "window", "cycles", "fires",
                 "seed", "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "e_bit_pj", "status",
                 "snax_forge_commit"]
@@ -1312,7 +1312,7 @@ def char_seq_cells(tech: str, point: str) -> int | None:
 
 
 def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
-    """rand64 (X19): per data input port in tb.json order, one stream of full-range int64, as many values as the
+    """rand64: per data input port in tb.json order, one stream of full-range int64, as many values as the
     slots take new beats; the expected outputs from sim/ref.py's char_ref. Every data input bit must take both
     values in the working window's beats (busy, or link's stream: it toggles there). For link's stream the
     reference is checked against the FIFO it is: the output at stream slot t is the beat loaded D slots before."""
@@ -1360,7 +1360,7 @@ def vcd_windows(vcd: Path, wins: list[tuple[str, int, int]], out: dict, timescal
     ends with a bare time step at t1 (vcd2saif ends a file's window at its last time step), so the window is whole. The boundaries are quiet: an event at a
     boundary fails the point. `out` maps a window to its file.
 
-    timescale_10ps (cluster pwr, draft X76): the VCD's $timescale must be 1ps (on one line or three) and each cut's
+    timescale_10ps (cluster pwr): the VCD's $timescale must be 1ps (on one line or three) and each cut's
     is written as 10ps, the time numbers unchanged, so a run at tb_bin's 1 ns clock reads as one at 10 ns. `done`,
     when given, is called with a window's name as soon as its cut is closed (it may block, holding the pass)."""
     wins = sorted(wins, key=lambda w: w[1])
@@ -1373,7 +1373,7 @@ def vcd_windows(vcd: Path, wins: list[tuple[str, int, int]], out: dict, timescal
             header.append(line)
             if line.startswith("$enddefinitions"):
                 break
-        if timescale_10ps:
+        if timescale_10ps:      # NB (X76): tb_bin runs at 1 ns; read as 10 ns, a zero-delay run's activity unchanged
             text = "".join(header)
             m = re.search(r"\$timescale\s+(\d+)\s*(\w+)\s+\$end[^\n]*\n?", text)
             if not m or (m.group(1), m.group(2)) != ("1", "ps"):
@@ -1437,7 +1437,7 @@ def _pack(values: list[int]) -> str:
 
 def do_point_char(point: str, tech: str, seed: int, threads: int) -> list[tuple[dict, dict]]:
     """One worker: the DC run and the block unpacked, tb.json, compile, one simulation over every window, then per
-    window vcd2saif, the SAIF check and PT; cleanup, and the point's folder packed into its zip (X51). Returns
+    window vcd2saif, the SAIF check and PT; cleanup, and the point's folder packed into its zip. Returns
     [(row, info)], one per window."""
     with contextlib.ExitStack() as stack:
         rows = _do_point_char(stack, point, tech, seed, threads)
@@ -1516,7 +1516,7 @@ def _do_point_char(stack: contextlib.ExitStack, point: str, tech: str, seed: int
             spans.append((w, *(round(float(x) * 1e-9 / unit) for x in (t0, t1))))
         vcd_windows(vcd, spans, cuts)
         times["vcd_cut"] = time.time() - t
-        vcd.unlink()                     # X18: the shared VCD is gone once cut
+        vcd.unlink()                     # the shared VCD is gone once cut
         t = time.time()
         for w, a, b in spans:
             try:
@@ -1524,7 +1524,7 @@ def _do_point_char(stack: contextlib.ExitStack, point: str, tech: str, seed: int
                                "-instance", f"{TB_TOP}/{DUT}", "-time", str(a), str(b)], rdir / w / "vcd2saif.log",
                               rdir / w)
             finally:
-                cuts[w].unlink(missing_ok=True)      # X18: and each window's cut at once
+                cuts[w].unlink(missing_ok=True)      # and each window's cut at once
             if rc or not (rdir / w / f"{w}.saif").is_file():
                 raise Fail(f"vcd2saif {w} ({w}/vcd2saif.log)")
         times["vcd2saif"] = time.time() - t
@@ -1535,7 +1535,7 @@ def _do_point_char(stack: contextlib.ExitStack, point: str, tech: str, seed: int
         for r in rows.values():
             r["status"] = f"failed: {type(e).__name__}: {e}"
     finally:
-        vcd.unlink(missing_ok=True)      # X18: no VCD is kept, whatever the result
+        vcd.unlink(missing_ok=True)      # no VCD is kept, whatever the result
         for f in rdir.rglob("*.vcd"):
             f.unlink()
         shutil.rmtree(pdir / "work", ignore_errors=True)
@@ -1579,13 +1579,13 @@ def _do_point_char(stack: contextlib.ExitStack, point: str, tech: str, seed: int
     for w, r in rows.items():
         out.append((r, {**infos[w], "sim": sim, "row": r, "run": str((rdir / w).relative_to(ROOT)),
                         "zip": point_zip(pdir), "prefix": f"{rdir.name}/{w}/"}))
-    pack_point(pdir)                     # X51: tb.json, each window's SAIF and PT reports; the rest goes
+    pack_point(pdir)                     # tb.json, each window's SAIF and PT reports; the rest goes
     return out
 
 
 def write_results_char(tech: str, results: list[tuple[dict, dict]]) -> None:
     """char_power.csv (merged on point, window and seed, in each kind's window order), and per ok window its
-    reports in power_reports/<point>.zip as <window>/..., the point's tb.json once at its top (X51)."""
+    reports in power_reports/<point>.zip as <window>/..., the point's tb.json once at its top."""
     out = RESULTS / tech
     key = lambda r: (r["point"], syn.gate_flag(r), r["window"], str(r["seed"]))  # gated rows apart  # noqa: E731
     rows = [r for r, _ in results]
@@ -1651,7 +1651,7 @@ def run_char(points: list[str], tech: str, seed: int, j: int, threads: int) -> i
 
 
 
-# ---------------------------------------------------------------- streamer and xbar (STRM1, X52): one busy window
+# ---------------------------------------------------------------- streamer and xbar: one busy window
 STRM_COLUMNS = {
     "streamer": ["point", "depth", "loops", "channels", "tech", "clock_ns", "clk_gate", "seed", "bounds", "cycles", "fill",
                  "stalls", "beats", "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj",
@@ -1667,7 +1667,7 @@ XBAR_RE = re.compile(r"TB: grants (\d+) expected (\d+) grant_cycles_bad (\d+) ba
 
 
 def strm_points(points: list[str]) -> tuple[list[str], list[str]]:
-    """(points to run, xbar points left out because inputs > banks: no conflict-free stimulus, X52)."""
+    """(points to run, xbar points left out because inputs > banks: no conflict-free stimulus)."""
     if SOURCE != "xbar":
         return points, []
     keep, out = [], []
@@ -1679,8 +1679,8 @@ def strm_points(points: list[str]) -> tuple[list[str], list[str]]:
 
 def do_point_strm(point: str, tech: str, seed: int, threads: int) -> tuple[dict, dict]:
     """One worker: the DC run unpacked, tb.json and the generated TB, compile, vsim, the window cut out of the VCD
-    (vcd_windows, X32) and vcd2saif on it, both VCDs deleted at once (X18), the SAIF check (X9), PT; the point's
-    folder packed into its zip (X51). Returns (row, info)."""
+    (vcd_windows) and vcd2saif on it, both VCDs deleted at once, the SAIF check, PT; the point's
+    folder packed into its zip. Returns (row, info)."""
     with contextlib.ExitStack() as stack:
         return _do_point_strm(stack, point, tech, seed, threads)
 
@@ -1756,7 +1756,7 @@ def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int
         info.update({"window_ns": [float(win.group(1)), float(win.group(2))], "vcd_bytes": vcd.stat().st_size})
         t = time.time()
         vcd_windows(vcd, [("busy", a, b)], {"busy": cut})
-        vcd.unlink()                      # X18: the shared VCD is gone once cut
+        vcd.unlink()                      # the shared VCD is gone once cut
         rc = run_tool([tool("vcd2saif"), "-input", str(cut), "-output", str(saif), "-instance", f"{TB_TOP}/{DUT}",
                        "-time", str(a), str(b)], rdir / "vcd2saif.log", rdir)
         cut.unlink(missing_ok=True)
@@ -1792,19 +1792,19 @@ def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int
         row["status"] = f"failed: {type(e).__name__}: {e}"
     finally:
         for f in (vcd, cut):
-            f.unlink(missing_ok=True)     # X18: no VCD is kept, whatever the result
+            f.unlink(missing_ok=True)     # no VCD is kept, whatever the result
         shutil.rmtree(pdir / "work", ignore_errors=True)
         for f in pdir.rglob("vsim.wlf"):
             f.unlink()
     times["point_total"] = time.time() - t_point
     info.update({"zip": point_zip(pdir), "prefix": f"{rdir.name}/"})
-    pack_point(pdir)                      # X51: tb.json, the SAIF and PT's reports; the rest goes
+    pack_point(pdir)                      # tb.json, the SAIF and PT's reports; the rest goes
     return row, info
 
 
 def write_results_strm(tech: str, results: list[tuple[dict, dict]]) -> None:
     """power_pt.csv (merged on point and seed) and per ok point its PT reports and tb.json in
-    power_reports/<point>.zip (X51)."""
+    power_reports/<point>.zip."""
     out = RESULTS / tech
     key = lambda r: (r["point"], syn.gate_flag(r), str(r["seed"]))  # gated rows apart  # noqa: E731
     rows = [r for r, _ in results]
@@ -1823,7 +1823,7 @@ def write_results_strm(tech: str, results: list[tuple[dict, dict]]) -> None:
 def run_strm(points: list[str], tech: str, seed: int, j: int, threads: int) -> int:
     points, out = strm_points(points)
     if out:
-        print(f"pwr: {len(out)} xbar points left out, inputs > banks (X52): {', '.join(out)}", flush=True)
+        print(f"pwr: {len(out)} xbar points left out, inputs > banks: {', '.join(out)}", flush=True)
     points.sort(key=syn.strm_size, reverse=True)       # the largest first, as syn.py runs them
     results = []
 
@@ -1861,7 +1861,7 @@ def cmd_tbjson(args) -> int:
 def cmd_run(args) -> int:
     global INITREG_SEED, CLK_GATE
     INITREG_SEED = args.initreg_seed
-    CLK_GATE = args.clk_gate          # X79: the _cg netlists (syn.py --clk-gate), rows with clk_gate 1
+    CLK_GATE = args.clk_gate          # the _cg netlists (syn.py --clk-gate), rows with clk_gate 1
     syn.use_clk_gate(CLK_GATE)
     if INITREG_SEED is not None and args.source in ("char", *STRM):
         sys.exit("--initreg-seed: not built for --source char (its windows run one simulation per point)")
@@ -1939,7 +1939,7 @@ def dc_groups(rpt: Path) -> dict:
 
 
 def cmd_setup_check(args) -> int:
-    """X25: PT and DC on the same netlist with the same forced activity, per power group: a diagnostic. It prints
+    """PT and DC on the same netlist with the same forced activity, per power group: a diagnostic. It prints
     the differences (for the run note) and fails only on the wire-load check (PITFALLS PT1)."""
     use_source(args.source)
     point = args.point or SETUP_POINTS.get(args.source)
@@ -1948,7 +1948,7 @@ def cmd_setup_check(args) -> int:
     tech = args.tech
     base = tech_runs(tech) / "setup_check" / point
     shutil.rmtree(base, ignore_errors=True)
-    with contextlib.ExitStack() as stack:     # the DC run unpacked for PT and DC; the folder packed after (X51)
+    with contextlib.ExitStack() as stack:     # the DC run unpacked for PT and DC; the folder packed after
         try:
             run, _, _ = point_inputs(stack, tech, point)
         except Fail as e:
@@ -1983,7 +1983,7 @@ def _setup_check(tech: str, point: str, base: Path, run: Path) -> int:
     pt, dc = pt_groups(base / "pt" / "reports"), dc_groups(base / "dc" / "reports" / "power.rpt")
     table = []
     print(f"setup-check {tech} {point}: uniform activity, PT against DC (PT {t_pt:.1f} s, DC {t_dc:.1f} s); "
-          f"a diagnostic (X25), PT is the reference; wire load: {wl['wire_cap_nets']} nets with wire capacitance, "
+          f"a diagnostic, PT is the reference; wire load: {wl['wire_cap_nets']} nets with wire capacitance, "
           f"{wl['wire_res_nets']} with resistance, of {wl['nets']}")
     print(f"{'group':<14} {'PT dyn uW':>12} {'DC dyn uW':>12} {'diff %':>8} {'PT leak uW':>12} {'DC leak uW':>12} {'diff %':>8}")
     for g in syn.POWER_GROUPS:
@@ -1998,12 +1998,12 @@ def _setup_check(tech: str, point: str, base: Path, run: Path) -> int:
         print(f"{g:<14} {pd:12.6g} {dd:12.6g} {100 * rd:8.4f} {pl:12.6g} {dl:12.6g} {100 * rl:8.4f}")
     (base / "check.json").write_text(json.dumps({"tech": tech, "point": point, "wire_load": wl, "groups": table,
                                                  "pt_s": t_pt, "dc_s": t_dc}, indent=1) + "\n")
-    print(f"setup-check {tech}: done; the differences go into the run note (X25)")
+    print(f"setup-check {tech}: done; the differences go into the run note")
     return 0
 
 
 def cmd_modules(args) -> int:
-    """X60, once per source and technology: power_pt_modules.csv's size column filled on the rows written before it
+    """Once per source and technology: power_pt_modules.csv's size column filled on the rows written before it
     (the point's default size, from its committed tb.json and the source's default_size), and the rows of every
     n2048 run with seed 0 that has none yet, from the run's kept power_hierarchy.rpt and units.rpt in sim/runs/
     (pt_hierarchy, as a run writes them). Each added point's top row must equal power_pt.csv's e_dyn_pj."""
@@ -2013,7 +2013,7 @@ def cmd_modules(args) -> int:
         rows = list(csv.DictReader(fh))
     with (RESULTS / args.tech / "power_pt.csv").open(newline="") as fh:
         power = {(r["point"], r["size"]): r for r in csv.DictReader(fh)
-                 if r["seed"] == "0" and syn.gate_flag(r) == "0"}   # X60's migration: ungated rows only (X79)
+                 if r["seed"] == "0" and syn.gate_flag(r) == "0"}   # ungated rows only
     filled = 0
     defaults: dict[str, str] = {}
     for r in rows:
@@ -2101,14 +2101,14 @@ def main() -> int:
                         "in place of +initreg+0; results/ is not written")
     p.add_argument("--clk-gate", action="store_true",
                    help="the clock-gated netlists (syn.py --clk-gate, <point>_cg.zip): runs and power_reports tagged "
-                        "_cg, rows with clk_gate 1, apart from the ungated ones; off by default (X79)")
+                        "_cg, rows with clk_gate 1, apart from the ungated ones; off by default")
     p.set_defaults(fn=cmd_run)
-    p = sub.add_parser("setup-check", help="diagnostic: PT against DC with forced activity, per power group (X25)")
+    p = sub.add_parser("setup-check", help="diagnostic: PT against DC with forced activity, per power group")
     p.add_argument("--tech", required=True, choices=syn.tech_names())
     p.add_argument("--source", choices=list(SOURCES), default="hls")
     p.add_argument("--point", default=None, help=f"default per source: {SETUP_POINTS}")
     p.set_defaults(fn=cmd_setup_check)
-    p = sub.add_parser("modules", help="X60: fill power_pt_modules.csv's size column, add the n2048 runs' modules")
+    p = sub.add_parser("modules", help="fill power_pt_modules.csv's size column, add the n2048 runs' modules")
     p.add_argument("--tech", required=True, choices=syn.tech_names())
     p.add_argument("--source", choices=["hls", "forge", "bambu", "xls"], default="hls")
     p.set_defaults(fn=cmd_modules)

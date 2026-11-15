@@ -39,7 +39,7 @@ PIXI_* and CONDA_* removed). It prints one JSON object on stdout.
       container, axpy's alpha, as a 0-d array cast to its descriptor's dtype); the kernel's inout arrays
       not given (its outputs, zero-filled at the size the SPEC's descriptors give for SYMBOLS_JSON, else
       every symbol = N, the length of the first input) written to OUT_NPZ; an inout array given (axpy's y)
-      is updated in place and written too. DTYPES_JSON ({container: dtype}, the point's, X57) replaces the
+      is updated in place and written too. DTYPES_JSON ({container: dtype}, the point's) replaces the
       descriptors' dtypes, as the recipe's dtypes do in the bundle (relu, matadd and axpy are int32 kernels).
 
 snax-forge is not changed: only its modules are imported.
@@ -56,7 +56,7 @@ from bundles import find_recipe  # noqa: E402  one resolver for both (recipes/**
 
 def flat(acc: dict) -> dict:
     """accelerator.json's groups, inputs and outputs over its accelerators (D157's nested form), or as written
-    in the flat form of the SYN1 bundles (f9764d5)."""
+    in the flat form of the first bundles (f9764d5)."""
     if "accelerators" not in acc:
         return acc
     a = acc["accelerators"]

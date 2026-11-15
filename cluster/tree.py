@@ -1,4 +1,4 @@
-"""cluster/tree.py - DC's area_hierarchy.rpt as an indented tree (CSYN1 Part B, X67).
+"""cluster/tree.py - DC's area_hierarchy.rpt as an indented tree.
 
     pixi run python cluster/tree.py AREA_HIERARCHY_RPT [--depth 4] [-o tree.txt]
 

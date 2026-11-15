@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""cluster/cluster.py - a snax-forge design built into snax_cluster's whole cluster (CSYN1 Part B, X66, X67).
+"""cluster/cluster.py - a snax-forge design built into snax_cluster's whole cluster.
 
-  pixi run cluster rtl <point> [--allow-branch]    step 1: the RTL with every memory as a RAM1 macro
+  pixi run cluster rtl <point> [--allow-branch]    step 1: the RTL with every memory as an SRAM macro
   pixi run cluster syn <point> [--cores N] [--allow-branch]   step 2: DC on the whole cluster
-  pixi run cluster gls <point> [--allow-branch]    step 3: the netlist in the same testbench (R4)
-  pixi run cluster pwr <point> [--cores N] [--again] [--allow-branch]   PWR1: the energy per program section; part 1
-      (R1) runs the quiet build on the netlist and cuts its VCD into one SAIF per section (skipped when the zip's
-      pwr/check.json is PASS for the same netlist, quiet ELF and snax_cluster; --again reruns it), part 2 (R2) runs
+  pixi run cluster gls <point> [--allow-branch]    step 3: the netlist in the same testbench
+  pixi run cluster pwr <point> [--cores N] [--again] [--allow-branch]   step 4: the energy per program section; part 1
+      runs the quiet build on the netlist and cuts its VCD into one SAIF per section (skipped when the zip's
+      pwr/check.json is PASS for the same netlist, quiet ELF and snax_cluster; --again reruns it), part 2 runs
       PrimePower once on the netlist, window after window, into results/cluster/nangate45/power_pt.csv and
       power_reports/<point>.zip (cluster/power.py, whose docstring holds the steps)
 
 A point is an entry of cluster/points.json (point, recipe, W, sets, and srams: the macro instances the
-cluster holds, per macro; optional syn: DC settings of the point, today only {"clk_gate": true}, X79); the file
+cluster holds, per macro; optional syn: DC settings of the point, today only {"clk_gate": true}); the file
 also names the two images. A point with syn.clk_gate is a variant of another (the same recipe, W, sets and srams,
 its own name, e.g. dot3_w8_cg): every step runs on it as on any point, and syn turns on dc_syn.tcl's
 CLK_GATE_ENABLE (SYN_CLK_GATE_ENABLE=1: the clock-gating style, compile_ultra -no_autoungroup -gate_clock and the
@@ -22,11 +22,11 @@ Both commits are recorded. The folder holding the three repos is mounted at its 
 `podman run --rm` (no -it, stdin closed), with the home folder's Scala caches at /root (strm/gen.py's
 podman_cmd, PITFALLS SC6).
 
-The bundle, rtl/cluster/<point>.zip (X51): `pixi run forge <recipe> --set W=<W> --set <sets...>` in
+The bundle, rtl/cluster/<point>.zip: `pixi run forge <recipe> --set W=<W> --set <sets...>` in
 snax-forge's image from the snax-forge checkout, the recipe found as forge/bundles.py finds it. A dirty
-bundle (bundle.json `dirty`, X21) or one whose commit is not the checkout's is refused. The zip holds
+bundle (bundle.json `dirty`) or one whose commit is not the checkout's is refused. The zip holds
 bundle/ (the bundle folder, forge_expected.txt with it), sw/forge.elf (the ELF forge prints), the quiet
-build beside it (sw/forge_quiet.elf and its legend sw/obs_marks.json, snax-forge D135, for PWR1), forge.log,
+build beside it (sw/forge_quiet.elf and its legend sw/obs_marks.json, snax-forge D135, for step 4), forge.log,
 forge.txt (forge's terminal output) and provenance.json (snax-forge commit, image and id, the command, both
 ELFs' sha256). A zip whose provenance has the same commit, image id and command is reused.
 
@@ -45,12 +45,12 @@ snax_forge.hjson), from snax_cluster's target/snitch_cluster:
   6. sim/runs/cluster/nangate45/<point>.zip, under rtl/ (other members kept): memories.json, mem.json,
      tc_sram_impl.sv, sram_models.f, plain/ and macro/ (each run's snax-forge-vsim.txt; the macro run's
      vlog.log and vopt.log), logs/ (every step's log), check.json. Packed also when a step failed. Then
-     tmp/cluster/<point>/ is deleted and `make clean-vsim clean-generated` runs in snax_cluster (X51),
+     tmp/cluster/<point>/ is deleted and `make clean-vsim clean-generated` runs in snax_cluster,
      also on a failure.
 Each step's log path is printed when it starts. One line at the end: PASS or FAIL with the cycles and the
 instances; a failure names the check or step and prints at most 30 lines of its log.
 
-syn (X67 step 2, X68), from the same bundle zip, in tmp/cluster/<point>/:
+syn (step 2), from the same bundle zip, in tmp/cluster/<point>/:
   1. image: make clean-generated clean-syn, make rtl-gen CFG_OVERRIDE=<cluster file>; clustergen --memories;
      cluster/mem.py --text-only: its tc_sram_impl.sv must equal step 1's (rtl/tc_sram_impl.sv in
      sim/runs/cluster/nangate45/<point>.zip), or the run stops
@@ -60,14 +60,14 @@ syn (X67 step 2, X68), from the same bundle zip, in tmp/cluster/<point>/:
      tc_sram_impl.sv, and the macros' .db (from ram/runs/lib/<name>.zip) for SYN_RAM_DBS; dc_syn.tcl sources
      the list (SYN_FLIST_TCL), elaborates snax_forge_cluster_wrapper (SYN_TOP), adds cluster.sdc after
      constraints.sdc (SYN_EXTRA_SDC) and runs cluster/cluster_check.tcl after the reports (SYN_POST_TCL);
-     no SDF (X69); SYN_IGNORE_LOAD=1, so DC keeps --cores under a loaded host (UIO-231); with the point's
-     syn.clk_gate, SYN_CLK_GATE_ENABLE=1 (X79). DC's stdout goes to logs/dc_stdout.log as it runs; its path is printed first.
+     no SDF; SYN_IGNORE_LOAD=1, so DC keeps --cores under a loaded host (UIO-231); with the point's
+     syn.clk_gate, SYN_CLK_GATE_ENABLE=1. DC's stdout goes to logs/dc_stdout.log as it runs; its path is printed first.
   4. tree.txt (cluster/tree.py, area_hierarchy.rpt to depth 4) beside the reports; the run zip
      syn/runs/cluster/nangate45/<point>.zip keeps syn.py's KEEP_RUN and the cluster's files; a row in
      results/cluster/nangate45/synth_dc.csv and the report zip results/cluster/nangate45/reports/<point>.zip.
   5. after DC ends, also on a failure: tmp/cluster/<point>/ deleted, make clean-syn clean-generated in snax_cluster.
 
-gls (X67 step 3): step 2's netlist (out/snax_forge_cluster_wrapper_mapped.v of syn/runs/cluster/nangate45/<point>.zip)
+gls (step 3): step 2's netlist (out/snax_forge_cluster_wrapper_mapped.v of syn/runs/cluster/nangate45/<point>.zip)
 in step 1's testbench, with step 1's ELF and check; zero delay, functional. snax_cluster's hook SIM_TYPE=gate_level_sim
 (GLS_NETLIST, GLS_CELLS, with SRAM_IMPL and SRAM_MODELS) compiles the cells, the macro models and the netlist into
 work-vsim/gls, and vopt takes -Lf work-vsim/gls, +initreg+0, +acc=n; vsim +nospecify +notimingchecks.
@@ -82,7 +82,7 @@ work-vsim/gls, and vopt takes -Lf work-vsim/gls, +initreg+0, +acc=n; vsim +nospe
      three with the same SRAM_IMPL, SRAM_MODELS, SIM_TYPE, GLS_NETLIST, GLS_CELLS. The two host steps' Questa
      processes are sampled from /proc every PEAK_EVERY s (peak resident memory, first and last seen); Questa's own
      elapsed times are read from vlog.log (the netlist's vlog), vopt.log and the run's output.
-  4. the checks (X84). Gates: the data line equal to the expected one and to step 1's macro run (data); forge cycles
+  4. the checks. Gates: the data line equal to the expected one and to step 1's macro run (data); forge cycles
      and every counter within check.TIMING_PCT (10 %) of the macro run's (cycles, exact values kept); the swap
      (vopt loaded snax_forge_cluster_wrapper and Nangate cells from work-vsim/gls, its command has +initreg+0 and
      +acc=n; the run prints no [tc_sram_impl]); [SUCCESS] in both runs. Reported, not gates (gate false in
@@ -119,12 +119,12 @@ ROOT = Path(__file__).resolve().parent.parent
 HERE = ROOT / "cluster"
 for d in ("arc", "forge", "strm", "cluster", "syn", "ram", "sim"):
     sys.path.insert(0, str(ROOT / d))
-import arc  # noqa: E402  arc/arc.py (X51)
+import arc  # noqa: E402  arc/arc.py
 import bundles  # noqa: E402  forge/bundles.py: find_recipe, inner_env
 import check  # noqa: E402  cluster/check.py
 import gen as strm_gen  # noqa: E402  strm/gen.py: podman_cmd with the Scala caches (SC6)
-import mem  # noqa: E402  cluster/mem.py (X66)
-import syn as synpy  # noqa: E402  syn/syn.py: the cluster source's DC run (X67 step 2)
+import mem  # noqa: E402  cluster/mem.py
+import syn as synpy  # noqa: E402  syn/syn.py: the cluster source's DC run (step 2)
 import tree  # noqa: E402  cluster/tree.py
 
 POINTS = HERE / "points.json"
@@ -146,7 +146,7 @@ TREE_DEPTH = 4
 RUN_LOG = "logs/snax-forge-vsim.txt"          # snax_forge.mk's SNAX_FORGE_LOG for SIM=vsim, under TB_DIR
 SUCCESS = check.SUCCESS
 GENERIC_SRAM = "tech_cells_generic/src/rtl/tc_sram"
-NETLIST = "out/snax_forge_cluster_wrapper_mapped.v"     # step 2's netlist in its run zip (X69)
+NETLIST = "out/snax_forge_cluster_wrapper_mapped.v"     # step 2's netlist in its run zip
 GLS_TIMEOUT = {"gls_vsim_preparation": 1800, "gls_snax-forge-sim": 4 * 3600, "gls_snax-forge-run": 8 * 3600}
 RTL_PATHS = ("hw", "util", "target/snitch_cluster/cfg", "Bender.yml")
 NOT_RTL = re.compile(r"(^|/)(Makefile[^/]*|[^/]*\.mk|[^/]*\.md|README[^/]*)$")
@@ -163,7 +163,7 @@ class StepFailed(Exception):
         self.step, self.log, self.why = step, log, why
 
 
-SYN_KEYS = {"clk_gate": bool}     # a point's optional "syn" settings (X79) and their types
+SYN_KEYS = {"clk_gate": bool}     # a point's optional "syn" settings and their types
 
 
 def syn_settings(p: dict) -> dict:
@@ -400,7 +400,7 @@ def make_bundle(p: dict, images: dict, repos: dict, steps: Steps) -> tuple[Path,
     quiet, marks = elf.parent / "forge_quiet.elf", elf.parent / "obs_marks.json"
     if not quiet.is_file() or not marks.is_file():
         raise StepFailed("forge", log, f"no {quiet} or no {marks}: the quiet build (snax-forge D135, "
-                                       "CORE1 R3 on)")
+                                       "from the one-core cluster on)")
     forge_log = elf.parent.parent / "forge.log"
     prov = {"point": p["point"], "recipe": p["recipe"], "recipe_file": str(bundles.find_recipe(p["recipe"], FORGE)),
             "W": p["W"], "sets": p.get("sets", []), **key, "image": images["snax_forge"],
@@ -676,11 +676,11 @@ def syn(p: dict, images: dict, args) -> int:
         syn_env.update({"SYN_FLIST_TCL": str(rdir / "syn_flist.tcl"), "SYN_TOP": synpy.SOURCES["cluster"]["top"],
                         "SYN_EXTRA_SDC": str(rdir / "cluster.sdc"), "SYN_POST_TCL": str(CHECK_TCL),
                         "SYN_RAM_DBS": " ".join(str(d) for d in dbs),
-                        "SYN_IGNORE_LOAD": "1"})   # X68: the cores asked for, whatever the host's load (UIO-231)
+                        "SYN_IGNORE_LOAD": "1"})   # the cores asked for, whatever the host's load (UIO-231)
         clk_gate = syn_settings(p).get("clk_gate", False)
-        if clk_gate:                                       # X79: dc_syn.tcl's CLK_GATE_ENABLE
+        if clk_gate:                                       # dc_syn.tcl's CLK_GATE_ENABLE
             syn_env["SYN_CLK_GATE_ENABLE"] = "1"
-        print(f"  clock gating                 {'on (SYN_CLK_GATE_ENABLE=1, X79)' if clk_gate else 'off'}", flush=True)
+        print(f"  clock gating                 {'on (SYN_CLK_GATE_ENABLE=1)' if clk_gate else 'off'}", flush=True)
 
         def prepare() -> None:
             (rdir / "syn_flist.tcl").write_text(flist)
@@ -720,7 +720,7 @@ def syn(p: dict, images: dict, args) -> int:
         failed = f"driver: {e!r}"
         print(f"cluster syn {point}: FAIL in the driver: {e!r}", flush=True)
     finally:
-        # Each step on its own, so one that fails does not skip the rest (CSYN1 R3's stopped run).
+        # Each step on its own, so one that fails does not skip the rest (a stopped run left the rest undone).
         try:
             unfinished(rdir, synpy.run_zip(TECH, point, sargs.clock), dc_start)
         except Exception as e:  # noqa: BLE001
@@ -748,7 +748,7 @@ def syn(p: dict, images: dict, args) -> int:
 
 
 def unfinished(rdir: Path, z: Path, dc_start: float | None) -> None:
-    """A run folder left after the step: pack it (its DC logs kept, X51) when finish_run did not write the zip
+    """A run folder left after the step: pack it (its DC logs kept) when finish_run did not write the zip
     after DC started; otherwise finish_run's zip is the run's and only the folder's remnants go."""
     if not rdir.is_dir():
         return
@@ -761,11 +761,11 @@ def unfinished(rdir: Path, z: Path, dc_start: float | None) -> None:
 
 
 def ram_zip(name: str) -> Path:
-    import ram  # noqa: PLC0415  ram/ram.py: the macros' zips (X49)
+    import ram  # noqa: PLC0415  ram/ram.py: the macros' zips
     return ram.macro_zip(name)
 
 
-# ---------------------------------------------------------------- gls (X67 step 3)
+# ---------------------------------------------------------------- gls (step 3)
 def rtl_changes(old: str) -> list[str]:
     """The files changed between the netlist's snax_cluster commit and HEAD that can change the RTL (RTL_PATHS,
     all but Makefiles, .mk and docs)."""
@@ -824,7 +824,7 @@ def gls_checks(work: Path, p: dict, rtl_res: dict, rtl_run: str, netlist: Path, 
     c["swap"] = swap_check(vopt, vlog, run, netlist, cell_names)
     succ = {"gls": check.success(run), "rtl": check.success(rtl_run)}
     c["success"] = {"status": "PASS" if all(succ.values()) else "FAIL", **succ}
-    # reported, not gates (X84): D123 against SNAX-GVSoC (the rtl step's gate) and the RAMCOUNT comparison
+    # reported, not gates: D123 against SNAX-GVSoC (the rtl step's gate) and the RAMCOUNT comparison
     ok, notes = check.compare(expected, run) if run else (False, ["no run output"])
     c["d123"] = {"status": "PASS" if ok else "FAIL", "gate": False, "notes": notes}
     ok, notes, extra = check.ram_compare(rtl_run, run, p["srams"])
@@ -837,7 +837,7 @@ def gls_checks(work: Path, p: dict, rtl_res: dict, rtl_run: str, netlist: Path, 
 
 
 def gates_failed(checks: dict) -> list[str]:
-    """The gls checks that fail the step (X84): every check but those marked gate False."""
+    """The gls checks that fail the step: every check but those marked gate False."""
     return [k for k, v in checks.items() if v.get("gate", True) and v["status"] != "PASS"]
 
 
@@ -937,7 +937,7 @@ def gls(p: dict, images: dict, args) -> int:
         res["checks"] = gls_checks(work, p, rtl_res, rtl_run, netlist, cell_names)
         # the netlist's one write at time 0 per macro, allowed by the check (PITFALLS Q8, Q14)
         res["ram_extra_writes"] = res["checks"]["ramcount"]["extra_writes"]
-        res["ram_extra_reads"] = res["checks"]["ramcount"]["extra_reads"]    # CG1 R2: the gated netlist's, Q14
+        res["ram_extra_reads"] = res["checks"]["ramcount"]["extra_reads"]    # the gated netlist's, Q14
         bad = gates_failed(res["checks"])
         res["status"] = "PASS" if not bad else "FAIL"
         res["failed"] = ", ".join(bad) or None
@@ -988,7 +988,7 @@ def gls(p: dict, images: dict, args) -> int:
 
 
 def drop_wlf(res: dict) -> None:
-    """VSIM_FLAGS' `log -r /*` writes vsim.wlf beside snax_cluster's Makefile: scratch (X51), its size recorded in
+    """VSIM_FLAGS' `log -r /*` writes vsim.wlf beside snax_cluster's Makefile: scratch, its size recorded in
     the run's check.json, then deleted (clean-vsim deletes it too; this does not rest on that)."""
     f = TB_DIR / "vsim.wlf"
     if f.is_file():
@@ -1037,20 +1037,20 @@ def gls_summary(point: str, res: dict) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("rtl", help="step 1: RTL with the memory macros, against the plain RTL (X66, X67)")
+    r = sub.add_parser("rtl", help="step 1: RTL with the memory macros, against the plain RTL")
     r.add_argument("point")
     r.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
-    s = sub.add_parser("syn", help="step 2: DC on the whole cluster (X67, X68)")
+    s = sub.add_parser("syn", help="step 2: DC on the whole cluster")
     s.add_argument("point")
-    s.add_argument("--cores", type=int, default=16, help="DC's cores (default 16, X68)")
+    s.add_argument("--cores", type=int, default=16, help="DC's cores (default 16)")
     s.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
-    g = sub.add_parser("gls", help="step 3: step 2's netlist in step 1's testbench (X67)")
+    g = sub.add_parser("gls", help="step 3: step 2's netlist in step 1's testbench")
     g.add_argument("point")
     g.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
-    w = sub.add_parser("pwr", help="PWR1: the quiet build on the netlist, one SAIF per program section, then PT per "
+    w = sub.add_parser("pwr", help="step 4: the quiet build on the netlist, one SAIF per program section, then PT per "
                                    "window (cluster/power.py)")
     w.add_argument("point")
-    w.add_argument("--cores", type=int, default=16, help="PT's threads (default 16, X59; lowered to the free cores)")
+    w.add_argument("--cores", type=int, default=16, help="PT's threads (default 16, lowered to the free cores)")
     w.add_argument("--again", action="store_true", help="run part 1 again even when pwr/check.json is current")
     w.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
     a = ap.parse_args()

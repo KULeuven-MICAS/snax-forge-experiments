@@ -4,15 +4,15 @@
     pixi run cluster-energy [--tech nangate45] [--md]
     pixi run cluster-energy-test                    report/test_cluster_energy.py
 
-For every point of cluster/points.json that has PWR1's PrimePower reports (results/cluster/<tech>/power_reports/
-<point>.zip, `pixi run cluster pwr` part 2, X74), reads each window's power_hierarchy.rpt and sums each node's own
-dynamic power (internal + switching, its total minus its children's; leakage out, X13) into cluster/groups.json's
-groups by X72's rules (report/cluster_breakdown.py's `groups`), so the groups add up to the top's dynamic power.
-A window w of C_w cycles at t_clk (10 ns as the cuts read the run, X76) gives each group g
+For every point of cluster/points.json that has its PrimePower reports (results/cluster/<tech>/power_reports/
+<point>.zip, `pixi run cluster pwr` part 2), reads each window's power_hierarchy.rpt and sums each node's own
+dynamic power (internal + switching, its total minus its children's; leakage out) into cluster/groups.json's
+groups by the same rules (report/cluster_breakdown.py's `groups`), so the groups add up to the top's dynamic power.
+A window w of C_w cycles at t_clk (10 ns as the cuts read the run) gives each group g
 
     E_g,w = (P_int + P_sw)_g,w * C_w * t_clk,    E_w = sum_g E_g,w,    E_span = sum_w E_w
 
-over the span's windows (X73: the first mark to the end of the last DMA out). Then, where they exist:
+over the span's windows (the first mark to the end of the last DMA out). Then, where they exist:
 
   run     the run phase: each run window against the acc_config window before it (the idle reference, the same
           cluster with nothing moving but the clock): per group the energy per cycle in both, the run window's
@@ -23,7 +23,7 @@ over the span's windows (X73: the first mark to the end of the last DMA out). Th
           idle, each side's shares of its own five-part sum. HWCOST is an estimate with no bit-level switching;
           the shares are what is compared, not the absolute numbers
   alone   the accelerator's shell in the run window against its point measured alone (points.json's `alone`, a
-          row of results/forge/<tech>/power_pt.csv, X23's busy window): energy and energy per cycle
+          row of results/forge/<tech>/power_pt.csv, its busy window): energy and energy per cycle
 
 Each window's top dynamic power must equal power_pt.csv's `e_dyn_pj` (the same report, PT's groups) within
 0.01 %, or the point fails. Writes results/cluster/<tech>/energy.json; --md also prints the tables as Markdown.
@@ -57,7 +57,7 @@ def parse_hierarchy(text: str) -> list[dict]:
     """PT's `report_power -hierarchy -nosplit`: path (the top as ''), design, dynamic power (W) as `total`, in order.
 
     Two spaces of indent per level; a name is followed by its design in brackets (the top's line is the design).
-    `total` is internal + switching, leakage left out (X13), so cluster_breakdown's `own` and `groups` apply.
+    `total` is internal + switching, leakage left out, so cluster_breakdown's `own` and `groups` apply.
     """
     rows: list[dict] = []
     stack: list[tuple[int, str]] = []
@@ -134,7 +134,7 @@ def hwcost_rows(cost: dict, runs: list[dict], cfg: dict) -> dict:
 
 
 def alone_row(rows: list[dict], cycles: int, clock_ns: float, alone: dict) -> dict:
-    """The shell in the run window against the same point measured alone over X23's busy window."""
+    """The shell in the run window against the same point measured alone over its busy window."""
     shell = next(r for r in rows if cb.SHELL.fullmatch(r["path"]))
     e = pj_per_cycle(shell["total"], clock_ns)
     return {"point": alone["point"], "snax_forge_commit": alone["snax_forge_commit"], "seed": alone.get("seed"),
@@ -145,7 +145,7 @@ def alone_row(rows: list[dict], cycles: int, clock_ns: float, alone: dict) -> di
 
 
 def csv_rows(path: Path, point: str, ungated: bool = False) -> list[dict]:
-    """The point's rows; with `ungated`, its ungated ones (clk_gate not 1, X79): the `alone` point as X23 ran it."""
+    """The point's rows; with `ungated`, its ungated ones (clk_gate not 1): the `alone` point as it was measured."""
     if not path.is_file():
         return []
     with path.open(newline="") as fh:

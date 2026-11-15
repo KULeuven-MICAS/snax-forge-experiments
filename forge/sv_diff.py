@@ -7,11 +7,11 @@ NEW_DIR and OLD_DIR (default rtl/forge) hold bundles as forge/bundles.py writes 
 bundle in NEW_DIR, its rtl/sv/*.sv and the file lists (rtl/files.f, rtl/sv/filelist.f) are compared with
 OLD_DIR's bundle of the same point after masking what snax-forge renamed without changing the hardware:
   - the tag: snax-forge names modules and files <slot>_<design>_* since D157 (snax_forge_dot_4_ctrl), the
-    SYN1 and SYN2 bundles <slot>_* (snax_forge_ctrl); the new bundle's tag (bundle.json) becomes snax_forge_
+    first bundles <slot>_* (snax_forge_ctrl); the new bundle's tag (bundle.json) becomes snax_forge_
   - ElementwiseLanes became SimdLanes
   - the generator's "// Generated" header lines; a file list's order (sorted by name, so a rename reorders it)
 A bundle that failed (a zip with the log only) is reported and skipped. --same FILE writes the points that are
-identical, one per line (CSYN1 R2 installed those into rtl/forge/). Exit 1 when any point differs.
+identical, one per line (installed into rtl/forge/ as such). Exit 1 when any point differs.
 """
 from __future__ import annotations
 

@@ -2,7 +2,7 @@
 # cluster/batch.sh POINT... [--from STEP]
 #
 # Runs the cluster flow on each point in order, in series: cluster rtl, cluster syn --cores 16, cluster gls,
-# cluster pwr --cores 16, cluster-hwcost (PWR2). --from starts the first point at STEP (rtl|syn|gls|pwr|hwcost).
+# cluster pwr --cores 16, cluster-hwcost. --from starts the first point at STEP (rtl|syn|gls|pwr|hwcost).
 # ALLOW_BRANCH=1 adds --allow-branch to the four cluster steps (snax_cluster off origin/main).
 #
 # Before each point: quota -v against the global stop (QUOTA_MAX_FILES files, QUOTA_MAX_KB 1K blocks), and, when
@@ -13,7 +13,7 @@
 set -u
 
 STEPS=(rtl syn gls pwr hwcost)
-OUT=${BATCH_OUT:-tmp/overnight-1}               # the batch's folder (BATCH_OUT=tmp/cg3 for CG3's)
+OUT=${BATCH_OUT:-tmp/overnight-1}               # the batch's folder (BATCH_OUT=tmp/<name> for another)
 STATUS=$OUT/status.txt
 QUOTA_MAX_FILES=${QUOTA_MAX_FILES:-1550000}
 QUOTA_MAX_KB=${QUOTA_MAX_KB:-136718750}          # 140 GB

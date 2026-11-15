@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""report/xbar_kinds.py - the interconnect's read-only and write-only inputs, in two forms HWCOST can use (X71).
+"""report/xbar_kinds.py - the interconnect's read-only and write-only inputs, in two forms HWCOST can use.
 
   pixi run xbar-kinds [--tech nangate45]
   pixi run xbar-kinds-test                    report/test_xbar_kinds.py
 
-Reads results/xbar_mix/<tech>/synth_dc.csv (CSYN1 R3c, X70), results/strm/<tech>/xbar.csv (STRM1's table, X52, X53)
-and, for the check against the cluster, results/cluster/<tech>/reports/dot3_w16.zip (CSYN1 R3, its
+Reads results/xbar_mix/<tech>/synth_dc.csv, results/strm/<tech>/xbar.csv
+and, for the check against the cluster, results/cluster/<tech>/reports/dot3_w16.zip (its
 area_hierarchy.rpt). Writes results/strm/<tech>/xbar_kinds.json next to xbar.csv:
 
   factor      the default form. A read-write input's area, with every input read-write, comes from xbar.csv as it
@@ -25,7 +25,7 @@ area_hierarchy.rpt). Writes results/strm/<tech>/xbar_kinds.json next to xbar.csv
               the table's range, by linear extrapolation.
 
   n = n_rw + n_ro + n_wo inputs (streamer channels, cores, the AXI port), b banks. A reader's channel is read-only,
-  a writer's write-only, the cores and AXI read-write (snax_cluster's DataRequestor and the cluster template, X70).
+  a writer's write-only, the cores and AXI read-write (snax_cluster's DataRequestor and the cluster template).
 
 checks lists each form against the two i36_b32 points and the cluster's sparse_interconnect_i. Standard library,
 numpy and arc/arc.py.

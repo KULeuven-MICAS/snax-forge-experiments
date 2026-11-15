@@ -1,6 +1,6 @@
 #-----------------------------
 # syn/scripts/clock_gating.tcl
-# Clock gating for one DC run (X79): sourced by dc_syn.tcl right before compile_ultra when CLK_GATE_ENABLE is 1,
+# Clock gating for one DC run: sourced by dc_syn.tcl right before compile_ultra when CLK_GATE_ENABLE is 1,
 # which then compiles with -gate_clock. Off (the default), dc_syn.tcl never sources it and the run is as before.
 #
 # The library's integrated clock gates are found by DC itself: on nangate45 CLKGATE_X1-X8 carry
@@ -11,12 +11,12 @@
 # Not set, on purpose: -control_point and a test_mode port (DC would add a port to the top; no scan here),
 # -negative_edge_logic (no negedge ICG in Nangate; every flop of these designs is posedge), operand isolation
 # (it changes the datapath's logic, a different effect), power_cg_designware (obsolete in DC Y-2026.03, which
-# ignores it with INFO-100; CG1 R2).
+# ignores it with INFO-100).
 #-----------------------------
 
 set cg_cells [get_lib_cells -quiet */* -filter "clock_gating_integrated_cell == latch_posedge"]
 if {[sizeof_collection $cg_cells] == 0} {
-    puts "clock_gating.tcl: no library cell with clock_gating_integrated_cell latch_posedge; stopping (X79)"
+    puts "clock_gating.tcl: no library cell with clock_gating_integrated_cell latch_posedge; stopping"
     exit 2
 }
 puts "clock_gating.tcl: integrated clock gates [lsort [get_object_name $cg_cells]]"

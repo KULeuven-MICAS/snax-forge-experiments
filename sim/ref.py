@@ -35,7 +35,7 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
     return {k: np.asarray(v, dtype=np.int64) for k, v in out.items()}
 
 
-# ---------------------------------------------------------------- CHAR1: the blocks alone, cycle by cycle
+# ---------------------------------------------------------------- the blocks alone, cycle by cycle
 # snax-forge's datapaths (hw/chisel/src/main/scala/snax/forge/datapath/, at the commit of the point) at int64,
 # wrapping at 64 bits, stepped one slot at a time as sim/sources/char.py's schedule() drives them. A slot's
 # inputs are applied at its rising edge, the TB samples the outputs at its falling edge (the registers still hold

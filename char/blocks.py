@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""char/blocks.py - snax-forge's catalogue blocks alone, for the points in char/points.json (CHAR1).
+"""char/blocks.py - snax-forge's catalogue blocks alone, for the points in char/points.json.
 
 A point is one catalogue datapath of snax-forge (hw/chisel/blocks.json) at
 full params, named <block>/<case>_w<W> (e.g. tree/add_w8, link/d4_w1).
@@ -18,7 +18,7 @@ the top module with the asynchronous active-high reset it has inside an
 accelerator: rtl/char/<point>/sv/, one file per module, and emitted.json
 (block, params, top, modules, files). A point's folder and zip are removed
 first; a kept point's folder is packed into rtl/char/<point>.zip, test-read
-and deleted (docs X51): syn/syn.py and sim/pwr.py read the zip.
+and deleted: syn/syn.py and sim/pwr.py read the zip.
 
 A kept point gets point.json: point, datapath, params, snax_forge_commit,
 dirty, date. The commit and dirty are snax-forge's `git rev-parse HEAD` and
@@ -136,7 +136,7 @@ def main() -> int:
             "snax_forge_commit": commit, "dirty": dirty,
             "date": dt.datetime.now().isoformat(timespec="seconds"),
         }, indent=2) + "\n")
-        arc.pack_bundle(dest)               # rtl/char/<point>.zip, test-read; the folder goes (X51)
+        arc.pack_bundle(dest)               # rtl/char/<point>.zip, test-read; the folder goes
         made.append(p["point"])
         print(f"made  {p['point']}  {emitted['top']}  ({len(emitted['files'])} file(s))", flush=True)
     if failed:

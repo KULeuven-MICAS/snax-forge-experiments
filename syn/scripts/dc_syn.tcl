@@ -25,24 +25,24 @@
 #                      its blocks)
 #   SYN_CLK_PORT       the clock port: ap_clk (default, Vitis), clock (Bambu; a snax-forge block),
 #                      clk (XLS) or clk_i (snax-forge)
-#   SYN_RAM_DBS        optional: SRAM macro .db files linked beside the library (X62, a Vitis RAM swapped)
+#   SYN_RAM_DBS        optional: SRAM macro .db files linked beside the library (a Vitis RAM swapped)
 #   SYN_RST_PORT       the reset port, kept ideal: ap_rst_n (default, Vitis, synchronous, active low),
 #                      reset (Bambu, mostly synchronous, active low), rst (XLS, synchronous, active
 #                      high), rst_ni (snax-forge, asynchronous, active low) or reset (a snax-forge
-#                      block alone, CHAR1: asynchronous, active high)
+#                      block alone: asynchronous, active high)
 #                      syn.py checks both ports are on the top before it starts DC (port guard)
 #
-# Optional hooks (CSYN1 Part B, the cluster source; unset, the run is as before):
+# Optional hooks (the cluster source; unset, the run is as before):
 #   SYN_FLIST_TCL      a Tcl file list in bender's synopsys form (snax_cluster's gen-syn syn_flist.tcl:
 #                      analyze groups, each 'if {0 == [analyze ...]} {return 1}'), sourced in place of
 #                      SYN_FILELIST; a failed group stops the run (exit 2). Needs SYN_TOP.
 #   SYN_TOP            the module elaborated after SYN_FLIST_TCL
 #   SYN_EXTRA_SDC      a file sourced right after constraints.sdc (it sees the same variables)
 #   SYN_POST_TCL       a file sourced after the reports, before the outputs
-#   SYN_WRITE_SDF      1: write the SDF beside the netlist (syn.py --sdf); otherwise none (X69)
+#   SYN_WRITE_SDF      1: write the SDF beside the netlist (syn.py --sdf); otherwise none
 #   SYN_IGNORE_LOAD    1: take SYN_CORES whatever the host's load (disable_multicore_resource_checks set before
 #                      set_host_options); otherwise DC lowers the cores under load once, at the start (UIO-231)
-#   SYN_CLK_GATE_ENABLE 1: CLK_GATE_ENABLE, clock gating (X79): clock_gating.tcl sourced before the compile,
+#   SYN_CLK_GATE_ENABLE 1: CLK_GATE_ENABLE, clock gating: clock_gating.tcl sourced before the compile,
 #                      compile_ultra -no_autoungroup -gate_clock, and reports/clock_gating*.rpt; otherwise 0, none
 #
 # The constraints are physical (ns, fF) and scaled to the library's units here; the
@@ -71,14 +71,14 @@ set clock_ns     $::env(SYN_CLOCK_NS)
 set hdl_format   [env_or SYN_FORMAT verilog]
 set clk_port     [env_or SYN_CLK_PORT ap_clk]
 set rst_port     [env_or SYN_RST_PORT ap_rst_n]
-# X79: the clock-gating switch, off unless SYN_CLK_GATE_ENABLE is 1 (syn.py --clk-gate, a cluster point's syn.clk_gate)
+# the clock-gating switch, off unless SYN_CLK_GATE_ENABLE is 1 (syn.py --clk-gate, a cluster point's syn.clk_gate)
 set CLK_GATE_ENABLE [expr {[env_or SYN_CLK_GATE_ENABLE 0] eq "1" ? 1 : 0}]
 
 #-----------------------------
 # Setting up multiple cores
 #-----------------------------
 
-# SYN_IGNORE_LOAD=1 (the cluster source, X68): the load check is off before the cores are set, so DC keeps
+# SYN_IGNORE_LOAD=1 (the cluster source): the load check is off before the cores are set, so DC keeps
 # SYN_CORES; otherwise set_host_options cuts them by the load at this moment (UIO-231) for the whole run
 if {[env_or SYN_IGNORE_LOAD 0] eq "1"} { set disable_multicore_resource_checks true }
 
@@ -187,7 +187,7 @@ close $fh
 puts "dc_syn.tcl: $read_name ($read_time, $read_cap), $oc_name $oc_volt V $oc_temp C"
 
 #-----------------------------
-# SRAM macros (X62): a Vitis RAM swapped for a generated macro; its .db is linked beside the library, after the
+# SRAM macros: a Vitis RAM swapped for a generated macro; its .db is linked beside the library, after the
 # library check above, which counts the libraries loaded so far (syn.py sets SYN_RAM_DBS, space separated)
 #-----------------------------
 set ram_dbs [env_or SYN_RAM_DBS ""]
@@ -201,6 +201,8 @@ if {$ram_dbs ne ""} {
 # none: the library has none; check that.
 #-----------------------------
 set auto_wire_load_selection false
+# NB (X3): auto_wire_load_selection false keeps the library's default_wire_load (PITFALLS DC1); removing
+# that attribute before elaboration is what leaves no wire-load model.
 if {$wire_load eq "off"} {
     if {$default_wlm ne ""} { remove_attribute [get_libs $lib_name] default_wire_load }
 } elseif {$wire_load eq "none"} {
@@ -243,7 +245,7 @@ if {$extra_sdc ne ""} {
 }
 
 #-----------------------------
-# Compile; with CLK_GATE_ENABLE (X79) the clock-gating style first, and -gate_clock
+# Compile; with CLK_GATE_ENABLE the clock-gating style first, and -gate_clock
 #-----------------------------
 if {$CLK_GATE_ENABLE} {
     source [file join $script_dir clock_gating.tcl]
@@ -292,7 +294,7 @@ close $fh
 report_power -significant_digits 6 > reports/power.rpt
 report_power -hierarchy -nosplit -significant_digits 6 > reports/power_hierarchy.rpt
 report_power -verbose -hierarchy -nosplit -significant_digits 6 > reports/power_verbose_hierarchy.rpt
-# X79: what clock gating did: the summary, each ICG with the bits it gates, and every ungated register with why
+# what clock gating did: the summary, each ICG with the bits it gates, and every ungated register with why
 if {$CLK_GATE_ENABLE} {
     report_clock_gating -nosplit > reports/clock_gating.rpt
     report_clock_gating -gating_elements -nosplit > reports/clock_gating_elements.rpt
@@ -300,7 +302,7 @@ if {$CLK_GATE_ENABLE} {
 }
 
 #-----------------------------
-# Path classes (docs X40): the worst setup slack from inputs or registers to registers or
+# Path classes: the worst setup slack from inputs or registers to registers or
 # outputs, measured after compile with get_timing_paths -from/-to only; nothing here
 # changes the compile (no group_path). Inputs: every input but the clock and the reset;
 # outputs: every output; registers: clock pins as start points, data pins as endpoints.
@@ -344,7 +346,7 @@ if {$post_tcl ne ""} {
 }
 
 #-----------------------------
-# Outputs: the netlist; the SDF only with SYN_WRITE_SDF=1 (syn.py --sdf, X69): nothing reads it
+# Outputs: the netlist; the SDF only with SYN_WRITE_SDF=1 (syn.py --sdf): nothing reads it
 #-----------------------------
 write_file -format verilog -hierarchy -output out/${target_design}_mapped.v
 if {[env_or SYN_WRITE_SDF 0] eq "1"} { write_sdf out/${target_design}_mapped.sdf }

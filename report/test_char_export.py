@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""report/test_char_export.py - char_export.py --clk-gate (CG2, X83) on synthetic gated rows.
+"""report/test_char_export.py - char_export.py --clk-gate on synthetic gated rows.
 
   pixi run char-export-test
 
@@ -77,7 +77,7 @@ class TestCharExportGated(unittest.TestCase):
         shutil.copy(cls.old / TECH / "char.json", char / TECH / "char.json")
         scols, srows = rows(cls.old / TECH / "char_synth.csv")
         pcols, prows = rows(cls.old / TECH / "char_power.csv")
-        # the twins are made from the ungated rows; committed gated rows (CG2 R2) are left out
+        # the twins are made from the ungated rows; committed gated rows are left out
         srows = [r for r in srows if r.get("clk_gate", "") != "1"]
         prows = [r for r in prows if r.get("clk_gate", "") != "1"]
         gs = [gated_synth(r) for r in srows]
@@ -135,7 +135,7 @@ class TestCharExportGated(unittest.TestCase):
         self.assertIn("lanes/mul_w8: area_um2", self.out)
         line = next(ln for ln in self.out.splitlines() if ln.startswith("  tree/add_w8: area_um2"))
         self.assertIn("seq_cells 1.0156", line)             # 65 / 64: one gate per 64 bits
-        self.assertIn("tree/add_w8: 65 sequential cells, its bits are 64", self.out)   # printed, not failed (X82)
+        self.assertIn("tree/add_w8: 65 sequential cells, its bits are 64", self.out)   # printed, not failed
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""sim/sources/strm.py - a STRM1 point (streamer reader or sparse interconnect) -> tb.json and its generated TB (X52).
+"""sim/sources/strm.py - a streamer or xbar point (streamer reader or sparse interconnect) -> tb.json and its generated TB.
 
 A streamer point is snax_cluster's reader alone, as the Streamer uses it (strm/gen.py, rtl/streamer/<point>.zip);
 an xbar point is the TCDM sparse interconnect (rtl/xbar/<point>.zip). Both are synthesized by syn/syn.py --source
@@ -19,7 +19,7 @@ tb.json:
   window   the window's expected cycles: reader None (fill + beats, measured), xbar cycles + 1
   seed     the root seed of the TB's $urandom calls: sim/pwr.py runs vsim -sv_seed <seed> (pwr run --seed, default 0)
 
-The stimuli (STRM1 R0, X52):
+The stimuli:
   reader  io_start for one cycle; every TCDM request granted at once (ready 1), its response valid the next cycle
           with a new random 64-bit word; the output always ready. Window: from a quarter cycle before the edge that
           takes io_start to a quarter cycle before the edge that takes the last beat. Checks: beats = 1024, every
@@ -32,8 +32,8 @@ The stimuli (STRM1 R0, X52):
           cycle 0 to a quarter cycle before the edge after cycle `cycles` (its read responses): cycles + 1 edges.
           Checks: every input granted every cycle (grants = inputs x cycles), each bank's request (row, write,
           data, strb) its input's, no bank valid without an input, each read response valid with the bank's data.
-The window's rising edges are its own cycles and no event sits on a boundary (CHAR1's rule, X31); the TB dumps
-from time 0 and sim/pwr.py cuts the window (X32).
+The window's rising edges are its own cycles and no event sits on a boundary (the char source's rule); the TB dumps
+from time 0 and sim/pwr.py cuts the window.
 """
 from __future__ import annotations
 

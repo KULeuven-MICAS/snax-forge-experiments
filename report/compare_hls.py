@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""report/compare_hls.py - results/compare/: forge and the four HLS cases side by side, one page per kernel (X46, X64).
+"""report/compare_hls.py - results/compare/: forge and the four HLS cases side by side, one page per kernel.
 
   pixi run compare-hls
 
-Reads only results/compare_done.csv and results/compare_untiered.csv (report/compare.py, X45). Writes, for the
+Reads only results/compare_done.csv and results/compare_untiered.csv (report/compare.py). Writes, for the
 HLS cases Vitis opt, Vitis dace, Bambu and XLS, and forge's cases of the kernel (forge, forge2 to forge6,
-forge_baked; X61):
+forge_baked):
 
   results/compare/README.md                  the setup, the summary across kernels, the index, the nangate15 check
   results/compare/<tier>/<kernel>.md         one kernel: its figure and table, the insights, the parts at n2048
@@ -16,7 +16,7 @@ forge_baked; X61):
 Only the parts between <!-- gen:NAME --> and <!-- /gen --> are generated. Everything outside the markers is
 hand-written (the summary and the insights) and is kept as it is; a missing page is created from a template
 with every marker in place. Main view: nangate45, int64, a 10 ns clock; tier done at n2048
-(X24) and untiered at n2048 too (X55, X61); the nangate15 check compares untiered at each kernel's larger cosim
+ and untiered at n2048 too; the nangate15 check compares untiered at each kernel's larger cosim
 size, the only one both technologies have. Power is P = E_run / (cycles x T_clk), T_clk = 10 ns.
 """
 from __future__ import annotations
@@ -162,7 +162,7 @@ def setup(rows: list[dict]) -> list[str]:
     return lines
 
 
-# X65: the line on top of the README and of every kernel page (hand-written text, outside the markers)
+# the line on top of the README and of every kernel page (hand-written text, outside the markers)
 PERIPHERALS_LINE = "forge's figures exclude `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168): it is in neither the csr nor the total without csr."
 PARTS_BASIS = (
     "Every point at n2048 on nangate45 (2048 elements per input stream), per kernel and W. A part's energy per task "
@@ -180,8 +180,8 @@ PARTS_BASIS = (
 
 
 def forge_csr_cell(r: dict) -> tuple[float | None, float | None]:
-    """X65: forge's whole csr cell (the csr part plus its <tag>_peripherals child), area and pJ per cycle: what X63's
-    total without csr subtracts, so the peripherals are in no figure (0 where the bundle has none, before CTRL2)."""
+    """forge's whole csr cell (the csr part plus its <tag>_peripherals child), area and pJ per cycle: what the
+    total without csr subtracts, so the peripherals are in no figure (0 where the bundle has none)."""
     def get(k):
         return float(r[k]) if r.get(k) not in (None, "") else None
     a, e = get("csr_um2"), get("e_dyn_csr_pj")
@@ -191,7 +191,7 @@ def forge_csr_cell(r: dict) -> tuple[float | None, float | None]:
 
 
 def parts_table(rows: list[dict], tier: str, kernel: str) -> list[str]:
-    """X63: the parts at n2048 of every tool and case of one kernel, W by W."""
+    """The parts at n2048 of every tool and case of one kernel, W by W."""
     pts = [r for r in rows if r["tech"] == TECH and r["kernel"] == kernel and r["status"] == "ok"
            and r["size"] == "n2048"]
     order = {c: i for i, (_t, c) in enumerate(CASES)}

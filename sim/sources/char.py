@@ -1,4 +1,4 @@
-"""sim/sources/char.py - a CHAR1 block point -> tb.json, and the slot schedule its sequencer drives (X14).
+"""sim/sources/char.py - a char block point -> tb.json, and the slot schedule its sequencer drives.
 
 A char point is one snax-forge catalogue block alone (char/blocks.py, rtl/char/<point>.zip: point.json, emitted.json, unpacked by sim/pwr.py),
 synthesized by syn/syn.py --source char. It has no CSRs, no START and no done: a sequencer of sim/tb/ drives its
@@ -12,7 +12,7 @@ tb.json:
   control  {kind: "char_<kind>"}
   data_in  [port, ...]   every 64-bit data input, one per lane, in the catalogue's port order then lane order
                          (ElementwiseLanes and Mac: a_0 .. a_{W-1}, b_0 ..; the others in_0 ..): rand64 draws
-                         one stream per port in this order (X19)
+                         one stream per port in this order
   outs     [port, ...]   every 64-bit data output (out, or out_0 .. out_{W-1})
   pins     {name: {port, bits}}  the kind's pins present in the netlist: a pin of no bits is absent (LinkBuffer's
                          wslot and rslot at depth 1, SerialAccumulate's lane at lanes 1)
@@ -25,12 +25,12 @@ serial (SerialAccumulate), link (LinkBuffer).
 
 schedule(tb) is the sequence of slots the kind's sequencer drives after reset, slot by slot: 4 settle slots with
 every pin and data input low, then per window a lead-in of the window's own kind (outside every window) and the
-window's slots. The windows (CHAR1 R2): lanes, fold and serial have busy (a fire every cycle; serial a read every
+window's slots. The windows: lanes, fold and serial have busy (a fire every cycle; serial a read every
 cycle, 128 beats of W) and idle (the enable at 0, every other input held), each after one lead-in slot; link has
 stream only, a FIFO at full rate: a lead-in of D loads round the ring (the fill), then 128 cycles with a load of
 new data every cycle into slot t mod D and rslot the oldest slot, the same slot (read before the edge that
 overwrites it), so out at cycle t is the beat loaded at t - D. A slot's inputs are applied at its rising edge (after the flops have taken the slot
-before, as SYN1 and SYN2's TBs and a block's neighbours inside an accelerator change them), the outputs are sampled
+before, as the forge points' TBs and a block's neighbours inside an accelerator change them), the outputs are sampled
 at its falling edge, and the next rising edge takes it. A window's rising edges are its own slots' input changes
 and the captures of its lead-in and its own slots but the last, which falls on the next lead-in's edge: every
 window measures its own kind only. sim/tb/char_<kind>_seq.sv implements the same loops; the TB prints each
@@ -64,7 +64,7 @@ CORE = "char_seq_core.svh"
 
 
 def point_dir(point: str, bundle: Path) -> Path:
-    """The block, unpacked from rtl/char/<point>.zip by sim/pwr.py (X51), with the files it needs."""
+    """The block, unpacked from rtl/char/<point>.zip by sim/pwr.py, with the files it needs."""
     for f in ("point.json", "emitted.json"):
         if not (bundle / f).is_file():
             raise FileNotFoundError(f"{point}: no {f} in {RTL / point}.zip (pixi run char-rtl)")

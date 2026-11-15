@@ -23,7 +23,7 @@ foreach {var key} {lib_db lib_db lib_name lib_name wire_load wire_load t_scale t
 regexp {"out_load_ff":\s*([0-9.eE+-]+)} $tj -> out_load_ff
 regexp {"max_transition_ns":\s*([0-9.eE+-]+)} $tj -> max_trans_ns
 # The clock and reset ports constraints.sdc names: tech.json's dc_env (SYN_CLK_PORT, SYN_RST_PORT, which
-# syn.py records since SYN1 R0, clk_i and rst_ni for snax-forge), else Vitis's ap_clk and ap_rst_n.
+# syn.py records, clk_i and rst_ni for snax-forge), else Vitis's ap_clk and ap_rst_n.
 proc tj_env {key default} {
     global tj
     if {[regexp "\"$key\":\\s*\"(\[^\"\]*)\"" $tj -> v]} { return $v }

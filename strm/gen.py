@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""strm/gen.py - the streamer reader and the TCDM sparse interconnect, one bundle per point (STRM1).
+"""strm/gen.py - the streamer reader and the TCDM sparse interconnect, one bundle per point.
 
   pixi run strm-rtl [--only POINT ...] [--set streamer|xbar|xbar_mix] [--list] [--dry-run] [--mem MB]
 
@@ -10,7 +10,7 @@ without the set, e.g. 'd8_*' or 'xbar/i16_b32'). Default: every point of the thr
 sets. A set's points are its axes' product, then its `extra` list (xbar: i36_b32,
 the cluster's 36 inputs, which only xbar_mix reads).
 
-xbar_mix (CSYN1 R3c) runs no sbt: a point is its base xbar point's SparseInterconnect
+xbar_mix runs no sbt: a point is its base xbar point's SparseInterconnect
 (rtl/xbar/i<inputs>_b<banks>.zip, made first in the same call when it is missing or
 stale) inside strm/xbar_mix.py's wrapper, inputs 0..ro-1 read-only and ro..ro+wo-1
 write-only. Its axes are inputs x banks, each with grid.json's mixes (rw: r0_w0,
@@ -35,7 +35,7 @@ runs `compile` and then one `runMain` per point:
             grid.json's fixed widths (memAddrWidth = log2(TCDM bytes / banks / 8)),
             sparseConfig [[NumInp, 1]]; top SparseInterconnect.
 
-A point's zip, rtl/streamer/<point>.zip or rtl/xbar/<point>.zip (git-ignored, X51):
+A point's zip, rtl/streamer/<point>.zip or rtl/xbar/<point>.zip (git-ignored):
   <top>.sv      firtool's preamble (the macro block before the first module), then
                 the top's modules, children before parents
   filelist.f    '# top: <top>', then <top>.sv (syn/scripts/dc_syn.tcl's format)
@@ -75,9 +75,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "arc"))
-import arc  # noqa: E402  arc/arc.py: a bundle is one zip (X51)
+import arc  # noqa: E402  arc/arc.py: a bundle is one zip
 sys.path.insert(0, str(ROOT / "strm"))
-import xbar_mix  # noqa: E402  strm/xbar_mix.py: the wrapper with read-only and write-only inputs (CSYN1 R3c)
+import xbar_mix  # noqa: E402  strm/xbar_mix.py: the wrapper with read-only and write-only inputs
 
 GRID = ROOT / "strm" / "grid.json"
 TMP = ROOT / "tmp" / "strm"
@@ -282,8 +282,8 @@ REG = re.compile(r"^\s*reg\s+(?:\[(\d+):(\d+)\]\s+)?(\w+)\s*(?:\[(\d+):(\d+)\])?
 def flop_bits(sv: str, top: str) -> int:
     """The register and memory bits the bundle's RTL declares under `top`, over the instance tree: firtool writes
     a register as `reg [h:l] x;` (1 bit without a range) and a memory as `reg [h:l] x [0:N-1];`. Its `_RANDOM*`
-    temporaries live only in the simulation-only init blocks and are skipped. DC's flop count must equal it (STRM1
-    R0: no register trimmed)."""
+    temporaries live only in the simulation-only init blocks and are skipped. DC's flop count must equal it (
+    no register trimmed)."""
     _pre, mods = split_modules(sv)
     memo: dict[str, int] = {}
 
@@ -364,7 +364,7 @@ def sections(log: str, n: int) -> tuple[list[str], list[tuple[str, int]]]:
     return parts[:n], [(m.group(1), int(m.group(2))) for m in SUCCESS.finditer(log)]
 
 
-# ---------------------------------------------------------------- xbar_mix (CSYN1 R3c): no sbt
+# ---------------------------------------------------------------- xbar_mix: no sbt
 def make_mix(grid: dict, p: dict, cfg: dict) -> str:
     """rtl/xbar_mix/<point>.zip from its base xbar zip and strm/xbar_mix.py's wrapper; a line for the report."""
     b = base_of(grid, p)
@@ -443,7 +443,7 @@ def run_sbt(grid: dict, work: list[tuple[dict, dict, Path]], args) -> tuple[list
                   "image": grid["image"], "runmain_s": st[1], "date": dt.datetime.now().isoformat(timespec="seconds")}
             members.update({"config.json": config_text(cfg).encode(), "point.json": (json.dumps(pj, indent=1) + "\n").encode(),
                             "gen.log": parts[i].encode()})
-            arc.write(zip_of(p), members)      # test-read before it replaces anything (X51)
+            arc.write(zip_of(p), members)      # test-read before it replaces anything
             made.append(name)
             print(f"made  {name}  {facts['top']}  {len(facts['modules'])} modules  runMain {st[1]} s  "
                   f"-> {zip_of(p).relative_to(ROOT)}", flush=True)

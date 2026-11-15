@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""char/checks.py - CHAR1's checks on the blocks alone, as Markdown tables for the run note.
+"""char/checks.py - the checks on the blocks alone, as Markdown tables for the run note.
 
   pixi run python char/checks.py [--tech T ...]            R0: synthesis
   pixi run python char/checks.py --power [--tech T ...]    R1: power (results/char/<tech>/char_power.csv)
 
 Read from the committed CSVs (results/char/<tech>/char_synth.csv and
-char_synth_modules.csv; SYN2's results/forge/<tech>/synth_dc_modules.csv), and
-rtl/char/ and rtl/forge/'s bundle zips (local, X51) for the RTL table. None is a gate.
+char_synth_modules.csv; the forge accelerators' results/forge/<tech>/synth_dc_modules.csv), and
+rtl/char/ and rtl/forge/'s bundle zips (local) for the RTL table. None is a gate.
 
-  rtl      each block's top .sv against the file of the same name in SYN2's
+  rtl      each block's top .sv against the file of the same name in the forge
            bundles (rtl/sv/ in rtl/forge/<point>.zip): identical or not, per bundle
-  inside   each point against every hierarchical cell of SYN2's forge rows
+  inside   each point against every hierarchical cell of the forge rows
            whose design is the block's top (DC may add _<n>): area, comb and
            seq alone (the char row) and inside (the cell's subtree: area is the
            cell's own total, comb and seq summed over the cell and every cell
@@ -20,7 +20,7 @@ rtl/char/ and rtl/forge/'s bundle zips (local, X51) for the RTL table. None is a
            LinkBuffer at depth 1, at W = 8 and 32
   flops    seq_area_um2 / seq_cells per point with flops, per technology
 
-With --power (R2), from char_power.csv (and SYN2's results/forge/<tech>/power_pt_modules.csv):
+With --power, from char_power.csv (and results/forge/<tech>/power_pt_modules.csv):
 
   hold     idle e_bit_pj of every registered block (Mac, TreeAccumulate, SerialAccumulate), its mean (e_hold) and
            spread
@@ -29,7 +29,7 @@ With --power (R2), from char_power.csv (and SYN2's results/forge/<tech>/power_pt
            against W x its W = 1 value
   lanes    busy(W) / (W busy(1)) for ElementwiseLanes add and mul and Mac, idle(W) / (W idle(1)) for Mac
   cross    TreeAccumulate and SerialAccumulate busy and idle against W
-  syn2     busy (link: stream) against every hierarchical cell of SYN2's forge rows whose design is the block's
+  syn2     busy (link: stream) against every hierarchical cell of the forge rows whose design is the block's
            top (e_dyn_pj per cycle of the forge point's run): a check of size, the stimulus differs
 
 Standard library and arc/arc.py only.
@@ -46,7 +46,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "arc"))
-import arc  # noqa: E402  the bundles are zips (X51)
+import arc  # noqa: E402  the bundles are zips
 
 TECHS = ("nangate45",)
 SLOPE_MIN = 0.7      # a LinkBuffer slope ratio below this calls for R2's diagnostic (not a gate)
@@ -111,7 +111,7 @@ def inside_table(tech: str, char: list[dict]) -> str:
                          f"{100 * (a - ia) / ia:+.2f}", f2(c), f2(ic), f2(s), f2(is_)])
     head = ["point", "inside", "area alone", "area inside", "diff um2", "diff %", "comb alone", "comb inside",
             "seq alone", "seq inside"]
-    return table(head, body) + "\n\nNo SYN2 counterpart: " + (", ".join(f"`{p}`" for p in none) or "none") + "."
+    return table(head, body) + "\n\nNo forge counterpart: " + (", ".join(f"`{p}`" for p in none) or "none") + "."
 
 
 def lanes_table(char: list[dict]) -> str:
@@ -237,9 +237,9 @@ def power_tables(tech: str) -> tuple[str, dict]:
         for m in hits:
             x = float(m["e_dyn_pj"])
             body.append([p, win, m["point"].removeprefix("done/"), f"{e(p, win):.4f}", f"{x:.4f}", f"{e(p, win) / x:.3f}"])
-    out += [f"\n### {tech}: busy alone against inside SYN2 (n2048 run, per cycle)\n",
+    out += [f"\n### {tech}: busy alone against inside the forge points (n2048 run, per cycle)\n",
             table(["point", "window", "inside", "alone pJ", "inside pJ", "alone / inside"], body),
-            "\nNo SYN2 counterpart: " + ", ".join(f"`{p}`" for p in none) + "."]
+            "\nNo forge counterpart: " + ", ".join(f"`{p}`" for p in none) + "."]
     return "\n".join(out), nums
 
 
@@ -261,7 +261,7 @@ def main() -> int:
     print(rtl_table())
     for tech in args.tech or TECHS:
         char = rows(ROOT / "results" / "char" / tech / "char_synth.csv")
-        print(f"\n## {tech}: alone against inside (SYN2)\n")
+        print(f"\n## {tech}: alone against inside (the forge points)\n")
         print(inside_table(tech, char))
         print(f"\n## {tech}: lane copies\n")
         print(lanes_table(char))

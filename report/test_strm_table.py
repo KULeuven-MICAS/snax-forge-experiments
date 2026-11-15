@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""report/test_strm_table.py - seeded tests of report/strm_table.py's reference interpolation (X53).
+"""report/test_strm_table.py - seeded tests of report/strm_table.py's reference interpolation.
 
   pixi run strm-table-test
 
@@ -132,7 +132,7 @@ class TestGated(unittest.TestCase):
     def test_build_takes_one_gate(self):
         with tempfile.TemporaryDirectory() as t:
             d = Path(t) / "results" / "streamer" / "nangate45"
-            # a row from before X79 (no clk_gate) reads as ungated; the gated rows of the same points sit beside it
+            # a row from before the switch (no clk_gate) reads as ungated; the gated rows of the same points sit beside it
             _csv(d / "synth_dc.csv", SYNTH, [
                 {"point": "d8_l1_c4", "clk_gate": "", "status": "ok", "area_um2": "100", "seq_cells": "50",
                  "slack_ns": "7", "fmax_mhz": "300", "depth": "8", "loops": "1", "channels": "4"},

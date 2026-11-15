@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""report/cluster_breakdown.py - a synthesized cluster's area in groups, against HWCOST and the accelerator alone (X72).
+"""report/cluster_breakdown.py - a synthesized cluster's area in groups, against HWCOST and the accelerator alone.
 
     pixi run cluster-breakdown [--tech nangate45] [--md]
     pixi run cluster-breakdown-test                 report/test_cluster_breakdown.py
 
-For every point of cluster/points.json that has its DC reports (results/cluster/<tech>/reports/<point>.zip, X67
-step 2), reads area_hierarchy.rpt (cluster/tree.py's parse) and sums it into cluster/groups.json's groups: a node
+For every point of cluster/points.json that has its DC reports (results/cluster/<tech>/reports/<point>.zip, step 2
+of cluster/cluster.py), reads area_hierarchy.rpt (cluster/tree.py's parse) and sums it into cluster/groups.json's groups: a node
 belongs to the first group with a rule it matches, else to its parent's group, and its own area (total minus its
 children's) goes there, so the groups add up to the top's total. Then, where they exist:
 
@@ -13,7 +13,7 @@ children's) goes there, so the groups add up to the top's total. Then, where the
           groups.json maps them to; the parts' sum against those groups' sum, and HWCOST's shares of its own total
           beside the groups' shares of theirs (the viewer's bar, D167)
   alone   the accelerator's shell inside the cluster (csr, ctrl, dp, the rest, the whole) against its point
-          synthesized alone (points.json's `alone`, a row of results/forge/<tech>/synth_dc.csv, X22)
+          synthesized alone (points.json's `alone`, a row of results/forge/<tech>/synth_dc.csv)
 
 Writes results/cluster/<tech>/breakdown.json; --md also prints the tables as Markdown. The macros' area is checked
 against synth_dc.csv's `macro_um2` (the TCDM banks and I-cache macros together). Standard library and arc/arc.py.
@@ -98,7 +98,7 @@ def hwcost_rows(cost: dict, areas: dict[str, float], cfg: dict) -> dict:
 
 
 def alone_rows(rows: list[dict], alone: dict) -> dict:
-    """The shell inside the cluster against the same point synthesized alone (synth_dc.csv's X22 columns)."""
+    """The shell inside the cluster against the same point synthesized alone (synth_dc.csv's csr, ctrl and datapath columns)."""
     shell = next(r for r in rows if SHELL.fullmatch(r["path"]))
     tot = {r["path"]: r["total"] for r in rows}
     sub = {k: tot.get(f"{shell['path']}/{k}", 0.0) for k in ("csr", "ctrl", "dp")}
@@ -113,7 +113,7 @@ def alone_rows(rows: list[dict], alone: dict) -> dict:
 
 
 def csv_row(path: Path, point: str, ungated: bool = False) -> dict | None:
-    """The point's row; with `ungated`, its ungated one (clk_gate not 1, X79): the `alone` point as X22 ran it."""
+    """The point's row; with `ungated`, its ungated one (clk_gate not 1): the `alone` point as it was synthesized."""
     if not path.is_file():
         return None
     with path.open(newline="") as fh:

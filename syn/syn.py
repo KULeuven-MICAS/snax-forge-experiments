@@ -11,7 +11,7 @@ filelist.f ('# top: <module>', then the files). Patterns are shell globs over th
   pixi run syn summary      [PATTERN ...] [--tech T] [--source S]
   pixi run syn check-ports  [PATTERN ...] [--source S]
 
---source picks where the points come from (docs X39):
+--source picks where the points come from:
 
   hls    Vitis (the default): hls-exercises' rtl/ (a checkout next to this repo,
          ../hls-exercises), the filelist.f that bench/bench.py writes; cases opt and
@@ -19,14 +19,14 @@ filelist.f ('# top: <module>', then the files). Patterns are shell globs over th
   bambu  Bambu: the same rtl/ root, the filelist.f that bench/bambu.py writes; case
          bambu; clock clock, reset reset. A bambu row has more columns: ctrl_um2 (the
          controller_* instance with its children), datapath_um2 (the datapath_*
-         instance with its children) and glue_um2 = area_um2 minus the two (docs X41),
+         instance with its children) and glue_um2 = area_um2 minus the two,
          from synth_dc_modules.csv's rows; a point without exactly one controller_* and
          one datapath_* fails
   xls    Google XLS: dslx-exercises' rtl/ (../dslx-exercises); case xls; clock clk,
          reset rst
 
 For these three, list shows only the folders named <case>_w<W> with <case> in the
-source's cases and W <= MAX_W (16, docs X38): Vitis's unopt_w*, any *_w32, a per-size
+source's cases and W <= MAX_W (16): Vitis's unopt_w*, any *_w32, a per-size
 folder (opt_n512_w8) or a clock variant (opt_w8_c10) is not listed.
 
 Or forge, snax-forge's accelerator bundles that forge/bundles.py (pixi run
@@ -45,7 +45,7 @@ three modules, bundle.json's "modules", from synth_dc_modules.csv's rows) and
 glue_um2 = area_um2 minus the three (the cells DC leaves at the top's own
 level); run reports a glue that is negative or above 1 % of the total.
 
-Or char (CHAR1): snax-forge's catalogue blocks alone, which char/blocks.py
+Or char: snax-forge's catalogue blocks alone, which char/blocks.py
 (pixi run char-rtl) writes into rtl/char/ in this repo. A char point is a
 zip there holding an emitted.json, rtl/char/<point>.zip, named
 <block>/<case>_w<W> (e.g. tree/add_w8); its top is emitted.json's "top",
@@ -58,7 +58,7 @@ synth_dc_modules.csv), and a char row has more columns, from point.json:
 datapath, lanes, depth, op, form (a Mac's acc, plain or reg) and
 snax_forge_commit.
 
-Or streamer and xbar (STRM1, docs X52): snax_cluster's streamer reader and TCDM
+Or streamer and xbar: snax_cluster's streamer reader and TCDM
 sparse interconnect, which strm/gen.py (pixi run strm-rtl) writes into
 rtl/streamer/ and rtl/xbar/ in this repo, one zip per point named after the
 grid (streamer d<depth>_l<loops>_c<channels>, xbar i<inputs>_b<banks>) holding
@@ -71,21 +71,21 @@ results/<source>/<tech>/synth_dc.csv and synth_dc_modules.csv; a row adds the
 grid's params (streamer depth, loops, channels; xbar inputs, banks),
 rtl_flop_bits (the register and memory bits the bundle's RTL declares,
 strm/gen.py's flop_bits), opt1207 (DC's unloaded registers removed, the unique
-OPT-1207 lines) and snax_cluster_commit. The flop check (X82): a row whose
+OPT-1207 lines) and snax_cluster_commit. The flop check: a row whose
 seq_cells differs from rtl_flop_bits is printed ("flops <point> ..."), not
 failed; a clock-gated run counts its integrated gates as sequential cells. run starts the
 largest points first (xbar by inputs x banks, streamer by channels x depth,
 then loops).
 
-Or xbar_mix (CSYN1 R3c, docs X70): an xbar point's SparseInterconnect inside
+Or xbar_mix: an xbar point's SparseInterconnect inside
 strm/xbar_mix.py's wrapper, top xbar_mix, with read-only and write-only inputs
 (rtl/xbar_mix/i<inputs>_b<banks>_r<ro>_w<wo>.zip, strm/gen.py --set xbar_mix),
 run as xbar is. Its rows add inputs, banks, ro, wo, rtl_flop_bits (the
 SparseInterconnect's: the wrapper adds none), flops_removed (rtl_flop_bits minus
 DC's flops), opt1207 and snax_cluster_commit. Flops DC removes are reported per
-point, not failed; so is a row with more sequential cells than the RTL declares (X82).
+point, not failed; so is a row with more sequential cells than the RTL declares.
 
-Or cluster (CSYN1 Part B, docs X67): a snax-forge design in snax_cluster's whole
+Or cluster: a snax-forge design in snax_cluster's whole
 cluster, top snax_forge_cluster_wrapper (clock clk_i, reset rst_ni, asynchronous).
 Its DC run is driven by cluster/cluster.py (pixi run cluster syn <point>), which
 builds the cluster's file list with snax_cluster's gen-syn and calls this
@@ -106,7 +106,7 @@ files and checks that the source's clock and reset ports are on it; if not, the 
 "failed: no clock port <name> on <top>" (or reset) and DC is not run. check-ports runs
 the guard alone on every listed point, one line per point.
 
-After compile, dc_syn.tcl measures the worst setup slack of four path classes (docs X40)
+After compile, dc_syn.tcl measures the worst setup slack of four path classes
 with get_timing_paths -from/-to only, into reports/path_classes.rpt: in2reg, reg2reg,
 reg2out and in2out, inputs being every input but the clock and the reset, registers
 their clock pins as start points and their data pins as endpoints. Every row has them
@@ -114,7 +114,7 @@ as slack_in2reg_ns, slack_reg2reg_ns, slack_reg2out_ns and slack_in2out_ns; a cl
 with no path is empty.
 
 A DC run that fails on a licence (LICENCE_ERROR in logs/dc_shell.log or
-logs/dc_stdout.log) is rerun once (docs X17); the retry is printed and
+logs/dc_stdout.log) is rerun once; the retry is printed and
 counted. After a second licence failure the row's status is
 "failed: licence (<the matched line>)".
 
@@ -130,10 +130,10 @@ any RTL if the library's own name or units differ from the tech file.
 
 Each run works in syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>][_cg]/ (the
 clock tag only for a clock other than the default, _cg only with --clk-gate): WORK/, logs/, reports/,
-out/ (the mapped netlist; the sdf only with --sdf, docs X69) and tech.json (the tech file, the resolved
+out/ (the mapped netlist; the sdf only with --sdf) and tech.json (the tech file, the resolved
 values, the .db's md5 and what DC read from the library). When DC ends, the
 folder is packed into <point>[_c<clock>].zip next to it (KEEP_RUN: the mapped
-netlist, KEPT_REPORTS, dc_shell.log and dc_stdout.log; docs X51), the zip is
+netlist, KEPT_REPORTS, dc_shell.log and dc_stdout.log), the zip is
 test-read and the folder deleted, scratch with it; everything that reads a run
 afterwards reads the zip. Every run also writes one row into
 syn/runs/<source>/<tech>/summary.csv, whose run column names the folder (its
@@ -144,7 +144,7 @@ reports/<tier>/<kernel>/<point>[_c<clock>][_cg].zip (KEPT_REPORTS: area, power,
 reference, qor, path classes, tech.json, lib_info.txt; with clock gating the three
 clock_gating*.rpt, whatever their size).
 
---clk-gate (X79) turns on dc_syn.tcl's CLK_GATE_ENABLE (SYN_CLK_GATE_ENABLE=1):
+--clk-gate turns on dc_syn.tcl's CLK_GATE_ENABLE (SYN_CLK_GATE_ENABLE=1):
 clock_gating.tcl's style, compile_ultra -no_autoungroup -gate_clock and the
 clock-gating reports. Such a run is tagged _cg, its rows (synth_dc.csv and the
 modules CSV) have clk_gate 1, and it never replaces the ungated run of the same
@@ -155,7 +155,7 @@ row's clk_gate comes from the environment DC ran with (tech.json).
 
 A point whose filelist.f has '# ram:' lines holds a memory Vitis built (e.g.
 DaCe's dot buffer). Neither library has RAM cells. On nangate45 (hls source) each
-such RAM is swapped for an SRAM macro (X62, ram/vitis_ram.py): the macro of the
+such RAM is swapped for an SRAM macro (ram/vitis_ram.py): the macro of the
 instance's AddressRange x DataWidth (pixi run ram lib, made when missing), a
 wrapper with Vitis's module name and ports in the run folder, the run's own
 filelist.f, and the macro's .db linked beside the library (SYN_RAM_DBS); the row's
@@ -184,7 +184,7 @@ source SYN_FORMAT (verilog; forge, char, streamer, xbar and xbar_mix sverilog),
 SYN_CLK_PORT (ap_clk; bambu clock; xls clk; forge clk_i; char, streamer, xbar
 and xbar_mix clock) and SYN_RST_PORT (ap_rst_n; bambu reset; xls rst; forge
 rst_ni; char, streamer, xbar and xbar_mix reset); with --sdf, SYN_WRITE_SDF=1 (dc_syn.tcl
-writes the SDF only then, X69); with --clk-gate, SYN_CLK_GATE_ENABLE=1 (X79). The cluster source also sets SYN_FLIST_TCL,
+writes the SDF only then); with --clk-gate, SYN_CLK_GATE_ENABLE=1. The cluster source also sets SYN_FLIST_TCL,
 SYN_TOP, SYN_EXTRA_SDC, SYN_POST_TCL and SYN_RAM_DBS in place of SYN_FILELIST,
 and SYN_IGNORE_LOAD=1 (dc_syn.tcl's optional hooks).
 Standard library and arc/arc.py only.
@@ -212,9 +212,9 @@ from pathlib import Path
 SYN = Path(__file__).resolve().parent
 ROOT = SYN.parent
 sys.path.insert(0, str(ROOT / "arc"))
-import arc  # noqa: E402  arc/arc.py: every output is one zip per point (X51)
+import arc  # noqa: E402  arc/arc.py: every output is one zip per point
 sys.path.insert(0, str(ROOT / "ram"))
-import vitis_ram  # noqa: E402  ram/vitis_ram.py: a Vitis RAM swapped for an SRAM macro (X62)
+import vitis_ram  # noqa: E402  ram/vitis_ram.py: a Vitis RAM swapped for an SRAM macro
 
 TECH_DIR = SYN / "tech"
 # Per source: the points' folder, the HDL format, the clock and reset ports (dc_syn.tcl's defaults
@@ -234,10 +234,10 @@ SOURCES = {
                  "format": "sverilog", "clk": "clock", "rst": "reset"},
     "xbar": {"rtl": Path(os.environ.get("SYN_RTL_XBAR", ROOT / "rtl" / "xbar")),
              "format": "sverilog", "clk": "clock", "rst": "reset"},
-    # CSYN1 R3c (X70): an xbar point's SparseInterconnect in strm/xbar_mix.py's wrapper, top xbar_mix
+    # an xbar point's SparseInterconnect in strm/xbar_mix.py's wrapper, top xbar_mix
     "xbar_mix": {"rtl": Path(os.environ.get("SYN_RTL_XBAR_MIX", ROOT / "rtl" / "xbar_mix")),
                  "format": "sverilog", "clk": "clock", "rst": "reset"},
-    # CSYN1 Part B (X67): driven by cluster/cluster.py, not by `syn run`; the point's bundle zip names it
+    # driven by cluster/cluster.py, not by `syn run`; the point's bundle zip names it
     "cluster": {"rtl": Path(os.environ.get("SYN_RTL_CLUSTER", ROOT / "rtl" / "cluster")),
                 "format": "sverilog", "clk": "clk_i", "rst": "rst_ni", "top": "snax_forge_cluster_wrapper"},
 }
@@ -246,7 +246,7 @@ BUNDLED = ("forge", "char", "streamer", "xbar", "xbar_mix")
 STRM = ("streamer", "xbar", "xbar_mix")
 # The results/<source>/<tech>/ CSVs: synth_dc.csv and synth_dc_modules.csv, but for char
 RESULT_CSVS = {"char": ("char_synth.csv", "char_synth_modules.csv")}
-# X38: at most 16 64-bit channels per stream, so W <= 16 for every HLS case; W = 32 is retired
+# at most 16 64-bit channels per stream, so W <= 16 for every HLS case; W = 32 is retired
 MAX_W = 16
 SOURCE = "hls"
 RTL = SOURCES["hls"]["rtl"].resolve()
@@ -261,10 +261,10 @@ def use_source(name: str) -> None:
 
 SCRIPT = SYN / "scripts" / "dc_syn.tcl"
 DEFAULT_CLOCK = "10"
-# X79: clock gating for this invocation (--clk-gate): runs tagged _cg, rows with clk_gate 1. use_clk_gate() sets it.
+# clock gating for this invocation (--clk-gate): runs tagged _cg, rows with clk_gate 1. use_clk_gate() sets it.
 CLK_GATE = False
 CG_TAG = "_cg"
-# dc_syn.tcl's clock-gating reports (X79): kept with the others, whatever their size, where the run wrote them
+# dc_syn.tcl's clock-gating reports: kept with the others, whatever their size, where the run wrote them
 CG_REPORTS = ("clock_gating.rpt", "clock_gating_elements.rpt", "clock_gating_ungated.rpt")
 
 
@@ -274,7 +274,7 @@ def use_clk_gate(on: bool) -> None:
 
 
 def gate_flag(row: dict) -> str:
-    """A row's clk_gate as a key: '1' or '0' (empty, a row from before X79, reads as 0)."""
+    """A row's clk_gate as a key: '1' or '0' (empty, a row from before the switch, reads as 0)."""
     return "1" if str(row.get("clk_gate", "")) == "1" else "0"
 MAX_REPORT_BYTES = 1 << 20  # reports copied to results/ above this size are skipped
 # What results/<source>/<tech>/reports/ keeps of a run: what the area and energy model reads (area and
@@ -282,14 +282,14 @@ MAX_REPORT_BYTES = 1 << 20  # reports copied to results/ above this size are ski
 # (timing, constraints, ports, clocks, verbose power) stays in syn/runs/.
 KEPT_REPORTS = ("area.rpt", "area_hierarchy.rpt", "reference.rpt", "power.rpt", "power_hierarchy.rpt",
                 "qor.rpt", "path_classes.rpt", "tech.json", "lib_info.txt", *CG_REPORTS)
-# What a run's zip, syn/runs/<source>/<tech>/<point>[_c<clock>].zip, keeps of its folder (X51): the mapped netlist
+# What a run's zip, syn/runs/<source>/<tech>/<point>[_c<clock>].zip, keeps of its folder: the mapped netlist
 # (sim/pwr.py and pt_power.tcl read it), KEPT_REPORTS (tech.json at the top, the rest in reports/) and the two DC
 # logs (errors and licence lines). The rest (WORK/, alib-*/, the .sdf if --sdf wrote one, default.svf, the other reports, command logs,
 # a forge or char point's filelist.f into the unpacked bundle) is scratch, deleted with the folder.
 KEEP_RUN = ("out/*_mapped.v", "tech.json", "logs/dc_shell.log", "logs/dc_stdout.log", "ram/*.v",
             *(f"reports/{r}" for r in KEPT_REPORTS if r != "tech.json"))
-# The cluster source keeps more (X67): its gate and port reports, the area tree, and in the run zip what it ran
-# from; its report zip keeps the hierarchical area and power reports whatever their size (CSYN1 R3b reads them)
+# The cluster source keeps more: its gate and port reports, the area tree, and in the run zip what it ran
+# from; its report zip keeps the hierarchical area and power reports whatever their size (report/cluster_breakdown.py reads them)
 CLUSTER_REPORTS = ("cluster_check.rpt", "cluster_ports.rpt")
 CLUSTER_RUN_FILES = ("syn_flist.tcl", "cluster.sdc", "tc_sram_impl.sv", "tree.txt")
 UNLIMITED_REPORTS = {"cluster": ("area_hierarchy.rpt", "power_hierarchy.rpt")}
@@ -308,7 +308,7 @@ def keep_run() -> tuple:
     return KEEP_RUN + CLUSTER_RUN_FILES + tuple(f"reports/{r}" for r in CLUSTER_REPORTS)
 
 
-# dc_syn.tcl's path classes (X40), in reports/path_classes.rpt and the slack_<class>_ns columns
+# dc_syn.tcl's path classes, in reports/path_classes.rpt and the slack_<class>_ns columns
 PATH_CLASSES = ("in2reg", "reg2reg", "reg2out", "in2out")
 
 COLUMNS = ["point", "top", "tech", "clock_ns", "clk_gate", "status", "errors", "area_um2", "comb_area_um2", "seq_area_um2",
@@ -320,11 +320,11 @@ COLUMNS = ["point", "top", "tech", "clock_ns", "clk_gate", "status", "errors", "
 FORGE_COLUMNS = ["recipe", "W", "snax_forge_commit",   # after COLUMNS, forge rows only
                  "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2"]
 CHAR_COLUMNS = ["datapath", "lanes", "depth", "op", "form", "snax_forge_commit"]  # after COLUMNS, char rows only
-BAMBU_COLUMNS = ["ctrl_um2", "datapath_um2", "glue_um2"]  # after COLUMNS, bambu rows only (X41)
+BAMBU_COLUMNS = ["ctrl_um2", "datapath_um2", "glue_um2"]  # after COLUMNS, bambu rows only
 CLUSTER_COLUMNS = ["recipe", "W", "snax_forge_commit", "snax_cluster_commit", "macro_um2", "macros"]  # cluster rows
-HLS_COLUMNS = ["ram_um2", "ram_kind"]   # after COLUMNS, hls rows only (X62): a RAM's area, inside area_um2
-RAM_TECH = "nangate45"                  # the macros are CACTI's 45 nm (X47)
-# after COLUMNS, streamer and xbar rows (X52): the grid's params, then the flop check's numbers
+HLS_COLUMNS = ["ram_um2", "ram_kind"]   # after COLUMNS, hls rows only: a RAM's area, inside area_um2
+RAM_TECH = "nangate45"                  # the macros are CACTI's 45 nm
+# after COLUMNS, streamer and xbar rows: the grid's params, then the flop check's numbers
 STRM_COLUMNS = {"streamer": ["depth", "loops", "channels", "rtl_flop_bits", "opt1207", "snax_cluster_commit"],
                 "xbar": ["inputs", "banks", "rtl_flop_bits", "opt1207", "snax_cluster_commit"],
                 "xbar_mix": ["inputs", "banks", "ro", "wo", "rtl_flop_bits", "flops_removed", "opt1207",
@@ -615,7 +615,7 @@ def rams_of(point: str) -> list[str]:
 
 def parked_row(tech: str, point: str, clock: str, rams: list[str]) -> dict:
     return no_run_row(tech, point, clock, f"skipped: needs a RAM macro ({', '.join(rams)}); {tech} has no RAM "
-                                          "cells, RAM1 builds one (OpenRAM)")
+                                          "cells, ram/ram.py builds one")
 
 
 def no_run_row(tech: str, point: str, clock: str, status: str) -> dict:
@@ -628,12 +628,12 @@ def no_run_row(tech: str, point: str, clock: str, status: str) -> dict:
 
 
 def point_tag(point: str, clock: str) -> str:
-    """<point>[_c<clock>][_cg]: the clock tag for a clock other than the default, _cg with --clk-gate (X79)."""
+    """<point>[_c<clock>][_cg]: the clock tag for a clock other than the default, _cg with --clk-gate."""
     return point + ("" if clock == DEFAULT_CLOCK else "_c" + clock.replace(".", "p")) + (CG_TAG if CLK_GATE else "")
 
 
 def run_dir(tech: str, point: str, clock: str) -> Path:
-    """The folder DC works in; it lives only during the run (X51), the CSVs' run column names it."""
+    """The folder DC works in; it lives only during the run, the CSVs' run column names it."""
     return RUNS / tech / point_tag(point, clock)
 
 
@@ -707,7 +707,7 @@ def power_groups(power: str, groups=None) -> dict:
 
 
 def run_clk_gate(tech_json: str | None) -> str:
-    """X79: '1' when the run's DC environment (tech.json) had SYN_CLK_GATE_ENABLE=1, else '0' ('' with no tech.json)."""
+    """'1' when the run's DC environment (tech.json) had SYN_CLK_GATE_ENABLE=1, else '0' ('' with no tech.json)."""
     if tech_json is None:
         return ""
     env = json.loads(tech_json).get("resolved", {}).get("dc_env", {})
@@ -796,9 +796,9 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
         row["e_total_pj"] = _num(e_total)
         if dyn is not None:
             e_dyn = dyn * clock_ns / 1000.0
-            # X62: an SRAM macro is a black box to DC (its default-activity power is in that group, not in the four);
-            # the cluster's memories are macros (X66, PITFALLS DC12); a clock-gated run's integrated gates may be
-            # black boxes to DC too (Nangate's statetable, CG1 R2), so a gated row takes the group out as well (CG2)
+            # an SRAM macro is a black box to DC (its default-activity power is in that group, not in the four);
+            # the cluster's memories are macros (PITFALLS DC12); a clock-gated run's integrated gates may be
+            # black boxes to DC too (Nangate's statetable), so a gated row takes the group out as well
             if row.get("ram_kind") == "macro" or SOURCE == "cluster" or row.get("clk_gate") == "1":
                 bb = power_groups(power, ["black_box"]).get("black_box", (0.0, 0.0, 0.0))
                 e_dyn -= (bb[0] + bb[1]) * clock_ns / 1000.0
@@ -806,7 +806,7 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
     lic = licence_error(get)
     if not row["area_um2"] or float(row["area_um2"]) == 0 or lic:
         # A licence failure in compile_ultra (DC-Expert, SEC-50) still writes the reports, of an empty
-        # design: area 0. It fails the row whatever the reports say (HSYN1 R6).
+        # design: area 0. It fails the row whatever the reports say.
         # at a line's start: dc_shell.log also echoes the script, whose puts line is indented
         mismatch = re.search(r"^dc_syn\.tcl: library mismatch", log_text, re.M) is not None
         row["status"] = ("failed: library mismatch (logs/dc_shell.log)" if mismatch
@@ -827,8 +827,8 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
 
 
 def flop_note(row: dict) -> str:
-    """X82: the flop check, printed, never failed. A streamer or xbar row whose seq_cells differs from the RTL's
-    bits (STRM1 R0 found them equal ungated; a clock-gated run counts its integrated clock gates as sequential cells
+    """The flop check, printed, never failed. A streamer or xbar row whose seq_cells differs from the RTL's
+    bits (equal ungated; a clock-gated run counts its integrated clock gates as sequential cells
     too), or an xbar_mix row with no count or more flops than the RTL declares. '' when there is nothing to say."""
     if SOURCE == "xbar_mix":
         if row["flops_removed"] == "" or row["flops_removed"] < 0:
@@ -843,7 +843,7 @@ def flop_note(row: dict) -> str:
 
 def flops_removed(row: dict) -> int | str:
     """An xbar_mix row's rtl_flop_bits minus DC's flops ('' without both): the flops DC removed, which the ties may
-    make dead (reported per point, X70)."""
+    make dead (reported per point)."""
     try:
         return int(row["rtl_flop_bits"]) - int(row["seq_cells"])
     except (TypeError, ValueError):
@@ -851,8 +851,8 @@ def flops_removed(row: dict) -> int | str:
 
 
 LINK5 = re.compile(r"\(LINK-5\)|Unable to resolve reference", re.I)
-# X79: the library's integrated clock gates DC found (clock_gating.tcl's line, gated runs only). Nangate describes
-# them with a statetable, so DC marks them is_black_box; they are not the cluster's black boxes (CG1 R2).
+# the library's integrated clock gates DC found (clock_gating.tcl's line, gated runs only). Nangate describes
+# them with a statetable, so DC marks them is_black_box; they are not the cluster's black boxes.
 ICG_LINE = re.compile(r"^clock_gating\.tcl: integrated clock gates (.+)$", re.M)
 
 
@@ -883,7 +883,7 @@ def cluster_check(text: str) -> dict:
 
 def cluster_extra(tj: dict, get, log: str, tech: dict) -> tuple[dict, str]:
     """A cluster row's CLUSTER_COLUMNS (tech.json's resolved cluster block, cluster_check.rpt) and its gates
-    (X67): no unresolved reference (cluster_check.rpt, LINK-5 in the log), the macros the only black boxes in
+   : no unresolved reference (cluster_check.rpt, LINK-5 in the log), the macros the only black boxes in
     the point's numbers (srams), every leaf cell from the technology's library or a macro's. '' when they pass."""
     cl = tj.get("resolved", {}).get("cluster", {})
     srams = dict(sorted(cl.get("srams", {}).items()))
@@ -893,7 +893,7 @@ def cluster_extra(tj: dict, get, log: str, tech: dict) -> tuple[dict, str]:
     if text is None:
         return row, "no reports/cluster_check.rpt"
     cc = cluster_check(text)
-    # X79: the technology's integrated clock gates, which DC marks black boxes, are not macros (CG1 R2)
+    # the technology's integrated clock gates, which DC marks black boxes, are not macros
     icg = icg_cells(log)
     cc["black_box"] = {k: v for k, v in cc["black_box"].items()
                        if not (k in icg and cc["refs"].get(k, ("",))[0] == tech["lib_name"])}
@@ -914,9 +914,9 @@ def cluster_extra(tj: dict, get, log: str, tech: dict) -> tuple[dict, str]:
 
 
 def ram_area(tj: dict, get, tech: dict, point: str, clock: str) -> dict:
-    """X62: ram_um2 and ram_kind of an hls row: the area of the RAM modules' top-level instances (area_hierarchy.rpt,
+    """ram_um2 and ram_kind of an hls row: the area of the RAM modules' top-level instances (area_hierarchy.rpt,
     by design name: Vitis's RAM, or its wrapper around the macro); for a macro it must equal the macros' area (a
-    black box, the CACTI area of X49). '' for a point without a RAM."""
+    black box, the macro's CACTI area). '' for a point without a RAM."""
     ram = tj.get("resolved", {}).get("ram")
     if not ram:
         return {"ram_um2": "", "ram_kind": ""}
@@ -1066,7 +1066,7 @@ def _merge(path: Path, columns: list[str], key, rows: list[dict], drop: set) -> 
 
 
 def summary_key(r: dict) -> tuple:
-    """The CSVs' merge key: point, clock and clk_gate (X79), so a gated run never replaces the ungated one."""
+    """The CSVs' merge key: point, clock and clk_gate, so a gated run never replaces the ungated one."""
     return (r["point"], r["clock_ns"], gate_flag(r))
 
 
@@ -1083,7 +1083,7 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
     modules = []
     for r in rows:
         if r["run"]:
-            if SOURCE != "cluster":          # no modules CSV for the cluster (X67; R3b reads the reports)
+            if SOURCE != "cluster":          # no modules CSV for the cluster (report/cluster_breakdown.py reads the reports)
                 modules += read_modules(tech, r["point"], r["clock_ns"])
             skipped = copy_reports(name, r["point"], r["clock_ns"])
             if skipped:
@@ -1148,8 +1148,8 @@ def dc_env(tech: dict, res: dict, point: str, args) -> dict:
         "SYN_FORMAT": src["format"],
         "SYN_CLK_PORT": src["clk"],
         "SYN_RST_PORT": src["rst"],
-        **({"SYN_WRITE_SDF": "1"} if getattr(args, "sdf", False) else {}),   # X69: no SDF unless asked
-        **({"SYN_CLK_GATE_ENABLE": "1"} if CLK_GATE else {}),               # X79: clock gating only when asked
+        **({"SYN_WRITE_SDF": "1"} if getattr(args, "sdf", False) else {}),   # no SDF unless asked
+        **({"SYN_CLK_GATE_ENABLE": "1"} if CLK_GATE else {}),               # clock gating only when asked
     }
 
 
@@ -1159,7 +1159,7 @@ RETRIES_LOCK = threading.Lock()
 
 def run_dc(point: str, name: str, rdir: Path, cmd: list[str], syn_env: dict, clock: str, prepare) -> int:
     """DC in a fresh rdir (logs/ made, then prepare() writes what the run reads), its stdout into
-    logs/dc_stdout.log as it runs; rerun once on a licence error (X17, counted in RETRIES). The return code."""
+    logs/dc_stdout.log as it runs; rerun once on a licence error (counted in RETRIES). The return code."""
     for attempt in (1, 2):
         if rdir.exists():
             shutil.rmtree(rdir)
@@ -1212,8 +1212,8 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
     ram_plan, ram_info = None, None
     if rams and args.with_ram:          # Vitis's RAM as written: DC builds it from flops
         ram_info = {"kind": "flops", "modules": [Path(f).stem for f in rams]}
-    elif rams:                          # X62: the macro swap, where a macro can be made
-        why = f"{name} has no macros (CACTI at 45 nm, X47)" if name != RAM_TECH or SOURCE != "hls" else ""
+    elif rams:                          # the macro swap, where a macro can be made
+        why = f"{name} has no macros (CACTI at 45 nm only)" if name != RAM_TECH or SOURCE != "hls" else ""
         if not why:
             ram_plan = vitis_ram.plan(RTL / point, point_files(point), rams, make=not args.dry_run)
             why = "" if ram_plan["ok"] else ram_plan["why"]
@@ -1238,7 +1238,7 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
         print(f"# then {run_zip(name, point, args.clock).relative_to(ROOT)} keeps {', '.join(KEEP_RUN)}; "
               f"the folder is deleted")
         return None
-    with contextlib.ExitStack() as stack:     # a forge or char bundle, unpacked for DC, deleted after (X51)
+    with contextlib.ExitStack() as stack:     # a forge or char bundle, unpacked for DC, deleted after
         bundle = (stack.enter_context(arc.unpacked(bundle_zip(point))) if SOURCE in BUNDLED
                   else None)
         if ram_plan:                          # the macros' .db for DC's link_library, unpacked, deleted after
@@ -1280,7 +1280,7 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
 
 def cmd_run(args) -> int:
     if SOURCE == "cluster":
-        sys.exit("the cluster source runs through cluster/cluster.py: pixi run cluster syn <point> (X67)")
+        sys.exit("the cluster source runs through cluster/cluster.py: pixi run cluster syn <point>")
     points = select(args.patterns)
     if not points:
         sys.exit("no rtl point matches (syn.py list shows them)")
@@ -1348,10 +1348,10 @@ def main() -> int:
             p.add_argument("--cores", type=int, default=16, help="cores per DC run (default 16)")
             p.add_argument("-j", "--jobs", type=int, default=1, help="DC runs at once (each takes a license)")
             p.add_argument("--dry-run", action="store_true", help="print the commands, run nothing")
-            p.add_argument("--sdf", action="store_true", help="also write the SDF (SYN_WRITE_SDF=1); off by default (X69)")
+            p.add_argument("--sdf", action="store_true", help="also write the SDF (SYN_WRITE_SDF=1); off by default")
             p.add_argument("--clk-gate", action="store_true",
                            help="clock gating (SYN_CLK_GATE_ENABLE=1, dc_syn.tcl's CLK_GATE_ENABLE): runs tagged _cg, "
-                                "rows with clk_gate 1; off by default (X79)")
+                                "rows with clk_gate 1; off by default")
             p.add_argument("--with-ram", action="store_true",
                            help="also run points with a '# ram:' line (parked by default)")
         else:
