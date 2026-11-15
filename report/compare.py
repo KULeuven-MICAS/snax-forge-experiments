@@ -5,8 +5,8 @@
   pixi run compare --check    # checks only, writes nothing
 
 Reads only committed CSVs (no tool, no licence, no sibling checkout): each source's synth_dc.csv, power_pt.csv and
-power_pt_modules.csv, and the cycle CSVs' provenance, for forge, hls (Vitis opt and dace), bambu and xls, W <=
-MAX_W. One row per tech, tier, kernel, W, tool, case and size, laid out and not compared. The columns and the checks
+power_pt_modules.csv, their clock-gated rows only, and the cycle CSVs' provenance, for forge, hls (Vitis opt and
+dace), bambu and xls, W <= MAX_W. One row per tech, tier, kernel, W, tool, case and size, laid out and not compared. The columns and the checks
 (any failure: exit 1, nothing written) are in results/compare/README.md, "The tier CSVs". A glue energy within
 1e-5 of the total (PT's rounding) is written as 0.
 """
@@ -71,11 +71,12 @@ PROV = ["rtl_commit", "tool_version", "dc_version", "syn_date"]
 COLUMNS = KEY + TASK + AREA + TIMING + ENERGY + PART_E + PROV
 
 
-def read(path: Path) -> list[dict]:
+def read(path: Path, gated: bool = True) -> list[dict]:
+    """A results CSV's clock-gated rows (clk_gate 1), the basis; gated=False for a CSV with no clk_gate column."""
     if not path.is_file():
         return []
-    with path.open(newline="") as fh:     # a clock-gated row (clk_gate 1) is not part of the comparison
-        return [r for r in csv.DictReader(fh) if r.get("clk_gate", "") != "1"]
+    with path.open(newline="") as fh:
+        return [r for r in csv.DictReader(fh) if not gated or r.get("clk_gate", "") == "1"]
 
 
 def parse(point: str) -> dict | None:
@@ -97,7 +98,7 @@ def provenance(source: str) -> dict:
     out = {}
     if source not in CYCLES_CSV:
         return out
-    for r in read(ROOT / "results" / CYCLES_CSV[source]):
+    for r in read(ROOT / "results" / CYCLES_CSV[source], gated=False):
         if r.get("clock_ns") not in ("10", "10.0") or not r.get("W"):
             continue
         out[(r["tier"], r["kernel"], r["case"], r["W"])] = (r.get("git", ""), r.get(VERSION_COL[source], ""))
@@ -274,7 +275,7 @@ def main() -> int:
         for source in SOURCES:
             got = rows_for(source, tech, problems)
             if not got:
-                problems.append(f"{tech} {source}: no rows")
+                problems.append(f"{tech} {source}: no clock-gated rows; synthesize and measure its points with --clk-gate")
             rows += got
     check_sizes(rows, problems)
     keys = defaultdict(int)
