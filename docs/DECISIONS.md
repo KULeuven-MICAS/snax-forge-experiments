@@ -86,6 +86,7 @@ A later choice that changes an entry takes the next number and says which one it
 | [X84](#x84-a-netlist-run-gated-on-data-and-timing-the-rest-reported) | A netlist run gated on data and timing (within 10 % of the RTL); D123 and RAMCOUNT reported |
 | [X85](#x85-the-gated-tables-hwcost-in-the-sweep-and-at-w--32) | The gated tables' HWCOST in the sweep (`--tables gated`) and at W = 32, extrapolated as snax-forge does |
 | [X86](#x86-the-ungated-and-gated-sweeps-side-by-side-in-one-folder) | The ungated and gated sweeps side by side in one folder (`_ungated`, `_gated`); bars stacked memory, control, streamers, crossbar, datapath, the rest on top |
+| [X87](#x87-clock-gated-synthesis-is-the-basis-from-now-on) | Clock-gated synthesis is the basis from now on: cluster points and HWCOST's tables; ungated kept as the reference |
 
 ## Synthesis
 
@@ -432,6 +433,10 @@ A cluster point's `gls` fails only when its data line differs from the expected 
 ### X86. The ungated and gated sweeps side by side in one folder
 
 `pixi run cluster-sweep` writes the recipe's ungated sweep (its points but the variants, beside snax-forge's HWCOST) and `pixi run cluster-sweep --gated` its clock-gated sweep (the variants with `"syn": {"clk_gate": true}`, one per W, beside HWCOST on the gated tables, X85), both into `results/cluster/<tech>/` with the label in the name: `sweep_ungated.csv`, `sweep_energy_ungated.png`, `sweep_area_ungated.png`, `sweep_energy_five_ungated.png`, `sweep_area_five_ungated.png`, and the same with `_gated`; each figure's title names its synthesis. The bars stack the parts from the steadiest at the bottom to the most changed on top (memory, control, streamers, crossbar, datapath), the netlist's not-priced part above them; the palette's five slots follow that order. `--points ... --out NAME` (X80) stays for a look at chosen points, its folder not committed; the `cg1/` and `cg3/` folders are gone (their points are in the two sweeps). Amends X78's file names and X80's committed folders. **Why:** one place for both syntheses, read pair by pair; what stays the same sits at the bottom so the change shows on top (Ryan, 15 Nov). *15 Nov (CG3).*
+
+### X87. Clock-gated synthesis is the basis from now on
+
+New cluster points are synthesized with DC's clock gating (`"syn": {"clk_gate": true}`, X79) and HWCOST's block tables are the clock-gated ones (`streamer_cg.csv`, `xbar_cg.csv`, `char_cg.json`, X83); the sources not yet gated (the accelerators alone, the HLS points, the `xbar_mix` grid) are synthesized gated when a task next needs them. The ungated rows, tables and sweep stay as the reference and are not rerun. The flows' switch keeps its default off (X79) until a task changes the flows; a point or source says `clk_gate` itself. **Why:** clock gating is what a real design gets (best practice), so the ungated run windows, 46 to 82 % idle clocking at W ≤ 16, overstate the cluster's energy 2 to 5 times; and with the gated tables HWCOST's streamers come within −3 to −7 % (−23 to −34 % ungated) while memory and the datapath do not move (CG3, `results/cluster/runs/2026-11-15_cg3_r3.md`). HWCOST's remaining gaps (the datapath's stimulus, the crossbar's full-crossbar price, W = 32's stalls) are the same in both bases. Ryan, 15 Nov. *15 Nov (CG3).*
 
 ## Retired
 
