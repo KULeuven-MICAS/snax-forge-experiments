@@ -7,7 +7,7 @@ Part of [the comparison](../README.md): setup, summary across kernels and the pa
 <!-- gen:main -->
 ![axpy](axpy.png)
 
-n2048, nangate45, int64, 10 ns.
+n2048, nangate45, int64, 10 ns. HLS clock-gated, forge ungated: forge's points are not yet synthesized gated, and the insights below were written when both were ungated.
 
 [forge's ctrl + datapath against the HLS totals](axpy_ctrl_dp.png): forge without its csr, its `<tag>_peripherals` and its glue; the HLS cases as above.
 
@@ -15,30 +15,30 @@ n2048, nangate45, int64, 10 ns.
 |---|---|---|---|---|---|
 | 1 | forge | 8,898 | 22.39 | 2048 | 1.093 |
 | 1 | forge baked | 1,802 | 4.33 | 2048 | 0.2114 |
-| 1 | Vitis opt | 8,767 | 24.76 | 2050 | 1.208 |
-| 1 | Vitis dace | 58,219 | 73.46 | 4101 | 1.791 |
-| 1 | Bambu | 9,340 | 27.24 | 2050 | 1.329 |
-| 1 | XLS | 7,883 | 22.7 | 2049 | 1.108 |
+| 1 | Vitis opt | 8,559 | 23.42 | 2050 | 1.142 |
+| 1 | Vitis dace | 58,037 | 69.93 | 4101 | 1.705 |
+| 1 | Bambu | 8,910 | 27.15 | 2050 | 1.325 |
+| 1 | XLS | 7,829 | 21.91 | 2049 | 1.07 |
 | 2 | forge | 15,812 | 20.99 | 1024 | 2.05 |
 | 2 | forge baked | 2,337 | 3.341 | 1024 | 0.3263 |
-| 2 | Vitis opt | 16,404 | 23.84 | 1026 | 2.324 |
-| 2 | Bambu | 17,909 | 26.72 | 1026 | 2.604 |
-| 2 | XLS | 14,883 | 22.02 | 1025 | 2.148 |
+| 2 | Vitis opt | 16,077 | 23.11 | 1026 | 2.252 |
+| 2 | Bambu | 17,118 | 26.49 | 1026 | 2.582 |
+| 2 | XLS | 14,817 | 21.63 | 1025 | 2.11 |
 | 4 | forge | 29,628 | 20.23 | 512 | 3.95 |
 | 4 | forge baked | 3,408 | 2.848 | 512 | 0.5562 |
-| 4 | Vitis opt | 31,699 | 23.34 | 514 | 4.541 |
-| 4 | Bambu | 35,066 | 26.41 | 514 | 5.139 |
-| 4 | XLS | 28,904 | 21.76 | 513 | 4.241 |
+| 4 | Vitis opt | 31,129 | 22.91 | 514 | 4.457 |
+| 4 | Bambu | 33,551 | 26.12 | 514 | 5.081 |
+| 4 | XLS | 28,829 | 21.54 | 513 | 4.2 |
 | 8 | forge | 57,261 | 19.82 | 256 | 7.741 |
 | 8 | forge baked | 5,550 | 2.591 | 256 | 1.012 |
-| 8 | Vitis opt | 62,301 | 23.05 | 258 | 8.935 |
-| 8 | Bambu | 69,396 | 26.22 | 258 | 10.16 |
-| 8 | XLS | 56,854 | 21.47 | 257 | 8.354 |
+| 8 | Vitis opt | 61,252 | 22.77 | 258 | 8.827 |
+| 8 | Bambu | 66,432 | 25.89 | 258 | 10.03 |
+| 8 | XLS | 56,791 | 21.37 | 257 | 8.314 |
 | 16 | forge | 112,454 | 19.71 | 128 | 15.4 |
 | 16 | forge baked | 9,834 | 2.462 | 128 | 1.923 |
-| 16 | Vitis opt | 123,459 | 22.94 | 130 | 17.64 |
-| 16 | Bambu | 138,011 | 26.17 | 130 | 20.13 |
-| 16 | XLS | 112,732 | 21.66 | 129 | 16.79 |
+| 16 | Vitis opt | 121,451 | 22.73 | 130 | 17.49 |
+| 16 | Bambu | 132,178 | 25.8 | 130 | 19.85 |
+| 16 | XLS | 112,758 | 21.6 | 129 | 16.75 |
 <!-- /gen -->
 
 ## Insights
@@ -65,14 +65,14 @@ n2048, nangate45, int64, 10 ns.
 | 1 | forge baked | datapath | 535.5 | 2.336 | 1.141 |
 | 1 | forge baked | total | 1,802 | 4.33 | 2.114 |
 | 1 | forge baked | total without csr | 974.9 | 2.88 | 1.406 |
-| 1 | Vitis opt | total | 8,767 | 24.76 | 12.09 |
+| 1 | Vitis opt | total | 8,559 | 23.42 | 11.43 |
 | 1 | Vitis dace | RAM (macro) | 49,275 | 45.25 | 22.09 |
-| 1 | Vitis dace | logic without the RAM | 8,944 | 28.21 | 13.77 |
-| 1 | Vitis dace | total | 58,219 | 73.46 | 35.87 |
-| 1 | Bambu | ctrl | 57.46 | 0.04347 | 0.02123 |
-| 1 | Bambu | datapath | 9,278 | 27.18 | 13.27 |
-| 1 | Bambu | total | 9,340 | 27.24 | 13.3 |
-| 1 | XLS | total | 7,883 | 22.7 | 11.08 |
+| 1 | Vitis dace | logic without the RAM | 8,762 | 24.69 | 12.05 |
+| 1 | Vitis dace | total | 58,037 | 69.93 | 34.15 |
+| 1 | Bambu | ctrl | 72.35 | 0.04325 | 0.02112 |
+| 1 | Bambu | datapath | 8,833 | 27.09 | 13.23 |
+| 1 | Bambu | total | 8,910 | 27.15 | 13.26 |
+| 1 | XLS | total | 7,829 | 21.91 | 10.7 |
 | 2 | forge | csr | 1,073 | 0.9531 | 0.4654 |
 | 2 | forge | ctrl | 438.4 | 0.2754 | 0.1345 |
 | 2 | forge | datapath | 14,020 | 19.52 | 9.532 |
@@ -83,11 +83,11 @@ n2048, nangate45, int64, 10 ns.
 | 2 | forge baked | datapath | 1,071 | 2.336 | 1.141 |
 | 2 | forge baked | total | 2,337 | 3.341 | 1.631 |
 | 2 | forge baked | total without csr | 1,510 | 2.612 | 1.275 |
-| 2 | Vitis opt | total | 16,404 | 23.84 | 11.64 |
-| 2 | Bambu | ctrl | 57.72 | 0.02216 | 0.01082 |
-| 2 | Bambu | datapath | 17,846 | 26.69 | 13.03 |
-| 2 | Bambu | total | 17,909 | 26.72 | 13.05 |
-| 2 | XLS | total | 14,883 | 22.02 | 10.75 |
+| 2 | Vitis opt | total | 16,077 | 23.11 | 11.28 |
+| 2 | Bambu | ctrl | 72.35 | 0.02193 | 0.01071 |
+| 2 | Bambu | datapath | 17,040 | 26.46 | 12.92 |
+| 2 | Bambu | total | 17,118 | 26.49 | 12.94 |
+| 2 | XLS | total | 14,817 | 21.63 | 10.56 |
 | 4 | forge | csr | 1,073 | 0.4767 | 0.2328 |
 | 4 | forge | ctrl | 438.4 | 0.1395 | 0.06813 |
 | 4 | forge | datapath | 27,836 | 19.49 | 9.514 |
@@ -98,11 +98,11 @@ n2048, nangate45, int64, 10 ns.
 | 4 | forge baked | datapath | 2,142 | 2.342 | 1.143 |
 | 4 | forge baked | total | 3,408 | 2.848 | 1.39 |
 | 4 | forge baked | total without csr | 2,581 | 2.481 | 1.211 |
-| 4 | Vitis opt | total | 31,699 | 23.34 | 11.4 |
-| 4 | Bambu | ctrl | 57.99 | 0.01149 | 0.005609 |
-| 4 | Bambu | datapath | 35,003 | 26.4 | 12.89 |
-| 4 | Bambu | total | 35,066 | 26.41 | 12.9 |
-| 4 | XLS | total | 28,904 | 21.76 | 10.62 |
+| 4 | Vitis opt | total | 31,129 | 22.91 | 11.19 |
+| 4 | Bambu | ctrl | 72.35 | 0.01127 | 0.005502 |
+| 4 | Bambu | datapath | 33,473 | 26.1 | 12.75 |
+| 4 | Bambu | total | 33,551 | 26.12 | 12.75 |
+| 4 | XLS | total | 28,829 | 21.54 | 10.52 |
 | 8 | forge | csr | 1,073 | 0.2386 | 0.1165 |
 | 8 | forge | ctrl | 438.4 | 0.0707 | 0.03452 |
 | 8 | forge | datapath | 55,469 | 19.45 | 9.495 |
@@ -113,11 +113,11 @@ n2048, nangate45, int64, 10 ns.
 | 8 | forge baked | datapath | 4,284 | 2.336 | 1.141 |
 | 8 | forge baked | total | 5,550 | 2.591 | 1.265 |
 | 8 | forge baked | total without csr | 4,723 | 2.407 | 1.175 |
-| 8 | Vitis opt | total | 62,301 | 23.05 | 11.26 |
-| 8 | Bambu | ctrl | 59.05 | 0.006157 | 0.003006 |
-| 8 | Bambu | datapath | 69,332 | 26.22 | 12.8 |
-| 8 | Bambu | total | 69,396 | 26.22 | 12.8 |
-| 8 | XLS | total | 56,854 | 21.47 | 10.48 |
+| 8 | Vitis opt | total | 61,252 | 22.77 | 11.12 |
+| 8 | Bambu | ctrl | 75.28 | 0.005961 | 0.002911 |
+| 8 | Bambu | datapath | 66,351 | 25.88 | 12.64 |
+| 8 | Bambu | total | 66,432 | 25.89 | 12.64 |
+| 8 | XLS | total | 56,791 | 21.37 | 10.43 |
 | 16 | forge | csr | 1,073 | 0.1195 | 0.05835 |
 | 16 | forge | ctrl | 438.4 | 0.03582 | 0.01749 |
 | 16 | forge | datapath | 110,662 | 19.52 | 9.534 |
@@ -128,9 +128,9 @@ n2048, nangate45, int64, 10 ns.
 | 16 | forge baked | datapath | 8,567 | 2.334 | 1.139 |
 | 16 | forge baked | total | 9,834 | 2.462 | 1.202 |
 | 16 | forge baked | total without csr | 9,007 | 2.369 | 1.157 |
-| 16 | Vitis opt | total | 123,459 | 22.94 | 11.2 |
-| 16 | Bambu | ctrl | 58.79 | 0.003485 | 0.001702 |
-| 16 | Bambu | datapath | 137,947 | 26.16 | 12.77 |
-| 16 | Bambu | total | 138,011 | 26.17 | 12.78 |
-| 16 | XLS | total | 112,732 | 21.66 | 10.58 |
+| 16 | Vitis opt | total | 121,451 | 22.73 | 11.1 |
+| 16 | Bambu | ctrl | 75.28 | 0.003297 | 0.00161 |
+| 16 | Bambu | datapath | 132,097 | 25.8 | 12.6 |
+| 16 | Bambu | total | 132,178 | 25.8 | 12.6 |
+| 16 | XLS | total | 112,758 | 21.6 | 10.55 |
 <!-- /gen -->

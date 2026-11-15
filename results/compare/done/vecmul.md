@@ -7,37 +7,37 @@ Part of [the comparison](../README.md): setup, summary across kernels and the pa
 <!-- gen:main -->
 ![vecmul](vecmul.png)
 
-n2048, nangate45, int64, 10 ns.
+n2048, nangate45, int64, 10 ns. HLS clock-gated, forge ungated: forge's points are not yet synthesized gated, and the insights below were written when both were ungated.
 
 [forge's ctrl + datapath against the HLS totals](vecmul_ctrl_dp.png): forge without its csr, its `<tag>_peripherals` and its glue; the HLS cases as above.
 
 | W | Case | Area (µm²) | Energy (nJ) | Latency (cycles) | Power (mW) |
 |---|---|---|---|---|---|
 | 1 | forge | 8,179 | 25.19 | 2048 | 1.23 |
-| 1 | Vitis opt | 7,956 | 26.36 | 2050 | 1.286 |
-| 1 | Vitis dace | 8,076 | 26.75 | 2050 | 1.305 |
-| 1 | Bambu | 9,073 | 31.17 | 2050 | 1.521 |
-| 1 | XLS | 7,311 | 25.7 | 2049 | 1.254 |
+| 1 | Vitis opt | 7,795 | 25.91 | 2050 | 1.264 |
+| 1 | Vitis dace | 7,925 | 25.89 | 2050 | 1.263 |
+| 1 | Bambu | 8,641 | 31.08 | 2050 | 1.516 |
+| 1 | XLS | 7,328 | 26.34 | 2049 | 1.286 |
 | 2 | forge | 15,092 | 24.09 | 1024 | 2.353 |
-| 2 | Vitis opt | 15,291 | 25.88 | 1026 | 2.522 |
-| 2 | Vitis dace | 15,735 | 26.29 | 1026 | 2.563 |
-| 2 | Bambu | 17,340 | 30.65 | 1026 | 2.987 |
-| 2 | XLS | 14,276 | 25.37 | 1025 | 2.475 |
+| 2 | Vitis opt | 15,010 | 25.6 | 1026 | 2.495 |
+| 2 | Vitis dace | 15,398 | 25.6 | 1026 | 2.495 |
+| 2 | Bambu | 16,544 | 30.41 | 1026 | 2.964 |
+| 2 | XLS | 14,389 | 26.07 | 1025 | 2.543 |
 | 4 | forge | 28,917 | 23.63 | 512 | 4.615 |
-| 4 | Vitis opt | 29,961 | 25.53 | 514 | 4.967 |
-| 4 | Vitis dace | 30,402 | 25.74 | 515 | 4.998 |
-| 4 | Bambu | 33,876 | 30.29 | 514 | 5.893 |
-| 4 | XLS | 28,610 | 25.84 | 513 | 5.038 |
+| 4 | Vitis opt | 29,438 | 25.33 | 514 | 4.929 |
+| 4 | Vitis dace | 29,834 | 25.35 | 515 | 4.922 |
+| 4 | Bambu | 32,351 | 29.98 | 514 | 5.834 |
+| 4 | XLS | 28,515 | 25.93 | 513 | 5.054 |
 | 8 | forge | 56,567 | 23.37 | 256 | 9.129 |
-| 8 | Vitis opt | 59,302 | 25.33 | 258 | 9.816 |
-| 8 | Vitis dace | 59,710 | 25.42 | 259 | 9.814 |
-| 8 | Bambu | 66,948 | 30.1 | 258 | 11.67 |
-| 8 | XLS | 56,467 | 24.97 | 257 | 9.718 |
+| 8 | Vitis opt | 58,296 | 25.17 | 258 | 9.754 |
+| 8 | Vitis dace | 58,662 | 25.17 | 259 | 9.72 |
+| 8 | Bambu | 63,967 | 29.75 | 258 | 11.53 |
+| 8 | XLS | 56,765 | 25.87 | 257 | 10.07 |
 | 16 | forge | 111,867 | 23.21 | 128 | 18.13 |
-| 16 | Vitis opt | 117,985 | 25.18 | 130 | 19.37 |
-| 16 | Vitis dace | 118,359 | 25.22 | 131 | 19.25 |
-| 16 | Bambu | 133,097 | 30.05 | 130 | 23.11 |
-| 16 | XLS | 112,942 | 25.37 | 129 | 19.66 |
+| 16 | Vitis opt | 116,016 | 25.04 | 130 | 19.26 |
+| 16 | Vitis dace | 116,351 | 25.05 | 131 | 19.12 |
+| 16 | Bambu | 127,250 | 29.67 | 130 | 22.82 |
+| 16 | XLS | 113,269 | 25.94 | 129 | 20.11 |
 <!-- /gen -->
 
 ## Insights
@@ -56,54 +56,54 @@ n2048, nangate45, int64, 10 ns.
 | 1 | forge | datapath | 6,913 | 23.19 | 11.32 |
 | 1 | forge | total | 8,179 | 25.19 | 12.3 |
 | 1 | forge | total without csr | 7,352 | 23.74 | 11.59 |
-| 1 | Vitis opt | total | 7,956 | 26.36 | 12.87 |
-| 1 | Vitis dace | total | 8,076 | 26.75 | 13.06 |
-| 1 | Bambu | ctrl | 57.46 | 0.04347 | 0.02123 |
-| 1 | Bambu | datapath | 9,010 | 31.11 | 15.19 |
-| 1 | Bambu | total | 9,073 | 31.17 | 15.22 |
-| 1 | XLS | total | 7,311 | 25.7 | 12.55 |
+| 1 | Vitis opt | total | 7,795 | 25.91 | 12.65 |
+| 1 | Vitis dace | total | 7,925 | 25.89 | 12.64 |
+| 1 | Bambu | ctrl | 72.35 | 0.04325 | 0.02112 |
+| 1 | Bambu | datapath | 8,563 | 31.03 | 15.15 |
+| 1 | Bambu | total | 8,641 | 31.08 | 15.18 |
+| 1 | XLS | total | 7,328 | 26.34 | 12.86 |
 | 2 | forge | csr | 547.7 | 0.4847 | 0.2367 |
 | 2 | forge | ctrl | 438.4 | 0.2755 | 0.1345 |
 | 2 | forge | datapath | 13,825 | 23.09 | 11.27 |
 | 2 | forge | total | 15,092 | 24.09 | 11.76 |
 | 2 | forge | total without csr | 14,265 | 23.36 | 11.41 |
-| 2 | Vitis opt | total | 15,291 | 25.88 | 12.64 |
-| 2 | Vitis dace | total | 15,735 | 26.29 | 12.84 |
-| 2 | Bambu | ctrl | 57.72 | 0.02216 | 0.01082 |
-| 2 | Bambu | datapath | 17,277 | 30.62 | 14.95 |
-| 2 | Bambu | total | 17,340 | 30.65 | 14.97 |
-| 2 | XLS | total | 14,276 | 25.37 | 12.39 |
+| 2 | Vitis opt | total | 15,010 | 25.6 | 12.5 |
+| 2 | Vitis dace | total | 15,398 | 25.6 | 12.5 |
+| 2 | Bambu | ctrl | 72.35 | 0.02193 | 0.01071 |
+| 2 | Bambu | datapath | 16,466 | 30.38 | 14.83 |
+| 2 | Bambu | total | 16,544 | 30.41 | 14.85 |
+| 2 | XLS | total | 14,389 | 26.07 | 12.73 |
 | 4 | forge | csr | 547.7 | 0.2424 | 0.1184 |
 | 4 | forge | ctrl | 438.4 | 0.1396 | 0.06815 |
 | 4 | forge | datapath | 27,650 | 23.12 | 11.29 |
 | 4 | forge | total | 28,917 | 23.63 | 11.54 |
 | 4 | forge | total without csr | 28,090 | 23.26 | 11.36 |
-| 4 | Vitis opt | total | 29,961 | 25.53 | 12.47 |
-| 4 | Vitis dace | total | 30,402 | 25.74 | 12.57 |
-| 4 | Bambu | ctrl | 58.52 | 0.0115 | 0.005613 |
-| 4 | Bambu | datapath | 33,813 | 30.27 | 14.78 |
-| 4 | Bambu | total | 33,876 | 30.29 | 14.79 |
-| 4 | XLS | total | 28,610 | 25.84 | 12.62 |
+| 4 | Vitis opt | total | 29,438 | 25.33 | 12.37 |
+| 4 | Vitis dace | total | 29,834 | 25.35 | 12.38 |
+| 4 | Bambu | ctrl | 72.35 | 0.01127 | 0.005502 |
+| 4 | Bambu | datapath | 32,273 | 29.97 | 14.63 |
+| 4 | Bambu | total | 32,351 | 29.98 | 14.64 |
+| 4 | XLS | total | 28,515 | 25.93 | 12.66 |
 | 8 | forge | csr | 547.7 | 0.1213 | 0.05922 |
 | 8 | forge | ctrl | 438.4 | 0.07074 | 0.03454 |
 | 8 | forge | datapath | 55,300 | 23.12 | 11.29 |
 | 8 | forge | total | 56,567 | 23.37 | 11.41 |
 | 8 | forge | total without csr | 55,740 | 23.19 | 11.32 |
-| 8 | Vitis opt | total | 59,302 | 25.33 | 12.37 |
-| 8 | Vitis dace | total | 59,710 | 25.42 | 12.41 |
-| 8 | Bambu | ctrl | 57.99 | 0.006146 | 0.003001 |
-| 8 | Bambu | datapath | 66,884 | 30.09 | 14.69 |
-| 8 | Bambu | total | 66,948 | 30.1 | 14.7 |
-| 8 | XLS | total | 56,467 | 24.97 | 12.19 |
+| 8 | Vitis opt | total | 58,296 | 25.17 | 12.29 |
+| 8 | Vitis dace | total | 58,662 | 25.17 | 12.29 |
+| 8 | Bambu | ctrl | 75.28 | 0.005961 | 0.002911 |
+| 8 | Bambu | datapath | 63,886 | 29.74 | 14.52 |
+| 8 | Bambu | total | 63,967 | 29.75 | 14.53 |
+| 8 | XLS | total | 56,765 | 25.87 | 12.63 |
 | 16 | forge | csr | 547.7 | 0.06071 | 0.02964 |
 | 16 | forge | ctrl | 438.4 | 0.03585 | 0.01751 |
 | 16 | forge | datapath | 110,601 | 23.08 | 11.27 |
 | 16 | forge | total | 111,867 | 23.21 | 11.33 |
 | 16 | forge | total without csr | 111,040 | 23.11 | 11.29 |
-| 16 | Vitis opt | total | 117,985 | 25.18 | 12.3 |
-| 16 | Vitis dace | total | 118,359 | 25.22 | 12.31 |
-| 16 | Bambu | ctrl | 59.58 | 0.003507 | 0.001712 |
-| 16 | Bambu | datapath | 133,032 | 30.04 | 14.67 |
-| 16 | Bambu | total | 133,097 | 30.05 | 14.67 |
-| 16 | XLS | total | 112,942 | 25.37 | 12.39 |
+| 16 | Vitis opt | total | 116,016 | 25.04 | 12.23 |
+| 16 | Vitis dace | total | 116,351 | 25.05 | 12.23 |
+| 16 | Bambu | ctrl | 75.28 | 0.003297 | 0.00161 |
+| 16 | Bambu | datapath | 127,169 | 29.66 | 14.48 |
+| 16 | Bambu | total | 127,250 | 29.67 | 14.49 |
+| 16 | XLS | total | 113,269 | 25.94 | 12.67 |
 <!-- /gen -->

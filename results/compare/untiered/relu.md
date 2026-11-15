@@ -7,33 +7,33 @@ Part of [the comparison](../README.md): setup, summary across kernels and the pa
 <!-- gen:main -->
 ![relu](relu.png)
 
-n2048, nangate45, int64, 10 ns.
+n2048, nangate45, int64, 10 ns. HLS clock-gated, forge ungated: forge's points are not yet synthesized gated, and the insights below were written when both were ungated.
 
 [forge's ctrl + datapath against the HLS totals](relu_ctrl_dp.png): forge without its csr, its `<tag>_peripherals` and its glue; the HLS cases as above.
 
 | W | Case | Area (µm²) | Energy (nJ) | Latency (cycles) | Power (mW) |
 |---|---|---|---|---|---|
 | 1 | forge | 1,335 | 2.912 | 2048 | 0.1422 |
-| 1 | Vitis opt | 1,028 | 3.186 | 2050 | 0.1554 |
-| 1 | Vitis dace | 1,145 | 3.576 | 2050 | 0.1745 |
-| 1 | Bambu | 1,764 | 4.875 | 2050 | 0.2378 |
-| 1 | XLS | 364.4 | 1.401 | 2049 | 0.06839 |
+| 1 | Vitis opt | 933.7 | 2.845 | 2050 | 0.1388 |
+| 1 | Vitis dace | 1,071 | 2.824 | 2050 | 0.1378 |
+| 1 | Bambu | 1,431 | 4.925 | 2050 | 0.2402 |
+| 1 | XLS | 337.3 | 1.481 | 2049 | 0.07229 |
 | 2 | forge | 1,403 | 1.909 | 1024 | 0.1864 |
-| 2 | Vitis opt | 1,434 | 2.647 | 1026 | 0.258 |
-| 2 | Bambu | 2,765 | 4.317 | 1026 | 0.4208 |
-| 2 | XLS | 433.6 | 1.151 | 1025 | 0.1123 |
+| 2 | Vitis opt | 1,287 | 2.475 | 1026 | 0.2412 |
+| 2 | Bambu | 2,192 | 4.257 | 1026 | 0.4149 |
+| 2 | XLS | 406.4 | 1.191 | 1025 | 0.1162 |
 | 4 | forge | 1,540 | 1.397 | 512 | 0.2729 |
-| 4 | Vitis opt | 2,246 | 2.367 | 514 | 0.4604 |
-| 4 | Bambu | 4,768 | 4.019 | 514 | 0.7819 |
-| 4 | XLS | 571.9 | 1.017 | 513 | 0.1983 |
+| 4 | Vitis opt | 1,993 | 2.279 | 514 | 0.4433 |
+| 4 | Bambu | 3,715 | 3.904 | 514 | 0.7595 |
+| 4 | XLS | 544.8 | 1.037 | 513 | 0.2022 |
 | 8 | forge | 1,813 | 1.144 | 256 | 0.4469 |
-| 8 | Vitis opt | 3,871 | 2.237 | 258 | 0.8671 |
-| 8 | Bambu | 8,776 | 3.879 | 258 | 1.504 |
-| 8 | XLS | 849.3 | 0.9553 | 257 | 0.3717 |
+| 8 | Vitis opt | 3,406 | 2.187 | 258 | 0.8478 |
+| 8 | Bambu | 6,763 | 3.732 | 258 | 1.446 |
+| 8 | XLS | 821.9 | 0.9652 | 257 | 0.3755 |
 | 16 | forge | 2,360 | 1.019 | 128 | 0.7959 |
-| 16 | Vitis opt | 7,121 | 2.183 | 130 | 1.679 |
-| 16 | Bambu | 16,789 | 3.831 | 130 | 2.947 |
-| 16 | XLS | 1,405 | 0.9274 | 129 | 0.7189 |
+| 16 | Vitis opt | 6,232 | 2.148 | 130 | 1.652 |
+| 16 | Bambu | 12,856 | 3.654 | 130 | 2.811 |
+| 16 | XLS | 1,376 | 0.9321 | 129 | 0.7226 |
 <!-- /gen -->
 
 ## Insights
@@ -54,50 +54,50 @@ n2048, nangate45, int64, 10 ns.
 | 1 | forge | datapath | 68.36 | 0.9181 | 0.4483 |
 | 1 | forge | total | 1,335 | 2.912 | 1.422 |
 | 1 | forge | total without csr | 507.5 | 1.462 | 0.7137 |
-| 1 | Vitis opt | total | 1,028 | 3.186 | 1.556 |
-| 1 | Vitis dace | total | 1,145 | 3.576 | 1.746 |
-| 1 | Bambu | ctrl | 54 | 0.04337 | 0.02118 |
-| 1 | Bambu | datapath | 1,705 | 4.817 | 2.352 |
-| 1 | Bambu | total | 1,764 | 4.875 | 2.38 |
-| 1 | XLS | total | 364.4 | 1.401 | 0.6842 |
+| 1 | Vitis opt | total | 933.7 | 2.845 | 1.389 |
+| 1 | Vitis dace | total | 1,071 | 2.824 | 1.379 |
+| 1 | Bambu | ctrl | 58.79 | 0.04314 | 0.02107 |
+| 1 | Bambu | datapath | 1,367 | 4.867 | 2.376 |
+| 1 | Bambu | total | 1,431 | 4.925 | 2.405 |
+| 1 | XLS | total | 337.3 | 1.481 | 0.7233 |
 | 2 | forge | csr | 547.7 | 0.4847 | 0.2367 |
 | 2 | forge | ctrl | 438.1 | 0.2755 | 0.1345 |
 | 2 | forge | datapath | 136.7 | 0.9045 | 0.4416 |
 | 2 | forge | total | 1,403 | 1.909 | 0.9321 |
 | 2 | forge | total without csr | 575.9 | 1.18 | 0.5761 |
-| 2 | Vitis opt | total | 1,434 | 2.647 | 1.292 |
-| 2 | Bambu | ctrl | 54 | 0.02204 | 0.01076 |
-| 2 | Bambu | datapath | 2,706 | 4.288 | 2.094 |
-| 2 | Bambu | total | 2,765 | 4.317 | 2.108 |
-| 2 | XLS | total | 433.6 | 1.151 | 0.5619 |
+| 2 | Vitis opt | total | 1,287 | 2.475 | 1.209 |
+| 2 | Bambu | ctrl | 59.05 | 0.02183 | 0.01066 |
+| 2 | Bambu | datapath | 2,128 | 4.227 | 2.064 |
+| 2 | Bambu | total | 2,192 | 4.257 | 2.078 |
+| 2 | XLS | total | 406.4 | 1.191 | 0.5814 |
 | 4 | forge | csr | 547.7 | 0.2424 | 0.1184 |
 | 4 | forge | ctrl | 438.1 | 0.1396 | 0.06815 |
 | 4 | forge | datapath | 273.4 | 0.891 | 0.4351 |
 | 4 | forge | total | 1,540 | 1.397 | 0.6821 |
 | 4 | forge | total without csr | 712.6 | 1.031 | 0.5032 |
-| 4 | Vitis opt | total | 2,246 | 2.367 | 1.156 |
-| 4 | Bambu | ctrl | 54 | 0.01138 | 0.005557 |
-| 4 | Bambu | datapath | 4,709 | 4.004 | 1.955 |
-| 4 | Bambu | total | 4,768 | 4.019 | 1.962 |
-| 4 | XLS | total | 571.9 | 1.017 | 0.4968 |
+| 4 | Vitis opt | total | 1,993 | 2.279 | 1.113 |
+| 4 | Bambu | ctrl | 59.05 | 0.01117 | 0.005455 |
+| 4 | Bambu | datapath | 3,651 | 3.889 | 1.899 |
+| 4 | Bambu | total | 3,715 | 3.904 | 1.906 |
+| 4 | XLS | total | 544.8 | 1.037 | 0.5065 |
 | 8 | forge | csr | 547.7 | 0.1213 | 0.05922 |
 | 8 | forge | ctrl | 438.1 | 0.07074 | 0.03454 |
 | 8 | forge | datapath | 546.9 | 0.8891 | 0.4341 |
 | 8 | forge | total | 1,813 | 1.144 | 0.5586 |
 | 8 | forge | total without csr | 986.1 | 0.9598 | 0.4687 |
-| 8 | Vitis opt | total | 3,871 | 2.237 | 1.092 |
-| 8 | Bambu | ctrl | 54.53 | 0.006046 | 0.002952 |
-| 8 | Bambu | datapath | 8,716 | 3.872 | 1.89 |
-| 8 | Bambu | total | 8,776 | 3.879 | 1.894 |
-| 8 | XLS | total | 849.3 | 0.9553 | 0.4665 |
+| 8 | Vitis opt | total | 3,406 | 2.187 | 1.068 |
+| 8 | Bambu | ctrl | 59.58 | 0.005843 | 0.002853 |
+| 8 | Bambu | datapath | 6,698 | 3.724 | 1.818 |
+| 8 | Bambu | total | 6,763 | 3.732 | 1.822 |
+| 8 | XLS | total | 821.9 | 0.9652 | 0.4713 |
 | 16 | forge | csr | 547.7 | 0.06071 | 0.02964 |
 | 16 | forge | ctrl | 438.1 | 0.03585 | 0.01751 |
 | 16 | forge | datapath | 1,094 | 0.8904 | 0.4347 |
 | 16 | forge | total | 2,360 | 1.019 | 0.4975 |
 | 16 | forge | total without csr | 1,533 | 0.9262 | 0.4523 |
-| 16 | Vitis opt | total | 7,121 | 2.183 | 1.066 |
-| 16 | Bambu | ctrl | 55.33 | 0.003399 | 0.00166 |
-| 16 | Bambu | datapath | 16,729 | 3.826 | 1.868 |
-| 16 | Bambu | total | 16,789 | 3.831 | 1.87 |
-| 16 | XLS | total | 1,405 | 0.9274 | 0.4528 |
+| 16 | Vitis opt | total | 6,232 | 2.148 | 1.049 |
+| 16 | Bambu | ctrl | 59.58 | 0.003178 | 0.001552 |
+| 16 | Bambu | datapath | 12,791 | 3.65 | 1.782 |
+| 16 | Bambu | total | 12,856 | 3.654 | 1.784 |
+| 16 | XLS | total | 1,376 | 0.9321 | 0.4551 |
 <!-- /gen -->
