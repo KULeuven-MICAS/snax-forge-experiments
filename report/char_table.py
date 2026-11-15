@@ -1,26 +1,12 @@
 #!/usr/bin/env python3
-"""report/char_table.py - snax-forge's blocks alone, the table.
+"""report/char_table.py - the blocks alone, the table: results/char/char_table.md.
 
   pixi run char-table          (after pixi run char-export)
 
-Reads, per technology (nangate45, nangate15), results/char/<tech>/char_synth.csv and char_power.csv,
-and char/points.json (the params as hw/chisel/blocks.json names them); writes results/char/char_table.md. Every
-number is computed from those files, or, for the Model section and the known limits, from the files they cite:
-
-  the model            results/char/<tech>/char.json (report/char_export.py, checked equal to what it builds now
-                       from the same CSVs), and the forge points' results/forge/<tech>/power_pt.csv (cycles, config),
-                       power_pt_modules.csv (the units', ctrl's and the datapath's e_dyn per cycle) and
-                       synth_dc_modules.csv (ctrl's flops)
-  the free first       the forge points' results/forge/<tech>/synth_dc_modules.csv (TreeAccumulate inside dot 4)
-  the isolated fire    R1's char_power.csv at the pushed commit R1_COMMIT (`git show`, not a copy): duty50
-                       against (busy + idle) / 2
-  LinkBuffer's slope   the R2 run note's diagnostic table (results/char/runs/2026-11-03_char1_r2.md), the two
-                       netlists' e_flop and e_bit
-  the dot 4 to 6 Mac   the forge points' results/forge/<tech>/power_pt.csv (cycles) and power_pt_modules.csv (the Mac's
-                       e_dyn per cycle): (fires E_busy + (cycles - fires) E_idle) / cycles with fires = N / W
-
-Checks, each a failure: every point of char/points.json present on both technologies, every row ok, one
-snax-forge commit, the windows R2 has (busy and idle; LinkBuffer stream), char.json current.
+Reads results/char/<tech>/char_synth.csv and char_power.csv and char/points.json; for the model and the known
+limits, char.json, the forge points' power_pt.csv, power_pt_modules.csv and synth_dc_modules.csv, the duty50 rows
+at R1_COMMIT and a run note's diagnostic table. Every number is computed from those files. Checks, each a failure:
+every point present, every row ok, one snax-forge commit, the windows each block has, char.json current.
 """
 from __future__ import annotations
 

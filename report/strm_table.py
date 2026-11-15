@@ -2,44 +2,13 @@
 """report/strm_table.py - the reader and interconnect tables snax-forge's HW cost model reads, and the
 reference interpolation it copies.
 
-  pixi run strm-table [--tech nangate45] [--loo] [--clk-gate]
-  pixi run strm-table-test                       report/test_strm_table.py
+  pixi run strm-table [--tech nangate45] [--loo]
 
-Reads results/streamer/<tech>/synth_dc.csv and power_pt.csv (syn/syn.py and sim/pwr.py --source streamer) and the
-same two of results/xbar/<tech>/, and writes results/strm/<tech>/:
-
-  streamer.csv  depth, loops, channels, area_um2, e_beat_pj, flops, slack_ns, fmax_mhz, status
-                one row per grid point (FIFO depth x loops x channels): DC's total area, PT's dynamic energy over
-                the busy window / beats, DC's flop count, worst slack and fmax (a lower bound)
-  xbar.csv      inputs, banks, area_um2, e_access_pj, flops, slack_ns, fmax_mhz, status
-                one row per grid point (inputs x banks); e_access_pj is PT's energy over the window / grants and is
-                empty where inputs > banks (not measured: no conflict-free stimulus)
-status is "ok" or the failing step's status (DC's, then PT's); a failed point keeps its row with the numbers it
-has. A reader's cost also stands for a writer's. Only the ungated rows are read (an empty clk_gate reads as 0,
-X79).
-
---clk-gate reads the clock-gated rows (clk_gate 1) instead and writes streamer_cg.csv and xbar_cg.csv
-beside them, in the same columns: flops is DC's seq_cells, which counts the integrated clock gates too (an ICG is a
-sequential cell; the gate is not priced on its own). The grid is whatever points have gated rows. It then prints,
-per point in both tables, the gated value over the ungated one for area and energy, and their spread.
-
-The reference interpolation, for a query inside the grid:
-  reader  trilinear over (depth, loops, channels), linear in each raw value between the two grid values around
-          it (a grid value is matched exactly); area and energy alike
-  xbar    bilinear over (inputs, banks): area linear in inputs and banks; energy linear in 1/inputs (its shape is
-          a + b/inputs, a per-cycle cost shared by the grants, docs/cost_tables.md) and in banks. Energy where
-          inputs > banks: each bank count's row is completed with its value at inputs = banks (the most measured),
-          then interpolated as the rest
-  A query outside the grid's range on any axis is refused (ValueError), as is one that needs a missing value;
-  Table.at(..., extrapolate=True) instead continues the line through the two outermost grid values, clamped at 0,
-  as snax-forge's estimate does (report/cg2_reprice.py at W = 32).
-
---loo prints the leave-one-out check (for information): each interior grid point predicted from its neighbours
-with its own value on every interpolated axis left out (reader: depth 4 and 8, loops 2 to 6, channels 2, 4, 6, 8,
-trilinear from the 8 surrounding points; xbar: inputs 8 to 56 at the same bank count, area linear in inputs,
-energy linear in 1/inputs, only where the point and both neighbours are measured), with the mean and worst error of
-area and energy. The worked steps are in docs/cost_tables.md.
-Standard library only.
+Joins the gated rows (clk_gate 1) of results/streamer/<tech>/ and results/xbar/<tech>/ (synth_dc.csv, power_pt.csv)
+into results/strm/<tech>/streamer.csv (depth, loops, channels, area_um2, e_beat_pj, flops, slack_ns, fmax_mhz,
+status) and xbar.csv (inputs, banks, area_um2, e_access_pj, ...; energy empty where inputs > banks). Table.at reads
+them as X53 · X54 say, extrapolating along the two outermost grid values only when asked (X83 · X85); --loo prints
+the leave-one-out check. docs/cost_tables.md has the rule and worked examples. Standard library only.
 """
 from __future__ import annotations
 

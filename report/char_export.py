@@ -1,47 +1,15 @@
 #!/usr/bin/env python3
-"""report/char_export.py - the table snax-forge reads, results/char/<tech>/char.json.
+"""report/char_export.py - the block model snax-forge reads, results/char/<tech>/char.json.
 
-  pixi run char-export
+  pixi run char-export                     char.json from the ungated rows
+  pixi run char-export --clk-gate          char_cg.json from the clock-gated rows (nangate45)
 
-Reads, per technology, results/char/<tech>/char_synth.csv and char_power.csv, with char/points.json and
-../snax-forge/hw/chisel/blocks.json for the params, and for the ctrl counter factor only the forge accelerators'
-results/forge/<tech>/power_pt_modules.csv (ctrl/ctrl's energy per cycle) and synth_dc_modules.csv (ctrl/ctrl's
-sequential area); writes results/char/<tech>/char.json. The model it serves (registers as bits, a block's comb part
-per fire, ctrl as its bits x e_hold x a counter factor), per unit and task:
-
-  E_unit = n_fire (e_comb + n_bits (e_load - e_hold)) + C_acc n_bits e_hold
-  E_ctrl = f_ctrl n_bits_ctrl C_acc e_hold
-
-char.json:
-  tech, clock_ns, units {area um2, energy pJ, flop_energy fJ per flop per cycle}
-  source   {snax_forge: the CSVs' commit, snax_forge_experiments: the last commit touching this technology's char
-            CSVs, stimulus: rand64 seed 0}
-  flop     {area_um2: seq_area / seq_cells, one constant; e_load_fj: the mean busy e_bit of the points whose flops
-            all load every cycle (Mac, TreeAccumulate and SerialAccumulate busy, LinkBuffer depth 1 stream);
-            e_hold_fj: the mean idle e_bit (char_table.md's e_hold)}
-  ctrl     {counter_factor: per forge point ctrl's energy per cycle / (its flops x e_hold), the mean over the 48
-            points, two decimals}
-  blocks   {datapath: [{params: blocks.json's params but lanes and depth, lanes_rule: copy | interpolate,
-            points: [{lanes, depth (LinkBuffer only), comb_um2, e_comb_pj}]}]}
-
-e_comb_pj is the busy window's e_comb per cycle (a fire every cycle; LinkBuffer's stream, a load every cycle). copy:
-W x the lanes-1 point (ElementwiseLanes, Mac, LinkBuffer; their W = 8 and 32 points stay as checks); interpolate:
-linear in lanes between the points (TreeAccumulate, SerialAccumulate). A block's flops are its bits (no field):
-lanes x depth x the output's width, checked against seq_cells here.
-
-results/forge's synth_dc_modules.csv has no seq_cells per module: ctrl's flops are its seq_um2 / flop.area_um2, which must be
-an integer at every point.
-
-  pixi run char-export --clk-gate          (nangate45)
-
-writes results/char/nangate45/char_cg.json from the clock-gated rows (clk_gate 1) of the same CSVs, in char.json's
-format. An integrated clock gate is a sequential cell: flop.area_um2 is the mean of seq_area / seq_cells (not one
-constant once gates are in), e_load and e_hold are per sequential cell as before (pwr.py's e_bit = e_flop /
-seq_cells), and a block's seq_cells against its bits is printed, not checked. ctrl stays ungated: its factor is
-char.json's times char.json's e_hold over this e_hold, so E_ctrl is unchanged. The params are checked against
-blocks.json at the rows' snax-forge commit (git show in the sibling checkout; printed and skipped when that commit is
-not there). Then, per point, the gated value over the ungated one: area, comb area, seq_cells, the busy (stream)
-e_comb and e_dyn, and the busy and idle e_bit.
+Reads results/char/<tech>/char_synth.csv and char_power.csv, char/points.json and the sibling snax-forge's
+hw/chisel/blocks.json for the params, and for the control factor the forge points' power_pt_modules.csv and
+synth_dc_modules.csv. Writes the flop constants (area, e_load, e_hold), the control factor and per block its comb
+area and energy per fire with a lanes rule (copy or interpolate). The fields and the model are in
+results/char/README.md; the gated table counts a clock gate as a sequential cell and keeps E_ctrl (X83 · X85), and
+prints, per point, the gated value over the ungated one.
 """
 from __future__ import annotations
 

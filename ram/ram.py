@@ -1,19 +1,14 @@
 """ram/ram.py - SRAM bank area and energy from CACTI 7 at 45 nm (itrs-hp), one point per (depth, width).
 
-    pixi run ram-build                       # clone and build CACTI into ram/cacti/ (once)
     pixi run ram point 512 64                # one point: config, run, parse, print
-    pixi run ram point 512 64 --objective 0:0:0:100:0
     pixi run ram table -j 32                 # the lookup table -> results/ram/nangate45/ram_table.csv
     pixi run ram lib 512 64 --mask 8         # one SRAM macro (.lib, .db, .v) -> ram/runs/lib/sram_d512_w64_m8.zip
     pixi run ram libs ram/macros.json -j 4   # the macros in a list
 
-Each point runs in a temporary folder under tmp/ with tech_params/ linked in: CACTI opens
-"tech_params/45nm.dat" relative to its working directory. What is kept of it, key.json, rc,
-cacti.out and cacti.err, goes into one zip, ram/runs/cacti.zip, as d<d>_w<w>[_<variant>]/... (the
-vdd check as vdd_check/...); the main thread rewrites the zip once at the end of a command when
-points were added or changed. A point whose config (and CACTI commit) is unchanged in the zip is not
-rerun. Dynamic energies are scaled from CACTI's itrs-hp Vdd (1.0 V at 45 nm) to Nangate 45 nm's
-1.10 V by (1.1 / 1.0)^2; area and timing are not scaled.
+Each point runs in a temporary folder under tmp/ with tech_params/ linked in (PITFALLS C1); what is kept of it goes
+into ram/runs/cacti.zip, rewritten once at the end of a command, and a point whose config and CACTI commit are
+unchanged there is not rerun. Dynamic energies are scaled from CACTI's 1.0 V to Nangate 45 nm's 1.10 V by
+(1.1 / 1.0)^2; area and timing are not scaled. Details in ram/README.md.
 """
 
 import argparse

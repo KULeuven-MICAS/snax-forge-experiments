@@ -1,55 +1,13 @@
 #!/usr/bin/env python3
 """forge/bundles.py - snax-forge's accelerator bundles for the points in forge/points.json.
 
-A point is one snax-forge recipe at one W, named as hls-exercises names its
-points (<tier>/<kernel>/<case>_w<W>, e.g. done/dot/forge3_w4), so a forge row
-joins the HLS rows of the same kernel and W. Patterns are shell globs over
-those names.
+  pixi run forge-rtl [PATTERN ...] [--list] [--dry-run] [-j N] [--allow-dirty] [--set K=V ...] [--out DIR]
 
-  pixi run forge-rtl [PATTERN ...] [--list] [--dry-run] [-j N] [--allow-dirty]
-                     [--set K=V ...] [--out DIR]
-
-Per point, in the snax-forge checkout (SNAX_FORGE, default ../snax-forge from
-the repo root), each through `pixi run --manifest-path $SNAX_FORGE/pixi.toml`:
-
-  1. sandbox recipes/<folder>/<r>.json --set W=<w> [--set K=V ...] --out out/sandbox/syn1/<r>_w<w>[_<K><V>...]
-  2. design <the last .snaxdfg of that folder> --platform platforms/snax_forge.json
-            --out out/design/syn1/<r>_w<w>[_<K><V>...]
-  3. bundle out/design/syn1/<...>/design_point.json --out <DIR>/<point>/
-
-DIR is rtl/forge/ in this repo (git ignores rtl/: a bundle is rebuilt from its
-commit). A point's folder is emptied first. bundle.json names the commit and
-whether snax-forge's work tree was dirty; a dirty bundle is refused (its folder
-emptied but for the log) unless --allow-dirty. A bundle that is kept gets
-point.json: point, recipe, W, snax_forge_commit, dirty, date. Each point's
-task output is in forge-rtl.log. When the point is done, its folder is packed
-into <DIR>/<point>.zip, test-read and deleted: syn/syn.py and
-sim/pwr.py read the zip, a failed or refused point's zip holds the log only.
-
-The tasks run inside this repo's `pixi run`, whose PIXI_* and CONDA_*
-variables and .pixi/ PATH entries would make the inner pixi take this repo's
-environment; they are removed, and before any point the driver checks that
-the inner CONDA_PREFIX is under $SNAX_FORGE/.pixi/envs/.
-
-The first point runs alone when hw/chisel's Emit classpath
-(hw/chisel/target/emit-classpath.txt) is not there yet: the first Emit exports
-it through sbt, and parallel first calls would race. A point's own `sets`
-(points.json, e.g. ["M=16", "N=128"]) and then the global --set values (e.g.
---set N=2048) go to the sandbox step after W, and tag the sandbox and design
-folder names in that order; point.json records them as `sets`.
-
-A recipe is found by its name in any folder under $SNAX_FORGE/recipes/ but
-recipes/custom/ (the editor's), as snax-forge keeps them by category
-(recipes/reduce/rowsum_2.json); a name found in no folder or in several is
-refused (find_recipe, also used by forge/query.py).
-
-A point's `dtypes` (points.json, e.g. {"A": "int64", "B": "int64"}) are the
-recipe's `dtypes` field (snax-forge's recipe.py, D113): the driver writes the
-recipe it found with that field set into tmp/forge_recipes/<work name>.json,
-gives the sandbox that file, and deletes it when the point ends. snax-forge's
-relu, matadd and axpy kernels are int32, the HLS points int64; the dtypes make
-forge's points int64 too. The work name ends _<dtype> then, and point.json
-records `dtypes` and `recipe_file` (the recipe in snax-forge it was made from).
+A point is one snax-forge recipe at one W, named as hls-exercises names its points (done/dot/forge3_w4); patterns
+are shell globs over those names. Per point, in the snax-forge checkout (SNAX_FORGE, default ../snax-forge):
+sandbox, design and bundle, packed into <DIR>/<point>.zip (DIR rtl/forge/) with point.json (recipe, W, sets,
+dtypes, commit, dirty, date). A dirty bundle is refused unless --allow-dirty. find_recipe finds a recipe by name
+under recipes/ (also used by forge/query.py). The steps, the environment and the dtypes are in forge/README.md.
 Standard library and arc/arc.py only.
 """
 

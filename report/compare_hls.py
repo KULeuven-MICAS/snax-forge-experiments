@@ -3,21 +3,12 @@
 
   pixi run compare-hls
 
-Reads only results/compare_done.csv and results/compare_untiered.csv (report/compare.py). Writes, for the
-HLS cases Vitis opt, Vitis dace, Bambu and XLS, and forge's cases of the kernel (forge, forge2 to forge6,
-forge_baked):
-
-  results/compare/README.md                  the setup, the summary across kernels, the index, the nangate15 check
-  results/compare/<tier>/<kernel>.md         one kernel: its figure and table, the insights, the parts at n2048
-  results/compare/<tier>/<kernel>.png        area, energy, latency and power against W, one line per case
-  results/compare/<tier>/<kernel>_ctrl_dp.png  the same with forge's ctrl + datapath only (no csr, peripherals
-                                               or glue) against the HLS totals
-
-Only the parts between <!-- gen:NAME --> and <!-- /gen --> are generated. Everything outside the markers is
-hand-written (the summary and the insights) and is kept as it is; a missing page is created from a template
-with every marker in place. Main view: nangate45, int64, a 10 ns clock; tier done at n2048
- and untiered at n2048 too; the nangate15 check compares untiered at each kernel's larger cosim
-size, the only one both technologies have. Power is P = E_run / (cycles x T_clk), T_clk = 10 ns.
+Reads only results/compare_done.csv and compare_untiered.csv (report/compare.py). Writes the README's generated
+parts (the index, the setup, the parts' basis) and per kernel <tier>/<kernel>.md, <kernel>.png (area, energy,
+latency and power against W, one line per case) and <kernel>_ctrl_dp.png (forge's ctrl + datapath against the HLS
+totals). Only the parts between <!-- gen:NAME --> and <!-- /gen --> are generated; the text outside is
+hand-written and kept, and a missing page is made from a template. Main view: nangate45, int64, 10 ns, n2048;
+power is E_run / (cycles x 10 ns).
 """
 from __future__ import annotations
 

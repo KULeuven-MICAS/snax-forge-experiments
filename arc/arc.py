@@ -4,21 +4,15 @@
   pixi run arc check                 unpacked run folders, report folders not zipped, tmp/ leftovers, inodes
   pixi run arc ls ZIP                a zip's members and sizes
   pixi run arc cat ZIP MEMBER        one member on stdout
-  pixi run arc-test                  arc/test_arc.py
 
 The helpers every script imports (none of them calls zipfile itself):
 
-  write(zip_path, {name: bytes})     a deterministic zip: entries sorted, deflated, timestamps 1980-01-01,
-                                     permissions 0644; written to a temporary name next to it, test-read
-                                     (every member read back and compared), then renamed into place
-  pack(src_dir, zip_path, keep=None) a folder's regular files (or those whose relative path matches one of
-                                     the fnmatch patterns in keep) through write(); symlinks are not packed
+  write(zip_path, {name: bytes})     a deterministic zip (entries sorted, fixed timestamps), test-read, renamed into place
+  pack(src_dir, zip_path, keep=None) a folder's regular files (or those matching keep's patterns) through write()
+  pack_bundle(folder)                a bundle folder to <folder>.zip, then the folder goes
   names(), read(), read_text(), read_all(), has()       reading in place
-  unpacked(zip_path, members=None)   a context manager: the members (fnmatch patterns, default all) in a
-                                     new folder under tmp/, deleted on exit, also on an exception
-  workdir(prefix)                    a context manager: an empty folder under tmp/, deleted on exit
-
-tmp/ is git-ignored and on the repo's filesystem. Standard library only.
+  unpacked(zip_path, members=None)   the members in a new folder under tmp/, deleted on exit, also on an exception
+  workdir(prefix)                    an empty folder under tmp/, deleted on exit
 """
 from __future__ import annotations
 

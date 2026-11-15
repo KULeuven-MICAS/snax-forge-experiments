@@ -4,50 +4,11 @@
   pixi run compare            # writes results/compare_done.csv and results/compare_untiered.csv
   pixi run compare --check    # checks only, writes nothing
 
-Reads only committed CSVs in this repo (no tool, no licence, no checkout next to the repo):
-
-  results/<source>/<tech>/synth_dc.csv          area, timing, path-class slacks, the forge and bambu splits
-  results/<source>/<tech>/power_pt.csv          one row per point, size and seed: window cycles and energy
-  results/<source>/<tech>/power_pt_modules.csv  energy per hierarchical cell, per point and size
-  results/hls/hls_cycles.csv, results/bambu/bambu_cycles.csv, results/xls/xls_cycles.csv   provenance
-
-for the sources forge, hls (Vitis opt and dace), bambu and xls, on nangate45 and nangate15, W <= MAX_W.
-Forge's W = 32 rows are left out like every other W > MAX_W; its untiered points are nangate45 only
-(snax-forge D159), every other point is on both technologies.
-
-One row per tech, tier, kernel, W, tool, case and size. The data is laid out, not compared: no ratios, no
-ranking (the comparison is brainstormed on top of these tables). Parked points (a RAM macro) are rows
-with their status and no numbers.
-
-Columns:
-  key        tech, tier, kernel, W, tool (forge, vitis, bambu, xls), case (forge, forge2..6, forge_baked, opt,
-             dace, bambu, xls), point, size, status (ok, or the synthesis or power status that is not)
-  task       beats (per input stream), elements (beats * W), cycles (the power window), window (how the
-             window is defined for the tool)
-  area       area_um2, comb_area_um2, seq_area_um2, buf_inv_area_um2, cells, seq_cells, and the split where
-             the RTL declares it as hierarchy: csr_um2 (forge), ctrl_um2, datapath_um2, glue_um2
-             (forge, bambu); empty for vitis and xls; forge's csr_um2 is the csr cell without its child
-             <tag>_peripherals (BUSY_COUNTER, snax-forge D168), whose area is peripherals_um2 (for the
-             record, in no figure: forge's total without csr is area_um2 - csr_um2 - peripherals_um2; empty
-             where the bundle has none: every point before the leaner control unit); ram_kind and ram_um2 for a Vitis point with a RAM (
-             an SRAM macro or flops, inside area_um2)
-  timing     crit_path_ns, slack_ns, fmax_mhz, slack_in2reg_ns, slack_reg2reg_ns, slack_reg2out_ns,
-             slack_in2out_ns (empty on forge rows, synthesized before these columns)
-  energy     e_clk_pj, e_reg_pj, e_seq_pj, e_comb_pj, e_flop_pj, e_dyn_pj (per cycle of the window),
-             p_dyn_uw, e_run_pj (the task), pj_per_elem (e_run_pj / elements), flop_bits, e_bit_pj,
-             leak_dc_uw (DC's leakage estimate); ram_reads, ram_writes, e_ram_pj (the RAM's share of
-             e_run_pj: counted accesses x CACTI's energies for a macro, PT's for flops)
-  parts      e_dyn_csr_pj, e_dyn_ctrl_pj, e_dyn_datapath_pj, e_dyn_glue_pj (per cycle, forge and bambu
-             only; forge's csr without its _peripherals child, whose energy is e_dyn_peripherals_pj, for the record), parts_size (the run they come from: the row's own run where power_pt_modules.csv has it
-             (every n2048 run), else the point's default run: tier done b64 (rowsum m8_n64), forge
-             n2048, untiered on nangate45 n2048, on nangate15 the default run)
-  provenance rtl_commit (the tool repo commit the RTL was measured at; forge: snax_forge_commit),
-             tool_version, dc_version, syn_date
-
-Checks (any failure: exit 1, nothing written): every listed point has a synthesis row on both technologies
-(an untiered forge point on nangate45 only); every ok point has the same sizes as the other points of its
-kernel, n2048 among them, each with an ok power row; no duplicate key; the split columns (csr, ctrl, datapath, glue and, for forge's leaner control unit, peripherals) sum to the area where they exist; a point with parts has an ok
-run at its default size. A glue energy within 1e-5 of the total (PT's rounding) is written as 0.
+Reads only committed CSVs (no tool, no licence, no sibling checkout): each source's synth_dc.csv, power_pt.csv and
+power_pt_modules.csv, and the cycle CSVs' provenance, for forge, hls (Vitis opt and dace), bambu and xls, W <=
+MAX_W. One row per tech, tier, kernel, W, tool, case and size, laid out and not compared. The columns and the checks
+(any failure: exit 1, nothing written) are in results/compare/README.md, "The tier CSVs". A glue energy within
+1e-5 of the total (PT's rounding) is written as 0.
 """
 from __future__ import annotations
 

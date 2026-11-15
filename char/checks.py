@@ -1,38 +1,15 @@
 #!/usr/bin/env python3
-"""char/checks.py - the checks on the blocks alone, as Markdown tables for the run note.
+"""char/checks.py - the checks on the blocks alone, as Markdown tables for a run note.
 
-  pixi run python char/checks.py [--tech T ...]            R0: synthesis
-  pixi run python char/checks.py --power [--tech T ...]    R1: power (results/char/<tech>/char_power.csv)
+  pixi run python char/checks.py [--tech T ...]            synthesis
+  pixi run python char/checks.py --power [--tech T ...]    power (results/char/<tech>/char_power.csv)
 
-Read from the committed CSVs (results/char/<tech>/char_synth.csv and
-char_synth_modules.csv; the forge accelerators' results/forge/<tech>/synth_dc_modules.csv), and
-rtl/char/ and rtl/forge/'s bundle zips (local) for the RTL table. None is a gate.
-
-  rtl      each block's top .sv against the file of the same name in the forge
-           bundles (rtl/sv/ in rtl/forge/<point>.zip): identical or not, per bundle
-  inside   each point against every hierarchical cell of the forge rows
-           whose design is the block's top (DC may add _<n>): area, comb and
-           seq alone (the char row) and inside (the cell's subtree: area is the
-           cell's own total, comb and seq summed over the cell and every cell
-           below it, as area_hierarchy.rpt gives each level's own), and the
-           difference in um2 and % of inside
-  lanes    area(W) / (W * area(1)) for ElementwiseLanes add and mul, Mac and
-           LinkBuffer at depth 1, at W = 8 and 32
-  flops    seq_area_um2 / seq_cells per point with flops, per technology
-
-With --power, from char_power.csv (and results/forge/<tech>/power_pt_modules.csv):
-
-  hold     idle e_bit_pj of every registered block (Mac, TreeAccumulate, SerialAccumulate), its mean (e_hold) and
-           spread
-  depth    LinkBuffer at W = 1: least-squares lines E_stream(D) = m D + c over D = 1 .. 16 for e_dyn and e_flop,
-           and m against 64 e_hold (one more slot of 64 holding flops per depth) as a ratio; d1 at W = 8 and 32
-           against W x its W = 1 value
-  lanes    busy(W) / (W busy(1)) for ElementwiseLanes add and mul and Mac, idle(W) / (W idle(1)) for Mac
-  cross    TreeAccumulate and SerialAccumulate busy and idle against W
-  syn2     busy (link: stream) against every hierarchical cell of the forge rows whose design is the block's
-           top (e_dyn_pj per cycle of the forge point's run): a check of size, the stimulus differs
-
-Standard library and arc/arc.py only.
+Read from the committed CSVs (char_synth.csv, char_synth_modules.csv, char_power.csv, and the forge points'
+synth_dc_modules.csv and power_pt_modules.csv) and the local bundle zips; none is a gate. Synthesis: each block's
+RTL against the same file in the forge bundles, each point alone against the same cell inside the forge points,
+the lane copies and the flop area. Power: the registered blocks' idle e_bit and its mean e_hold, LinkBuffer's
+depth sweep against 64 e_hold, the lane copies, the folds against W, and busy alone against inside the forge
+points. Standard library and arc/arc.py only.
 """
 
 from __future__ import annotations

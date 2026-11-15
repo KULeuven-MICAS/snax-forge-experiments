@@ -1,20 +1,9 @@
-"""strm/xbar_mix.py - the TCDM sparse interconnect as the cluster drives it: read-only and write-only inputs.
+"""strm/xbar_mix.py - the TCDM sparse interconnect as the cluster drives it: read-only and write-only inputs (X70).
 
-The xbar points (strm/gen.py) synthesize SparseInterconnect alone, every input a full read-write port. In the
-cluster most inputs are streamer channels that only read or only write (snax_cluster's DataRequestor ties a reader's
-write and data to 0; a writer drives write 1 and never reads its response data; no streamer drives amo), and
-sparse_interconnect_wrapper.sv.tpl ties every response ready to 1 and every bank response valid to 1. DC drops what
-those constants make dead. This module writes the wrapper that puts the same constants on a point's
-SparseInterconnect, so a point can be synthesized with R read-only inputs, W write-only inputs and the rest read-write:
-
-    inputs 0 .. R-1        read-only:  bits_write = 0, bits_data = 0, bits_amo = 0 (not ports of the wrapper)
-    inputs R .. R+W-1      write-only: bits_write = 1, bits_amo = 0; the response data not connected
-    inputs R+W .. N-1      read-write: every field a port (the cores and the AXI port in the cluster)
-    every input            tcdmRsps ready = 1 (the template's 1'b1)
-    every bank             memRsps valid = 1, memRsps ready and memReqs priority not connected (the template's)
-
-The order follows the cluster's: snax_cluster.sv connects {axi, cores, snax ports} to inputs N-1 .. 0, and a forge
-accelerator's channels come in its streamer's order (the readers', then the writer's).
+The xbar points (strm/gen.py) synthesize SparseInterconnect alone, every input a full read-write port. In the cluster
+most inputs are streamer channels that only read or only write, and the template ties every response ready and every
+bank response valid to 1; DC drops what those constants make dead. This module writes the wrapper that puts the same
+constants on a point's SparseInterconnect (the ties in wrapper()'s docstring).
 
     wrapper(sv_text, ro, wo, top="xbar_mix") -> str   the wrapper module for the SparseInterconnect in sv_text
     ports(sv_text, module="SparseInterconnect")      [(direction, msb, name)] of the module, as emitted
@@ -83,7 +72,19 @@ def tie(name: str, ro: int, wo: int) -> str | None:
 
 
 def wrapper(sv_text: str, ro: int, wo: int, top: str = "xbar_mix", module: str = "SparseInterconnect") -> str:
-    """The wrapper module `top` around `module` with ro read-only and wo write-only inputs (the module doc)."""
+    """The ties, input by input:
+
+        inputs 0 .. R-1        read-only:  bits_write = 0, bits_data = 0, bits_amo = 0 (not ports of the wrapper)
+        inputs R .. R+W-1      write-only: bits_write = 1, bits_amo = 0; the response data not connected
+        inputs R+W .. N-1      read-write: every field a port (the cores and the AXI port in the cluster)
+        every input            tcdmRsps ready = 1 (the template's 1'b1)
+        every bank             memRsps valid = 1, memRsps ready and memReqs priority not connected (the template's)
+
+    The order follows the cluster's: snax_cluster.sv connects {axi, cores, snax ports} to inputs N-1 .. 0, and a forge
+    accelerator's channels come in its streamer's order (the readers', then the writer's).
+
+    The wrapper module `top` around `module` with ro read-only and wo write-only inputs.
+    """
     ps = ports(sv_text, module)
     n = n_inputs(ps)
     if ro < 0 or wo < 0 or ro + wo > n:

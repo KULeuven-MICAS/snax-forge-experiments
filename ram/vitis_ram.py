@@ -1,25 +1,12 @@
-"""ram/vitis_ram.py - a Vitis RAM swapped for an SRAM macro, shared by syn/syn.py and sim/pwr.py.
+"""ram/vitis_ram.py - a Vitis RAM swapped for an SRAM macro, shared by syn/syn.py and sim/pwr.py (X62).
 
-Vitis writes each memory it builds as its own module, <top>_<array>_RAM_AUTO_1R1W (hls-exercises names the file
-on a '# ram:' line of the point's filelist.f): one port, address0, ce0, we0, d0, q0, plus reset and clk, read
-first, sized by the parameters DataWidth, AddressRange and AddressWidth that its parent passes when it
-instantiates it (the module's own defaults are not the instance's). Here:
+Vitis writes each memory it builds as its own module, <top>_<array>_RAM_AUTO_1R1W, one port, sized by the parameters
+its parent passes. Here:
 
-  instances(files, ram_files)   every instance of every RAM module: its parameters from the parent's
-                                instantiation, the parent's file and the instance name
-  macro(depth, width)           ram.py's make_macro (pixi run ram lib <depth> <width>, no byte mask): the
-                                macro's zip in ram/runs/lib/, or its CACTI status when CACTI has no such array
-  wrapper(module, inst, cell)   a module with Vitis's name and ports around the macro cell, plain wiring:
-                                ce0 -> req_i, we0 -> we_i, address0 -> addr_i, d0 -> wdata_i, q0 <- rdata_o;
-                                reset is not used (the macro has none)
-  plan(rtl_dir, files, rams)    the swap of one point: the macros (made when missing), the wrappers' text, the
-                                point's files with each RAM file replaced by its wrapper; or why it cannot be
-                                swapped (a RAM module instantiated with different sizes, a size CACTI refuses)
-
-Behaviour the swap changes, and why it is safe for DaCe's buffers: Vitis's RAM reads first (on
-a write, q0 takes the old word at the written address); the macro, as tc_sram, keeps the last read word on a
-write. The two differ only in q0 after a write cycle; the swap is used only where the point's RTL never reads q0
-after a write (dot's and axpy's __tmp0: one loop only writes it, the next only reads it).
+  instances(files, ram_files)   every instance of every RAM module, with its parameters from the parent
+  macro(depth, width)           ram.py's make_macro: the macro's zip in ram/runs/lib/, or CACTI's status
+  wrapper(module, inst, cell)   a module with Vitis's name and ports around the macro cell, plain wiring
+  plan(rtl_dir, files, rams)    the swap of one point, or why it cannot be swapped (when it is safe: plan())
 """
 from __future__ import annotations
 
@@ -121,8 +108,14 @@ def arc_read(z: Path, member: str) -> bytes:
 
 
 def plan(rtl_dir: Path, files: list[str], ram_files: list[str], make: bool = True) -> dict:
-    """{ok, why, macros: [{cell, zip, depth, width, area_um2, e_rd_pj, e_wr_pj, instances}], wrappers: {file: text},
-    files: the point's files with each RAM file replaced by its wrapper's name}."""
+    """Behaviour the swap changes, and why it is safe for DaCe's buffers: Vitis's RAM reads first (on
+    a write, q0 takes the old word at the written address); the macro, as tc_sram, keeps the last read word on a
+    write. The two differ only in q0 after a write cycle; the swap is used only where the point's RTL never reads q0
+    after a write (dot's and axpy's __tmp0: one loop only writes it, the next only reads it).
+
+    {ok, why, macros: [{cell, zip, depth, width, area_um2, e_rd_pj, e_wr_pj, instances}], wrappers: {file: text},
+    files: the point's files with each RAM file replaced by its wrapper's name}.
+    """
     try:
         insts = instances(rtl_dir, files, ram_files)
     except ValueError as e:

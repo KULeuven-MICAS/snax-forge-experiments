@@ -1,48 +1,15 @@
 #!/usr/bin/env python3
 """forge/query.py - what sim/sources/forge.py needs from snax-forge, answered by snax-forge's own code.
 
-Runs inside snax-forge's pixi environment, with snax-forge as the working directory (sim/sources/forge.py
-calls it as forge/bundles.py calls snax-forge's tasks: `pixi run --manifest-path $SNAX_FORGE/pixi.toml`,
-PIXI_* and CONDA_* removed). It prints one JSON object on stdout.
+  python forge/query.py point BUNDLE_DIR            kernel, ports' containers, baked scalars
+  python forge/query.py program BUNDLE_DIR          LOWER's writes, scalars and stream orders for the design point
+  python forge/query.py cycles BUNDLE_DIR JOBS BEATS_JSON    the group's busy cycles
+  python forge/query.py ctrl_bits ACCELERATOR_JSON  the control units' registers and bits
+  python forge/query.py ref KERNEL IN_NPZ OUT_NPZ [SYMBOLS_JSON [DTYPES_JSON]]   the kernel's NumPy body
 
-  python forge/query.py point BUNDLE_DIR
-      kernel: the recipe's kernel (point.json's recipe, found under recipes/**/ by forge/bundles.py's find_recipe)
-      ports:  per outer port of accelerator.json (inputs, then outputs, in its order) the container
-              the design point's graph binds it to, as snax-forge's gen/rtl.py `vectors` finds it
-      baked:  {container: value} of the recipe's bake_scalar steps with a number (axpy_baked's alpha = 3)
-
-  python forge/query.py program BUNDLE_DIR
-      what snax-forge's LOWER writes for the design point's own size (lower/derive.py's task_list, the C
-      backend's job_writes and scalar slots, lower/c.py), for its one accelerator task:
-      symbols   the graph's bound symbols (the size the design point was made at: the point's sets)
-      n         the task's firings; writes [[unit, CSR, value], ...] JOBS then each JOB_BEATS, as job_writes
-      scalars   [{unit, slot, container, dtype, csrs}] each slot read from a scalar container (axpy's k1 from
-                alpha): its R/W CSRs (K1, or K1_LO and K1_HI at 64 bits, low word first, gen/accelerator.py's
-                scalar_csrs), written with the container's value before START
-      streams   per streamer task {end, component, dir, container, shape, beats, lanes, order, identity}:
-                order the container's flat (row-major) element index of each element the streamer visits,
-                beat by beat and lane 0 first (lower/derive.py's addresses over the task's bounds and strides,
-                mapped back through the container's L1 layout); identity when it is 0, 1, 2, ...
-
-  python forge/query.py cycles BUNDLE_DIR JOBS BEATS_JSON
-      the group's busy cycles E - s of one run: gen/rtl.py's `group_counter` (snax-gvsoc's group rule,
-      estimate/cycles.py's `group_cycles`, every input valid and the output ready), with JOBS and each
-      unit's T its JOB_BEATS (BEATS_JSON: {unit: value}) or its fixed T, as the program writes them
-
-  python forge/query.py ctrl_bits ACCELERATOR_JSON
-      per control unit <tag>_<group>_ctrl of the accelerator.json (a file, or a bundle folder holding one), the
-      registers firtool keeps and their bits, from snax-forge's estimate/bits.py (`accelerator_registers`, as
-      hw/chisel's CtrlRegistersSpec reads them): {module: {"registers": [[name, bits], ...], "bits": n}}
-
-  python forge/query.py ref KERNEL IN_NPZ OUT_NPZ [SYMBOLS_JSON [DTYPES_JSON]]
-      the kernel's NumPy body (kernels/<...>/<KERNEL>.py, SPEC.func) on the arrays in IN_NPZ (a scalar
-      container, axpy's alpha, as a 0-d array cast to its descriptor's dtype); the kernel's inout arrays
-      not given (its outputs, zero-filled at the size the SPEC's descriptors give for SYMBOLS_JSON, else
-      every symbol = N, the length of the first input) written to OUT_NPZ; an inout array given (axpy's y)
-      is updated in place and written too. DTYPES_JSON ({container: dtype}, the point's) replaces the
-      descriptors' dtypes, as the recipe's dtypes do in the bundle (relu, matadd and axpy are int32 kernels).
-
-snax-forge is not changed: only its modules are imported.
+Runs inside snax-forge's pixi environment, with snax-forge as the working directory (sim/sources/forge.py calls it
+as forge/bundles.py calls snax-forge's tasks), and prints one JSON object on stdout. What each answer holds is in
+forge/README.md. snax-forge is not changed: only its modules are imported.
 """
 from __future__ import annotations
 

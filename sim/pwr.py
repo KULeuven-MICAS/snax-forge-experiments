@@ -1,85 +1,18 @@
 #!/usr/bin/env python3
 """sim/pwr.py - dynamic energy of mapped netlists from simulated activity (docs/power.md).
 
-  pixi run pwr tbjson      POINT [--source hls|forge|char|bambu|xls|streamer|xbar] [--tech T]
-  pixi run pwr run         PATTERN ... --tech T [--source hls|forge|char|bambu|xls|streamer|xbar] [--stim rand64|forge]
-                                       [--size TAG|all] [--seed N] [-j N] [--clk-gate]
+  pixi run pwr tbjson      POINT [--source S] [--tech T]
+  pixi run pwr run         PATTERN ... --tech T [--source S] [--stim rand64|forge] [--size TAG|all] [--seed N]
+                                       [-j N] [--cores C] [--clk-gate] [--initreg-seed N]
   pixi run pwr setup-check --tech T [--source hls|forge|bambu|xls] [--point P]
-  pixi run pwr summary     [PATTERN ...] [--source ...] [--tech T]
+  pixi run pwr summary     [PATTERN ...] [--source S] [--tech T]
+  pixi run pwr modules     --source S --tech T
 
---source hls (the default) takes hls-exercises' points, as below; --source forge takes snax-forge's bundles in
-rtl/forge/ (forge/bundles.py) and their netlists in syn/runs/forge/<tech>/: tb.json from sim/sources/forge.py
-(control forge_csr: the wrapper driven through its CSRs by sim/tb/csr_seq.sv: JOBS, the JOB_BEATS and a scalar's
-CSRs as snax-forge's LOWER writes them, then START), the size n2048 (the point's sets), the window from the
-edge accepting START to the run's end, with BUSY_COUNTER read back and the group's cycles from snax-forge's model
-beside it; the stimulus rand64, fed and collected in the order the bundle's streamers visit each container;
-the reference sim/ref.py, checked once per kernel, size, seed and scalar against snax-forge's kernel body; runs
-in sim/runs/forge/<tech>/, results in results/forge/<tech>/ with the columns recipe, snax_forge_commit, counter
-and counter_diff added (docs/power.md, Forge).
-
-Every source: the window is the measurement; expected_cycles (cosim's line, the bambu or xls line, or
-snax-forge's model) and expected_diff = expected - window are columns beside it, and a run fails only when the
-expected count (or forge's BUSY_COUNTER) is more than 5 % of the window away.
-
---source char takes snax-forge's catalogue blocks alone in rtl/char/ (char/blocks.py) and their netlists
-in syn/runs/char/<tech>/: tb.json from sim/sources/char.py (control char_<kind>: the block's data and pins driven
-by the kind's sequencer sim/tb/char_<kind>_seq.sv through fixed windows, every output compared at every falling
-edge against sim/ref.py's char_ref), the stimulus rand64 (one stream per data input port), one vcd2saif and one
-PT run per window, the windows' energies per cycle in results/char/<tech>/char_power.csv, one row per point and
-window (docs/power.md, Char). --size does not apply.
-
---source streamer and --source xbar take snax_cluster's streamer reader alone and its TCDM sparse
-interconnect, rtl/streamer/ and rtl/xbar/ (strm/gen.py), and their netlists in syn/runs/<source>/<tech>/: tb.json
-and a TB generated whole per point by sim/sources/strm.py (the reader streams 1,024 beats from a TCDM model that
-grants at once and answers the next cycle; the interconnect gets every input on its own bank every cycle for 1,024
-cycles, only where inputs <= banks), one busy window cut out of the VCD (vcd_windows) and one PT run, vsim
--sv_seed <seed>; results/<source>/<tech>/power_pt.csv with e_beat_pj or e_access_pj, the energy over the window
-per beat or grant (docs/power.md, Streamer and interconnect). --size does not apply.
-
---source bambu and --source xls take Bambu's points (hls-exercises' rtl/, <case>_w<W> with
-case bambu) and Google XLS's (dslx-exercises' rtl/, case xls), as syn/syn.py lists them (its case filters and
-MAX_W), and their netlists in syn/runs/<source>/<tech>/: tb.json from sim/sources/bambu.py (control bambu_ctl:
-start_port pulsed by sim/tb/bambu_seq.sv, the run-time pins plain inputs held from time 0) or sim/sources/xls.py
-(control xls_cfg: one cfg beat on _cfg_TDATA by sim/tb/xls_seq.sv); the streams through axis_src and axis_sink as
-for hls; sizes b64, the point's sizes.txt (--size all) and n2048; the expected cycles from the
-line through results/<source>/<source>_cycles.csv (bambu: cycles_done; xls: cycles, plus 1 for the window); runs
-in sim/runs/<source>/<tech>/, results in results/<source>/<tech>/ with the hls columns (docs/power.md, Bambu, XLS).
-
-A point is an hls-exercises rtl/ folder, <tier>/<kernel>/<point>, whose mapped netlist is already in
-syn/runs/hls/<tech>/<point>.zip (syn/syn.py). Per point, one worker runs, start to end:
-  inputs     the DC zip's netlist, tech.json and lib_info.txt (and a forge or char bundle) unpacked into tmp/
-  tb.json    sim/sources/hls.py, written into the point's folder
-  compile    the fixed TB (sim/tb/) and a generated top (tb.sv), vlog; vopt +initreg+0 +acc=n
-  per run (size, stimulus):
-    stimulus rand64 (seed 0, 64 beats; rowsum at m8_n64) or forge (data.h at a cosim size, validation)
-             with the reference of sim/ref.py; every input stream bit must toggle
-    vsim     functional, zero delay: no SDF, +nospecify +notimingchecks; the TB dumps the DUT scopes
-             to a VCD between $dumpon and $dumpoff around the busy window and checks every output beat
-    cycles   against cosim's line cycles = a x loop_count + b (results/hls/hls_cycles.csv)
-    vcd2saif the busy window, in the VCD's time unit; the VCD is deleted at once
-    saif     T0 + T1 + TX = DURATION on every net, DURATION = cycles x clock, clock TC = 2 x cycles
-    pt       sim/scripts/pt_power.tcl: read_saif, >= 99% of nets annotated, report_power
-  cleanup    the compiled design library and vsim.wlf are deleted; the point's folder is packed into
-             sim/runs/.../<point>.zip (tb.json, per run tag the SAIF and PT's reports, merged with the zip's
-             other runs), test-read and deleted with the rest, and tmp/ is cleaned
-Results: results/hls/<tech>/power_pt.csv (one row per point, size and seed), power_pt_modules.csv
-(per point and size: the default run and every n2048 run) and power_reports/<point>.zip.
---clk-gate measures the clock-gated netlists instead (syn.py run --clk-gate, syn/runs/<source>/<tech>/<point>_cg.zip):
-the point's folder in sim/runs/ and its power_reports zip are tagged _cg, and its rows have clk_gate 1; every CSV merges
-gated and ungated rows apart (an empty clk_gate, a row from before the switch, reads as 0).
-  pixi run pwr modules --source S --tech T   a one-off: fills power_pt_modules.csv's size column on old
-                                              rows and adds the n2048 runs' rows from sim/runs/ (their kept
-                                              power_hierarchy.rpt and units.rpt), checked against power_pt.csv
-
-Parallel workers J = min(free msimhdlsim, free PrimePower, free PrimeTime, nproc) from lmutil lmstat;
-PT threads per run = max(1, nproc // J); --cores C puts C in place of nproc, a budget for the whole run. A tool that fails on a licence error is retried once.
-setup-check: a diagnostic: PT against DC with the same forced activity, per power group, printed and kept in
-check.json; it fails only on the wire-load check (PITFALLS PT1), never on the groups' differences.
-
-Environment, all optional:
-  PT_SHELL   pt_shell (else PATH)          LMUTIL    lmutil (else PATH)
-  SIM_HLS    ../hls-exercises              vcd2saif  from PATH, else next to pt_shell
-  vlib, vlog, vopt, vsim from PATH; dc_shell (setup-check) from DC_SHELL or PATH.
+The sources are hls (the default), forge, char, bambu, xls, streamer and xbar. Per point one worker unpacks the DC
+run, writes tb.json (sim/sources/), compiles the testbench and the netlist, simulates each run at zero delay, cuts
+the window into a SAIF, checks it and runs PrimePower, then packs the point into sim/runs/.../<point>.zip and
+writes its rows into results/<source>/<tech>/. Workers and PT threads come from the free licences. The stages, each
+source's testbench and window, the checks and the columns are in docs/power.md; the commands in docs/TOOL.md.
 """
 from __future__ import annotations
 
