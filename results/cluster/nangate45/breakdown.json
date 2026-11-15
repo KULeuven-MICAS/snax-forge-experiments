@@ -101,7 +101,7 @@
    "ok": true
   },
   "hwcost": {
-   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
    "snax_forge_clean": true,
    "platform": "platforms/snax_forge.json",
    "parts": [
@@ -110,10 +110,10 @@
      "groups": [
       "acc_datapath"
      ],
-     "hwcost_um2": 58012.206284,
+     "hwcost_um2": 57848.966478999995,
      "cluster_um2": 57881.6003,
-     "diff_pct": 0.22564335354079978,
-     "hwcost_share_pct": 9.102743551696705,
+     "diff_pct": -0.05638030191090464,
+     "hwcost_share_pct": 9.289320445955818,
      "cluster_share_pct": 9.34096812747663
     },
     {
@@ -121,10 +121,10 @@
      "groups": [
       "acc_control"
      ],
-     "hwcost_um2": 712.88,
+     "hwcost_um2": 709.714652,
      "cluster_um2": 704.6339999999999,
-     "diff_pct": 1.1702529256323277,
-     "hwcost_share_pct": 0.11185859388566788,
+     "diff_pct": 0.7210341822847182,
+     "hwcost_share_pct": 0.11396516184971581,
      "cluster_share_pct": 0.11371426673454235
     },
     {
@@ -132,10 +132,10 @@
      "groups": [
       "streamers"
      ],
-     "hwcost_um2": 82519.317048,
+     "hwcost_um2": 68034.552554,
      "cluster_um2": 70681.78469999983,
-     "diff_pct": 16.74764212341712,
-     "hwcost_share_pct": 12.948174690543853,
+     "diff_pct": -3.7452819806909052,
+     "hwcost_share_pct": 10.924910133022875,
      "cluster_share_pct": 11.406669730170949
     },
     {
@@ -143,10 +143,10 @@
      "groups": [
       "tcdm_interconnect"
      ],
-     "hwcost_um2": 63333.82855765514,
+     "hwcost_um2": 63427.38872162847,
      "cluster_um2": 57658.69310000011,
-     "diff_pct": 9.842636300847788,
-     "hwcost_share_pct": 9.937763730018041,
+     "diff_pct": 10.004901796201738,
+     "hwcost_share_pct": 10.185097068230213,
      "cluster_share_pct": 9.304995226938425
     },
     {
@@ -157,13 +157,13 @@
      "hwcost_um2": 432726.4,
      "cluster_um2": 432726.40640000015,
      "diff_pct": -1.4789945875049569e-06,
-     "hwcost_share_pct": 67.89945943385574,
+     "hwcost_share_pct": 69.48670719094137,
      "cluster_share_pct": 69.83365264867946
     }
    ],
-   "hwcost_um2": 637304.6318896551,
+   "hwcost_um2": 622747.0224066285,
    "cluster_um2": 619653.1185000001,
-   "diff_pct": 2.8486120480413653,
+   "diff_pct": 0.4992961084611039,
    "not_costed_um2": 390554.9157999994
   },
   "alone": {
@@ -306,7 +306,7 @@
    "ok": true
   },
   "hwcost": {
-   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
    "snax_forge_clean": true,
    "platform": "platforms/snax_forge.json",
    "parts": [
@@ -315,10 +315,10 @@
      "groups": [
       "acc_datapath"
      ],
-     "hwcost_um2": 14932.176069,
+     "hwcost_um2": 14771.330264,
      "cluster_um2": 14783.7481,
-     "diff_pct": 1.003994169787014,
-     "hwcost_share_pct": 2.990357455654309,
+     "diff_pct": -0.08399653400480041,
+     "hwcost_share_pct": 2.984847102205468,
      "cluster_share_pct": 2.9696764875208004
     },
     {
@@ -326,10 +326,10 @@
      "groups": [
       "acc_control"
      ],
-     "hwcost_um2": 712.88,
+     "hwcost_um2": 709.714652,
      "cluster_um2": 704.6339999999999,
-     "diff_pct": 1.1702529256323277,
-     "hwcost_share_pct": 0.1427632525317261,
+     "diff_pct": 0.7210341822847182,
+     "hwcost_share_pct": 0.14341225093164445,
      "cluster_share_pct": 0.141542929976447
     },
     {
@@ -337,10 +337,10 @@
      "groups": [
       "streamers"
      ],
-     "hwcost_um2": 25795.88174,
+     "hwcost_um2": 21372.833592000003,
      "cluster_um2": 25645.591699999957,
-     "diff_pct": 0.5860267985161901,
-     "hwcost_share_pct": 5.165952164636631,
+     "diff_pct": -16.660789729409757,
+     "hwcost_share_pct": 4.318814844217397,
      "cluster_share_pct": 5.151542772840432
     },
     {
@@ -348,10 +348,10 @@
      "groups": [
       "tcdm_interconnect"
      ],
-     "hwcost_um2": 25176.847307248772,
+     "hwcost_um2": 25297.005259253652,
      "cluster_um2": 23963.14239999998,
-     "diff_pct": 5.064882088455955,
-     "hwcost_share_pct": 5.041982676014847,
+     "diff_pct": 5.566310281800414,
+     "hwcost_share_pct": 5.111773380802647,
      "cluster_share_pct": 4.813581783931553
     },
     {
@@ -362,13 +362,13 @@
      "hwcost_um2": 432726.4,
      "cluster_um2": 432726.40640000015,
      "diff_pct": -1.4789945875049569e-06,
-     "hwcost_share_pct": 86.65894445116248,
+     "hwcost_share_pct": 87.44115242184284,
      "cluster_share_pct": 86.92365602573076
     }
    ],
-   "hwcost_um2": 499344.1851162488,
+   "hwcost_um2": 494877.2837672537,
    "cluster_um2": 497823.5226000001,
-   "diff_pct": 0.3054621662525481,
+   "diff_pct": -0.5918239494507966,
    "not_costed_um2": 390503.5777999991
   },
   "alone": {
@@ -511,7 +511,7 @@
    "ok": true
   },
   "hwcost": {
-   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
    "snax_forge_clean": true,
    "platform": "platforms/snax_forge.json",
    "parts": [
@@ -520,10 +520,10 @@
      "groups": [
       "acc_datapath"
      ],
-     "hwcost_um2": 29293.25014,
+     "hwcost_um2": 29130.542335,
      "cluster_um2": 29149.876199999995,
-     "diff_pct": 0.4918509396619838,
-     "hwcost_share_pct": 5.371825314982627,
+     "diff_pct": -0.06632571907800033,
+     "hwcost_share_pct": 5.419561614585365,
      "cluster_share_pct": 5.410892819026926
     },
     {
@@ -531,10 +531,10 @@
      "groups": [
       "acc_control"
      ],
-     "hwcost_um2": 712.88,
+     "hwcost_um2": 709.714652,
      "cluster_um2": 704.6339999999999,
-     "diff_pct": 1.1702529256323277,
-     "hwcost_share_pct": 0.13072864268194226,
+     "diff_pct": 0.7210341822847182,
+     "hwcost_share_pct": 0.13203812826603906,
      "cluster_share_pct": 0.13079640628601433
     },
     {
@@ -542,10 +542,10 @@
      "groups": [
       "streamers"
      ],
-     "hwcost_um2": 44740.40151,
+     "hwcost_um2": 36947.133246,
      "cluster_um2": 40654.10939999986,
-     "diff_pct": 10.051362999481066,
-     "hwcost_share_pct": 8.204539280730867,
+     "diff_pct": -9.118330738785973,
+     "hwcost_share_pct": 6.873791184739107,
      "cluster_share_pct": 7.546345209397299
     },
     {
@@ -553,10 +553,10 @@
      "groups": [
       "tcdm_interconnect"
      ],
-     "hwcost_um2": 37839.851665902264,
+     "hwcost_um2": 37993.565649855664,
      "cluster_um2": 35490.78459999999,
-     "diff_pct": 6.618808494592349,
-     "hwcost_share_pct": 6.939109594278749,
+     "diff_pct": 7.051918062853061,
+     "hwcost_share_pct": 7.068473618830991,
      "cluster_share_pct": 6.58791242254989
     },
     {
@@ -567,13 +567,13 @@
      "hwcost_um2": 432726.4,
      "cluster_um2": 432726.40640000015,
      "diff_pct": -1.4789945875049569e-06,
-     "hwcost_share_pct": 79.35379716732581,
+     "hwcost_share_pct": 80.5061354535785,
      "cluster_share_pct": 80.32405314273987
     }
    ],
-   "hwcost_um2": 545312.7833159023,
+   "hwcost_um2": 537507.3558828557,
    "cluster_um2": 538725.8106,
-   "diff_pct": 1.2226948451877973,
+   "diff_pct": -0.22617344355326377,
    "not_costed_um2": 390501.18379999895
   },
   "alone": {
@@ -716,7 +716,7 @@
    "ok": true
   },
   "hwcost": {
-   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
    "snax_forge_clean": true,
    "platform": "platforms/snax_forge.json",
    "parts": [
@@ -725,10 +725,10 @@
      "groups": [
       "acc_datapath"
      ],
-     "hwcost_um2": 115449.852566,
+     "hwcost_um2": 115285.814761,
      "cluster_um2": 115348.7726,
-     "diff_pct": 0.08762985831719616,
-     "hwcost_share_pct": 14.066294693170713,
+     "diff_pct": -0.05458041518856625,
+     "hwcost_share_pct": 14.541644292374114,
      "cluster_share_pct": 14.735729017774927
     },
     {
@@ -736,10 +736,10 @@
      "groups": [
       "acc_control"
      ],
-     "hwcost_um2": 712.88,
+     "hwcost_um2": 709.714652,
      "cluster_um2": 704.6339999999999,
-     "diff_pct": 1.1702529256323277,
-     "hwcost_share_pct": 0.08685658697688681,
+     "diff_pct": 0.7210341822847182,
+     "hwcost_share_pct": 0.0895202765393594,
      "cluster_share_pct": 0.09001652507146675
     },
     {
@@ -747,10 +747,10 @@
      "groups": [
       "streamers"
      ],
-     "hwcost_um2": 158089.916122,
+     "hwcost_um2": 130184.919166,
      "cluster_um2": 130745.9133999995,
-     "diff_pct": 20.913848862216604,
-     "hwcost_share_pct": 19.261517436061094,
+     "diff_pct": -0.4290720982484572,
+     "hwcost_share_pct": 16.42095162070075,
      "cluster_share_pct": 16.702703519221153
     },
     {
@@ -758,10 +758,10 @@
      "groups": [
       "tcdm_interconnect"
      ],
-     "hwcost_um2": 113776.20409404027,
+     "hwcost_um2": 113890.805132402,
      "cluster_um2": 103257.21200000012,
-     "diff_pct": 10.187174232478927,
-     "hwcost_share_pct": 13.862379035453419,
+     "diff_pct": 10.298160221875714,
+     "hwcost_share_pct": 14.365683929465952,
      "cluster_share_pct": 13.191040189385935
     },
     {
@@ -772,13 +772,13 @@
      "hwcost_um2": 432726.4,
      "cluster_um2": 432726.40640000015,
      "diff_pct": -1.4789945875049569e-06,
-     "hwcost_share_pct": 52.72295224833788,
+     "hwcost_share_pct": 54.582199880919816,
      "cluster_share_pct": 55.28051074854652
     }
    ],
-   "hwcost_um2": 820755.2527820403,
+   "hwcost_um2": 792797.6537114021,
    "cluster_um2": 782782.9383999998,
-   "diff_pct": 4.85093791896583,
+   "diff_pct": 1.2793732234215929,
    "not_costed_um2": 390510.2276999991
   },
   "alone": {
@@ -921,7 +921,7 @@
    "ok": true
   },
   "hwcost": {
-   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
    "snax_forge_clean": true,
    "platform": "platforms/snax_forge.json",
    "parts": [
@@ -930,10 +930,10 @@
      "groups": [
       "acc_datapath"
      ],
-     "hwcost_um2": 230322.485142,
+     "hwcost_um2": 230159.511337,
      "cluster_um2": 230275.6692,
-     "diff_pct": 0.02033039016350692,
-     "hwcost_share_pct": 19.410781261006647,
+     "diff_pct": -0.05044295969415442,
+     "hwcost_share_pct": 20.331332927997924,
      "cluster_share_pct": 20.817544493665388
     },
     {
@@ -941,10 +941,10 @@
      "groups": [
       "acc_control"
      ],
-     "hwcost_um2": 712.88,
+     "hwcost_um2": 709.714652,
      "cluster_um2": 704.6339999999999,
-     "diff_pct": 1.1702529256323277,
-     "hwcost_share_pct": 0.06007905713945034,
+     "diff_pct": 0.7210341822847182,
+     "hwcost_share_pct": 0.06269323735469079,
      "cluster_share_pct": 0.06370082300796291
     },
     {
@@ -952,10 +952,10 @@
      "groups": [
       "streamers"
      ],
-     "hwcost_um2": 309231.11427,
+     "hwcost_um2": 254485.65239000006,
      "cluster_um2": 250819.64070000674,
-     "diff_pct": 23.28823747892073,
-     "hwcost_share_pct": 26.060927201665397,
+     "diff_pct": 1.4616126870136377,
+     "hwcost_share_pct": 22.480202943097204,
      "cluster_share_pct": 22.67477518705027
     },
     {
@@ -963,10 +963,10 @@
      "groups": [
       "tcdm_interconnect"
      ],
-     "hwcost_um2": 213577.00690516402,
+     "hwcost_um2": 213962.1156871675,
      "cluster_um2": 191635.1822000007,
-     "diff_pct": 11.449789361884315,
-     "hwcost_share_pct": 17.999530357883696,
+     "diff_pct": 11.650748693872513,
+     "hwcost_share_pct": 18.900522436568494,
      "cluster_share_pct": 17.32433976138104
     },
     {
@@ -977,13 +977,13 @@
      "hwcost_um2": 432726.4,
      "cluster_um2": 432726.40640000015,
      "diff_pct": -1.4789945875049569e-06,
-     "hwcost_share_pct": 36.4686821223048,
+     "hwcost_share_pct": 38.22524845498169,
      "cluster_share_pct": 39.11963973489534
     }
    ],
-   "hwcost_um2": 1186569.8863171642,
+   "hwcost_um2": 1132043.3940661675,
    "cluster_um2": 1106161.5325000077,
-   "diff_pct": 7.269133074572538,
+   "diff_pct": 2.3397904199095527,
    "not_costed_um2": 390516.87779999874
   },
   "alone": {

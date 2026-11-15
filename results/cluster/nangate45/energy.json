@@ -404,7 +404,7 @@
   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
   "snax_cluster_commit": "ac231e42876526cdf4182ffdb3a41a914b2c49e1",
   "hwcost": {
-   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
    "platform": "platforms/snax_forge.json",
    "stimulus": "rand64 seed 0",
    "parts": [
@@ -413,8 +413,8 @@
      "groups": [
       "acc_datapath"
      ],
-     "hwcost_nj": 24.2507020032,
-     "hwcost_share_pct": 34.44040389271446,
+     "hwcost_nj": 24.169516083199998,
+     "hwcost_share_pct": 39.23683633450081,
      "run_nj": 14.832598339999999,
      "run_share_pct": 29.975108315855536,
      "above_idle_nj": 14.831020211238,
@@ -425,8 +425,8 @@
      "groups": [
       "acc_control"
      ],
-     "hwcost_nj": 0.130458995864,
-     "hwcost_share_pct": 0.1852754822685646,
+     "hwcost_nj": 0.13045777331499997,
+     "hwcost_share_pct": 0.21178538629004887,
      "run_nj": 0.08492367142,
      "run_share_pct": 0.17162173417247845,
      "above_idle_nj": 0.07651994221620001,
@@ -437,8 +437,8 @@
      "groups": [
       "streamers"
      ],
-     "hwcost_nj": 20.309970923,
-     "hwcost_share_pct": 28.84384961495574,
+     "hwcost_nj": 11.522835472,
+     "hwcost_share_pct": 18.70619204653868,
      "run_nj": 11.878718459999986,
      "run_share_pct": 24.005630323840634,
      "above_idle_nj": 11.050742649099988,
@@ -449,8 +449,8 @@
      "groups": [
       "tcdm_interconnect"
      ],
-     "hwcost_nj": 11.223497971,
-     "hwcost_share_pct": 15.939406750340472,
+     "hwcost_nj": 11.277340745,
+     "hwcost_share_pct": 18.307655460571304,
      "run_nj": 8.039151820000006,
      "run_share_pct": 16.246273312900037,
      "above_idle_nj": 7.184399020400006,
@@ -462,14 +462,14 @@
       "tcdm_banks"
      ],
      "hwcost_nj": 14.49889394,
-     "hwcost_share_pct": 20.59106425972076,
+     "hwcost_share_pct": 23.537530772099164,
      "run_nj": 14.64765939168,
      "run_share_pct": 29.601366313231306,
      "above_idle_nj": 14.64765939168,
      "above_idle_share_pct": 30.649832203321125
     }
    ],
-   "hwcost_nj": 70.413523833064,
+   "hwcost_nj": 61.599044013515,
    "run_nj": 49.483051683099994,
    "above_idle_nj": 47.790341214634196
   },
@@ -895,7 +895,7 @@
   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
   "snax_cluster_commit": "ac231e42876526cdf4182ffdb3a41a914b2c49e1",
   "hwcost": {
-   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
    "platform": "platforms/snax_forge.json",
    "stimulus": "rand64 seed 0",
    "parts": [
@@ -904,8 +904,8 @@
      "groups": [
       "acc_datapath"
      ],
-     "hwcost_nj": 25.305418265599997,
-     "hwcost_share_pct": 34.91980113385673,
+     "hwcost_nj": 24.984211251199998,
+     "hwcost_share_pct": 39.34936148333928,
      "run_nj": 15.48845529,
      "run_share_pct": 30.14833174642777,
      "above_idle_nj": 15.483137682215,
@@ -916,8 +916,8 @@
      "groups": [
       "acc_control"
      ],
-     "hwcost_nj": 0.5203131158000001,
-     "hwcost_share_pct": 0.7179976375167247,
+     "hwcost_nj": 0.520308239875,
+     "hwcost_share_pct": 0.8194694164146573,
      "run_nj": 0.32341120139999996,
      "run_share_pct": 0.629521021157815,
      "above_idle_nj": 0.29340567179,
@@ -928,8 +928,8 @@
      "groups": [
       "streamers"
      ],
-     "hwcost_nj": 20.919122923,
-     "hwcost_share_pct": 28.867004081844748,
+     "hwcost_nj": 12.212553744,
+     "hwcost_share_pct": 19.23439515763313,
      "run_nj": 13.164402650000003,
      "run_share_pct": 25.624555251290843,
      "above_idle_nj": 11.990353553500004,
@@ -940,8 +940,8 @@
      "groups": [
       "tcdm_interconnect"
      ],
-     "hwcost_nj": 11.223497971,
-     "hwcost_share_pct": 15.487683825654878,
+     "hwcost_nj": 11.277340745,
+     "hwcost_share_pct": 17.761463553286355,
      "run_nj": 7.751062060000014,
      "run_share_pct": 15.087469085629536,
      "above_idle_nj": 5.980479095500012,
@@ -953,14 +953,14 @@
       "tcdm_banks"
      ],
      "hwcost_nj": 14.49889394,
-     "hwcost_share_pct": 20.007513321126922,
+     "hwcost_share_pct": 22.835310389326576,
      "run_nj": 14.646839085269999,
      "run_share_pct": 28.510122895494025,
      "above_idle_nj": 14.646839085269999,
      "above_idle_share_pct": 30.26568166991233
     }
    ],
-   "hwcost_nj": 72.4672462154,
+   "hwcost_nj": 63.493307920075,
    "run_nj": 51.37417028667002,
    "above_idle_nj": 48.39421508827502
   },
@@ -1386,7 +1386,7 @@
   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
   "snax_cluster_commit": "ac231e42876526cdf4182ffdb3a41a914b2c49e1",
   "hwcost": {
-   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
    "platform": "platforms/snax_forge.json",
    "stimulus": "rand64 seed 0",
    "parts": [
@@ -1395,8 +1395,8 @@
      "groups": [
       "acc_datapath"
      ],
-     "hwcost_nj": 24.509999232,
-     "hwcost_share_pct": 34.52118046779078,
+     "hwcost_nj": 24.3470249984,
+     "hwcost_share_pct": 39.20199440829745,
      "run_nj": 14.97051122,
      "run_share_pct": 30.264834690747588,
      "above_idle_nj": 14.967698033946002,
@@ -1407,8 +1407,8 @@
      "groups": [
       "acc_control"
      ],
-     "hwcost_nj": 0.260410369176,
-     "hwcost_share_pct": 0.36677574996705403,
+     "hwcost_nj": 0.26040792883499997,
+     "hwcost_share_pct": 0.41929189175009507,
      "run_nj": 0.16503723194,
      "run_share_pct": 0.33364422023275886,
      "above_idle_nj": 0.14977176295619998,
@@ -1419,8 +1419,8 @@
      "groups": [
       "streamers"
      ],
-     "hwcost_nj": 20.507085803000002,
-     "hwcost_share_pct": 28.883265281769933,
+     "hwcost_nj": 11.722930192,
+     "hwcost_share_pct": 18.87549891068195,
      "run_nj": 12.079354154000004,
      "run_share_pct": 24.41998481343814,
      "above_idle_nj": 11.191448219700007,
@@ -1431,8 +1431,8 @@
      "groups": [
       "tcdm_interconnect"
      ],
-     "hwcost_nj": 11.223497971,
-     "hwcost_share_pct": 15.807768709797678,
+     "hwcost_nj": 11.277340745,
+     "hwcost_share_pct": 18.158039795622173,
      "run_nj": 7.602984731999992,
      "run_share_pct": 15.370422071014458,
      "above_idle_nj": 6.419618123799991,
@@ -1444,14 +1444,14 @@
       "tcdm_banks"
      ],
      "hwcost_nj": 14.49889394,
-     "hwcost_share_pct": 20.421009790674567,
+     "hwcost_share_pct": 23.345174993648307,
      "run_nj": 14.647148149522,
      "run_share_pct": 29.61111420456707,
      "above_idle_nj": 14.647148149522,
      "above_idle_share_pct": 30.9170165435207
     }
    ],
-   "hwcost_nj": 70.999887315176,
+   "hwcost_nj": 62.10659780423501,
    "run_nj": 49.46503548746199,
    "above_idle_nj": 47.375684289924195
   },
@@ -1877,7 +1877,7 @@
   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
   "snax_cluster_commit": "ac231e42876526cdf4182ffdb3a41a914b2c49e1",
   "hwcost": {
-   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
    "platform": "platforms/snax_forge.json",
    "stimulus": "rand64 seed 0",
    "parts": [
@@ -1886,8 +1886,8 @@
      "groups": [
       "acc_datapath"
      ],
-     "hwcost_nj": 23.919886156799997,
-     "hwcost_share_pct": 34.20906003939521,
+     "hwcost_nj": 23.8787696896,
+     "hwcost_share_pct": 39.06109127711896,
      "run_nj": 14.838829649999997,
      "run_share_pct": 29.391644832451522,
      "above_idle_nj": 14.837922961114998,
@@ -1898,8 +1898,8 @@
      "groups": [
       "acc_control"
      ],
-     "hwcost_nj": 0.06548330920800001,
-     "hwcost_share_pct": 0.09365105007566796,
+     "hwcost_nj": 0.065482695555,
+     "hwcost_share_pct": 0.10711714135170312,
      "run_nj": 0.04419442985000001,
      "run_share_pct": 0.08753702390025714,
      "above_idle_nj": 0.039120438735000006,
@@ -1910,8 +1910,8 @@
      "groups": [
       "streamers"
      ],
-     "hwcost_nj": 20.214902763,
-     "hwcost_share_pct": 28.910372640440542,
+     "hwcost_nj": 11.411367951999999,
+     "hwcost_share_pct": 18.666811186842548,
      "run_nj": 12.000322850000028,
      "run_share_pct": 23.76934269084714,
      "above_idle_nj": 11.154016503500019,
@@ -1922,8 +1922,8 @@
      "groups": [
       "tcdm_interconnect"
      ],
-     "hwcost_nj": 11.223497971,
-     "hwcost_share_pct": 16.051301976319003,
+     "hwcost_nj": 11.277340745,
+     "hwcost_share_pct": 18.447568360084833,
      "run_nj": 8.954677100000014,
      "run_share_pct": 17.736755197030476,
      "above_idle_nj": 8.292140041000014,
@@ -1935,14 +1935,14 @@
       "tcdm_banks"
      ],
      "hwcost_nj": 14.49889394,
-     "hwcost_share_pct": 20.73561429376959,
+     "hwcost_share_pct": 23.717412034601935,
      "run_nj": 14.648533407100004,
      "run_share_pct": 29.0147202557706,
      "above_idle_nj": 14.648533407100004,
      "above_idle_share_pct": 29.91222161154372
     }
    ],
-   "hwcost_nj": 69.922664140008,
+   "hwcost_nj": 61.13185502215501,
    "run_nj": 50.486557436950044,
    "above_idle_nj": 48.97173335145004
   },
@@ -2368,7 +2368,7 @@
   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
   "snax_cluster_commit": "ac231e42876526cdf4182ffdb3a41a914b2c49e1",
   "hwcost": {
-   "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+   "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
    "platform": "platforms/snax_forge.json",
    "stimulus": "rand64 seed 0",
    "parts": [
@@ -2377,8 +2377,8 @@
      "groups": [
       "acc_datapath"
      ],
-     "hwcost_nj": 24.005483929599997,
-     "hwcost_share_pct": 34.32874033896946,
+     "hwcost_nj": 23.984630348800003,
+     "hwcost_share_pct": 39.22294140125191,
      "run_nj": 22.549942899999998,
      "run_share_pct": 30.75308765065854,
      "above_idle_nj": 22.54901170601,
@@ -2389,8 +2389,8 @@
      "groups": [
       "acc_control"
      ],
-     "hwcost_nj": 0.032995465880000005,
-     "hwcost_share_pct": 0.047184750946061046,
+     "hwcost_nj": 0.032995156675,
+     "hwcost_share_pct": 0.05395818396898497,
      "run_nj": 0.028162712000000003,
      "run_share_pct": 0.038407651605018175,
      "above_idle_nj": 0.023131217614000003,
@@ -2401,8 +2401,8 @@
      "groups": [
       "streamers"
      ],
-     "hwcost_nj": 20.167368683000003,
-     "hwcost_share_pct": 28.840091908553653,
+     "hwcost_nj": 11.355634192,
+     "hwcost_share_pct": 18.570283052502948,
      "run_nj": 17.96326879999995,
      "run_share_pct": 24.497888191935882,
      "above_idle_nj": 16.340276997199915,
@@ -2413,8 +2413,8 @@
      "groups": [
       "tcdm_interconnect"
      ],
-     "hwcost_nj": 11.223497971,
-     "hwcost_share_pct": 16.05002209792276,
+     "hwcost_nj": 11.277340745,
+     "hwcost_share_pct": 18.44224692106694,
      "run_nj": 18.13592940000001,
      "run_share_pct": 24.73335870240077,
      "above_idle_nj": 17.152528160000006,
@@ -2426,14 +2426,14 @@
       "tcdm_banks"
      ],
      "hwcost_nj": 14.49889394,
-     "hwcost_share_pct": 20.733960903608057,
+     "hwcost_share_pct": 23.7105704412092,
      "run_nj": 14.648481085299998,
      "run_share_pct": 19.977257803399787,
      "above_idle_nj": 14.648481085299998,
      "above_idle_share_pct": 20.7152746770164
     }
    ],
-   "hwcost_nj": 69.92823998948,
+   "hwcost_nj": 61.14949438247501,
    "run_nj": 73.32578489729995,
    "above_idle_nj": 70.71342916612392
   },

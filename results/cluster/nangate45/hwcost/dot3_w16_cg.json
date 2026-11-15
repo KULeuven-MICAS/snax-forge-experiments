@@ -1,11 +1,11 @@
 {
  "W": 16,
  "cost": {
-  "area": 820755.2527820403,
-  "area_design": 388028.85278204025,
-  "energy": 69.922664140008,
+  "area": 792797.6537114021,
+  "area_design": 360071.25371140207,
+  "energy": 61.13185502215501,
   "extrapolated": [],
-  "kernel_energy": 23.985369466007995,
+  "kernel_energy": 23.944252385155,
   "memory": {
    "area": 432726.4,
    "banks": 32,
@@ -22,38 +22,40 @@
   "not_costed": [],
   "parts": {
    "control": {
-    "area": 712.88,
-    "energy": 0.06548330920800001
+    "area": 709.714652,
+    "energy": 0.065482695555
    },
    "crossbar": {
-    "area": 113776.20409404027,
-    "energy": 11.223497971
+    "area": 113890.805132402,
+    "energy": 11.277340745
    },
    "datapath": {
-    "area": 115449.852566,
-    "energy": 23.919886156799997
+    "area": 115285.814761,
+    "energy": 23.8787696896
    },
    "memory": {
     "area": 432726.4,
     "energy": 14.49889394
    },
    "streamers": {
-    "area": 158089.916122,
-    "energy": 20.214902763
+    "area": 130184.919166,
+    "energy": 11.411367951999999
    }
   },
   "source": {
+   "clk_gate": "1",
+   "ctrl": "ctrl ungated: counter_factor is char.json's x char.json's e_hold / this e_hold (CG2, X83)",
    "snax_forge": "e8611d51d5653e4c6e246184831136ec363727f5",
-   "snax_forge_experiments": "6c727da448a1f0b9a18d10e875c9f3fe8c6b5faa",
+   "snax_forge_experiments": "cd90a2c5a2619a32e47d39163ab28fa0b8fe8d0c",
    "stimulus": "rand64 seed 0"
   },
   "tech": "nangate45",
   "xbar": {
    "accesses": 4097,
-   "area": 113776.20409404027,
+   "area": 113890.805132402,
    "banks": 32,
-   "e_access": 2.739443,
-   "energy": 11.223497971,
+   "e_access": 2.752585,
+   "energy": 11.277340745,
    "extrapolated": [],
    "form": "factor",
    "inputs": 35,
@@ -68,6 +70,6 @@
   "N=2048"
  ],
  "snax_forge_clean": true,
- "snax_forge_commit": "b29bf0c093ea2171b2eda55e6fe8a1be2a1c5313",
+ "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
  "tech": "nangate45"
 }
