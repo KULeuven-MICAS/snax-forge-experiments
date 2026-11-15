@@ -23,6 +23,7 @@ IDs are never reused; retired: LIB1, LIB3, LIB4 and PT5 (the 15 nm library, remo
 - **DC15. DC's tied-constant pseudo-cells look like unresolved black boxes.** `**logic_0**` and `**logic_1**` have no library cell; `cluster_check.tcl` lists them as constants, out of the reference and black-box gates.
 - **DC16. The cluster's interconnect has two levels in `area_hierarchy.rpt`.** `sparse_interconnect_wrapper` holds 193 µm² of its own beside `sparse_interconnect_i`; compare a lone SparseInterconnect with the inner level and say which level a number is.
 - **DC17. `syn.py run --dry-run -j N` interleaves its points' lines.** Compare dry runs at `-j 1`, where the order is fixed.
+- **DC18. The run summary on the server keeps rows that results/ no longer has.** `syn/runs/<source>/<tech>/summary.csv` is never pruned, so copying it over `synth_dc.csv` brought removed ungated rows and stale dates back; `syn.py` merges a batch's rows into the committed CSV instead (X79 · X87 · X88).
 - **DC18. An output port nothing loads stays in the netlist with no driver.** Such a port reads Z for the whole run although the logic behind it works; take an internal status from the RTL run, never from a netlist port.
 
 ## Libraries

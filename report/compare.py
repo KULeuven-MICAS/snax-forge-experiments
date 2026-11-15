@@ -6,7 +6,8 @@
 
 Reads only committed CSVs (no tool, no licence, no sibling checkout): each source's synth_dc.csv, power_pt.csv and
 power_pt_modules.csv, and the cycle CSVs' provenance, for forge, hls (Vitis opt and dace), bambu and xls, W <=
-MAX_W. One row per tech, tier, kernel, W, tool, case and size, laid out and not compared. The columns and the checks
+MAX_W: the HLS sources' clock-gated rows, forge's ungated rows until its points are synthesized gated (CLK_GATE; the
+clk_gate column says which). One row per tech, tier, kernel, W, tool, case and size, laid out and not compared. The columns and the checks
 (any failure: exit 1, nothing written) are in results/compare/README.md, "The tier CSVs". A glue energy within
 1e-5 of the total (PT's rounding) is written as 0.
 """
@@ -33,6 +34,9 @@ WINDOW = {
     "bambu": "start_port to done_port (X44)",
     "xls": "cfg transfer to last output, last edge included (X44)",
 }
+# NB (X45 · X55 · X61): the basis is clock-gated (X79 · X87 · X88), but forge's points are not yet synthesized gated,
+# so forge is read ungated until they are and every row says which in its clk_gate column
+CLK_GATE = {"forge": "0", "hls": "1", "bambu": "1", "xls": "1"}
 CYCLES_CSV = {"hls": "hls/hls_cycles.csv", "bambu": "bambu/bambu_cycles.csv", "xls": "xls/xls_cycles.csv"}
 VERSION_COL = {"hls": "vitis", "bambu": "bambu_version", "xls": "xls_version"}
 # Parts by the design name of the hierarchical cell (synth_dc_modules.csv, power_pt_modules.csv): a regex on
@@ -57,7 +61,7 @@ REF_TECH_UNTIERED = "nangate45"           # untiered n2048 runs on nangate45 onl
 N2048_ONLY = {("done", "dot", "dace"), ("untiered", "axpy", "dace"), ("untiered", "rowsum", "dace")}
 POINT = re.compile(r"^(?P<tier>[^/]+)/(?P<kernel>[^/]+)/(?P<case>[a-z]+[0-9]*(?:_[a-z]+)?)_w(?P<w>\d+)$")
 
-KEY = ["tech", "tier", "kernel", "W", "tool", "case", "point", "size", "status"]
+KEY = ["tech", "tier", "kernel", "W", "tool", "case", "point", "size", "clk_gate", "status"]
 TASK = ["beats", "elements", "cycles", "window"]
 AREA = ["area_um2", "comb_area_um2", "seq_area_um2", "buf_inv_area_um2", "cells", "seq_cells",
         "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2", "ram_kind", "ram_um2", "peripherals_um2"]
@@ -71,11 +75,13 @@ PROV = ["rtl_commit", "tool_version", "dc_version", "syn_date"]
 COLUMNS = KEY + TASK + AREA + TIMING + ENERGY + PART_E + PROV
 
 
-def read(path: Path) -> list[dict]:
+def read(path: Path, clk_gate: str | None = "1") -> list[dict]:
+    """A results CSV's rows with that clk_gate ('1' gated, '0' ungated, an empty cell read as '0'); None for a CSV
+    with no clk_gate column."""
     if not path.is_file():
         return []
-    with path.open(newline="") as fh:     # a clock-gated row (clk_gate 1) is not part of the comparison
-        return [r for r in csv.DictReader(fh) if r.get("clk_gate", "") != "1"]
+    with path.open(newline="") as fh:
+        return [r for r in csv.DictReader(fh) if clk_gate is None or (r.get("clk_gate") or "0") == clk_gate]
 
 
 def parse(point: str) -> dict | None:
@@ -97,7 +103,7 @@ def provenance(source: str) -> dict:
     out = {}
     if source not in CYCLES_CSV:
         return out
-    for r in read(ROOT / "results" / CYCLES_CSV[source]):
+    for r in read(ROOT / "results" / CYCLES_CSV[source], None):
         if r.get("clock_ns") not in ("10", "10.0") or not r.get("W"):
             continue
         out[(r["tier"], r["kernel"], r["case"], r["W"])] = (r.get("git", ""), r.get(VERSION_COL[source], ""))
@@ -150,16 +156,17 @@ def peripherals(mods: list[dict], csr_path: str, what: str) -> dict | None:
 
 def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
     base = ROOT / "results" / source / tech
-    synth = {r["point"]: r for r in read(base / "synth_dc.csv")}
+    gate = CLK_GATE[source]
+    synth = {r["point"]: r for r in read(base / "synth_dc.csv", gate)}
     power = defaultdict(list)
-    for r in read(base / "power_pt.csv"):
+    for r in read(base / "power_pt.csv", gate):
         power[r["point"]].append(r)
     mods = defaultdict(list)
-    for r in read(base / "power_pt_modules.csv"):
+    for r in read(base / "power_pt_modules.csv", gate):
         mods[(r["point"], r["size"])].append(r)
     synth_mods = defaultdict(list)
     if source == "forge":
-        for r in read(base / "synth_dc_modules.csv"):
+        for r in read(base / "synth_dc_modules.csv", gate):
             synth_mods[r["point"]].append(r)
     prov = provenance(source)
     out = []
@@ -168,7 +175,7 @@ def rows_for(source: str, tech: str, problems: list[str]) -> list[dict]:
         p = parse(point)
         tool = TOOL[source]
         common = {"tech": tech, "tier": p["tier"], "kernel": p["kernel"], "W": p["w"], "tool": tool,
-                  "case": p["case"], "point": point, "window": WINDOW[tool]}
+                  "case": p["case"], "point": point, "window": WINDOW[tool], "clk_gate": gate}
         common.update({c: s.get(c, "") for c in AREA + TIMING})
         common["leak_dc_uw"] = s.get("leak_power_uw", "")
         if source == "forge":
@@ -274,7 +281,7 @@ def main() -> int:
         for source in SOURCES:
             got = rows_for(source, tech, problems)
             if not got:
-                problems.append(f"{tech} {source}: no rows")
+                problems.append(f"{tech} {source}: no rows with clk_gate {CLK_GATE[source]}")
             rows += got
     check_sizes(rows, problems)
     keys = defaultdict(int)

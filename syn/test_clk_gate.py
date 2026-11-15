@@ -149,6 +149,27 @@ def test_flop_note_reports_not_fails() -> None:
         syn.use_source("hls")
 
 
+def test_results_csv_merged_not_copied() -> None:
+    """A batch merges its rows into the committed results CSV: rows removed from results/ (an ungated twin) stay out
+    even though the server's run summary still holds them."""
+    keep = (syn.RUNS, syn.RESULTS)
+    try:
+        with tempfile.TemporaryDirectory() as t:
+            syn.RUNS, syn.RESULTS = Path(t) / "runs", Path(t) / "results"
+            cols = syn.columns()
+            old = {"point": "done/dot/opt_w1", "clock_ns": "10", "clk_gate": "", "status": "ok", "run": ""}
+            syn._merge(syn.summary_of("nangate45"), cols, syn.summary_key, [old], set())   # the server still has it
+            (syn.RESULTS / "nangate45").mkdir(parents=True)
+            (syn.RESULTS / "nangate45" / "synth_dc.csv").write_text(",".join(cols) + "\n")  # removed from results/
+            new = {"point": "done/dot/opt_w1", "clock_ns": "10", "clk_gate": "1", "status": "ok", "run": ""}
+            syn.write_summary(TECH, [new])
+            got = [(r["point"], r["clk_gate"]) for r in csv.DictReader((syn.RESULTS / "nangate45" / "synth_dc.csv").open())]
+            assert got == [("done/dot/opt_w1", "1")], got
+            assert len(list(csv.DictReader(syn.summary_of("nangate45").open()))) == 2
+    finally:
+        syn.RUNS, syn.RESULTS = keep
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

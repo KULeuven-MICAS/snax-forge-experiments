@@ -165,7 +165,7 @@ results/cluster/nangate45/energy.json: dot3_w8_cg, dot3_w2_cg, dot3_w4_cg, dot3_
 
 ## 8. Compare forge with the HLS tools
 
-**`compare`** (`report/compare.py`) writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs only, one row per tech, tier, kernel, W, tool, case and size, and writes nothing when a point or size is missing (X45 · X55 · X61); `--check` checks only.
+**`compare`** (`report/compare.py`) writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs, one row per tech, tier, kernel, W, tool, case and size: the HLS sources' clock-gated rows and forge's ungated rows until its points are synthesized gated (`clk_gate` says which), and writes nothing when a source has no rows on its basis or a point or size is missing (X45 · X55 · X61); `--check` checks only.
 
 ```
 $ pixi run compare

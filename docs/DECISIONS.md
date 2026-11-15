@@ -26,7 +26,7 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X16 · X59 — Parallel jobs from free licences, at most 16 cores
 
-- **Decided:** free licences are counted with `lmutil lmstat` before a batch and size the parallel jobs; PT threads are cores // jobs. A round uses at most 16 cores and never every free licence: DC `-j 4 --cores 4`, power `--cores 16 -j 4`, one batch at a time. Cluster runs have their own budget (X68).
+- **Decided:** free licences are counted with `lmutil lmstat` before a batch and size the parallel jobs; PT threads are cores // jobs. A round uses at most 16 cores, or up to 24 on Ryan's word that the host is quiet (at least 8 left free), and never every free licence: DC `-j 4 --cores 4` (`-j 6` at 24 cores), power `--cores 16 -j 4`, one batch at a time. Cluster runs have their own budget (X68).
 - **Why:** the host and licences are shared; a job without a licence fails or waits, and a multicore DC run can hold several DC-Expert licences (PITFALLS L4).
 - **Where:** `TOOL.md`, section 1; `results/forge/runs/2026-11-10_csyn1_r1.md`.
 
@@ -95,9 +95,9 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 ### X79 · X87 · X88 — Clock-gated synthesis is the basis
 
 - **Decided:** `dc_syn.tcl`'s `CLK_GATE_ENABLE` (from `SYN_CLK_GATE_ENABLE`, default 0) turns on DC's clock gating for a run: `clock_gating.tcl` (stop if the library has no `latch_posedge` integrated gate; positive edge, `-minimum_bitwidth 2`, through the hierarchy, no test or negedge logic, no operand isolation), `compile_ultra -no_autoungroup -gate_clock`, and the three `clock_gating*.rpt`, kept whatever their size. `syn.py run --clk-gate` and `pwr.py run --clk-gate` tag a run `_cg` and its rows `clk_gate` 1, merged apart from ungated rows (an empty `clk_gate` reads as 0); a cluster point sets `"syn": {"clk_gate": true}` under its own name. The switch's default stays off; a point or source says `clk_gate` itself.
-- **Decided:** gated synthesis is the basis: new cluster points are gated and HWCOST's block tables are the gated ones (X83). The ungated data that had a gated twin was removed: the ungated STRM rows and tables, the ungated cluster points and their sweep, and the 15 nm library (X1). The sources not yet gated (the accelerators alone, the `xbar_mix` grid, the HLS points) keep their ungated rows until they are synthesized gated (CG5 and CG6); `char.json` stays until then, as the gated control factor comes from it.
+- **Decided:** gated synthesis is the basis: new cluster points are gated and HWCOST's block tables are the gated ones (X83). The ungated data that had a gated twin was removed: the ungated STRM rows and tables, the ungated cluster points and their sweep, and the 15 nm library (X1). The HLS points (Vitis, Bambu, XLS) are gated, their ungated rows removed. The sources not yet gated (the accelerators alone, the `xbar_mix` grid) keep their ungated rows until they are synthesized gated; `char.json` stays until then, as the gated control factor comes from it.
 - **Why:** clock gating is what a real design gets. The ungated run windows were 46 to 82 % idle clocking at W ≤ 16 and overstated the cluster's energy 2 to 5 times; with the gated tables HWCOST's streamers come within −3 to −7 % (−23 to −34 % ungated), while memory and the datapath do not move. On `dot3_w8_cg` DC gates 98.6 % of the registers with `CLKGATE_X1` cells; area −6.5 %.
-- **Where:** `syn/README.md`, "Clock gating"; `results/cluster/runs/2026-11-13_cg1_r1.md`, `2026-11-15_cg3_r3.md`, `2026-11-15_cg4_r1.md`.
+- **Where:** `syn/README.md`, "Clock gating"; `results/cluster/runs/2026-11-13_cg1_r1.md`, `2026-11-15_cg3_r3.md`, `2026-11-15_cg4_r1.md`; `results/runs/2026-11-15_cg6_r1.md`, `2026-11-15_cg6_r2.md`.
 
 ## Power
 
@@ -405,7 +405,7 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X45 · X55 · X61 — The tier comparison CSVs
 
-- **Decided:** `pixi run compare` writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs only: one row per tech, tier, kernel, W, tool, case and size, with areas, splits, energies, cycles and provenance, and no ratios. Every untiered point also runs its n2048 task and takes its parts from it; the compare scripts take every forge case by its design name (PITFALLS E5). It writes nothing if a point or size is missing, a run failed, a key repeats or a split does not add up.
+- **Decided:** `pixi run compare` writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs only: one row per tech, tier, kernel, W, tool, case and size, with areas, splits, energies, cycles and provenance, and no ratios. Every untiered point also runs its n2048 task and takes its parts from it; the compare scripts take every forge case by its design name (PITFALLS E5). The HLS sources are read on their clock-gated rows (X79 · X87 · X88); forge on its ungated rows until its points are synthesized gated (`CLK_GATE`), every row saying which in `clk_gate`, and the pages and figures saying "HLS clock-gated, forge ungated". It writes nothing if a source has no rows on its basis, a point or size is missing, a run failed, a key repeats or a split does not add up.
 - **Why:** every comparison reads the same raw rows.
 - **Where:** `TOOL.md`; `report/compare.py`'s docstring.
 
