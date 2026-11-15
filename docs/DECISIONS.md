@@ -405,7 +405,7 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X45 · X55 · X61 — The tier comparison CSVs
 
-- **Decided:** `pixi run compare` writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs' clock-gated rows only (X79 · X87 · X88): one row per tech, tier, kernel, W, tool, case and size, with areas, splits, energies, cycles and provenance, and no ratios. Every untiered point also runs its n2048 task and takes its parts from it; the compare scripts take every forge case by its design name (PITFALLS E5). It writes nothing if a source has no gated rows, a point or size is missing, a run failed, a key repeats or a split does not add up; until forge's points are synthesized gated, the committed CSVs and `results/compare/` stay the ungated comparison of both sides.
+- **Decided:** `pixi run compare` writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs only: one row per tech, tier, kernel, W, tool, case and size, with areas, splits, energies, cycles and provenance, and no ratios. Every untiered point also runs its n2048 task and takes its parts from it; the compare scripts take every forge case by its design name (PITFALLS E5). The HLS sources are read on their clock-gated rows (X79 · X87 · X88); forge on its ungated rows until its points are synthesized gated (`CLK_GATE`), every row saying which in `clk_gate`, and the pages and figures saying "HLS clock-gated, forge ungated". It writes nothing if a source has no rows on its basis, a point or size is missing, a run failed, a key repeats or a split does not add up.
 - **Why:** every comparison reads the same raw rows.
 - **Where:** `TOOL.md`; `report/compare.py`'s docstring.
 

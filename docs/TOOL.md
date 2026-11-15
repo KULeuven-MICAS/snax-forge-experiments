@@ -165,12 +165,14 @@ results/cluster/nangate45/energy.json: dot3_w8_cg, dot3_w2_cg, dot3_w4_cg, dot3_
 
 ## 8. Compare forge with the HLS tools
 
-**`compare`** (`report/compare.py`) writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs' clock-gated rows only, one row per tech, tier, kernel, W, tool, case and size, and writes nothing when a source has no gated rows or a point or size is missing (X45 · X55 · X61); `--check` checks only. Until forge's points are synthesized gated it stops as below, and the committed CSVs and pages stay the ungated comparison.
+**`compare`** (`report/compare.py`) writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs, one row per tech, tier, kernel, W, tool, case and size: the HLS sources' clock-gated rows and forge's ungated rows until its points are synthesized gated (`clk_gate` says which), and writes nothing when a source has no rows on its basis or a point or size is missing (X45 · X55 · X61); `--check` checks only.
 
 ```
 $ pixi run compare
-compare: not written, 1 problem(s):
-  nangate45 forge: no clock-gated rows; synthesize and measure its points with --clk-gate
+compare: written, done 325 rows, untiered 281 rows
+  done      forge  40
+  done      vitis  125
+...
 ```
 
 **`compare-hls`** (`report/compare_hls.py`) writes `results/compare/`: the README's generated parts and one page and two figures per kernel (X64, X77). The text outside the `gen` markers is written by hand and kept. `python report/compare_summary.py [REV]` prints the ratios behind the README's summary table.
