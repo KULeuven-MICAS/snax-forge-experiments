@@ -896,7 +896,8 @@ def summary_key(r: dict) -> tuple:
 
 
 def write_summary(tech: dict, rows: list[dict]) -> None:
-    """The run summary, its copy in results/, the modules CSV and the reports, all in step."""
+    """The run summary, the results CSV, the modules CSV and the reports, all in step. The batch's rows are merged into
+    the committed results CSV, not copied from the run summary, so rows removed from results/ stay removed."""
     name = tech["name"]
     key = summary_key
     done = {key(r) for r in rows}
@@ -904,7 +905,7 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
     out = RESULTS / name
     out.mkdir(parents=True, exist_ok=True)
     synth_csv, modules_csv = RESULT_CSVS.get(SOURCE, ("synth_dc.csv", "synth_dc_modules.csv"))
-    shutil.copy2(summary_of(name), out / synth_csv)
+    _merge(out / synth_csv, columns(), key, rows, done)
     modules = []
     for r in rows:
         if r["run"]:
