@@ -1,80 +1,13 @@
 #!/usr/bin/env python3
-"""cluster/power.py - the cluster's dynamic energy per program section (PWR1), `pixi run cluster pwr <point>`.
+"""cluster/power.py - the cluster's dynamic energy per program section, `pixi run cluster pwr <point>`.
 
-  pixi run cluster pwr <point> [--allow-branch]
-
-Part 1 (R1): the quiet build (sw/forge_quiet.elf of rtl/cluster/<point>.zip, snax-forge D135) on step 3's netlist
-with our own vsim command and do-file, which dump a VCD of the cluster's design scopes and log every change of the
-wrapper's obs_o (the program section's mark, sw/obs_marks.json); the log is turned into one window per section, every
-window is cut from the VCD in one pass, vcd2saif makes a SAIF of each cut, and each SAIF is checked (X8, X9, X32).
-Part 2 (PT, R2) reads the SAIFs from the point's zip. snax-forge, snax_cluster and snax-gvsoc are read, never changed.
-
-tb_bin's clock is 1 ns (TCK = 1ns, -t 1ps), the flow's clock 10 ns (X2, X9's CLOCK_NS, PT's constraints.sdc). The
-activity of a zero-delay run does not depend on the period, so each cut's header gets `$timescale 10ps $end` in place
-of Questa's 1ps: every time reads ten times longer, as if the run were at 10 ns (draft X76), and X9's checks and PT's
-clock hold unchanged.
-
-  1. checks before anything runs, as gls: the repos (clean, snax_cluster on origin/main unless --allow-branch); step 1
-     (rtl/check.json) and step 3 (gls/check.json) PASS; the netlist in syn/runs/cluster/nangate45/<point>.zip; the
-     bundle zip's forge.elf the one the steps used; sw/forge_quiet.elf's sha256 equal to provenance's
-     quiet_elf_sha256; no RTL change in snax_cluster between the netlist's commit and HEAD (cluster.rtl_changes)
-  2. in tmp/cluster/<point>/, as gls: the bundle and the netlist unpacked; image: make clean-generated clean-vsim,
-     rtl-gen; clustergen --memories; cluster/mem.py, whose tc_sram_impl.sv must equal step 1's; the cell models
-     (pwr.cell_model); vsim_preparation in the image and snax-forge-sim SIM=vsim on the host with gls's options
-     (SRAM_IMPL, SRAM_MODELS, SIM_TYPE=gate_level_sim, GLS_NETLIST, GLS_CELLS), Questa's peak memory sampled
-     (cluster.Peak). No snax-forge-run. vopt and vlog are checked as gls's swap check (cluster.swap_check).
-  3. the vsim command: bin/snitch_cluster.vsim's vsim line, its one `-do "log -r /*; run -a"` (VSIM_FLAGS) replaced by
-     `-do <work>/pwr/pwr.do`, -batch where snax-forge-run puts it ($3), the quiet ELF as the binary ($1, realpath)
-     and $2 empty; written to pwr/vsim_cmd.sh and run from target/snitch_cluster, its output in pwr/vsim.txt. It
-     passes with `[SUCCESS] Program finished successfully` and no program output (no line outside Questa's `#`
-     transcript but fesvr's).
-  4. pwr/pwr.do: onbreak {resume}, onfinish stop; `vcd file pwr/dut.vcd` and pwr/vcd_add.do (sourced): one
-     non-recursive `vcd add` per design scope (X8: designs, not cells; LIB2), the wrapper's own nets, then every path
-     of pwr.scopes(netlist, top) under the wrapper's instance, each in braces with its escaped identifiers kept
-     (PITFALLS Q15); a `when` on the wrapper's obs_o (a port, visible under +acc=n, Q16) writes `<ps> <value>` per
-     change to pwr/obs_log.txt, flushed, and at the check's mark runs `vcd off` and `vcd flush`; the run goes on to
-     the program's exit. The dump runs from time 0 (a `when` can only turn it on at the mark's edge, a quarter cycle
-     after the window opens). `run -all`, `quit -f`; no `log`, no `power` (X8, X18). The windows come from obs_o
-     only (X73).
-  5. the windows (pwr/windows.json): the marks of obs_log.txt in order, each once, from the legend's first up to the
-     check's mark; section k from t_k - 250 ps to t_{k+1} - 250 ps (a quarter cycle before the edge where its mark
-     appears, a time with no events), (t_{k+1} - t_k) / 1000 cycles, a non-integer count failing. Each window's
-     cycles against CORE1 R2's quiet vsim run on the RTL (REF_CYCLES); beyond REF_TOL on any window the run stops.
-  6. the cut: one pwr.vcd_windows pass over dut.vcd for every window, the cuts' $timescale 10ps (timescale_10ps;
-     the VCD's must be 1ps), the window bounds the ps numbers; dut.vcd deleted right after the pass, whatever the
-     result (X18), its size recorded first.
-  7. vcd2saif per window as pwr.py's char source (-instance tb_bin/i_dut/i_snax_forge_cluster -time t0 t1), each cut
-     deleted after its vcd2saif; at most min(nproc, windows) jobs at once, with no more cuts on disk than jobs; then
-     pwr.saif_check(saif, cycles, "clk_i") per window (DURATION = cycles x 10 ns, clk_i TC = 2 x cycles).
-  8. under pwr/ of sim/runs/cluster/nangate45/<point>.zip (other members kept): pwr.do, vcd_add.do, vsim_cmd.sh,
-     vsim.txt, obs_log.txt, windows.json, <mark>_<kind>/w.saif and vcd2saif.log per window, logs/,
-     check.json; also on a failure. Then vsim.wlf (none expected) dropped, tmp/cluster/<point>/ deleted, make
-     clean-vsim clean-generated in snax_cluster. The SAIFs live only in this zip (sim/runs/ is git-ignored, X18).
-One line at the end; a failure names the check or step and prints at most 30 lines of its log.
-
-Part 2 (R2), run by the same command; part 1 is skipped when the zip's pwr/check.json is PASS for the same netlist
-sha256, quiet ELF sha256 and snax_cluster commit (--again reruns it):
-  1. PT's threads from --cores (default 16, X59), lowered to the host's free cores (nproc minus the load); a session
-     takes one PrimeTime and one PrimePower (L2), and one of each must stay free
-  2. in tmp/cluster/<point>/pt/: the DC run's tech.json, reports/lib_info.txt, the netlist and cluster.sdc; the
-     macros' .db (ram/runs/lib/<name>.zip, points.json's srams); every window's SAIF from pwr/ of the run zip
-  3. one pt_shell (sim/scripts/pt_power.tcl, PWR_MODE=cluster): the library and the macros linked with the netlist,
-     the wire load zeroed (PT1), constraints.sdc then cluster.sdc (PWR_EXTRA_SDC, X68), then per window of
-     PWR_WINDOWS reset_switching_activity, read_saif -strip_path tb_bin/i_dut/i_snax_forge_cluster, update_power,
-     the reports and a done file; a licence error is retried once (X17); peak memory from /usr/bin/time
-  4. per window, each check failing the window and the run: the wire-load counts 0 (PT1, X25); at least ANN_MIN %
-     of the driven nets annotated, the driven nets PT's nets minus the not-annotated ones the window's SAIF has at Z
-     for the whole window (PT6, DC18; the SAIF streamed, names compared with backslashes and trailing spaces
-     dropped); the SAIF's entries as part 1 counted them; every row of power.rpt parsed, no group but PT_GROUPS;
-     the hierarchy's top total equal to power.rpt's
-  5. results/cluster/nangate45/power_pt.csv, one row per window merged on (point, mark): X20's per-cycle energies
-     plus e_macro_pj (black_box + memory, the macros as PT measures them in averaged mode, PITFALLS PT7) and
-     e_io_pj, e_dyn_pj, p_dyn_uw, e_win_pj = e_dyn x cycles, the annotation, tx_nets (part 1), the commits, status;
-     no leakage (X13)
-  6. results/cluster/nangate45/power_reports/<point>.zip: per window power.rpt, power_hierarchy.rpt,
-     switching_activity.rpt, units.rpt; wire_load.rpt, licenses.rpt, windows.json, pt_check.json. pt/ of the run
-     zip: the not-annotated lists, pt_shell.log, the done files, logs/, pt_check.json; also on a failure. Then
-     tmp/cluster/<point>/ is deleted. One line at the end.
+Part 1: the quiet build (sw/forge_quiet.elf of rtl/cluster/<point>.zip) on step 3's netlist with our own vsim
+command and do-file, which dump one VCD of the cluster's design scopes and log every change of the wrapper's obs_o;
+the log gives one window per program section, every window is cut from the VCD in one pass, and vcd2saif makes and
+checks one SAIF per cut, kept under pwr/ of sim/runs/cluster/nangate45/<point>.zip. Part 2: one PrimePower
+session in averaged mode over the windows, into results/cluster/nangate45/power_pt.csv (one row per window) and
+power_reports/<point>.zip. Part 1 is skipped when its check.json is PASS for the same netlist, quiet ELF and
+snax_cluster (--again reruns it). The steps and checks are in cluster/README.md, "pwr".
 """
 
 from __future__ import annotations
@@ -108,7 +41,7 @@ CLOCK_PS = 1000                                      # tb_bin's TCK = 1ns at -t 
 QUIET = CLOCK_PS // 4                                # a window opens a quarter cycle before its mark's rising edge
 SAIF_CLOCK = "clk_i"
 OLD_DO = '-do "log -r /*; run -a"'                  # VSIM_FLAGS' do (target/snitch_cluster/Makefile)
-# CORE1 R2's quiet vsim run on the RTL (snax-forge out/core1-r2/obs_log.txt, results in its run note): cycles per mark
+# The quiet vsim run on the RTL of dot3_w16 (snax-forge out/core1-r2/obs_log.txt, results/cluster/runs/2026-11-12_core1_r2.md): cycles per mark
 REF_CYCLES = {"dot3_w16": {1: 305, 2: 291, 3: 32, 4: 11, 5: 185, 6: 77}}
 REF_TOL = 0.10                                       # D171's rule
 RUN_TIMEOUT = 4 * 3600
@@ -222,7 +155,7 @@ def windows(text: str, marks: list[dict]) -> list[dict]:
 
 
 def against_ref(wins: list[dict], ref: dict[int, int] | None) -> tuple[bool, list[dict]]:
-    """Each window's cycles against CORE1 R2's (REF_CYCLES), the difference and its share; ok within REF_TOL."""
+    """Each window's cycles against the RTL run's (REF_CYCLES), the difference and its share; ok within REF_TOL."""
     rows, ok = [], True
     for w in wins:
         r = (ref or {}).get(w["mark"])
@@ -241,7 +174,7 @@ def program_output(text: str) -> list[str]:
 
 def do_file(pdir: Path, check_mark: int) -> str:
     q = lambda p: "{" + str(p) + "}"   # noqa: E731
-    L = ["# PWR1 part 1 (cluster/power.py): the VCD of the cluster's design scopes, obs_o's changes",
+    L = ["# part 1 (cluster/power.py): the VCD of the cluster's design scopes, obs_o's changes",
          "onbreak {resume}", "onfinish stop",
          f"vcd file {q(pdir / 'dut.vcd')}",
          f"source {q(pdir / 'vcd_add.do')}",
@@ -388,7 +321,7 @@ def saif_jobs(vcd: Path, wins: list[dict], pdir: Path, res: dict) -> None:
                                  "-instance", TB_TOP, "-time", str(w["cut_t0"]), str(w["cut_t1"])],
                                 pdir / n / "vcd2saif.log", pdir / n, stdin_null=True)
         finally:
-            cuts[n].unlink(missing_ok=True)        # X18: each cut at once
+            cuts[n].unlink(missing_ok=True)        # each cut at once
             secs[n] = round(time.monotonic() - t, 1)
             slots.release()
 
@@ -410,7 +343,7 @@ def saif_jobs(vcd: Path, wins: list[dict], pdir: Path, res: dict) -> None:
     finally:
         res["seconds"]["cut"] = round(time.monotonic() - t, 1)
         res["cut_maxrss_mb"] = round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1)
-        vcd.unlink(missing_ok=True)                # X18: the VCD goes right after the pass, whatever the result
+        vcd.unlink(missing_ok=True)                # the VCD goes right after the pass, whatever the result
         print(f"  cut pass                      {res['seconds']['cut']:.0f} s, {len(futs)} of {len(order)} cuts; "
               f"dut.vcd deleted", flush=True)
         ex.shutdown(wait=True)
@@ -517,15 +450,15 @@ def part1(p: dict, images: dict, args, pre: dict | None = None) -> dict:
             raise cl.StepFailed("windows", pdir / "obs_log.txt", str(e)) from None
         ok, cmp_rows = against_ref(wins, REF_CYCLES.get(point))
         res["windows"] = wins
-        res["windows_ref"] = {"source": "CORE1 R2's quiet vsim run on the RTL (snax-forge out/core1-r2)",
+        res["windows_ref"] = {"source": "the quiet vsim run on the RTL (snax-forge out/core1-r2)",
                               "tol": REF_TOL, "rows": cmp_rows,
                               "status": "NONE" if point not in REF_CYCLES else "PASS" if ok else "FAIL"}
         (pdir / "windows.json").write_text(json.dumps(wins, indent=2) + "\n")
         for r in cmp_rows:
-            print(f"  window {r['mark']} {r['kind']:<16s} {r['cycles']:5d} cycles, CORE1 R2 {r['ref']}, diff {r['diff']}",
+            print(f"  window {r['mark']} {r['kind']:<16s} {r['cycles']:5d} cycles, RTL {r['ref']}, diff {r['diff']}",
                   flush=True)
         if not ok:
-            raise cl.Stop(f"window cycles beyond {REF_TOL:.0%} of CORE1 R2's: {cmp_rows}")
+            raise cl.Stop(f"window cycles beyond {REF_TOL:.0%} of the RTL run's: {cmp_rows}")
 
         # steps 6 and 7: the cut, vcd2saif, the checks
         vcd = pdir / "dut.vcd"
@@ -557,7 +490,7 @@ def part1(p: dict, images: dict, args, pre: dict | None = None) -> dict:
         res["failed"] = f"driver: {e!r}"
         print(f"cluster pwr {point}: FAIL in the driver: {e!r}", flush=True)
     finally:
-        (pdir / "dut.vcd").unlink(missing_ok=True)        # X18, also when the run stopped before the cut
+        (pdir / "dut.vcd").unlink(missing_ok=True)        # also when the run stopped before the cut
         res["questa"] = cl.questa_version()
         res["seconds"].update({k: v for k, v in steps.times.items()})
         res["seconds"]["total_before_pack"] = round(time.monotonic() - t_all, 1)
@@ -622,11 +555,11 @@ def summary(point: str, res: dict) -> str:
     return line
 
 
-# ---------------------------------------------------------------- part 2 (R2): PrimePower per window
+# ---------------------------------------------------------------- part 2: PrimePower per window
 PT_GROUPS = ("io_pad", "memory", "black_box", "clock_network", "register", "sequential", "combinational")
 E_GROUP = {"clock_network": "clk", "register": "reg", "sequential": "seq", "combinational": "comb",
            "black_box": "macro", "memory": "macro", "io_pad": "io"}
-ANN_MIN = 95.0                                       # % of the driven nets (PWR1 plan, topic 4)
+ANN_MIN = 95.0                                       # % of the driven nets
 PT_TIMEOUT = 4 * 3600
 STRIP = TB_TOP                                       # read_saif -strip_path
 STRIP_LEVELS = len(TB_TOP.split("/"))                # the SAIF's instance levels above the wrapper
@@ -745,8 +678,8 @@ def wire_load(text: str) -> dict:
 
 
 def energy(groups: dict, to_uw: float, cycles: int) -> dict:
-    """X20's per-cycle energies (pJ) from the groups' internal + switching, plus the macros (black_box + memory, as
-    PT measures them, PITFALLS PT7) and io_pad; e_dyn their sum, e_win e_dyn x cycles. No leakage (X13)."""
+    """The per-cycle energies (pJ) from the groups' internal + switching, plus the macros (black_box + memory, as
+    PT measures them, PITFALLS PT7) and io_pad; e_dyn their sum, e_win e_dyn x cycles. No leakage."""
     e = {k: 0.0 for k in ("clk", "reg", "seq", "comb", "macro", "io")}
     for g, (i, s, _l, _t) in groups.items():
         e[E_GROUP[g]] += (i + s) * to_uw * pwr.CLOCK_NS / 1000.0      # uW x ns -> pJ
@@ -886,7 +819,7 @@ def part2(p: dict, pre: dict, args, p1: dict) -> dict:
             except cl.StepFailed:
                 text = cl._text(pt / "pt_shell.log") + cl._text(steps.logs / f"{steps.k:02d}_pt_shell.log")
                 if attempt == 1 and pwr.LICENCE_ERR.search(text):
-                    print("  licence error in pt_shell, retrying once (X17)", flush=True)
+                    print("  licence error in pt_shell, retrying once", flush=True)
                     continue
                 raise
         res["seconds"]["pt_session"] = steps.times.get("pt_shell_retry", steps.times.get("pt_shell"))

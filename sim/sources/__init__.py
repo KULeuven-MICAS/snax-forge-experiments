@@ -1,6 +1,6 @@
 """sim/sources: one tb.json adapter per source (hls, forge, char, bambu, xls).
 
-The clock and reset port names of every source come from one table, syn/syn.py's SOURCES (docs X44): syn()
+The clock and reset port names of every source come from one table, syn/syn.py's SOURCES: syn()
 loads syn/syn.py once (as the module syn_driver, shared with sim/pwr.py) and ports(source) gives its
 (clock, reset) pair. No adapter writes a port name of its own.
 """
@@ -32,7 +32,7 @@ def ports(source: str) -> tuple[str, str]:
 
 def cycle_line(points: dict) -> tuple[int, int]:
     """(a, b) of cycles = a x loop_count + b through {size: (loop_count, cycles)}: integers, exact at every size
-    (a ValueError otherwise). The expected cycles of the bambu and xls sources (docs X44)."""
+    (a ValueError otherwise). The expected cycles of the bambu and xls sources."""
     pts = sorted(set(points.values()))
     if len(pts) < 2:
         raise ValueError(f"no cycle line: {len(pts)} size(s) {points}")

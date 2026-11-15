@@ -1,42 +1,14 @@
 #!/usr/bin/env python3
-"""report/cluster_sweep.py - the cluster points of one recipe side by side over W, the netlist beside HWCOST (X78).
+"""report/cluster_sweep.py - the cluster points of one recipe side by side over W, the netlist beside HWCOST.
 
-    pixi run cluster-sweep [--tech nangate45] [--recipe dot_3] [--md]      the ungated sweep
-    pixi run cluster-sweep --gated [--md]                                  the clock-gated sweep
-    pixi run cluster-sweep --points dot3_w8,dot3_w8_cg --out NAME [--tables gated] [--md]
-    pixi run cluster-sweep-test                     report/test_cluster_sweep.py
+    pixi run cluster-sweep [--tech nangate45] [--recipe dot_3] [--md]
+    pixi run cluster-sweep --points A,B,... --out NAME [--md]
 
-Reads what cluster-breakdown and cluster-energy already wrote (results/cluster/<tech>/breakdown.json and
-energy.json, X72, X74) and lays out the run window only (`5_run`, the busy section, X73) per point. Two sweeps,
-side by side in results/cluster/<tech>/ (X86):
-
-  ungated  the recipe's points of cluster/points.json but its variants (a `syn` field), in order of W, beside
-           snax-forge's HWCOST (the ungated tables, as energy.json and breakdown.json carry it); files *_ungated
-  gated    the recipe's clock-gated variants (`"syn": {"clk_gate": true}`, X79), in order of W, beside HWCOST on
-           the clock-gated tables (results/cluster/<tech>/hwcost_cg.csv's `gated` rows at each W, pixi run
-           cg2-reprice, X83, X85); files *_gated
-
---points names any points instead, in the order given (variants included), and --out NAME writes into
-results/cluster/<tech>/NAME/, the bars labelled by point (X80); for a look, not committed (X86). --tables gated
-takes HWCOST from the gated tables there too.
-
-  energy  the netlist's run-window energy in HWCOST's five parts (datapath, control, streamers, crossbar, memory;
-          the groups cluster/groups.json's `hwcost` maps to each), the groups HWCOST does not price as one more
-          line, and HWCOST's five parts (nJ per task); shares of each side's own five-part sum, the netlist's also
-          of its whole run window
-  area    the same layout in um2: the cluster's groups (breakdown.json) beside HWCOST's five parts
-  alone   the accelerator's shell in the run window and alone (points.json's `alone`): cycles, pJ/cycle, nJ, um2
-
-A part's share is s_p = E_p / sum over the five parts of E_q, on each side. No normalization, no check on the
-trend: the data is laid out, its reading is the user's.
-
-Writes sweep_<label>.csv in long form (point, W, source, window, group, metric, value; source `gls` the netlist,
-`hwcost` snax-forge's estimate, `hwcost_cg` the gated tables', `alone` the shell alone), and figures beside it:
-sweep_energy_<label>.png and sweep_area_<label>.png, per W the netlist's bar beside HWCOST's, absolute on the left
-and in % of the five parts on the right; sweep_energy_five_<label>.png and sweep_area_five_<label>.png, the
-absolute panel alone with the five parts only, each bar's total above it. The bars stack the parts that change
-least at the bottom (STACK: memory, control, streamers, crossbar, datapath) and the netlist's not-priced part on
-top. --md prints the tables as Markdown.
+Reads breakdown.json and energy.json and lays out the run window (`5_run`) of the recipe's points, one per W, or
+of the named points into results/cluster/<tech>/NAME/: sweep.csv (long form: point, W, source, window, group,
+metric, value) and sweep_energy.png, sweep_area.png, sweep_energy_five.png and sweep_area_five.png, the bars
+stacked in STACK's order with the netlist's not-priced part on top. The layout is in cluster/README.md, "The
+reports".
 """
 
 from __future__ import annotations
@@ -51,11 +23,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 POINTS = ROOT / "cluster" / "points.json"
 PARTS = ["datapath", "control", "streamers", "crossbar", "memory"]
-STACK = ["memory", "control", "streamers", "crossbar", "datapath"]    # the figures' bars, bottom to top (X86)
-LABELS = ("ungated", "gated")
+STACK = ["memory", "control", "streamers", "crossbar", "datapath"]    # the figures' bars, bottom to top
 REST = "not_priced"      # the netlist's groups HWCOST does not price
 RUN = "5_run"
-TABLES = ("snax-forge", "gated")
 FIELDS = ["point", "W", "source", "window", "group", "metric", "value"]
 # Categorical slots 1-5 of the dataviz reference palette in fixed order, given to the parts in STACK's order so
 # neighbours in a bar are neighbours in the validated order (adjacent CVD dE >= 9.1, normal-vision >= 19.6 on the
@@ -86,60 +56,30 @@ def point_data(p: dict, energy: dict, breakdown: dict) -> dict:
     return {
         "point": p["point"], "W": int(p["W"]), "run_cycles": run["cycles"], "run_nj": run["nj"],
         "span_cycles": e["span"]["cycles"], "span_nj": e["span"]["nj"],
-        "groups_pj": dict(run["groups"]),       # pJ per cycle per X72 group in the run window
+        "groups_pj": dict(run["groups"]),       # pJ per cycle per group in the run window
         "groups_um2": {g["name"]: g["area_um2"] for g in b["groups"]},
         "gls_e": gls_e, "hw_e": {k: eh[k]["hwcost_nj"] for k in PARTS},
         "gls_a": gls_a, "hw_a": {k: ah[k]["hwcost_um2"] for k in PARTS}, "area_um2": b["total_um2"],
         "alone_point": al["point"], "shell_cluster": al["cluster"], "shell_alone": al["alone"],
         "shell_cluster_um2": shell_area["cluster_um2"], "shell_alone_um2": shell_area["alone_um2"],
         "snax_forge_commit": e["snax_forge_commit"], "hwcost_commit": e["hwcost"]["snax_forge_commit"],
-        "hw_src": "hwcost",
     }
 
 
-def gated_hwcost(path: Path) -> dict[int, dict[str, dict[str, float]]]:
-    """hwcost_cg.csv's gated rows as {W: {"e": {part: nJ}, "a": {part: um2}}}; a W missing a part or a value is left
-    out, so use_gated names it."""
-    if not path.is_file():
-        raise SystemExit(f"no {path}: run pixi run cg2-reprice")
-    out: dict[int, dict[str, dict[str, float]]] = {}
-    with path.open(newline="") as fh:
-        for r in csv.DictReader(fh):
-            if r["tables"] != "gated" or r["part"] not in PARTS or "" in (r["area_um2"], r["energy_nj"]):
-                continue
-            w = out.setdefault(int(r["W"]), {"e": {}, "a": {}})
-            w["e"][r["part"]], w["a"][r["part"]] = float(r["energy_nj"]), float(r["area_um2"])
-    return {w: v for w, v in out.items() if set(v["e"]) == set(PARTS)}
-
-
-def use_gated(pts: list[dict], table: dict[int, dict[str, dict[str, float]]]) -> None:
-    """Each point's HWCOST five parts from the gated tables at its W (--tables gated, X85)."""
-    missing = sorted({d["W"] for d in pts if d["W"] not in table})
-    if missing:
-        raise SystemExit(f"hwcost_cg.csv has no complete gated row set at W = {missing}: run pixi run cg2-reprice")
-    for d in pts:
-        d["hw_e"], d["hw_a"], d["hw_src"] = dict(table[d["W"]]["e"]), dict(table[d["W"]]["a"]), "hwcost_cg"
-
-
 def select(cfg_points: list[dict], recipe: str, names: list[str] | None = None) -> list[dict]:
-    """The points laid out: `names` in their order (any point of points.json, a variant too, X80), or else the
-    recipe's points but its variants (a `syn` field, X79), in order of W."""
+    """The points laid out: `names` in their order (any point of points.json), or else the recipe's points in order
+    of W, one per W."""
     if names:
         by = {p["point"]: p for p in cfg_points}
         unknown = [n for n in names if n not in by]
         if unknown:
             raise SystemExit(f"no point {unknown} in {POINTS}")
         return [by[n] for n in names]
-    return sorted((p for p in cfg_points if p["recipe"] == recipe and "syn" not in p), key=lambda p: int(p["W"]))
-
-
-def gated_names(cfg_points: list[dict], recipe: str) -> list[str]:
-    """The recipe's clock-gated variants (syn.clk_gate true, X79), in order of W: the gated sweep (X86)."""
-    pts = [p for p in cfg_points if p["recipe"] == recipe and p.get("syn", {}).get("clk_gate")]
+    pts = sorted((p for p in cfg_points if p["recipe"] == recipe), key=lambda p: int(p["W"]))
     ws = [int(p["W"]) for p in pts]
     if len(set(ws)) != len(ws):
-        raise SystemExit(f"two gated points of {recipe} share a W: {sorted(ws)}")
-    return [p["point"] for p in sorted(pts, key=lambda p: int(p["W"]))]
+        raise SystemExit(f"two points of {recipe} share a W: {ws}; name the points with --points and --out")
+    return pts
 
 
 def load(tech: str, recipe: str, names: list[str] | None = None) -> list[dict]:
@@ -154,10 +94,10 @@ def load(tech: str, recipe: str, names: list[str] | None = None) -> list[dict]:
 
 
 def rows(pts: list[dict]) -> list[list]:
-    """sweep.csv's rows: every number of the tables, plus the run window's and the area's X72 groups."""
+    """sweep.csv's rows: every number of the tables, plus the run window's and the area's groups."""
     out: list[list] = []
     for d in pts:
-        pw, hs = [d["point"], d["W"]], d.get("hw_src", "hwcost")
+        pw, hs = [d["point"], d["W"]], "hwcost"
         out += [pw + ["gls", RUN, "", "cycles", d["run_cycles"]], pw + ["gls", RUN, "", "nj", d["run_nj"]],
                 pw + ["gls", "span", "", "cycles", d["span_cycles"]], pw + ["gls", "span", "", "nj", d["span_nj"]]]
         five_e, five_he = sum(d["gls_e"][k] for k in PARTS), sum(d["hw_e"].values())
@@ -211,9 +151,7 @@ def f1(x: float) -> str:
 
 
 def markdown(pts: list[dict]) -> str:
-    gated = any(d.get("hw_src") == "hwcost_cg" for d in pts)
-    out = ["Across W (run window `5_run`; span = the first mark to the end of the last DMA out, X73"
-           + ("; HWCOST from the clock-gated tables, hwcost_cg.csv, X85" if gated else "") + "):", "",
+    out = ["Across W (run window `5_run`; span = the first mark to the end of the last DMA out, X73):", "",
            "| W | point | run cycles | run nJ | five parts nJ | HWCOST nJ | span cycles | span nJ | area µm² | five parts µm² | HWCOST µm² |",
            "|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for d in pts:
@@ -249,11 +187,11 @@ def markdown(pts: list[dict]) -> str:
 
 
 def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (False, True),
-           by_point: bool = False, label: str | None = None) -> None:
+           by_point: bool = False) -> None:
     """Per W the netlist's bar beside HWCOST's, stacked by part: absolute (left), % of the five parts (right).
     panels=(False,) draws the absolute panel alone with the five parts only (the netlist's not-priced part left
     out, so both bars hold what HWCOST prices), each bar's total written above it. by_point labels each pair by
-    its point and W (--points, X80) in place of W alone."""
+    its point and W (--points) in place of W alone."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -306,9 +244,8 @@ def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (F
     fig.legend([seen[k] for k in keys], [names.get(k, k) for k in keys], loc="lower center",
                ncol=len(keys), fontsize=8.5, frameon=False)
     src = "run window 5_run" if kind == "energy" else "DC area per group"
-    synth = {"ungated": ", ungated synthesis", "gated": ", clock-gated synthesis"}.get(label or "", "")
-    head = f"dot_3 in the one-core cluster{synth}, N = 2048, nangate45, 10 ns"
-    hw = "HWCOST, gated tables" if any(d.get("hw_src") == "hwcost_cg" for d in pts) else "HWCOST"
+    head = "dot_3 in the one-core cluster, clock-gated synthesis, N = 2048, nangate45, 10 ns"
+    hw = "HWCOST"
     fig.suptitle(f"{head}\nGLS: netlist, {src}; HW: {hw}" if alone else
                  f"{head}: {what}\nGLS: netlist, {src}; HW: {hw}", fontsize=10.5)
     fig.tight_layout(rect=(0, 0.08 if alone else 0.07, 1, 0.97 if alone else 0.95))
@@ -320,46 +257,27 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tech", default="nangate45")
     ap.add_argument("--recipe", default="dot_3")
-    ap.add_argument("--gated", action="store_true",
-                    help="the recipe's clock-gated variants beside the gated tables' HWCOST, files *_gated (X86)")
-    ap.add_argument("--points", default=None,
-                    help="comma-separated points, in this order, variants included (X80); needs --out")
+    ap.add_argument("--points", default=None, help="comma-separated points, in this order; needs --out")
     ap.add_argument("--out", default=None, help="with --points: write into results/cluster/<tech>/OUT/")
-    ap.add_argument("--tables", choices=TABLES, default="snax-forge",
-                    help="with --points, HWCOST's five parts: snax-forge's estimate (default) or the gated tables' (X85)")
     ap.add_argument("--md", action="store_true", help="print the tables as Markdown")
     ap.add_argument("--no-figures", action="store_true", help=argparse.SUPPRESS)
     a = ap.parse_args()
     names = [n.strip() for n in a.points.split(",") if n.strip()] if a.points else None
     if bool(names) != bool(a.out):
         ap.error("--points and --out go together")
-    if names and a.gated:
-        ap.error("--gated is the recipe's gated sweep; name points with --points --out instead")
     res = ROOT / "results" / "cluster" / a.tech
-    if names:
-        label, base, tables = None, res / a.out, a.tables
-    else:
-        label, base = ("gated" if a.gated else "ungated"), res
-        tables = "gated" if a.gated else "snax-forge"
-        if a.gated:
-            names = gated_names(json.loads(POINTS.read_text())["points"], a.recipe)
-            if not names:
-                raise SystemExit(f"no clock-gated point of {a.recipe} in {POINTS}")
+    base = res / a.out if names else res
     pts = load(a.tech, a.recipe, names)
-    if tables == "gated":
-        use_gated(pts, gated_hwcost(res / "hwcost_cg.csv"))
     base.mkdir(parents=True, exist_ok=True)
-    sfx = f"_{label}" if label else ""
-    write_csv(base / f"sweep{sfx}.csv", rows(pts))
+    write_csv(base / "sweep.csv", rows(pts))
     if not a.no_figures:
-        by_point = label is None
         for kind in ("energy", "area"):
-            figure(pts, kind, base / f"sweep_{kind}{sfx}.png", by_point=by_point, label=label)
-            figure(pts, kind, base / f"sweep_{kind}_five{sfx}.png", panels=(False,), by_point=by_point, label=label)
+            figure(pts, kind, base / f"sweep_{kind}.png", by_point=bool(names))
+            figure(pts, kind, base / f"sweep_{kind}_five.png", panels=(False,), by_point=bool(names))
     ws = ", ".join(f"{d['point']} (W = {d['W']})" for d in pts)
     rel = base.relative_to(ROOT).as_posix()
-    print(f"{len(pts)} points ({ws}): {rel}/sweep{sfx}.csv"
-          f"{'' if a.no_figures else f', sweep_energy{sfx}.png, sweep_area{sfx}.png and their _five panels'}")
+    print(f"{len(pts)} points ({ws}): {rel}/sweep.csv"
+          f"{'' if a.no_figures else ', sweep_energy.png, sweep_area.png and their _five panels'}")
     if a.md:
         print(markdown(pts))
     return 0

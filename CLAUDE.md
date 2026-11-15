@@ -1,6 +1,6 @@
 # snax-forge-experiments
 
-Synthesis, power, memory and cost flows shared by snax-forge and the HLS comparison, with their results committed. Read `docs/README.md` first (folders, sibling repos, environment), then the decisions (`docs/DECISIONS.md`, X-numbers) and pitfalls (`docs/PITFALLS.md`) the task touches. A choice that contradicts an X-number gets a new X-number, never a silent change.
+Synthesis, power, memory and cost flows shared by snax-forge and the HLS comparison, with their results committed. Read `docs/README.md` first (the docs and how a round runs) and `docs/TOOL.md` for every command (setup, sibling repos, environment), then the decisions (`docs/DECISIONS.md`, X-numbers) and pitfalls (`docs/PITFALLS.md`) the task touches. A choice that contradicts an X-number gets a new X-number, never a silent change.
 
 ## Files are zipped, one zip per point (X51)
 
@@ -18,8 +18,8 @@ Ryan's home has a file-count quota (1,600,000 soft, folders count too), shared b
 
 ## Working rules
 
-- Python through the repo's pixi workspace (`pixi run ...`, Python 3.11; docs X15); scripts in files, not `pixi run python -c` (PITFALLS E1).
-- Start a round with `git pull` in this repo and every sibling repo the round reads (`docs/README.md`, Sibling repos).
+- Python through the repo's pixi workspace (`pixi run ...`, Python 3.11; X15); scripts in files, not `pixi run python -c` (PITFALLS E1). `pixi run test` and `pixi run lint` before a commit.
+- Start a round with `git pull` in this repo and every sibling repo the round reads (`docs/TOOL.md`, section 1).
 - A clean never deletes `syn/runs/` or `sim/runs/` (X6); they hold the netlists the power flow reads.
 - DC, Questa and PT parallelism from free licences (`lmutil lmstat`, PITFALLS L2, L3); CACTI and Python steps with `-j$(nproc)`.
 - Report after every step what changed and what was found. A failure stays as a row with its status and at most 30 error lines from its log.

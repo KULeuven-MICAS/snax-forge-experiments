@@ -1,4 +1,4 @@
-"""RAM1: Nangate 45 nm units and pin values for the SRAM macro generator -> ram/nangate45_pins.json.
+"""ram/pins.py - Nangate 45 nm units and pin values for the SRAM macro generator -> ram/nangate45_pins.json.
 
     pixi run python ram/pins.py [--lib <NangateOpenCellLibrary_typical.lib>]
 
@@ -171,7 +171,7 @@ def main():
         "source": (f"derived: capacitive_load_unit (1 fF, {rel}:{cap[1]}) x voltage_unit^2 (1 V, "
                    f"{rel}:{lib.attrs['voltage_unit'][1]}); the library has no internal_power_unit attribute; "
                    "dc_shell report_lib on the .db prints 'Dynamic Energy Unit : 0.001000pJ (derived from V,C units)' "
-                   "(RAM1 R3)"),
+                   ""),
     }
 
     # DFF_X1: D and CK capacitance, setup/hold of D against CK (largest entry), CK min pulse width (largest entry).

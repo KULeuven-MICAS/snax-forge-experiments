@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""report/test_strm_table.py - seeded tests of report/strm_table.py's reference interpolation (X53).
+"""report/test_strm_table.py - seeded tests of report/strm_table.py's reference interpolation.
 
-  pixi run strm-table-test
+  pixi run python report/test_strm_table.py
 
 On synthetic tables over the real grids: grid points come back exactly; a function multilinear in the raw values
 (a + b d + c l + e ch + f d ch + ...) is reproduced exactly anywhere inside; queries outside the grid and missing
 values are refused; the interconnect's energy for inputs > banks is its value at inputs = banks; a query between
 grid values stays between the corner values; the interconnect's energy, linear in 1/inputs, reproduces
-a + b / inputs exactly while its area stays linear in inputs. CG2 (X83): build() takes only the rows of the clk_gate
-asked for, and ratios() pairs gated and ungated rows by point. Standard library only.
+a + b / inputs exactly while its area stays linear in inputs; build() takes only the rows of the clk_gate asked
+for, the gated ones by default. Standard library only.
 """
 from __future__ import annotations
 
@@ -132,7 +132,7 @@ class TestGated(unittest.TestCase):
     def test_build_takes_one_gate(self):
         with tempfile.TemporaryDirectory() as t:
             d = Path(t) / "results" / "streamer" / "nangate45"
-            # a row from before X79 (no clk_gate) reads as ungated; the gated rows of the same points sit beside it
+            # a row from before the switch (no clk_gate) reads as ungated; the gated rows of the same points sit beside it
             _csv(d / "synth_dc.csv", SYNTH, [
                 {"point": "d8_l1_c4", "clk_gate": "", "status": "ok", "area_um2": "100", "seq_cells": "50",
                  "slack_ns": "7", "fmax_mhz": "300", "depth": "8", "loops": "1", "channels": "4"},
@@ -150,11 +150,7 @@ class TestGated(unittest.TestCase):
                              [("1", "20", "2", "10"), ("4", "100", "20", "50")])
             self.assertEqual([(r["channels"], r["area_um2"], r["e_beat_pj"], r["flops"], r["status"]) for r in cg],
                              [("4", "80", "10", "53", "ok")])
-            got = st.ratios(cg, un, st.READER_AXES, ("area_um2", "e_beat_pj", "flops"))
-            self.assertEqual(len(got), 1)
-            self.assertAlmostEqual(got[0]["area_um2"], 0.8)
-            self.assertAlmostEqual(got[0]["e_beat_pj"], 0.5)
-            self.assertAlmostEqual(got[0]["flops"], 53 / 50)
+            self.assertEqual(st.build("streamer", "nangate45", root=Path(t)), cg)   # the gated rows by default
 
 
 if __name__ == "__main__":

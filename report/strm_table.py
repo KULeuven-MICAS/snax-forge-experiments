@@ -1,45 +1,14 @@
 #!/usr/bin/env python3
-"""report/strm_table.py - STRM1: the reader and interconnect tables snax-forge's HW cost model reads, and the
-reference interpolation it copies (docs/DECISIONS.md X53).
+"""report/strm_table.py - the reader and interconnect tables snax-forge's HW cost model reads, and the
+reference interpolation it copies.
 
-  pixi run strm-table [--tech nangate45] [--loo] [--clk-gate]
-  pixi run strm-table-test                       report/test_strm_table.py
+  pixi run strm-table [--tech nangate45] [--loo]
 
-Reads results/streamer/<tech>/synth_dc.csv and power_pt.csv (syn/syn.py and sim/pwr.py --source streamer) and the
-same two of results/xbar/<tech>/, and writes results/strm/<tech>/:
-
-  streamer.csv  depth, loops, channels, area_um2, e_beat_pj, flops, slack_ns, fmax_mhz, status
-                one row per grid point (FIFO depth x loops x channels): DC's total area, PT's dynamic energy over
-                the busy window / beats, DC's flop count, worst slack and fmax (a lower bound, X2)
-  xbar.csv      inputs, banks, area_um2, e_access_pj, flops, slack_ns, fmax_mhz, status
-                one row per grid point (inputs x banks); e_access_pj is PT's energy over the window / grants and is
-                empty where inputs > banks (not measured: no conflict-free stimulus, X52)
-status is "ok" or the failing step's status (DC's, then PT's); a failed point keeps its row with the numbers it
-has. A reader's cost also stands for a writer's (X52). Only the ungated rows are read (an empty clk_gate reads as 0,
-X79).
-
---clk-gate (CG2, X83) reads the clock-gated rows (clk_gate 1) instead and writes streamer_cg.csv and xbar_cg.csv
-beside them, in the same columns: flops is DC's seq_cells, which counts the integrated clock gates too (an ICG is a
-sequential cell; the gate is not priced on its own). The grid is whatever points have gated rows. It then prints,
-per point in both tables, the gated value over the ungated one for area and energy, and their spread.
-
-The reference interpolation (X53), for a query inside the grid:
-  reader  trilinear over (depth, loops, channels), linear in each raw value between the two grid values around
-          it (a grid value is matched exactly); area and energy alike
-  xbar    bilinear over (inputs, banks): area linear in inputs and banks; energy linear in 1/inputs (its shape is
-          a + b/inputs, a per-cycle cost shared by the grants, docs/cost_tables.md) and in banks. Energy where
-          inputs > banks: each bank count's row is completed with its value at inputs = banks (the most measured),
-          then interpolated as the rest
-  A query outside the grid's range on any axis is refused (ValueError), as is one that needs a missing value;
-  Table.at(..., extrapolate=True) instead continues the line through the two outermost grid values, clamped at 0,
-  as snax-forge's estimate does (report/cg2_reprice.py at W = 32, X85).
-
---loo prints the leave-one-out check (for information): each interior grid point predicted from its neighbours
-with its own value on every interpolated axis left out (reader: depth 4 and 8, loops 2 to 6, channels 2, 4, 6, 8,
-trilinear from the 8 surrounding points; xbar: inputs 8 to 56 at the same bank count, area linear in inputs,
-energy linear in 1/inputs, only where the point and both neighbours are measured), with the mean and worst error of
-area and energy. The worked steps are in docs/cost_tables.md.
-Standard library only.
+Joins the gated rows (clk_gate 1) of results/streamer/<tech>/ and results/xbar/<tech>/ (synth_dc.csv, power_pt.csv)
+into results/strm/<tech>/streamer.csv (depth, loops, channels, area_um2, e_beat_pj, flops, slack_ns, fmax_mhz,
+status) and xbar.csv (inputs, banks, area_um2, e_access_pj, ...; energy empty where inputs > banks). Table.at reads
+them as X53 · X54 say, extrapolating along the two outermost grid values only when asked (X83 · X85); --loo prints
+the leave-one-out check. docs/cost_tables.md has the rule and worked examples. Standard library only.
 """
 from __future__ import annotations
 
@@ -58,11 +27,11 @@ STREAMER_COLUMNS = ["depth", "loops", "channels", "area_um2", "e_beat_pj", "flop
 XBAR_COLUMNS = ["inputs", "banks", "area_um2", "e_access_pj", "flops", "slack_ns", "fmax_mhz", "status"]
 
 
-# ---------------------------------------------------------------- the reference interpolation (X53)
+# ---------------------------------------------------------------- the reference interpolation
 # How an axis is measured for one field: "lin" (the raw value) or "inv" (1 / value). The weight between two grid
 # values lo < x < hi is (g(x) - g(lo)) / (g(hi) - g(lo)), so an "inv" axis reproduces a + b / x exactly.
 SCALES = {"lin": lambda x: x, "inv": lambda x: 1.0 / x}
-XBAR_SCALES = {"e_access_pj": {"inputs": "inv"}}
+XBAR_SCALES = {"e_access_pj": {"inputs": "inv"}}   # NB (X54): energy per access is a + b / inputs
 
 
 class Table:
@@ -136,8 +105,9 @@ def load(path: Path, axes: tuple[str, ...], fields: tuple[str, ...],
     return Table(ax, fv, scales)
 
 
+# NB (X53): no conflict-free stimulus where inputs > banks, so the value at inputs = banks stands in
 def complete_xbar(t: Table) -> Table:
-    """xbar's energy where inputs > banks: each bank count's value at inputs = banks (X53)."""
+    """xbar's energy where inputs > banks: each bank count's value at inputs = banks."""
     e = dict(t.fields["e_access_pj"])
     for (i, b) in itertools.product(t.axes["inputs"], t.axes["banks"]):
         if i > b and (i, b) not in e and (b, b) in e:
@@ -146,7 +116,7 @@ def complete_xbar(t: Table) -> Table:
 
 
 def reader_cost(t: Table, depth: float, loops: float, channels: float) -> tuple[float, float]:
-    """(area_um2, e_beat_pj) of a reader (or a writer, X52)."""
+    """(area_um2, e_beat_pj) of a reader (or a writer)."""
     return (t.at("area_um2", depth=depth, loops=loops, channels=channels),
             t.at("e_beat_pj", depth=depth, loops=loops, channels=channels))
 
@@ -165,11 +135,11 @@ def read_csv(path: Path) -> list[dict]:
 
 
 def gate_of(row: dict) -> str:
-    """A row's clk_gate as '1' or '0' (empty, a row from before X79, reads as 0)."""
+    """A row's clk_gate as '1' or '0' (empty, a row from before the switch, reads as 0)."""
     return "1" if str(row.get("clk_gate", "")) == "1" else "0"
 
 
-def build(source: str, tech: str, gate: str = "0", root: Path = ROOT) -> list[dict]:
+def build(source: str, tech: str, gate: str = "1", root: Path = ROOT) -> list[dict]:
     """The table rows of `source` from its synth_dc.csv and power_pt.csv, the rows whose clk_gate is `gate`."""
     synth = {r["point"]: r for r in read_csv(root / "results" / source / tech / "synth_dc.csv") if gate_of(r) == gate}
     power = {r["point"]: r for r in read_csv(root / "results" / source / tech / "power_pt.csv") if gate_of(r) == gate}
@@ -209,7 +179,7 @@ def write(rows: list[dict], path: Path, columns: list[str]) -> None:
         w.writerows(rows)
 
 
-# ---------------------------------------------------------------- leave-one-out (step 5 of STRM1 R1)
+# ---------------------------------------------------------------- leave-one-out
 def _neighbours(vals: list[int], x: int) -> tuple[int, int]:
     i = vals.index(x)
     return vals[i - 1], vals[i + 1]
@@ -264,58 +234,25 @@ def print_loo(name: str, axes: tuple[str, ...], res: dict[str, list[tuple]]) -> 
               f"{dict(zip(axes, worst[0]))} (actual {worst[1]:.4g}, predicted {worst[2]:.4g})")
 
 
-# ---------------------------------------------------------------- gated against ungated (CG2, X83)
-def ratios(gated: list[dict], ungated: list[dict], axes: tuple[str, ...], fields: tuple[str, ...]) -> list[dict]:
-    """Per point in both lists (both ok), {axes..., field: gated / ungated} for each field both have."""
-    base = {tuple(r[a] for a in axes): r for r in ungated if r["status"] == "ok"}
-    out = []
-    for g in gated:
-        u = base.get(tuple(g[a] for a in axes))
-        if g["status"] != "ok" or u is None:
-            continue
-        row = {a: g[a] for a in axes}
-        for f in fields:
-            if _f(g[f]) is not None and _f(u[f]):
-                row[f] = float(g[f]) / float(u[f])
-        out.append(row)
-    return out
-
-
-def print_ratios(name: str, rows: list[dict], axes: tuple[str, ...], fields: tuple[str, ...]) -> None:
-    print(f"{name}: gated / ungated at {len(rows)} points")
-    for r in rows:
-        print("  " + " ".join(f"{a} {r[a]}" for a in axes) + "  " +
-              "  ".join(f"{f} {r[f]:.4f}" for f in fields if f in r))
-    for f in fields:
-        v = [r[f] for r in rows if f in r]
-        if v:
-            print(f"  {f}: mean {statistics.mean(v):.4f}, {min(v):.4f} to {max(v):.4f}")
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tech", default="nangate45")
     ap.add_argument("--loo", action="store_true", help="also print the leave-one-out check")
-    ap.add_argument("--clk-gate", action="store_true", help="the clock-gated rows into streamer_cg.csv and xbar_cg.csv (X83)")
     args = ap.parse_args()
     out = ROOT / "results" / "strm" / args.tech
-    gate, sfx = ("1", "_cg") if args.clk_gate else ("0", "")
     for source, stem, cols, axes, e_col in (("streamer", "streamer", STREAMER_COLUMNS, READER_AXES, "e_beat_pj"),
                                             ("xbar", "xbar", XBAR_COLUMNS, XBAR_AXES, "e_access_pj")):
-        name = f"{stem}{sfx}.csv"
-        rows = build(source, args.tech, gate)
+        name = f"{stem}.csv"
+        rows = build(source, args.tech)
         write(rows, out / name, cols)
         bad = [r for r in rows if r["status"] != "ok"]
         print(f"{(out / name).relative_to(ROOT)}: {len(rows)} rows, {len(rows) - len(bad)} ok")
         for r in bad:
             print(f"  {' '.join(f'{a} {r[a]}' for a in axes)}: {r['status']}")
-        if args.clk_gate:
-            print_ratios(stem, ratios(rows, build(source, args.tech, "0"), axes, ("area_um2", e_col, "flops")),
-                         axes, ("area_um2", e_col, "flops"))
     if not args.loo:
         return 0
-    reader = load(out / f"streamer{sfx}.csv", READER_AXES, ("area_um2", "e_beat_pj"))
-    xbar = load(out / f"xbar{sfx}.csv", XBAR_AXES, ("area_um2", "e_access_pj"), XBAR_SCALES)
+    reader = load(out / "streamer.csv", READER_AXES, ("area_um2", "e_beat_pj"))
+    xbar = load(out / "xbar.csv", XBAR_AXES, ("area_um2", "e_access_pj"), XBAR_SCALES)
     print_loo("reader", READER_AXES, loo_reader(reader))
     print_loo("xbar", XBAR_AXES, loo_xbar(xbar))
     return 0

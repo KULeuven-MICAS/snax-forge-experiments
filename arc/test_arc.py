@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""arc/test_arc.py - tests of arc/arc.py's pack, read and unpacked (pixi run arc-test), on seeded random trees.
+"""arc/test_arc.py - tests of arc/arc.py's pack, read and unpacked (pixi run test), on seeded random trees.
 
   round trip     every file of a tree comes back with its bytes; keep filters by path; symlinks are not packed
   determinism    the same tree packed twice gives the same bytes, also from a copy with other times and modes

@@ -1,49 +1,31 @@
 # syn
 
-ASIC synthesis with Design Compiler, on a technology chosen per run: the Nangate 45 nm and 15 nm Open Cell Libraries. The points come from one of five sources (`--source`, [Sources](#sources)): three HLS tools, `hls` (Vitis, the default) and `bambu` from hls-exercises' `rtl/` and `xls` (Google XLS) from dslx-exercises' `rtl/`, each the tool's Verilog of one point and nothing else, so no FPGA flow and no HLS tool are needed; `forge`, snax-forge's generated accelerators, bundled into this repo's `rtl/forge/` ([the forge source](#the-forge-source)); and `char`, snax-forge's blocks alone (CHAR1, `rtl/char/`).
+ASIC synthesis with Design Compiler on the Nangate 45 nm Open Cell Library (X1), one DC run per point. The points come from one of the sources in [Sources](#sources): the HLS tools (`hls` for Vitis, the default, and `bambu` from hls-exercises' `rtl/`, `xls` from dslx-exercises'), each the tool's Verilog of one point, so no FPGA flow and no HLS tool are needed; snax-forge's accelerators (`forge`) and blocks alone (`char`); snax_cluster's streamer reader and interconnect (`streamer`, `xbar`, `xbar_mix`); and the whole cluster (`cluster`, through `cluster/cluster.py`). Every command is in [`docs/TOOL.md`](../docs/TOOL.md#3-synthesize-syn).
 
 ## Setup
 
-- `dc_shell` on the path, or `DC_SHELL=/path/to/dc_shell`.
-- hls-exercises checked out next to this repo, so the Vitis and Bambu points are at `../hls-exercises/rtl/` from the repo root. Elsewhere: `SYN_RTL=/path/to/hls-exercises/rtl`.
-- dslx-exercises next to it, for the XLS points at `../dslx-exercises/rtl/`. Elsewhere: `SYN_RTL_XLS=/path/to/dslx-exercises/rtl`.
-- RTL_flow_Nangate15 next to this repo too, holding both libraries. Elsewhere: `SYN_LIB_NANGATE45=/path/to/NangateOpenCellLibrary_typical.db` and `SYN_LIB_NANGATE15=/path/to/NanGate_15nm_OCL_typical_conditional_nldm.db`.
-
-```
-<parent>/
-  hls-exercises/            writes rtl/<tier>/<kernel>/<case>_w<W>/filelist.f (Vitis: opt, dace; Bambu: bambu)
-  dslx-exercises/           writes rtl/<tier>/<kernel>/xls_w<W>/filelist.f (Google XLS)
-  snax-forge-experiments/   this repo: syn/ reads those, results/ keeps the summaries
-  RTL_flow_Nangate15/       tech/nangate45/NangateOpenCellLibrary_typical.db
-                            tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db
-```
-
-## Environment
-
-The repo has its own pixi workspace (`pixi.toml` at the root: Python 3.11 and numpy, nothing else). Run `pixi install` once from the repo root, then run every script through pixi: `pixi run syn ...` (tasks run from the repo root and take their arguments after the task name). The EDA tools (`dc_shell`, and later `vsim`, `pt_shell`, `lmutil`) come from the shell's PATH; pixi only puts its own `bin/` in front.
+The sibling repositories, the tools and the environment are in [`docs/TOOL.md`](../docs/TOOL.md#1-set-up). The library is `../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db` from the repository root, or `SYN_LIB_NANGATE45`.
 
 ## Technologies
 
 A technology is one file, `tech/<tech>.json`. `run` needs `--tech <tech>`; there is no default library.
 
-| field | nangate45 | nangate15 |
-|---|---|---|
-| `lib_env` (overrides `lib_default`) | `SYN_LIB_NANGATE45` | `SYN_LIB_NANGATE15` |
-| `lib_default` (from the repo root) | `../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db` | `../RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db` |
-| `lib_name` | `NangateOpenCellLibrary` | `NanGate_15nm_OCL` |
-| `units` | time `1ns`, cap `1ff` | time `1ps`, cap `1ff` |
-| `drive_cell` | `INV_X4` | `INV_X4` |
-| `out_load_ff` | 25.0 (four INV_X4 inputs, 4 x 6.258) | 13.2 (four INV_X4 inputs, 4 x 3.301) |
-| `max_transition_ns` | 0.25 | 0.25 |
-| `wire_load` | `off` (the library has models; none is used) | `none` (the library has none) |
-| `fixes` | none | none |
-| corner (`notes`) | typical, 1.10 V, 25 C | typical, 0.80 V, 25 C |
-
-nangate15's flops all have an async reset or set (DFFRNQ_X1, DFFSNQ_X1), so Vitis's synchronous reset costs a flop with an unused reset pin plus reset logic.
+| field | nangate45 |
+|---|---|
+| `lib_env` (overrides `lib_default`) | `SYN_LIB_NANGATE45` |
+| `lib_default` (from the repo root) | `../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db` |
+| `lib_name` | `NangateOpenCellLibrary` |
+| `units` | time `1ns`, cap `1ff` |
+| `drive_cell` | `INV_X4` |
+| `out_load_ff` | 25.0 (four INV_X4 inputs, 4 x 6.258) |
+| `max_transition_ns` | 0.25 |
+| `wire_load` | `off` (the library has models; none is used) |
+| `fixes` | none |
+| corner (`notes`) | typical, 1.10 V, 25 C |
 
 ### Units and scaling
 
-`constraints.sdc` holds physical values only, in ns and fF. syn.py derives from the tech file's units `T_SCALE`, library time units per ns (1 on nangate45, 1000 on nangate15), and `C_SCALE`, library capacitance units per fF (1 on both), and DC multiplies every constraint by them: the clock is `$clock_ns * T_SCALE`, the uncertainties 0.1 ns (setup) and 0.02 ns (hold), the I/O delays 0.01 ns, the max transition the tech file's, and the output load `out_load_ff * C_SCALE`. `set_max_fanout 32` has no unit. The clock is 10 ns on both.
+`constraints.sdc` holds physical values only, in ns and fF. syn.py derives from the tech file's units `T_SCALE`, library time units per ns (1 on nangate45; 1000 for a library in ps), and `C_SCALE`, library capacitance units per fF (1), and DC multiplies every constraint by them: the clock is `$clock_ns * T_SCALE`, the uncertainties 0.1 ns (setup) and 0.02 ns (hold), the I/O delays 0.01 ns, the max transition the tech file's, and the output load `out_load_ff * C_SCALE`. `set_max_fanout 32` has no unit. The clock is 10 ns (X2).
 
 ### The unit check
 
@@ -53,7 +35,7 @@ It then writes `reports/lib_info.txt`: the library name and units as read, the o
 
 ### Wire load
 
-No wire-load model applies on either library. On nangate45, whose library sets `default_wire_load 5K_hvratio_1_1`, `dc_syn.tcl` sets `auto_wire_load_selection false`, removes the library's `default_wire_load` before elaboration and runs `remove_wire_load_model` on the design after link (`auto_wire_load_selection false` alone still leaves `5K_hvratio_1_1`). On nangate15 (`none`) it checks that the library has no default model. Either way `area.rpt` says `No wire load specified` and `power.rpt` has no `Wire Load Model` table; syn.py marks a run whose area report says otherwise as failed.
+No wire-load model applies (X3). The library sets `default_wire_load 5K_hvratio_1_1`, `dc_syn.tcl` sets `auto_wire_load_selection false`, removes the library's `default_wire_load` before elaboration and runs `remove_wire_load_model` on the design after link (`auto_wire_load_selection false` alone still leaves `5K_hvratio_1_1`). `area.rpt` says `No wire load specified` and `power.rpt` has no `Wire Load Model` table; syn.py marks a run whose area report says otherwise as failed.
 
 ## Sources
 
@@ -85,28 +67,13 @@ No wire-load model applies on either library. On nangate45, whose library sets `
 
 **Bambu's split (docs X41).** Bambu's top holds a `controller_*` and a `datapath_*` instance. A bambu row adds `ctrl_um2` (the `controller_*` instance with its children), `datapath_um2` (the `datapath_*` instance with its children) and `glue_um2` (`area_um2` minus the two), from the point's `synth_dc_modules.csv` rows (absolute totals, as forge's). A point without exactly one `controller_*` and one `datapath_*` row fails (`failed: Bambu split (...)`). Bambu's `datapath_*` also holds its loop counter and its stream interfaces. Vitis and XLS rows report totals only: their netlists are flat, and a split would have to be inferred.
 
-## Run
+## What syn.py passes DC
 
-A point is named `<tier>/<kernel>/<point>`, the folder under the source's `rtl/` (for example `done/vecadd/opt_w8`, one hardware point that every size runs on). Patterns are shell globs over those names; quote them.
+syn.py passes DC: `SYN_FILELIST`, `SYN_LIB_DB` and `SYN_LIB_NAME`, `SYN_TIME_UNIT` and `SYN_CAP_UNIT` (the units to expect), `SYN_T_SCALE` and `SYN_C_SCALE`, `SYN_DRIVE_CELL`, `SYN_OUT_LOAD_FF`, `SYN_MAX_TRANS_NS`, `SYN_WIRE_LOAD`, `SYN_CLOCK_NS` and `SYN_CORES`, and from the source `SYN_FORMAT`, `SYN_CLK_PORT` and `SYN_RST_PORT` ([Sources](#sources)). `dc_syn.tcl` takes the hls values when the three are not set. The dry run prints the port guard's result and these variables. `--clk-gate` adds `SYN_CLK_GATE_ENABLE=1`, `--sdf` `SYN_WRITE_SDF=1`; the cluster source sets `SYN_FLIST_TCL`, `SYN_TOP`, `SYN_EXTRA_SDC`, `SYN_POST_TCL` and `SYN_RAM_DBS` in place of `SYN_FILELIST`, and `SYN_IGNORE_LOAD=1`.
 
-```bash
-pixi run syn list 'done/vecadd/*'                                           # the points a pattern picks
-pixi run syn run done/vecadd/opt_w8 --tech nangate45 --dry-run              # print the commands only
-pixi run syn run done/vecadd/opt_w8 --tech nangate45                        # one point at 10 ns
-pixi run syn run 'done/*/opt_w8' --tech nangate15 -j 2                      # several, 2 DC runs at once
-pixi run syn summary --tech nangate15                                       # every nangate15 run so far
-pixi run syn list --tech nangate45                                          # the points with a nangate45 row
-pixi run syn list --source bambu                                            # Bambu's points
-pixi run syn run done/dot/xls_w16 --source xls --tech nangate45 --dry-run   # an XLS point
-pixi run syn check-ports --source bambu                                     # the port guard alone, every point
-pixi run syn run done/dot/forge3_w8 --source forge --tech nangate45 --clk-gate   # the same point, clock-gated (X79)
-```
+## Clock gating
 
-`--source hls|bambu|xls|forge|char` picks the points (default `hls`); `list`, `run`, `summary` and `check-ports` all take it. `--clock` is the ASIC clock period in ns (default 10). `--cores` is the cores per DC run (default 16). `-j` is the number of DC runs at once, each of which holds a license. Without `--tech`, `list` lists the points and `summary` shows every technology.
-
-syn.py passes DC: `SYN_FILELIST`, `SYN_LIB_DB` and `SYN_LIB_NAME`, `SYN_TIME_UNIT` and `SYN_CAP_UNIT` (the units to expect), `SYN_T_SCALE` and `SYN_C_SCALE`, `SYN_DRIVE_CELL`, `SYN_OUT_LOAD_FF`, `SYN_MAX_TRANS_NS`, `SYN_WIRE_LOAD`, `SYN_CLOCK_NS` and `SYN_CORES`, and from the source `SYN_FORMAT`, `SYN_CLK_PORT` and `SYN_RST_PORT` ([Sources](#sources)). `dc_syn.tcl` takes the hls values when the three are not set. The dry run prints the port guard's result and these variables.
-
-**Clock gating (X79).** `--clk-gate` sets `SYN_CLK_GATE_ENABLE=1`, which turns on `dc_syn.tcl`'s `CLK_GATE_ENABLE`: `scripts/clock_gating.tcl` is sourced before the compile (it stops the run if the library has no `latch_posedge` integrated clock gate, then sets the style: latch-based integrated gates, positive edge, at least 2 bits a bank, through the hierarchy), the compile is `compile_ultra -no_autoungroup -gate_clock`, and three reports join the others: `clock_gating.rpt` (`report_clock_gating`), `clock_gating_elements.rpt` (each gate with the bits it gates) and `clock_gating_ungated.rpt` (each ungated register and why), kept whatever their size. The run is tagged `_cg` after the clock tag (`<point>[_c<clock>]_cg.zip`), and its rows have `clk_gate` 1; the CSVs merge on point, clock and `clk_gate`, so it sits beside the ungated run and never replaces it. A cluster point turns it on with `"syn": {"clk_gate": true}` in `cluster/points.json` instead: its own name tells it apart (no `_cg` tag), and its row's `clk_gate` comes from the environment DC ran with. Off by default; every other run is as before.
+`--clk-gate` sets `SYN_CLK_GATE_ENABLE=1`, which turns on `dc_syn.tcl`'s `CLK_GATE_ENABLE`: `scripts/clock_gating.tcl` is sourced before the compile (it stops the run if the library has no `latch_posedge` integrated clock gate, then sets the style: latch-based integrated gates, positive edge, at least 2 bits a bank, through the hierarchy), the compile is `compile_ultra -no_autoungroup -gate_clock`, and three reports join the others: `clock_gating.rpt` (`report_clock_gating`), `clock_gating_elements.rpt` (each gate with the bits it gates) and `clock_gating_ungated.rpt` (each ungated register and why), kept whatever their size. The run is tagged `_cg` after the clock tag (`<point>[_c<clock>]_cg.zip`), and its rows have `clk_gate` 1; the CSVs merge on point, clock and `clk_gate`, so it sits beside the ungated run and never replaces it. A cluster point turns it on with `"syn": {"clk_gate": true}` in `cluster/points.json` instead: its own name tells it apart (no `_cg` tag), and its row's `clk_gate` comes from the environment DC ran with. Off by default; a point or source says `clk_gate` itself (X79 · X87 · X88).
 
 ## What a run leaves
 
@@ -163,7 +130,7 @@ Only those nine files are committed per run (`KEPT_REPORTS` at the top of `syn.p
 | `cells`, `seq_cells` | number of cells, of sequential cells |
 | `crit_path_ns`, `slack_ns` | `qor.rpt`'s critical path length and slack, converted from library units to ns |
 | `fmax_mhz` | 1000 / (`clock_ns` - `slack_ns`) |
-| `slack_in2reg_ns`, `slack_reg2reg_ns`, `slack_reg2out_ns`, `slack_in2out_ns` | the worst setup slack of each path class (docs X40), from `path_classes.rpt`, in ns; empty when the class has no path, and in rows synthesized before HSYN1 R3 |
+| `slack_in2reg_ns`, `slack_reg2reg_ns`, `slack_reg2out_ns`, `slack_in2out_ns` | the worst setup slack of each path class (docs X40), from `path_classes.rpt`, in ns; empty when the class has no path, and in rows synthesized before these columns |
 | `maxcap_nets`, `maxtrans_nets` | `qor.rpt`: Max Cap Violations, Max Trans Violations |
 | `dyn_power_uw`, `leak_power_uw` | `power.rpt`'s total dynamic and cell leakage power, in uW |
 | `e_clk_pj`, `e_reg_pj`, `e_seq_pj`, `e_comb_pj`, `e_total_pj` | energy per cycle of the power groups clock_network, register, sequential, combinational: (internal + switching) [uW] x `clock_ns` / 1000; the total is their sum, and syn.py checks it against `dyn_power_uw` x `clock_ns` / 1000 |
@@ -171,7 +138,7 @@ Only those nine files are committed per run (`KEPT_REPORTS` at the top of `syn.p
 | `lib_md5`, `dc_version` | the .db's md5 and DC's version |
 | `date`, `run` | when the row was written, the run folder (its zip is `<run>.zip`) |
 
-`power.rpt` states its units (`Dynamic Power Units`, `Leakage Power Units`: 1 uW and 1 nW on nangate45, 1 mW and 1 pW on nangate15), and the totals carry their own suffix; syn.py reads both and converts to uW.
+`power.rpt` states its units (`Dynamic Power Units`, `Leakage Power Units`: 1 uW and 1 nW on nangate45), and the totals carry their own suffix; syn.py reads both and converts to uW.
 
 A forge row has seven more columns after `run`, described in [the forge source](#the-forge-source): `recipe`, `W`, `snax_forge_commit`, `csr_um2`, `ctrl_um2`, `datapath_um2`, `glue_um2`. A bambu row has three: `ctrl_um2`, `datapath_um2`, `glue_um2` ([Sources](#sources)).
 
@@ -209,7 +176,7 @@ hls-exercises' `bench/bench.py` (Vitis) and `bench/bambu.py` (Bambu), and dslx-e
 vecadd.v
 ```
 
-A `# ram:` line names a memory Vitis built. Neither library has RAM cells, and DC would build the memory from flops (hours, and no fair area), so `run` parks such a point with the status `skipped: needs a RAM macro (<files>); <tech> has no RAM cells, RAM1 builds one (OpenRAM)`. `--with-ram` runs it anyway.
+A `# ram:` line names a memory Vitis built. Neither library has RAM cells, and DC would build the memory from flops (hours, and no fair area), so `run` parks such a point with the status `skipped: needs a RAM macro (<files>); <tech> has no RAM cells, ram/ram.py builds one`. `--with-ram` runs it anyway.
 
 ## The forge source
 
@@ -225,15 +192,8 @@ A `# ram:` line names a memory Vitis built. Neither library has RAM cells, and D
 
 **The results tree.** As for the HLS sources, under `forge`: runs in `syn/runs/forge/<tech>/<tier>/<kernel>/<point>.zip` with `syn/runs/forge/<tech>/summary.csv`, committed results in `results/forge/<tech>/` (`synth_dc.csv`, `synth_dc_modules.csv`, `reports/` with one zip of `KEPT_REPORTS` per point). A forge row of `synth_dc.csv` has seven more columns after `run`: `recipe`, `W` (from `point.json`), `snax_forge_commit` (from `bundle.json`), and the area split of the wrapper, in um2: `csr_um2`, `ctrl_um2` and `datapath_um2` (the absolute total, children included, of the rows of `synth_dc_modules.csv` whose design is `snax_forge_csr`, `snax_forge_ctrl` and `snax_forge_datapath`, the keys of `bundle.json`'s `modules`), and `glue_um2` = `area_um2` minus the three.
 
-**The glue.** DC's boundary optimization is left on, so forge compiles like the HLS points (`compile_ultra -no_autoungroup`). It moves a few cells to the wrapper's own level: the inverter that turns `rst_ni` into the active-high `reset` of firtool's flops, and inverters on outputs taken out of the modules (`dot_3` at W = 4: 2.1 um2 on nangate45, 0.3 um2 on nangate15). `glue_um2` is their area. `run` prints a point whose glue is negative or above 1 % of the total (`GLUE_MAX`), or that has no row for one of the three modules (then the glue is empty); it does not fail it.
+**The glue.** DC's boundary optimization is left on, so forge compiles like the HLS points (`compile_ultra -no_autoungroup`). It moves a few cells to the wrapper's own level: the inverter that turns `rst_ni` into the active-high `reset` of firtool's flops, and inverters on outputs taken out of the modules (`dot_3` at W = 4: 2.1 um2). `glue_um2` is their area. `run` prints a point whose glue is negative or above 1 % of the total (`GLUE_MAX`), or that has no row for one of the three modules (then the glue is empty); it does not fail it.
 
-```bash
-pixi run forge-rtl --list 'done/dot/*'                                     # the forge points
-pixi run forge-rtl -j 6                                                    # all 48 bundles into rtl/forge/
-pixi run syn list --source forge                                           # the bundles syn.py sees
-pixi run syn run done/dot/forge3_w4 --source forge --tech nangate45        # one point
-pixi run syn summary --source forge                                        # every forge run so far
-```
 
 ## The streamer and xbar sources
 
@@ -241,20 +201,12 @@ pixi run syn summary --source forge                                        # eve
 
 **The points.** Every zip there with a `config.json`; the top is its `filelist.f`'s `# top:` line. `run` unpacks the zip into `tmp/` for the DC run and writes the run folder's `filelist.f` with the unpacked `<top>.sv`. Settings as every source: X1 to X4, 10 ns, `compile_ultra -no_autoungroup`. `run` starts the largest points first (xbar by inputs x banks, streamer by channels x depth, then loops), so the longest runs do not end the batch alone.
 
-**The flop check.** A row adds `rtl_flop_bits`, the register and memory bits the bundle's RTL declares under the top (`strm/gen.py`'s `flop_bits`, firtool's simulation-only `_RANDOM*` temporaries left out, PITFALLS SC7), and `opt1207`, the registers DC removed as unloaded (its unique OPT-1207 lines). A row whose `seq_cells` differs from `rtl_flop_bits` is printed (`flops <point> on <tech>: DC <n> sequential cells, RTL <m> bits, <k> OPT-1207`) and stays `ok` (X82): ungated, STRM1 found every point equal; a clock-gated run counts its integrated gates as sequential cells too. Rows also carry the grid's params and `snax_cluster_commit` (from `config.json`).
+**The flop check.** A row adds `rtl_flop_bits`, the register and memory bits the bundle's RTL declares under the top (`strm/gen.py`'s `flop_bits`, firtool's simulation-only `_RANDOM*` temporaries left out, PITFALLS SC7), and `opt1207`, the registers DC removed as unloaded (its unique OPT-1207 lines). A row whose `seq_cells` differs from `rtl_flop_bits` is printed (`flops <point> on <tech>: DC <n> sequential cells, RTL <m> bits, <k> OPT-1207`) and stays `ok` (X82): ungated, every point was equal; a clock-gated run counts its integrated gates as sequential cells too. Rows also carry the grid's params and `snax_cluster_commit` (from `config.json`).
 
-```bash
-pixi run syn list --source streamer
-pixi run syn run '*' --source xbar --tech nangate45 -j 4 --cores 4
-pixi run syn run 'd8_*' --source streamer --tech nangate45 -j 4 --cores 4
-```
 
-`rtl/xbar/` also holds `i36_b32` (`strm/grid.json`'s `extra`, the base of xbar_mix's cluster points), so `syn run '*' --source xbar` would synthesize it too; it is not one of STRM1's 27 points and not in `results/xbar/`.
+`rtl/xbar/` also holds `i36_b32` (`strm/grid.json`'s `extra`, the base of xbar_mix's cluster points), so `syn run '*' --source xbar` would synthesize it too; it is not one of the 27 grid points and not in `results/xbar/`.
 
 ## The xbar_mix source
 
 `--source xbar_mix` (X70) synthesizes an xbar point's `SparseInterconnect` inside `strm/xbar_mix.py`'s wrapper, top `xbar_mix`: inputs `0..ro-1` read-only (`bits_write`, `bits_data`, `bits_amo` tied 0), `ro..ro+wo-1` write-only (`bits_write` 1, `bits_amo` 0, response data open), the rest read-write, and on every point the ties of snax_cluster's `sparse_interconnect_wrapper.sv.tpl` (every `io_tcdmRsps_*_ready` and `io_memRsps_*_valid` 1, `io_memRsps_*_ready` and `io_memReqs_*_bits_priority` open). The zips are `rtl/xbar_mix/i<inputs>_b<banks>_r<ro>_w<wo>.zip` (`pixi run strm-rtl --set xbar_mix`, `strm/README.md`); `run` treats them as the xbar points, two files in the run's `filelist.f`, largest first by inputs x banks. A row adds `ro` and `wo`; `rtl_flop_bits` is the SparseInterconnect's (the wrapper declares no register), and `flops_removed` is `rtl_flop_bits` minus DC's flops: DC may remove the registers the ties make dead, so a removed flop is printed per point (`flops <point>: DC removed ...`) and does not fail the row. A row with more sequential cells than the RTL declares, or with no count, is printed the same way and stays `ok` (X82).
 
-```bash
-pixi run syn run '*' --source xbar_mix --tech nangate45 -j 4 --cores 4
-```

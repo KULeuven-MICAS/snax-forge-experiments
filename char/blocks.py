@@ -1,31 +1,14 @@
 #!/usr/bin/env python3
-"""char/blocks.py - snax-forge's catalogue blocks alone, for the points in char/points.json (CHAR1).
-
-A point is one catalogue datapath of snax-forge (hw/chisel/blocks.json) at
-full params, named <block>/<case>_w<W> (e.g. tree/add_w8, link/d4_w1).
-Patterns are shell globs over those names.
+"""char/blocks.py - snax-forge's catalogue blocks alone, for the points in char/points.json.
 
   pixi run char-rtl [PATTERN ...] [--list] [--dry-run] [--allow-dirty]
 
-Every selected point goes into one call of snax-forge's gen-block (its
-snax_forge/gen/block.py, C§17's --block) in the snax-forge checkout
-(SNAX_FORGE, default ../snax-forge from the repo root), through
-`pixi run --manifest-path $SNAX_FORGE/pixi.toml`, with forge/bundles.py's
-environment (this repo's PIXI_* and CONDA_* variables and .pixi/ PATH entries
-removed, the inner CONDA_PREFIX checked). gen-block's list is written to
-rtl/char/gen-block.json and its output to rtl/char/char-rtl.log. Each block is
-the top module with the asynchronous active-high reset it has inside an
-accelerator: rtl/char/<point>/sv/, one file per module, and emitted.json
-(block, params, top, modules, files). A point's folder and zip are removed
-first; a kept point's folder is packed into rtl/char/<point>.zip, test-read
-and deleted (docs X51): syn/syn.py and sim/pwr.py read the zip.
-
-A kept point gets point.json: point, datapath, params, snax_forge_commit,
-dirty, date. The commit and dirty are snax-forge's `git rev-parse HEAD` and
-`git status --porcelain`, as its bundle.py records them, taken before and
-after the call (dirty if either is). A dirty checkout is refused before
-anything runs unless --allow-dirty. git ignores rtl/: a block is rebuilt from
-its commit. Standard library and arc/arc.py only.
+A point is one catalogue datapath of snax-forge (hw/chisel/blocks.json) at full params, named <block>/<case>_w<W>
+(tree/add_w8, link/d4_w1); patterns are shell globs over those names. Every selected point goes into one call of
+snax-forge's gen-block in the snax-forge checkout (SNAX_FORGE, default ../snax-forge), with forge/bundles.py's
+cleaned environment; each block is the top module with the asynchronous active-high reset it has inside an
+accelerator, packed with emitted.json and point.json (point, datapath, params, commit, dirty, date) into
+rtl/char/<point>.zip. A dirty checkout is refused unless --allow-dirty. Standard library and arc/arc.py only.
 """
 
 from __future__ import annotations
@@ -136,7 +119,7 @@ def main() -> int:
             "snax_forge_commit": commit, "dirty": dirty,
             "date": dt.datetime.now().isoformat(timespec="seconds"),
         }, indent=2) + "\n")
-        arc.pack_bundle(dest)               # rtl/char/<point>.zip, test-read; the folder goes (X51)
+        arc.pack_bundle(dest)               # rtl/char/<point>.zip, test-read; the folder goes
         made.append(p["point"])
         print(f"made  {p['point']}  {emitted['top']}  ({len(emitted['files'])} file(s))", flush=True)
     if failed:

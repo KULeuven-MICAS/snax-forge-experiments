@@ -3,7 +3,7 @@
 # PrimePower (pt_shell, averaged mode) on one mapped netlist from syn/runs/, with the same
 # library, constraints and wire-load setting as syn/scripts/dc_syn.tcl. Nothing is
 # resynthesized and nothing under syn/runs/ is written: sim/pwr.py runs it in a folder of its own.
-# Generalized from sim/probe/pt_power.tcl (results/hls/runs/2026-10-29_pwr_step0.md).
+# First proved by hand on one point (results/hls/runs/2026-10-29_pwr_step0.md).
 #
 #   pt_shell -no_init -f <repo>/sim/scripts/pt_power.tcl -output_log_file pt_shell.log < /dev/null
 #
@@ -12,13 +12,13 @@
 #   PWR_MODE     saif     read_saif PWR_ACT -strip_path PWR_STRIP (the busy window, from vcd2saif)
 #                uniform  DC's power_default_toggle_rate and power_default_static_probability
 #                         annotated on every net but the clock's, nothing propagated (the setup
-#                         check against sim/probe/dc_readback.tcl uniform, docs/DECISIONS.md X10)
-#                cluster  PWR1 (cluster/power.py): the netlist linked once, then per window of PWR_WINDOWS
+#                         check against sim/scripts/dc_readback.tcl uniform)
+#                cluster  cluster/power.py: the netlist linked once, then per window of PWR_WINDOWS
 #                         reset_switching_activity, read_saif -strip_path PWR_STRIP, update_power and the
 #                         reports into PWR_OUT/<name>/, with a `done` file (each stage's seconds); licenses.rpt once
 #   PWR_WINDOWS  cluster: a file, one `<name> <saif path>` per line
-#   PWR_EXTRA_SDC  sourced after constraints.sdc when set (cluster: cluster/cluster.sdc, X68)
-#   PWR_RAM_DBS  the macros' .db, space separated, linked beside the library (X62; the cluster's 3 macros)
+#   PWR_EXTRA_SDC  sourced after constraints.sdc when set (cluster: cluster/cluster.sdc)
+#   PWR_RAM_DBS  the macros' .db, space separated, linked beside the library (a Vitis RAM swapped; the cluster's 3 macros)
 #   PWR_ACT      the SAIF (saif)
 #   PWR_STRIP    the DUT instance in the TB, tb/dut (saif)
 #   PWR_OUT      where the reports go (default reports)
@@ -60,7 +60,7 @@ set drive_cell   [tj_str drive_cell]
 set out_load_ff  [tj_num out_load_ff]
 set max_trans_ns [tj_num max_transition_ns]
 # The clock and reset ports constraints.sdc names: tech.json's dc_env (SYN_CLK_PORT, SYN_RST_PORT, which
-# syn.py records since SYN1 R0, clk_i and rst_ni for snax-forge), else Vitis's ap_clk and ap_rst_n.
+# syn.py records, clk_i and rst_ni for snax-forge), else Vitis's ap_clk and ap_rst_n.
 proc tj_env {key default} {
     global tj
     if {[regexp "\"$key\":\\s*\"(\[^\"\]*)\"" $tj -> v]} { return $v }
@@ -83,7 +83,7 @@ set power_enable_analysis true
 set power_analysis_mode averaged
 set search_path [list . [file dirname $lib_db]]
 set link_library [list * $lib_db]
-# X62: SRAM macros (a Vitis RAM swapped by syn.py), their .db beside the library (PWR_RAM_DBS, space separated)
+# SRAM macros (a Vitis RAM swapped by syn.py), their .db beside the library (PWR_RAM_DBS, space separated)
 if {[info exists ::env(PWR_RAM_DBS)] && $::env(PWR_RAM_DBS) ne ""} {
     foreach db $::env(PWR_RAM_DBS) { lappend link_library [file normalize $db] }
 }
@@ -99,7 +99,7 @@ set t_link     [clock milliseconds]
 # Wire load: none, as in dc_syn.tcl. PT applies the library's default_wire_load (nangate45's
 # 5K_hvratio_1_1) whatever auto_wire_load_selection and remove_wire_load_model say, and
 # report_design hides it (docs/PITFALLS.md PT1). Wire capacitance and resistance 0 on every net
-# override it; a no-op on nangate15, which has no models.
+# override it.
 #-----------------------------
 set auto_wire_load_selection false
 if {$wire_load eq "off"} { remove_wire_load_model }
@@ -125,7 +125,7 @@ source [file join $repo syn scripts constraints.sdc]
 if {[info exists ::env(PWR_EXTRA_SDC)] && $::env(PWR_EXTRA_SDC) ne ""} { source $::env(PWR_EXTRA_SDC) }
 
 #-----------------------------
-# PWR1's cluster mode: one session, one window after another (the reports as below, per window)
+# The cluster mode: one session, one window after another (the reports as below, per window)
 #-----------------------------
 if {$mode eq "cluster"} {
     set t_setup [clock milliseconds]

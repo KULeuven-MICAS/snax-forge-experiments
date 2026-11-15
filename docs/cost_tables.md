@@ -1,6 +1,6 @@
 # The cost tables
 
-snax-forge's first-order cost model (HWCOST) prices a design from four files made in this repo, all on Nangate 45 nm: the SRAM banks (`results/ram/nangate45/ram_table.csv`), the streamer's data mover (`results/strm/nangate45/streamer.csv`), the TCDM sparse interconnect (`results/strm/nangate45/xbar.csv`) and its read-only and write-only inputs (`results/strm/nangate45/xbar_kinds.json`). This page explains, for each one, what a number means, how it was measured, how a cost is read between grid points and how far that can be trusted. The costs are for comparing design variants with each other, not for sign-off. Only dynamic energy is used.
+snax-forge's first-order cost model (HWCOST) prices a design from four files made in this repo, all on Nangate 45 nm: the SRAM banks (`results/ram/nangate45/ram_table.csv`), the streamer's data mover (`results/strm/nangate45/streamer.csv`), the TCDM sparse interconnect (`results/strm/nangate45/xbar.csv`) and its read-only and write-only inputs (`results/strm/nangate45/xbar_kinds.json`). This page explains, for each one, what a number means, how it was measured, how a cost is read between grid points and how far that can be trusted. The costs are for comparing design variants with each other, not for sign-off. Only dynamic energy is used. The reader and interconnect tables come from clock-gated synthesis (X83 · X85); `xbar_kinds.json`'s factors are fitted on the `xbar_mix` grid, which is ungated until CG5 makes it again.
 
 ## Symbols
 
@@ -37,7 +37,7 @@ snax-forge's first-order cost model (HWCOST) prices a design from four files mad
 
 The reader and the interconnect come from snax_cluster's own Chisel generators at one pinned commit (`ea9c837`, `strm/grid.json`). Each grid point is generated, synthesized and simulated alone (X52):
 
-- **Synthesis:** Design Compiler on Nangate 45 nm (typical, 1.10 V, 25 °C), 10 ns clock, no wire-load model, hierarchy kept (X1–X4, X22). Every point met timing. A flop check compares DC's flops with the bits the RTL declares: all 195 points matched. No clock gating, as in the RTL. The clock-gated tables beside them, `streamer_cg.csv` and `xbar_cg.csv` (X83), come from the same RTL synthesized with DC's clock gating (X79); there an integrated gate counts as a sequential cell and the flop check is reported, not failed (X82).
+- **Synthesis:** Design Compiler on Nangate 45 nm (typical, 1.10 V, 25 °C), 10 ns clock, no wire-load model, hierarchy kept (X1–X4, X22), with DC's clock gating (X79), as the cluster is synthesized. Every point met timing. An integrated clock gate counts as a sequential cell, so the flop check against the bits the RTL declares is reported, not failed (X52 · X82).
 - **Power:** a zero-delay Questa simulation of the netlist; its window cut from the VCD, turned into a SAIF and read by PrimePower in averaged mode (X7–X9). Every SAIF checked, every net annotated. Random data with seed 0 (seed 1 moves a reader's energy by 0.15 %).
 
 Both stimuli are full rate: the case a design reaches when nothing stalls.
@@ -70,13 +70,13 @@ $$e_{\mathrm{beat}} = \frac{E_{\mathrm{dyn}}(\text{window})}{1024}$$
 
 | Axis | Shape | Why |
 |---|---|---|
-| $C$ | straight: about +4,723 µm², +667 flops and +4.91 pJ per beat per channel | each channel has its own request and response path and buffer slice |
-| $L$ | nearly flat: +34 flops (two 17-bit counters), about +530 µm² and +0.26–0.49 pJ per beat per loop | the address generator's counters and adders |
-| $D$ | 9.77, 14.41, 20.30, 32.40 pJ per beat at $D$ = 2, 4, 8, 16 | the buffers hold $C \times D \times 81$ bits (64 data, 17 address) |
+| $C$ | straight: about +3,888 µm², +688 flops and +2.75 pJ per beat per channel | each channel has its own request and response path and buffer slice |
+| $L$ | nearly flat: about +35 flops, +489 µm² and +0.02–0.27 pJ per beat per loop | the address generator's counters and adders |
+| $D$ | 7.68, 9.85, 11.54, 15.03 pJ per beat at $D$ = 2, 4, 8, 16 | the buffers hold $C \times D \times 81$ bits (64 data, 17 address) |
 
-Most of the depth cost is clock: with no clock gating every buffer entry is clocked every cycle, about 4.1 fJ per flop, whether it holds data or not.
+With clock gating a buffer entry that only holds costs little: from $D$ = 8 to 16 the reader gains 2,676 flops and 3.48 pJ per beat, 1.3 fJ per added flop.
 
-**How it is read.** Linear interpolation on each axis ([Reading a table](#reading-a-table)). Depth is the one axis that bends: depth 4 predicted from 2 and 8 comes out 6–8 % low in energy.
+**How it is read.** Linear interpolation on each axis ([Reading a table](#reading-a-table)). Depth is the one axis that bends: depth 4 predicted from 2 and 8 comes out 6–10 % low in energy.
 
 ### Example 1: one axis
 
@@ -84,20 +84,20 @@ $D$ = 8, $L$ = 2, $C$ = 3. Only $C$ lies between grid values (2 and 4):
 
 | $D$, $L$, $C$ | $e_{\mathrm{beat}}$ (pJ) | $A$ (µm²) |
 |---|---|---|
-| 8, 2, 2 | 10.4858 | 10,694.8 |
-| 8, 2, 4 | 20.2973 | 20,155.1 |
+| 8, 2, 2 | 6.0367 | 8,897.7 |
+| 8, 2, 4 | 11.5441 | 16,691.8 |
 
-$$t = \frac{3 - 2}{4 - 2} = 0.5, \qquad e_{\mathrm{beat}} = 10.4858 + 0.5\thinspace(20.2973 - 10.4858) = 15.3916 \text{ pJ}$$
+$$t = \frac{3 - 2}{4 - 2} = 0.5, \qquad e_{\mathrm{beat}} = 6.0367 + 0.5\thinspace(11.5441 - 6.0367) = 8.7904 \text{ pJ}$$
 
-and $A = 10{,}694.8 + 0.5\thinspace(20{,}155.1 - 10{,}694.8) = 15{,}424.9$ µm² (`reader_cost(t, 8, 2, 3)`).
+and $A = 8{,}897.7 + 0.5\thinspace(16{,}691.8 - 8{,}897.7) = 12{,}794.7$ µm² (`reader_cost(t, 8, 2, 3)`).
 
 ### Example 2: two axes
 
-$D$ = 6, $L$ = 3, $C$ = 3. $D$ lies between 4 and 8, $C$ between 2 and 4; at $L$ = 3 the corners are 7.8641 (4, 2), 14.7329 (4, 4), 10.7979 (8, 2), 20.6058 (8, 4) pJ.
+$D$ = 6, $L$ = 3, $C$ = 3. $D$ lies between 4 and 8, $C$ between 2 and 4; at $L$ = 3 the corners are 5.2744 (4, 2), 9.9340 (4, 4), 6.1246 (8, 2), 11.6321 (8, 4) pJ.
 
-1. Along $C$ at $D$ = 4, $t$ = 0.5: $7.8641 + 0.5\thinspace(14.7329 - 7.8641) = 11.2985$.
-2. Along $C$ at $D$ = 8: $10.7979 + 0.5\thinspace(20.6058 - 10.7979) = 15.7019$.
-3. Along $D$, $t = (6 - 4)/(8 - 4) = 0.5$: $11.2985 + 0.5\thinspace(15.7019 - 11.2985) = 13.5002$ pJ per beat.
+1. Along $C$ at $D$ = 4, $t$ = 0.5: $5.2744 + 0.5\thinspace(9.9340 - 5.2744) = 7.6042$.
+2. Along $C$ at $D$ = 8: $6.1246 + 0.5\thinspace(11.6321 - 6.1246) = 8.8784$.
+3. Along $D$, $t = (6 - 4)/(8 - 4) = 0.5$: $7.6042 + 0.5\thinspace(8.8784 - 7.6042) = 8.2413$ pJ per beat.
 
 Three axes off the grid take eight corners: four steps along the first axis, two along the second, one along the third.
 
@@ -111,7 +111,7 @@ $$e_{\mathrm{access}} = \frac{E_{\mathrm{dyn}}(\text{window})}{\text{grants}}$$
 
 With $n > b$ some inputs must conflict, so no clean stimulus exists and those points have area only. The 512-bit DMA path is the same for every design and is not swept.
 
-**Why energy goes as 1/n.** Part of each cycle's energy does not depend on how many requests pass: the clock into the registers (never gated) and the bank side, which toggles every cycle. Call it $\beta$ per cycle. The rest is paid per request, $\alpha$ per access. Over $T$ cycles with $n$ grants each:
+**Why energy goes as 1/n.** Part of each cycle's energy does not depend on how many requests pass: the clock into the registers DC does not gate and the bank side, which toggles every cycle. Call it $\beta$ per cycle. The rest is paid per request, $\alpha$ per access. Over $T$ cycles with $n$ grants each:
 
 $$E_{\mathrm{dyn}} = T\thinspace(\beta + n\thinspace\alpha) \qquad \Rightarrow \qquad e_{\mathrm{access}}(n) = \frac{E_{\mathrm{dyn}}}{T\thinspace n} = \alpha + \frac{\beta}{n}$$
 
@@ -119,25 +119,25 @@ $\alpha$ and $\beta$ are found by a least-squares fit of $\alpha + \beta / n$ to
 
 | $b$ | $\alpha$ (pJ per access) | $\beta$ (pJ per cycle) | worst residual |
 |---|---|---|---|
-| 16 | 2.21 | 6.12 | 0.02 pJ |
-| 32 | 2.34 | 13.02 | 0.05 pJ |
-| 64 | 3.91 | 24.36 | 0.54 pJ |
+| 16 | 2.21 | 6.31 | 0.02 pJ |
+| 32 | 2.35 | 13.44 | 0.05 pJ |
+| 64 | 3.93 | 25.17 | 0.56 pJ |
 
-$\beta$ grows by about 0.38 pJ per bank, as a cost every bank pays every cycle should. The 64-bank row also rises slowly above 32 inputs (each bank arbitrates over all inputs) and dips at 32 inputs (4.13 pJ against about 4.6 either side; not traced). Area is close to a fixed cost per crosspoint, 157–166 µm² per input per bank, so it is linear in $n$ and $b$.
+$\beta$ grows by about 0.39 pJ per bank, as a cost every bank pays every cycle should. The 64-bank row also rises slowly above 32 inputs (each bank arbitrates over all inputs) and dips at 32 inputs (4.16 pJ against about 4.64 either side; not traced). Area is close to a fixed cost per crosspoint, 157–166 µm² per input per bank, so it is linear in $n$ and $b$.
 
 **How it is read.** Area linear in $n$ and $b$. Energy linear in $1/n$ and in $b$ (X54): two grid points fix $\alpha$ and $\beta$, so interpolating in $1/n$ follows $\alpha + \beta / n$ exactly between them. Above $n = b$ the energy takes the value at $n = b$, the largest $n$ measured for that bank count; since $e_{\mathrm{access}}$ falls with $n$, this is pessimistic.
 
 ### Example 3: energy in 1/n
 
-$n$ = 12, $b$ = 32, between the points (8, 32): 3.985046 pJ, 40,117.3 µm² and (16, 32): 3.111931 pJ, 82,784.5 µm².
+$n$ = 12, $b$ = 32, between the points (8, 32): 4.043928 pJ, 40,287.8 µm² and (16, 32): 3.152293 pJ, 83,108.2 µm².
 
-$$t = \frac{1/12 - 1/8}{1/16 - 1/8} = \frac{0.083333 - 0.125}{0.0625 - 0.125} = 0.66667, \qquad e_{\mathrm{access}} = 3.985046 + 0.66667\thinspace(3.111931 - 3.985046) = 3.4030 \text{ pJ}$$
+$$t = \frac{1/12 - 1/8}{1/16 - 1/8} = \frac{0.083333 - 0.125}{0.0625 - 0.125} = 0.66667, \qquad e_{\mathrm{access}} = 4.043928 + 0.66667\thinspace(3.152293 - 4.043928) = 3.4495 \text{ pJ}$$
 
-Area in $n$: $t$ = 0.5, $A = 40{,}117.3 + 0.5\thinspace(82{,}784.5 - 40{,}117.3) = 61{,}450.9$ µm². For comparison, energy linear in $n$ gives 3.5485 pJ, 4 % higher.
+Area in $n$: $t$ = 0.5, $A = 40{,}287.8 + 0.5\thinspace(83{,}108.2 - 40{,}287.8) = 61{,}698.0$ µm². For comparison, energy linear in $n$ gives 3.5981 pJ, 4 % higher.
 
 ### Example 4: more inputs than banks
 
-$n$ = 40, $b$ = 32. The energy takes the 32-bank row's value at $n$ = 32: 2.7394 pJ per access. The area was measured: 210,443.8 µm².
+$n$ = 40, $b$ = 32. The energy takes the 32-bank row's value at $n$ = 32: 2.7526 pJ per access. The area was measured: 210,357.6 µm².
 
 ## Read-only and write-only inputs
 
@@ -165,23 +165,22 @@ Energy keeps `xbar.csv`'s $e_{\mathrm{access}}$ for every input kind.
 
 ### Example 5: the cluster's interconnect
 
-Two cores: $n$ = 36, $b$ = 32, with $n_{ro}$ = 32, $n_{wo}$ = 1, $n_{rw}$ = 3.
+The mix as synthesized alone: $n$ = 36, $b$ = 32, with $n_{ro}$ = 32, $n_{wo}$ = 1, $n_{rw}$ = 3.
 
-*Factor form.* $A_{\mathrm{table}}(36, 32)$, linear between $n$ = 32 and 40: $164{,}650.3 + \frac{36 - 32}{40 - 32}(210{,}443.8 - 164{,}650.3) = 187{,}547.0$ µm². The factor: $1 - 0.3965 \cdot \frac{32}{36} - 0.4108 \cdot \frac{1}{36} = 0.6361$. So $A$ = 119,308 µm².
+*Factor form.* $A_{\mathrm{table}}(36, 32)$, linear between $n$ = 32 and 40: $164{,}995.0 + \frac{36 - 32}{40 - 32}(210{,}357.6 - 164{,}995.0) = 187{,}676.3$ µm². The factor: $1 - 0.3965 \cdot \frac{32}{36} - 0.4108 \cdot \frac{1}{36} = 0.6361$. So $A$ = 119,390 µm².
 
 *Crosspoint form.* $159.34 \cdot 32 \cdot 3 + 95.06 \cdot 32 \cdot 32 + 93.65 \cdot 32 \cdot 1 + 26.30 \cdot 36 - 19.43 \cdot 32 - 201.0 = 115{,}763$ µm².
 
 | | Synthesized | Factor | Crosspoint | Every input read-write |
 |---|---|---|---|---|
-| The same mix alone (`i36_b32_r32_w1`) | 118,952 µm² | +0.3 % | −2.7 % | |
-| Inside the two-core cluster | 107,685 µm² | +10.8 % | +7.5 % | +74 % |
-| Inside the one-core cluster ($n$ = 35, $n_{rw}$ = 2) | 102,884 µm² | +10.6 % (113,776) | +7.5 % (110,638) | |
+| The same mix alone (`i36_b32_r32_w1`) | 119,307 µm² | +0.1 % | −3.0 % | +57 % |
+| Inside the one-core cluster (`dot3_w16_cg`, $n$ = 35, $n_{rw}$ = 2) | 103,257 µm² | +10.3 % (113,891) | +7.2 % (110,638) | +76 % (182,006) |
 
-The cluster's remaining 10 % is constants the forms do not model (priority, user and strobe bits, bank outputs nothing reads).
+The cluster's remaining 7–10 % is constants the forms do not model (priority, user and strobe bits, bank outputs nothing reads).
 
 ### Example 6: all read-only
 
-$n$ = 16, $b$ = 16, every input read-only. Factor: 41,886.0 × (1 − 0.3965) = 25,278 µm². Crosspoint: $95.06 \cdot 16 \cdot 16 + 26.30 \cdot 16 - 19.43 \cdot 16 - 201.0 = 24{,}245$ µm². Synthesized: 24,970 µm² (factor +1.2 %, crosspoint −2.9 %). The factor's +1.2 % is mostly the cluster template's ties: $f_{ro}$ is measured with them on both points, while `xbar.csv` was synthesized without them and is about 2 % larger.
+$n$ = 16, $b$ = 16, every input read-only. Factor: 42,048.5 × (1 − 0.3965) = 25,376 µm². Crosspoint: $95.06 \cdot 16 \cdot 16 + 26.30 \cdot 16 - 19.43 \cdot 16 - 201.0 = 24{,}245$ µm². Synthesized (ungated): 24,970 µm² (factor +1.6 %, crosspoint −2.9 %). The factor's +1.6 % is mostly the cluster template's ties: $f_{ro}$ is measured with them on both points, while `xbar.csv` was synthesized without them and is about 2 % larger.
 
 **Range.** Both forms were checked for $n$ and $b$ in 16–64. Beyond 64 inputs both extrapolate linearly; the cost per crosspoint drifts up about 3 % from 40 inputs on, so a 128-input interconnect may land a few percent above the line. Not synthesized.
 
@@ -199,7 +198,7 @@ $g(x) = x$ is plain linear interpolation; $g(x) = 1/x$ follows a curve $\alpha +
 | `xbar.csv` | linear in $n$, $b$ | linear in $1/n$ and $b$ |
 | `ram_table.csv` | lookup only | lookup only |
 
-`report/strm_table.py` (`Table.at`, `reader_cost`, `xbar_cost`) is the reference; it refuses a query outside the grid ($D$ 2–16, $L$ 1–7, $C$ 1–16, $n$ 4–64, $b$ 16–64). snax-forge copies the rule and extrapolates outside the grid with a warning. Tested by `pixi run strm-table-test`; a copy of the rule should reproduce the examples above.
+`report/strm_table.py` (`Table.at`, `reader_cost`, `xbar_cost`) is the reference; it refuses a query outside the grid ($D$ 2–16, $L$ 1–7, $C$ 1–16, $n$ 4–64, $b$ 16–64). snax-forge copies the rule and extrapolates outside the grid with a warning. Tested by `pixi run test`; a copy of the rule should reproduce the examples above.
 
 ## How far it can be trusted
 
@@ -207,26 +206,26 @@ $g(x) = x$ is plain linear interpolation; $g(x) = 1/x$ follows a curve $\alpha +
 
 | Quantity | Points | Mean error | Worst |
 |---|---|---|---|
-| Reader area | 40 | 0.83 % | +1.66 % ($D$ 4, $L$ 2, $C$ 2) |
-| Reader energy | 40 | 4.01 % | −8.68 % ($D$ 4, $L$ 6, $C$ 6) |
-| Interconnect area | 21 | 1.08 % | +3.04 % ($n$ 8, $b$ 16) |
-| Interconnect energy, in $1/n$ | 11 | 2.49 % | +11.32 % ($n$ 32, $b$ 64, the dip); all others within 3.9 % |
-| Interconnect energy, in $n$ (not used) | 11 | 8.98 % | +24.32 % ($n$ 8, $b$ 64) |
+| Reader area | 40 | 0.56 % | −1.01 % ($D$ 4, $L$ 3, $C$ 4) |
+| Reader energy | 40 | 5.09 % | −11.42 % ($D$ 4, $L$ 6, $C$ 6) |
+| Interconnect area | 21 | 1.05 % | +3.14 % ($n$ 8, $b$ 16) |
+| Interconnect energy, in $1/n$ | 11 | 2.61 % | +11.68 % ($n$ 32, $b$ 64, the dip); all others within 4.3 % |
+| Interconnect energy, in $n$ (not used) | 11 | 9.20 % | +24.67 % ($n$ 8, $b$ 64) |
 
-Reader, axis by axis (one axis interpolated, the other two on grid values): channels 0.12 % area and 0.45 % energy mean error, loops 0.03 % and 0.42 %, depth 0.74 % and 3.95 %. Depth in $\log_2 D$ does worse (20.2 % area, 9.3 % energy).
+Reader, axis by axis (one axis interpolated, the other two on grid values): channels 0.15 % area and 1.44 % energy mean error, loops 0.03 % and 0.69 %, depth 0.55 % and 4.37 %. Depth in $\log_2 D$ does worse (18.9 % area, 4.8 % energy).
 
-**Fits tried instead of the table** for the interconnect's energy, per bank count, checked the same way; none beats the table:
+**Fits tried instead of the table** for the interconnect's energy, per bank count, checked the same way (the two forms with an exponent fitted by least squares over a grid of it); none beats the table on the mean:
 
 | Form | Parameters | Mean | Worst |
 |---|---|---|---|
-| Table, linear in $1/n$ | — | 2.5 % | +11.3 % |
-| $\alpha + \beta/n + \gamma\thinspace n$ | 3 | 2.7 % | +10.8 % |
-| $\alpha + k\thinspace n^p$ | 3 | 4.5 % | +14.9 % |
-| $\alpha + \beta/n$ | 2 | 4.6 % | +15.1 % |
-| $\alpha + \beta/n + \gamma/n^2$ | 3 | 5.0 % | +15.3 % |
-| $\alpha + \beta\thinspace e^{-n/\tau}$ | 3 | 5.9 % | +21.9 % |
-| $k\thinspace n^p$ | 2 | 11.1 % | +18.5 % |
-| $\alpha + \beta\thinspace n + \gamma\thinspace n^2$ | 3 | 13.6 % | +23.7 % |
+| Table, linear in $1/n$ | — | 2.6 % | +11.7 % |
+| $\alpha + \beta/n + \gamma\thinspace n$ | 3 | 2.7 % | +11.1 % |
+| $\alpha + \beta\thinspace e^{-n/\tau}$ | 3 | 3.9 % | +13.2 % |
+| $\alpha + k\thinspace n^p$ | 3 | 4.4 % | +15.3 % |
+| $\alpha + \beta/n$ | 2 | 4.6 % | +15.4 % |
+| $\alpha + \beta/n + \gamma/n^2$ | 3 | 4.9 % | +15.7 % |
+| $k\thinspace n^p$ | 2 | 11.2 % | +19.0 % |
+| $\alpha + \beta\thinspace n + \gamma\thinspace n^2$ | 3 | 13.8 % | +24.1 % |
 
 The SRAM table has every size as a row, so it needs no such check; fits of it were rejected (the best still 6 % off on average, 30 % at worst, X48).
 
@@ -234,13 +233,13 @@ The SRAM table has every size as a row, so it needs no such check; fits of it we
 
 - **Full rate.** A reader never stalls, and every interconnect input is granted every cycle. An interconnect with mostly idle inputs still pays $\beta$ every cycle over fewer accesses, so its real energy per access is higher than the table's; conflicts add arbitration not in the table either.
 - **A writer priced as a reader:** slightly pessimistic.
-- **No clock gating**, as in the RTL.
+- **Clock gating as DC inserts it** (X79): a flop that holds costs almost nothing, as in the synthesized cluster.
 - **Two models side by side:** logic on the Nangate cell library, SRAM from CACTI's 45 nm model, whose cells (about 0.41 µm² per bit with periphery at 512 × 64) are close to a foundry 45 nm SRAM and denser than FreePDK45's. Memory-against-logic ratios inherit that; comparisons between designs on the same memories do not.
 - **Averaged PrimeTime for logic, counted accesses for memories:** averaged PrimeTime sees each pin's probability, not which pins were high together, and charged a macro 12.5 % low on a probe (PITFALLS PT7).
 - **Nangate 45 nm, typical corner, no place and route.**
 
 ## Sources
 
-- Decisions: X1–X4, X7–X9, X22 (the flows); X47–X50 (SRAM); X52–X54 (streamer and interconnect); X70, X71 (input kinds).
-- Run notes: `results/ram/runs/2026-11-05_ram1_r1.md`, `2026-11-06_ram1_r2.md`, `2026-11-06_ram1_r3.md`; `results/strm/runs/2026-11-06_strm1_r1.md`, `2026-11-06_strm1_r2.md`; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`, `2026-11-11_csyn1_r3d.md`.
+- Decisions: X1–X4, X7–X9, X22 (the flows); X47–X50 (SRAM); X52 · X82, X53 · X54 (streamer and interconnect); X79, X83 · X85 (clock gating); X70, X71 (input kinds).
+- Run notes: `results/ram/runs/2026-11-05_ram1_r1.md`, `2026-11-06_ram1_r2.md`, `2026-11-06_ram1_r3.md`; `results/strm/runs/2026-11-06_strm1_r1.md`, `2026-11-06_strm1_r2.md`, `2026-11-13_cg2_r1.md` to `2026-11-14_cg2_r4.md`; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`, `2026-11-11_csyn1_r3d.md`.
 - Code: `ram/ram.py`, `strm/gen.py`, `report/strm_table.py`, `strm/xbar_mix.py`, `report/xbar_kinds.py`.

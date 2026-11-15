@@ -1,6 +1,6 @@
 """report/cluster_breakdown.py and cluster/hwcost.py on made-up hierarchies (no DC, no snax-forge).
 
-    pixi run cluster-breakdown-test
+    pixi run python report/test_cluster_breakdown.py
 """
 
 import json

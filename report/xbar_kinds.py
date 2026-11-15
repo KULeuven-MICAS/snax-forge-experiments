@@ -1,34 +1,13 @@
 #!/usr/bin/env python3
-"""report/xbar_kinds.py - the interconnect's read-only and write-only inputs, in two forms HWCOST can use (X71).
+"""report/xbar_kinds.py - the interconnect's read-only and write-only inputs, in two forms HWCOST can use.
 
   pixi run xbar-kinds [--tech nangate45]
-  pixi run xbar-kinds-test                    report/test_xbar_kinds.py
 
-Reads results/xbar_mix/<tech>/synth_dc.csv (CSYN1 R3c, X70), results/strm/<tech>/xbar.csv (STRM1's table, X52, X53)
-and, for the check against the cluster, results/cluster/<tech>/reports/dot3_w16.zip (CSYN1 R3, its
-area_hierarchy.rpt). Writes results/strm/<tech>/xbar_kinds.json next to xbar.csv:
-
-  factor      the default form. A read-write input's area, with every input read-write, comes from xbar.csv as it
-              always did (A_table(n, b)); an input that only reads loses the share f_ro of it, one that only writes
-              the share f_wo:
-
-                  A = A_table(n, b) * (1 - f_ro * n_ro / n - f_wo * n_wo / n)
-
-              f_ro is the mean over the grid's (inputs, banks) pairs of 1 - A(all read-only) / A(all read-write),
-              f_wo the same with all write-only; both points of a pair are xbar_mix's (the template's ties on both).
-  crosspoint  the option. Area as a cost per crosspoint (one input x one bank) of each kind, plus small terms:
-
-                  A = b * (c_rw * n_rw + c_ro * n_ro + c_wo * n_wo) + d * n + e * b + g
-
-              by ordinary least squares (numpy.linalg.lstsq, unweighted squared error in um2) over the grid's points
-              (the two i36_b32 points left out, kept as checks). Needs no table, so it also gives a number outside
-              the table's range, by linear extrapolation.
-
-  n = n_rw + n_ro + n_wo inputs (streamer channels, cores, the AXI port), b banks. A reader's channel is read-only,
-  a writer's write-only, the cores and AXI read-write (snax_cluster's DataRequestor and the cluster template, X70).
-
-checks lists each form against the two i36_b32 points and the cluster's sparse_interconnect_i. Standard library,
-numpy and arc/arc.py.
+Reads results/xbar_mix/<tech>/synth_dc.csv, results/strm/<tech>/xbar.csv and, for the check against the cluster,
+a cluster point's area_hierarchy.rpt; writes results/strm/<tech>/xbar_kinds.json: the factor form (the default,
+A = A_table(n, b) (1 - f_ro n_ro / n - f_wo n_wo / n)), the crosspoint form (a least-squares cost per crosspoint
+of each kind) and their checks against the two i36_b32 points and the cluster's sparse_interconnect_i (X71). The
+fits and worked examples are in docs/cost_tables.md. Standard library, numpy and arc/arc.py.
 """
 
 from __future__ import annotations
@@ -48,7 +27,7 @@ sys.path.insert(0, str(ROOT / "report"))
 import arc  # noqa: E402
 import strm_table  # noqa: E402
 
-CLUSTER = ("dot3_w16", "sparse_interconnect_i", 36, 32, 32, 1)   # point, instance, n, b, n_ro, n_wo
+CLUSTER = ("dot3_w16_cg", "sparse_interconnect_i", 35, 32, 32, 1)   # point, instance, n, b, n_ro, n_wo
 
 
 def rows(path: Path) -> list[dict]:

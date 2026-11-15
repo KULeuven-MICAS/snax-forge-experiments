@@ -1,29 +1,9 @@
-"""sim/sources/bambu.py - a Bambu point -> tb.json (docs/DECISIONS.md X44).
+"""sim/sources/bambu.py - a Bambu point -> tb.json.
 
-hls-exercises is not changed for this: the adapter reads what bench/bambu.py writes and the netlist.
-  - rtl/<tier>/<kernel>/bambu_w<W>/filelist.f  the top module ('# top:'), '# ram:'
-  - rtl/<tier>/<kernel>/bambu_w<W>/sizes.txt   the sizes (--size all)
-  - bench/tier_<tier>/<kernel>/params.json     the stream args in order ("axis"), the config pins and their
-                                               expressions, the scalar args, the sizes (shared with Vitis)
-  - the netlist's port list                    every port must be covered
-
-tb.json for the generated TB top (sim/pwr.py), as sources/hls.py's with:
-  source  "bambu"
-  clock   {port}                               clock (syn/syn.py's SOURCES)
-  reset   {port, active: low, sync: true}      reset
-  control {kind: "bambu_ctl", start: start_port, done: done_port, idle: idle_port}
-          start_port pulsed for one cycle by sim/tb/bambu_seq.sv; idle_port an output nobody reads (covered,
-          not driven or checked)
-  streams [{arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   <arg>_TDATA/_TVALID/_TREADY (or
-          p_<arg>_...), in params.json's axis order; lanes = TDATA bits / 64
-  pins    [{port, bits, from: "config" | "data:<arg>"}]   loop_count, len (where the kernel has it), alpha
-          (axpy): plain inputs, no ap_vld; driven from time 0, before reset is released, and held for the
-          whole run (Bambu reads them on every iteration, hls-exercises tb/bambu.svh); alpha drawn as a rand64
-          data pin after the streams (X19)
-  sizes   as sources/hls.py's: the cosim sizes, b64 when every config pin equals loop_count, n2048 (X24, X55)
-Expected cycles: the line a x loop_count + b through cycles_done at the point's sizes in
-results/bambu/bambu_cycles.csv (status ok rows; cycles_done is start_port's cycle to done_port's, as the
-window counts), integer and exact at those sizes.
+hls-exercises is not changed for this: the adapter reads what bench/bambu.py writes (the point's filelist.f and
+sizes.txt), the kernel's bench params.json (shared with Vitis) and the netlist's port list, every port covered.
+build() writes tb.json as sources/hls.py's, with Bambu's handshake (its fields and the expected cycles in build()'s
+docstring); docs/power.md, "Bambu", has the testbench and the window.
 """
 from __future__ import annotations
 
@@ -45,6 +25,24 @@ def sizes_txt(point: str) -> list[str]:
 
 
 def build(point: str, netlist: Path) -> dict:
+    """tb.json for the generated TB top (sim/pwr.py), as sources/hls.py's with:
+      source  "bambu"
+      clock   {port}                               clock (syn/syn.py's SOURCES)
+      reset   {port, active: low, sync: true}      reset
+      control {kind: "bambu_ctl", start: start_port, done: done_port, idle: idle_port}
+              start_port pulsed for one cycle by sim/tb/bambu_seq.sv; idle_port an output nobody reads (covered,
+              not driven or checked)
+      streams [{arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   <arg>_TDATA/_TVALID/_TREADY (or
+              p_<arg>_...), in params.json's axis order; lanes = TDATA bits / 64
+      pins    [{port, bits, from: "config" | "data:<arg>"}]   loop_count, len (where the kernel has it), alpha
+              (axpy): plain inputs, no ap_vld; driven from time 0, before reset is released, and held for the
+              whole run (Bambu reads them on every iteration, hls-exercises tb/bambu.svh); alpha drawn as a rand64
+              data pin after the streams
+      sizes   as sources/hls.py's: the cosim sizes, b64 when every config pin equals loop_count, n2048
+    Expected cycles: the line a x loop_count + b through cycles_done at the point's sizes in
+    results/bambu/bambu_cycles.csv (status ok rows; cycles_done is start_port's cycle to done_port's, as the
+    window counts), integer and exact at those sizes.
+    """
     top = hls.filelist(point)["top"]
     prm = hls.params_of(point)
     case, w = hls.case_w(point)

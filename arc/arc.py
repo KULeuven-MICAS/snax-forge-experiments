@@ -1,32 +1,24 @@
 #!/usr/bin/env python3
-"""arc/arc.py - outputs zipped one per point (docs X51, CLAUDE.md "Files are zipped").
+"""arc/arc.py - outputs zipped one per point (CLAUDE.md, "Files are zipped").
 
   pixi run arc check                 unpacked run folders, report folders not zipped, tmp/ leftovers, inodes
-  pixi run arc migrate [KIND ...]    convert what is on disk to zips (rtl syn sim ram results; default all)
   pixi run arc ls ZIP                a zip's members and sizes
   pixi run arc cat ZIP MEMBER        one member on stdout
-  pixi run arc-test                  arc/test_arc.py
 
 The helpers every script imports (none of them calls zipfile itself):
 
-  write(zip_path, {name: bytes})     a deterministic zip: entries sorted, deflated, timestamps 1980-01-01,
-                                     permissions 0644; written to a temporary name next to it, test-read
-                                     (every member read back and compared), then renamed into place
-  pack(src_dir, zip_path, keep=None) a folder's regular files (or those whose relative path matches one of
-                                     the fnmatch patterns in keep) through write(); symlinks are not packed
+  write(zip_path, {name: bytes})     a deterministic zip (entries sorted, fixed timestamps), test-read, renamed into place
+  pack(src_dir, zip_path, keep=None) a folder's regular files (or those matching keep's patterns) through write()
+  pack_bundle(folder)                a bundle folder to <folder>.zip, then the folder goes
   names(), read(), read_text(), read_all(), has()       reading in place
-  unpacked(zip_path, members=None)   a context manager: the members (fnmatch patterns, default all) in a
-                                     new folder under tmp/, deleted on exit, also on an exception
-  workdir(prefix)                    a context manager: an empty folder under tmp/, deleted on exit
-
-tmp/ is git-ignored and on the repo's filesystem. Standard library only.
+  unpacked(zip_path, members=None)   the members in a new folder under tmp/, deleted on exit, also on an exception
+  workdir(prefix)                    an empty folder under tmp/, deleted on exit
 """
 from __future__ import annotations
 
 import argparse
 import contextlib
 import fnmatch
-import importlib.util
 import os
 import shutil
 import sys
@@ -53,7 +45,6 @@ ALLOWED = ("syn/runs/*/*/summary.csv",          # syn.py's summary per source an
            "rtl/char/gen-block.json",           # char/blocks.py's list and log of its one gen-block call
            "rtl/char/char-rtl.log")
 REPORT_DIRS = ("reports", "power_reports")      # results/<source>/<tech>/<these>/ hold zips only
-KINDS = ("rtl", "syn", "sim", "ram", "results")  # what migrate converts, in this order
 
 
 class ArcError(Exception):
@@ -287,152 +278,9 @@ def check(root: Path = ROOT, show: int = 20) -> int:
     return 1 if bad else 0
 
 
-# ---------------------------------------------------------------- migrate
-def _load(name: str, path: Path):
-    """A repo script as a module, loaded once (syn/syn.py is the module syn_driver, as sim/sources loads it)."""
-    mod = sys.modules.get(name)
-    if mod is None:
-        spec = importlib.util.spec_from_file_location(name, path)
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[name] = mod
-        spec.loader.exec_module(mod)
-    return mod
-
-
-def prune_empty(base: Path) -> int:
-    """Remove the empty folders below base (not base); returns how many."""
-    n = 0
-    for dp, dns, fns in os.walk(base, topdown=False, followlinks=False):
-        d = Path(dp)
-        if d != base and not any(d.iterdir()):
-            d.rmdir()
-            n += 1
-    return n
-
-
-def point_dirs(base: Path, marker) -> list[Path]:
-    """The outermost folders below base holding a file that `marker(names)` accepts; a point's own folder
-    is not searched further."""
-    out = []
-    for dp, dns, fns in os.walk(base, followlinks=False):
-        if Path(dp) != base and marker(set(fns), set(dns)):
-            out.append(Path(dp))
-            dns[:] = []
-        else:
-            dns.sort()
-    return sorted(out)
-
-
-INVENTORY: list[dict] = []        # one row per converted point: what was there, what the zip keeps
-
-
-def inventory_row(kind: str, folder: str, files: int, n_inodes: int, z: Path, members: int | None = None) -> None:
-    """members: the point's members in z (default: all of z's)."""
-    INVENTORY.append({"kind": kind, "folder": folder, "files_before": files, "inodes_before": n_inodes,
-                      "zip": z.relative_to(ROOT).as_posix(), "members": len(names(z)) if members is None else members,
-                      "zip_bytes": z.stat().st_size})
-
-
-def _files(d: Path) -> int:
-    return sum(len(fns) for _, _, fns in os.walk(d, followlinks=False))
-
-
-def _convert(label: str, base: Path, dirs: list[Path], fn, report: list) -> None:
-    """Convert each point folder with fn(folder) -> its zip; a point that fails keeps its folder, with the reason."""
-    before = inodes(base) if base.exists() else 0
-    done, failed = 0, []
-    for d in dirs:
-        try:
-            files, n = _files(d), inodes(d)
-            z = fn(d)
-            inventory_row(label, d.relative_to(ROOT).as_posix(), files, n, z)
-            done += 1
-        except Exception as e:  # noqa: BLE001  reported per point, the folder kept as it is
-            failed.append((d.relative_to(ROOT).as_posix(), f"{type(e).__name__}: {e}"))
-    prune_empty(base) if base.exists() else None
-    after = inodes(base) if base.exists() else 0
-    report.append({"folder": label, "points": done, "failed": failed, "before": before, "after": after})
-    print(f"{label}: {done} points converted, {len(failed)} kept; inodes {before} -> {after}", flush=True)
-    for p, why in failed:
-        print(f"  kept {p}: {why}", flush=True)
-
-
-def migrate(kinds: list[str]) -> list[dict]:
-    """Every existing run folder, bundle and committed report folder to its zip, as the flows write them (X51).
-    Rerunnable: a folder whose zip exists is packed again (the same contents give the same bytes)."""
-    report: list[dict] = []
-    syn = _load("syn_driver", ROOT / "syn" / "syn.py")
-    if "rtl" in kinds:
-        for s in ("forge", "forge_syn1"):
-            base = ROOT / "rtl" / s
-            if base.is_dir():
-                _convert(f"rtl/{s}", base, point_dirs(base, lambda f, d: "bundle.json" in f or "forge-rtl.log" in f),
-                         pack_bundle, report)
-        base = ROOT / "rtl" / "char"
-        if base.is_dir():
-            _convert("rtl/char", base, point_dirs(base, lambda f, d: "emitted.json" in f), pack_bundle, report)
-    if "syn" in kinds:
-        for src in sorted((ROOT / "syn" / "runs").iterdir()):
-            if src.is_dir():
-                _convert(f"syn/runs/{src.name}", src,
-                         point_dirs(src, lambda f, d: "tech.json" in f or ("logs" in d and "WORK" in d)),
-                         syn.pack_run, report)
-    if "sim" in kinds:
-        pwr = _load("sim_pwr", ROOT / "sim" / "pwr.py")
-        for top in sorted((ROOT / "sim" / "runs").iterdir()):
-            if top.is_dir():
-                _convert(f"sim/runs/{top.name}", top,
-                         point_dirs(top, lambda f, d: "tb.json" in f or "check.json" in f), pwr.pack_point, report)
-    if "ram" in kinds:
-        ram = _load("ram_flow", ROOT / "ram" / "ram.py")
-        cacti = ROOT / "ram" / "runs" / "cacti"
-        if cacti.is_dir():
-            before = inodes(cacti) + (1 if ram.CACTI_ZIP.exists() else 0)
-            n, failed = ram.migrate_cacti(inventory_row)
-            after = inodes(cacti) if cacti.exists() else 0
-            report.append({"folder": "ram/runs/cacti", "points": n, "failed": failed, "before": before,
-                           "after": after + 1})
-            print(f"ram/runs/cacti -> ram/runs/cacti.zip: {n} points, {len(failed)} kept; inodes {before} -> "
-                  f"{after + 1}", flush=True)
-            for p, why in failed:
-                print(f"  kept {p}: {why}", flush=True)
-        lib = ROOT / "ram" / "runs" / "lib"
-        if lib.is_dir():
-            _convert("ram/runs/lib", lib, point_dirs(lib, lambda f, d: "key.json" in f), ram.pack_macro, report)
-        probe = ROOT / "ram" / "runs" / "probe"
-        if probe.is_dir():
-            before = inodes(probe)
-
-            def one(d):
-                z = d.with_suffix(".zip")
-                pack(d, z)
-                shutil.rmtree(d)
-                return z
-            _convert("ram/runs/probe", ROOT / "ram" / "runs", [probe], one, report)
-            report[-1].update({"before": before, "after": 1})
-    if "results" in kinds:
-        for src in sorted((ROOT / "results").iterdir()):
-            for tech in sorted(src.iterdir()) if src.is_dir() else []:
-                for kind in REPORT_DIRS:
-                    base = tech / kind
-                    if base.is_dir():
-                        _convert(base.relative_to(ROOT).as_posix(), base,
-                                 point_dirs(base, lambda f, d: bool(f) and not all(x.endswith(".zip") for x in f)),
-                                 pack_report, report)
-    return report
-
-
+# ---------------------------------------------------------------- bundles
 def pack_bundle(d: Path) -> Path:
     """A bundle folder (rtl/<set>/<point>/) to rtl/<set>/<point>.zip, every file; then the folder goes."""
-    z = d.with_name(d.name + ".zip")
-    pack(d, z)
-    shutil.rmtree(d)
-    return z
-
-
-def pack_report(d: Path) -> Path:
-    """A committed report folder from before X51 (results/.../reports/<point>/, power_reports/<point>/) to
-    <point>.zip, every file (they are what the flows keep); then the folder goes."""
     z = d.with_name(d.name + ".zip")
     pack(d, z)
     shutil.rmtree(d)
@@ -445,9 +293,6 @@ def main() -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("check", help="what is left unzipped, and the inodes per top-level folder")
     p.add_argument("--show", type=int, default=20, help="paths listed per kind (default 20)")
-    p = sub.add_parser("migrate", help="convert the folders on disk to zips (rerunnable)")
-    p.add_argument("--inventory", type=Path, help="write one CSV row per converted point here")
-    p.add_argument("kinds", nargs="*", help=f"some of {' '.join(KINDS)} (default all)")
     p = sub.add_parser("ls", help="a zip's members")
     p.add_argument("zip")
     p = sub.add_parser("cat", help="one member on stdout")
@@ -456,26 +301,6 @@ def main() -> int:
     args = ap.parse_args()
     if args.cmd == "check":
         return check(show=args.show)
-    if args.cmd == "migrate":
-        bad = [k for k in args.kinds if k not in KINDS]
-        if bad:
-            ap.error(f"migrate: unknown kind {bad}: some of {' '.join(KINDS)}")
-        kinds = args.kinds or list(KINDS)
-        report = migrate(kinds)
-        if args.inventory:
-            import csv
-            new = not args.inventory.is_file()
-            with args.inventory.open("a", newline="") as fh:
-                w = csv.DictWriter(fh, fieldnames=["kind", "folder", "files_before", "inodes_before", "zip", "members",
-                                                   "zip_bytes"], lineterminator="\n")
-                if new:
-                    w.writeheader()
-                w.writerows(INVENTORY)
-            print(f"inventory: {len(INVENTORY)} rows appended to {args.inventory}")
-        print("\nfolder | points | kept | inodes before | after")
-        for r in report:
-            print(f"{r['folder']} | {r['points']} | {len(r['failed'])} | {r['before']} | {r['after']}")
-        return 1 if any(r["failed"] for r in report) else 0
     if args.cmd == "ls":
         with zipfile.ZipFile(args.zip) as zf:
             for i in zf.infolist():

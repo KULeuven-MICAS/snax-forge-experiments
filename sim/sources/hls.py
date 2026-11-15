@@ -1,24 +1,9 @@
-"""sim/sources/hls.py - an hls-exercises point -> tb.json (docs/DECISIONS.md X14).
+"""sim/sources/hls.py - an hls-exercises point -> tb.json.
 
-hls-exercises is not changed for this: the adapter reads what it already writes.
-  - rtl/<tier>/<kernel>/<point>/filelist.f   the top module ('# top:'), its Verilog files, '# ram:'
-  - the top's Verilog port list               port names and widths (Vitis renames dot's out to out_r)
-  - bench/tier_<tier>/<kernel>/params.json    the stream args in order, the config pins and their
-                                              expressions, the scalar args, dtype, sizes, valid rule
-
-tb.json describes the DUT's ports for the generated TB top (sim/pwr.py):
-  tb_version, point, kernel, top, case, W
-  clock   {port}
-  reset   {port, active, sync}
-  control {kind: "ap_ctrl_hs", start, done, ready, idle}
-  streams [{arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   in params.json's axis order
-  pins    [{port, bits, vld, from: "config" | "data:<arg>"}]
-  sizes   {tag: {pin: value}}  cosim's sizes valid at this W, and 'b64' (64 beats) when every config
-                               pin equals loop_count at cosim's sizes (rowsum's len does not, so it
-                               has no b64 and runs at a cosim size), then the reference task n2048
-                               (EXTRA_SIZES, X24 and X55: tier done N = 2048; untiered relu and axpy
-                               n = 2048, matadd m32_n64, rowsum m16_n128), from params.json's config
-                               expressions at those values
+hls-exercises is not changed for this: the adapter reads what it already writes: the point's filelist.f (the top
+module, its Verilog files, '# ram:'), the top's Verilog port list and bench/tier_<tier>/<kernel>/params.json (the
+stream args in order, the config pins and their expressions, the scalar args, dtype, sizes, valid rule). build()
+writes tb.json (its fields in build()'s docstring); docs/power.md, "Stages", has the testbench and the window.
 """
 from __future__ import annotations
 
@@ -35,13 +20,13 @@ HLS = Path(os.environ.get("SIM_HLS", Path(__file__).resolve().parents[3] / "hls-
 RTL = HLS / "rtl"
 BENCH = HLS / "bench"
 BEATS = 64
-# control kinds: only ap_ctrl_hs is built; the forge kinds are reserved for sim/sources/forge.py (SYN1)
+# control kinds: only ap_ctrl_hs is built; the forge kinds are reserved for sim/sources/forge.py
 CONTROL_KINDS = {"ap_ctrl_hs"}
 RESERVED_KINDS = {"forge_csr", "forge_datapath"}
-# The reference task n2048 beyond cosim's sizes (X24, X55): 2048 elements, the size every forge row runs
+# The reference task n2048 beyond cosim's sizes: 2048 elements, the size every forge row runs
 # (sim/sources/forge.py takes the same shapes from its points' sets), by tier and kernel ("*": every kernel of
 # the tier); its pins from params.json's config expressions at these values and its expected cycles from
-# cosim's line (sim/pwr.py expected_cycles, X19; the bambu and xls lines alike). Tagged n2048 whatever the
+# cosim's line (sim/pwr.py expected_cycles; the bambu and xls lines alike). Tagged n2048 whatever the
 # shape, so every source's reference task has one name.
 REF_TAG = "n2048"
 EXTRA_SIZES = {
@@ -133,6 +118,20 @@ def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | 
 
 
 def build(point: str) -> dict:
+    """tb.json describes the DUT's ports for the generated TB top (sim/pwr.py):
+      tb_version, point, kernel, top, case, W
+      clock   {port}
+      reset   {port, active, sync}
+      control {kind: "ap_ctrl_hs", start, done, ready, idle}
+      streams [{arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   in params.json's axis order
+      pins    [{port, bits, vld, from: "config" | "data:<arg>"}]
+      sizes   {tag: {pin: value}}  cosim's sizes valid at this W, and 'b64' (64 beats) when every config
+                                   pin equals loop_count at cosim's sizes (rowsum's len does not, so it
+                                   has no b64 and runs at a cosim size), then the reference task n2048
+                                   (EXTRA_SIZES: tier done N = 2048; untiered relu and axpy
+                                   n = 2048, matadd m32_n64, rowsum m16_n128), from params.json's config
+                                   expressions at those values
+    """
     fl = filelist(point)
     top = fl["top"]
     prm = params_of(point)
@@ -172,7 +171,7 @@ def build(point: str) -> dict:
     if extra:
         raise ValueError(f"{point}: ports tb.json does not cover: {extra}")
 
-    # a case with its own sizes (the dace case of dot, axpy and rowsum: the n2048 task only, X62) runs those, no b64
+    # a case with its own sizes (the dace case of dot, axpy and rowsum: the n2048 task only) runs those, no b64
     own = prm["cases"].get(case, {}).get("sizes")
     sizes = sizes_for(point, own or prm["sizes"], prm["config"], w, prm.get("valid"), b64=not own)
 
@@ -186,7 +185,7 @@ def check(tb: dict) -> None:
     """What sim/pwr.py relies on; rejects what it cannot drive."""
     kind = tb["control"]["kind"]
     if kind in RESERVED_KINDS:
-        raise ValueError(f"control.kind {kind} is reserved for snax-forge (sim/sources/forge.py, SYN1)")
+        raise ValueError(f"control.kind {kind} is reserved for snax-forge (sim/sources/forge.py)")
     if kind not in CONTROL_KINDS:
         raise ValueError(f"control.kind {kind}: only ap_ctrl_hs is built")
     if tb["tb_version"] != TB_VERSION:
@@ -202,7 +201,7 @@ def default_size(tb: dict) -> str:
     if "b64" in tb["sizes"]:
         return "b64"
     rest = [z for z in tb["sizes"] if z != REF_TAG]
-    return rest[-1] if rest else REF_TAG     # a dace point rebuilt for n2048 only (X62)
+    return rest[-1] if rest else REF_TAG     # a dace point rebuilt for n2048 only
 
 
 def data_h(point: str, size: str) -> Path:
