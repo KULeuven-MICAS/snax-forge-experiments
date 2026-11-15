@@ -12,9 +12,9 @@ pixi run cluster pwr dot3_w16            # PrimePower per program section on the
 pixi run cluster-hwcost dot3_w16         # snax-forge's HWCOST for the point (X72)
 pixi run cluster-breakdown --md          # the area in groups, against HWCOST and the accelerator alone (X72)
 pixi run cluster-energy --md             # the energy per window in groups, against HWCOST (X74)
-pixi run cluster-sweep --md              # a recipe's points over W: run window and area beside HWCOST, sweep.csv and figures (X78)
-pixi run cluster-sweep --points dot3_w8,dot3_w8_cg --out cg1 --md   # chosen points side by side, into cg1/ (X80)
-pixi run cluster-sweep --points dot3_w2_cg,dot3_w4_cg,dot3_w8_cg,dot3_w16_cg,dot3_w32_cg --out cg3 --tables gated --md   # the gated sweep beside the gated tables' HWCOST (X85)
+pixi run cluster-sweep --md              # the ungated sweep over W beside snax-forge's HWCOST: sweep_ungated.csv and figures (X78, X86)
+pixi run cluster-sweep --gated --md      # the clock-gated sweep over W beside the gated tables' HWCOST: sweep_gated.csv and figures (X85, X86)
+pixi run cluster-sweep --points dot3_w8,dot3_w8_cg --out tmp_look --md   # chosen points side by side in a folder, for a look, not committed (X80, X86)
 ```
 
 Each step takes snax_cluster from `SNAX_CLUSTER` (default `../snax_cluster`), clean and on `origin/main` unless `--allow-branch`, and records its commit. snax_cluster's make targets run in its container (`podman run --rm -v "$PWD":"$PWD" -w "$PWD" <image>`, the mount the parent folder of the sibling repos). The point's work folder is `tmp/cluster/<point>/`, deleted when the step ends, also on a failure.
@@ -44,4 +44,4 @@ Each step takes snax_cluster from `SNAX_CLUSTER` (default `../snax_cluster`), cl
 | `eqv_tb.sv` | the Verilator bench of `tc_sram_impl.sv` against tech_cells_generic's (result in its header) |
 | `test_*.py` | `pixi run python cluster/test_<name>.py` |
 
-Results in `results/cluster/nangate45/`: `synth_dc.csv`, `reports/`, `power_pt.csv`, `power_reports/`, `hwcost/<point>.json`, `breakdown.json`, `energy.json`, `sweep.csv`, `sweep_energy.png`, `sweep_area.png`, `sweep_energy_five.png`, `sweep_area_five.png`; run notes in `results/cluster/runs/`.
+Results in `results/cluster/nangate45/`: `synth_dc.csv`, `reports/`, `power_pt.csv`, `power_reports/`, `hwcost/<point>.json`, `breakdown.json`, `energy.json`, `hwcost_cg.csv`, and the two sweeps side by side: `sweep_<label>.csv`, `sweep_energy_<label>.png`, `sweep_area_<label>.png`, `sweep_energy_five_<label>.png`, `sweep_area_five_<label>.png` with `<label>` `ungated` and `gated` (X86); run notes in `results/cluster/runs/`.

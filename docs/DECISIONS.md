@@ -85,6 +85,7 @@ A later choice that changes an entry takes the next number and says which one it
 | [X83](#x83-the-clock-gated-block-tables) | The clock-gated block tables: `streamer_cg.csv`, `xbar_cg.csv`, `char_cg.json`, in the ungated formats |
 | [X84](#x84-a-netlist-run-gated-on-data-and-timing-the-rest-reported) | A netlist run gated on data and timing (within 10 % of the RTL); D123 and RAMCOUNT reported |
 | [X85](#x85-the-gated-tables-hwcost-in-the-sweep-and-at-w--32) | The gated tables' HWCOST in the sweep (`--tables gated`) and at W = 32, extrapolated as snax-forge does |
+| [X86](#x86-the-ungated-and-gated-sweeps-side-by-side-in-one-folder) | The ungated and gated sweeps side by side in one folder (`_ungated`, `_gated`); bars stacked memory, control, streamers, crossbar, datapath, the rest on top |
 
 ## Synthesis
 
@@ -427,6 +428,10 @@ A cluster point's `gls` fails only when its data line differs from the expected 
 ### X85. The gated tables' HWCOST in the sweep and at W = 32
 
 `pixi run cluster-sweep ... --tables gated` lays the points out beside HWCOST priced on the clock-gated tables (`hwcost_cg.csv`'s `gated` rows at each point's W, X83) instead of snax-forge's estimate on the ungated tables; `sweep.csv` names that source `hwcost_cg` and the figures say "HWCOST, gated tables". `cg2-reprice` prices W = 32 too: a query beyond a table's grid (the readers' 32 channels, the crossbar's 67 inputs) continues the line through the axis's two outermost grid values, clamped at 0, as snax-forge's estimate does (`strm_table.Table.at(..., extrapolate=True)`; without it a query outside the grid is still refused, X53), and each extrapolated field is named; the ungated set gives back the committed `hwcost/dot3_w32.json` exactly. `cg2-reprice` sets the gated tables against every gated cluster point it finds, beside snax-forge's HWCOST against the ungated twin. **Why:** the gated sweep (W = 2 to 32) is read beside the HWCOST that prices the same kind of blocks, with the ungated sweep's figures; W = 32 is extrapolated on the same axes in both table sets. *14 Nov (CG3).*
+
+### X86. The ungated and gated sweeps side by side in one folder
+
+`pixi run cluster-sweep` writes the recipe's ungated sweep (its points but the variants, beside snax-forge's HWCOST) and `pixi run cluster-sweep --gated` its clock-gated sweep (the variants with `"syn": {"clk_gate": true}`, one per W, beside HWCOST on the gated tables, X85), both into `results/cluster/<tech>/` with the label in the name: `sweep_ungated.csv`, `sweep_energy_ungated.png`, `sweep_area_ungated.png`, `sweep_energy_five_ungated.png`, `sweep_area_five_ungated.png`, and the same with `_gated`; each figure's title names its synthesis. The bars stack the parts from the steadiest at the bottom to the most changed on top (memory, control, streamers, crossbar, datapath), the netlist's not-priced part above them; the palette's five slots follow that order. `--points ... --out NAME` (X80) stays for a look at chosen points, its folder not committed; the `cg1/` and `cg3/` folders are gone (their points are in the two sweeps). Amends X78's file names and X80's committed folders. **Why:** one place for both syntheses, read pair by pair; what stays the same sits at the bottom so the change shows on top (Ryan, 15 Nov). *15 Nov (CG3).*
 
 ## Retired
 

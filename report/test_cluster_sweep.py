@@ -138,6 +138,22 @@ def test_gated_tables() -> None:
         assert png.stat().st_size > 1000
 
 
+def test_gated_names_and_stack() -> None:
+    cfg = [{"point": "x_w4", "recipe": "r", "W": 4}, {"point": "x_w8_cg", "recipe": "r", "W": 8, "syn": {"clk_gate": True}},
+           {"point": "x_w2_cg", "recipe": "r", "W": 2, "syn": {"clk_gate": True}},
+           {"point": "y_w2_cg", "recipe": "s", "W": 2, "syn": {"clk_gate": True}},
+           {"point": "x_w2_other", "recipe": "r", "W": 2, "syn": {"clk_gate": False}}]
+    assert cs.gated_names(cfg, "r") == ["x_w2_cg", "x_w8_cg"]
+    try:
+        cs.gated_names(cfg + [{"point": "x_w8_cg2", "recipe": "r", "W": 8, "syn": {"clk_gate": True}}], "r")
+    except SystemExit:
+        pass
+    else:
+        raise AssertionError("two gated points at one W must stop")
+    assert sorted(cs.STACK) == sorted(cs.PARTS) and cs.STACK[0] == "memory" and cs.STACK[-1] == "datapath"
+    assert list(cs.COLORS)[:5] == cs.STACK
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
