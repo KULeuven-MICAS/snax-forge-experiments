@@ -10,9 +10,12 @@ expected count, e = max(0, |got - want| - fill) / want, at most WARN_PCT (D123 a
 NEAR_PCT, WARNING up to WARN_PCT, FAIL beyond; snax_cluster's script since #694). Also reads the run's `forge cycles:` and its `[tc_sram_impl] <path>: <macro>`
 prints (cluster/mem.py's, one per instance at time 0, `<path>.gen_<macro>: <macro>`), and the macro models'
 `RAMCOUNT <path> <macro> reads N writes M` lines (ram/ram.py's final block): the netlist run (R4) and the RTL macro
-run, compared without the paths (they differ; the netlist's hold escaped identifiers with spaces), must give the same
-reads on every instance and the same writes, but for one more write allowed on an instance of the netlist run: the
-write at time 0 under +initreg+0 (PITFALLS Q8, Q14). Standard library only.
+run, compared without the paths (they differ; the netlist's hold escaped identifiers with spaces): the same reads on
+every instance and the same writes, but for one more write allowed on an instance of the netlist run: the write at
+time 0 under +initreg+0 (PITFALLS Q8, Q14). The netlist run's gates against the RTL run (X84) are data_compare (the
+data line equal to the expected one and to the RTL run's) and timing_compare (cycles and each counter within
+TIMING_PCT of the RTL run's); ram_compare and compare (D123 against SNAX-GVSoC) are then reported, not gates.
+Standard library only.
 """
 
 from __future__ import annotations
@@ -30,6 +33,7 @@ SRAM_MARK = "[tc_sram_impl] "
 SRAM_END = re.compile(r"\.gen_(\w+): (\w+)[ \t]*$", re.M)
 SUCCESS = "[SUCCESS] Program finished successfully"
 NEAR_PCT, WARN_PCT = 10, 15   # D123: a counter's gap beyond its fill, in % of its count
+TIMING_PCT = 10               # X84: the netlist run's cycles and counters against the RTL run's, in % of the RTL's
 # the path may hold spaces: a netlist's escaped identifiers end in one (`\gen_banks[0].i_data_mem .\gen_...`)
 RAMCOUNT = re.compile(r"RAMCOUNT (\S.*?)\s+(\w+) reads (\d+) writes (\d+)")
 
@@ -79,6 +83,40 @@ def compare(want_text: str, got_text: str) -> tuple[bool, list[str]]:
         elif d:
             notes.append(f"{wn}: counter {gv} against {wv}, within its fill {fill}")
     return ok, notes
+
+
+def data_compare(want_text: str, rtl_text: str, got_text: str) -> tuple[bool, list[str]]:
+    """X84's data gate: the netlist run's data line equals the expected one and the RTL run's."""
+    want, rtl, got = parse(want_text)["data"], parse(rtl_text)["data"], parse(got_text)["data"]
+    notes = []
+    if want is None:
+        notes.append("the expected file has no forge data line")
+    elif got != want:
+        notes.append(f"data: want '{want}', got '{got}'")
+    if got != rtl:
+        notes.append(f"data: the RTL run has '{rtl}', the netlist run '{got}'")
+    return not notes, notes
+
+
+def timing_compare(rtl_text: str, got_text: str, pct: float = TIMING_PCT) -> tuple[bool, list[str], list[dict]]:
+    """X84's timing gate: the netlist run's cycles and each counter, in order, within pct % of the RTL run's.
+    Returns (pass, notes, rows); each row names the quantity, both values and the gap in % of the RTL's."""
+    rtl, got = parse(rtl_text), parse(got_text)
+    rows, notes = [], []
+    pairs = [("cycles", rtl["cycles"], got["cycles"])]
+    if [n for n, _ in rtl["counters"]] != [n for n, _ in got["counters"]]:
+        notes.append(f"counters {[n for n, _ in got['counters']]}, the RTL run has {[n for n, _ in rtl['counters']]}")
+    else:
+        pairs += [(f"counter {n}", rv, gv) for (n, rv), (_, gv) in zip(rtl["counters"], got["counters"])]
+    for name, rv, gv in pairs:
+        if rv is None or gv is None:
+            notes.append(f"{name}: RTL {rv}, netlist {gv}")
+            continue
+        e = 100.0 * abs(gv - rv) / rv if rv else (0.0 if gv == rv else 100.0)
+        rows.append({"what": name, "rtl": rv, "gls": gv, "diff_pct": round(e, 3)})
+        if e > pct:
+            notes.append(f"{name}: netlist {gv} against RTL {rv}, {e:.1f} % (more than {pct:g} %)")
+    return not notes, notes, rows
 
 
 def sram_lines(text: str) -> int:
@@ -149,7 +187,7 @@ def ram_compare(want_text: str, got_text: str, srams: dict[str, int]) -> tuple[b
 def ram_summary(lines: int, ok: bool, extra: list[dict]) -> str:
     """The summary's RAMCOUNT part; extra holds ram_compare's extra writes and extra reads."""
     if not ok:
-        return f"RAMCOUNT {lines} differ"
+        return f"RAMCOUNT {lines} differ (reported, X84)"
     n_w = sum(1 for e in extra if "rtl_writes" in e)
     n_r = sum(1 for e in extra if "rtl_reads" in e)
     reads = f"reads equal but {n_r} macros +1 at time 0 (PITFALLS Q14)" if n_r else "reads equal"

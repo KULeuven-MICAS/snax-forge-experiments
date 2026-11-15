@@ -6,14 +6,14 @@
 # ALLOW_BRANCH=1 adds --allow-branch to the four cluster steps (snax_cluster off origin/main).
 #
 # Before each point: quota -v against the global stop (QUOTA_MAX_FILES files, QUOTA_MAX_KB 1K blocks), and, when
-# tmp/overnight-1/heads.txt lists "<repo dir> <sha>" lines, git fetch in each repo and its origin/main against <sha>.
-# Each step's console goes to tmp/overnight-1/<point>_<step>.log; one line per step to tmp/overnight-1/status.txt
+# $OUT/heads.txt lists "<repo dir> <sha>" lines, git fetch in each repo and its origin/main against <sha>.
+# Each step's console goes to $OUT/<point>_<step>.log; one line per step to $OUT/status.txt
 # (<iso time> <point> <step> START|PASS|FAIL <seconds>). The first failure writes FAIL and exits non-zero; the end
 # writes ALL DONE. Run from the repo's root.
 set -u
 
 STEPS=(rtl syn gls pwr hwcost)
-OUT=tmp/overnight-1
+OUT=${BATCH_OUT:-tmp/overnight-1}               # the batch's folder (BATCH_OUT=tmp/cg3 for CG3's)
 STATUS=$OUT/status.txt
 QUOTA_MAX_FILES=${QUOTA_MAX_FILES:-1550000}
 QUOTA_MAX_KB=${QUOTA_MAX_KB:-136718750}          # 140 GB

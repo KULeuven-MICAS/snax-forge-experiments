@@ -30,7 +30,9 @@ The reference interpolation (X53), for a query inside the grid:
           a + b/inputs, a per-cycle cost shared by the grants, docs/cost_tables.md) and in banks. Energy where
           inputs > banks: each bank count's row is completed with its value at inputs = banks (the most measured),
           then interpolated as the rest
-  A query outside the grid's range on any axis is refused (ValueError), as is one that needs a missing value.
+  A query outside the grid's range on any axis is refused (ValueError), as is one that needs a missing value;
+  Table.at(..., extrapolate=True) instead continues the line through the two outermost grid values, clamped at 0,
+  as snax-forge's estimate does (report/cg2_reprice.py at W = 32, X85).
 
 --loo prints the leave-one-out check (for information): each interior grid point predicted from its neighbours
 with its own value on every interpolated axis left out (reader: depth 4 and 8, loops 2 to 6, channels 2, 4, 6, 8,
@@ -72,25 +74,33 @@ class Table:
         self.axes = {k: sorted(v) for k, v in axes.items()}
         self.fields = fields
         self.scales = scales or {}
+        self.last_outside: list[str] = []
 
-    def at(self, field: str, **q: float) -> float:
-        """Multilinear interpolation of `field` at q (one value per axis), linear in each axis's scale."""
+    def at(self, field: str, extrapolate: bool = False, **q: float) -> float:
+        """Multilinear interpolation of `field` at q (one value per axis), linear in each axis's scale. With
+        extrapolate, a query outside the grid on an axis continues the line through that axis's two outermost
+        values, and the result is clamped at 0 (snax-forge's rule, char/tables.py); the axes it went outside on
+        are kept in self.last_outside."""
         names = list(self.axes)
         if set(q) != set(names):
             raise ValueError(f"query {q}: give exactly {names}")
-        spans = []
+        spans, self.last_outside = [], []
         for n in names:
             vals, x = self.axes[n], q[n]
-            if x < vals[0] or x > vals[-1]:
-                raise ValueError(f"{n} = {x} is outside the grid [{vals[0]}, {vals[-1]}]")
             i = bisect.bisect_left(vals, x)
-            if vals[i] == x:
+            if i < len(vals) and vals[i] == x:
                 spans.append([(vals[i], 1.0)])
+                continue
+            if x < vals[0] or x > vals[-1]:
+                if not extrapolate:
+                    raise ValueError(f"{n} = {x} is outside the grid [{vals[0]}, {vals[-1]}]")
+                lo, hi = (vals[0], vals[1]) if x < vals[0] else (vals[-2], vals[-1])
+                self.last_outside.append(n)
             else:
                 lo, hi = vals[i - 1], vals[i]
-                g = SCALES[self.scales.get(field, {}).get(n, "lin")]
-                w = (g(x) - g(lo)) / (g(hi) - g(lo))
-                spans.append([(lo, 1.0 - w), (hi, w)])
+            g = SCALES[self.scales.get(field, {}).get(n, "lin")]
+            w = (g(x) - g(lo)) / (g(hi) - g(lo))
+            spans.append([(lo, 1.0 - w), (hi, w)])
         total = 0.0
         for corner in itertools.product(*spans):
             key = tuple(c for c, _ in corner)
@@ -101,7 +111,7 @@ class Table:
             if v is None:
                 raise ValueError(f"{field} has no value at {dict(zip(names, key))}")
             total += weight * v
-        return total
+        return max(total, 0.0) if self.last_outside else total
 
 
 def _f(x: str) -> float | None:

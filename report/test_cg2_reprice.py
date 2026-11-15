@@ -3,10 +3,12 @@
 
   pixi run cg2-reprice-test
 
-The ungated table set gives back every part (area and energy) of the committed HWCOST json at W = 2, 4, 8 and 16.
+The ungated table set gives back every part (area and energy) of the committed HWCOST json at W = 2, 4, 8, 16 and
+32, W = 32 extrapolated on the readers' channels and the crossbar's inputs as snax-forge's estimate does.
 A gated set made by scaling the ungated tables (reader energy x 0.5, e_hold x 0.1 with ctrl's factor rescaled)
 moves the streamers' energy by exactly 0.5, keeps ctrl's energy, and a gated reader table without dot_3's points
-leaves those fields empty and names them. Standard library only.
+leaves those fields empty and names them. The comparison with the cluster comes for every W with a gated point
+(dot3_w8_cg today) and for no other. Standard library only.
 """
 from __future__ import annotations
 
@@ -47,6 +49,28 @@ class TestReprice(unittest.TestCase):
             for p in rp.PARTS:
                 self.assertAlmostEqual(parts[p][0], cost["parts"][p]["area"], delta=1e-9 * cost["parts"][p]["area"])
                 self.assertAlmostEqual(parts[p][1], cost["parts"][p]["energy"], delta=1e-9 * cost["parts"][p]["energy"])
+
+    def test_w32_extrapolated(self):
+        out: list[str] = []
+        rp.price(self.u, 32, rp.hwcost(TECH, 32), out)
+        self.assertEqual(out, ["reader d8_l1_c32 area_um2 on channels", "reader d8_l1_c32 e_beat_pj on channels",
+                               "xbar i67_b32 area_um2 on inputs"])
+        out = []
+        rp.price(self.u, 16, rp.hwcost(TECH, 16), out)
+        self.assertEqual(out, [])
+
+    def test_strict_table_refuses_outside(self):
+        with self.assertRaises(ValueError):
+            self.u.reader.at("e_beat_pj", depth=8, loops=1, channels=32)
+
+    def test_vs_cluster_only_where_gated(self):
+        g, _ = rp.price(self.u, 8, rp.hwcost(TECH, 8))
+        lines = rp.vs_cluster(TECH, 8, g)
+        self.assertTrue(any(x.startswith("dot3_w8_cg:") for x in lines), lines)
+        self.assertEqual(sum(x.startswith("| five parts |") for x in lines), 2)
+        g, _ = rp.price(self.u, 2, rp.hwcost(TECH, 2))
+        if "dot3_w2_cg" not in (rp.ROOT / "results" / "cluster" / TECH / "energy.json").read_text():
+            self.assertEqual(rp.vs_cluster(TECH, 2, g), [])
 
     def test_scaled_set(self):
         g = scaled(self.u, 0.5, 0.1)

@@ -72,7 +72,7 @@ pixi run char-export && pixi run char-table                         # CHAR1's ch
 pixi run ram table                                                  # the SRAM table (ram/README.md)
 pixi run strm-table && pixi run xbar-kinds                          # the streamer and interconnect tables
 pixi run strm-table --clk-gate && pixi run char-export --clk-gate   # CG2: the clock-gated tables (X83)
-pixi run cg2-reprice                                                # CG2: dot_3's HWCOST parts on either table set
+pixi run cg2-reprice                                                # dot_3's HWCOST parts on either table set, W = 2 to 32 (X83, X85)
 pixi run cluster rtl|syn|gls|pwr dot3_w16                           # the whole cluster (cluster/README.md)
 pixi run arc check                                                  # nothing left unzipped at the end of a round (X51)
 ```
