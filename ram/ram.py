@@ -36,7 +36,6 @@ import arc  # noqa: E402  arc/arc.py: outputs zipped (X51)
 
 CACTI_DIR = REPO / "ram" / "cacti"
 CACTI_BIN = CACTI_DIR / "cacti"
-RUNS = REPO / "ram" / "runs" / "cacti"          # the folders before X51 (pixi run arc migrate packs them)
 CACTI_ZIP = REPO / "ram" / "runs" / "cacti.zip"
 CACTI_KEEP = ("key.json", "rc", "cacti.out", "cacti.err")   # per point; the rest of its run folder is scratch
 TABLE_OUT = REPO / "results" / "ram" / "nangate45" / "ram_table.csv"
@@ -177,30 +176,6 @@ def run_point(d, w, objective=OBJECTIVE, ecc=False, tag=""):
     if got and "rc" in got and "key.json" in got and json.loads(got["key.json"]) == key:
         return name, got, True
     return name, run_cacti(name, cfg, key), False
-
-
-def migrate_cacti(inventory=None):
-    """The run folders of ram/runs/cacti/ into cacti.zip (CACTI_KEEP), folders deleted after the zip's test read;
-    a folder without key.json is kept; inventory(kind, folder, files, inodes, zip) per point. Returns (points,
-    [(folder, why)])."""
-    if not RUNS.is_dir():
-        return 0, []
-    done, failed = [], []
-    for rd in sorted(p for p in RUNS.iterdir() if p.is_dir() and not p.is_symlink()):
-        if not (rd / "key.json").is_file():
-            failed.append((str(rd.relative_to(REPO)), "no key.json"))
-            continue
-        CACHE.put(rd.name, {f: (rd / f).read_bytes() for f in CACTI_KEEP if (rd / f).is_file()})
-        done.append(rd)
-    CACHE.save()
-    for rd in done:
-        if inventory:
-            inventory("ram/runs/cacti", str(rd.relative_to(REPO)), sum(1 for _ in rd.iterdir()),
-                      arc.inodes(rd), CACTI_ZIP, len(CACHE.get(rd.name)))
-        shutil.rmtree(rd)
-    if not any(RUNS.iterdir()):
-        RUNS.rmdir()
-    return len(done), failed
 
 
 FIELDS = {  # CACTI's printed label -> (key, unit factor to ours)

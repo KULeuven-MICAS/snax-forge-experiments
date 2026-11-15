@@ -62,7 +62,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "syn"))
 import syn  # noqa: E402  (MAX_W and the case filters live in one place)
 
-TECHS = ("nangate45", "nangate15")
+TECHS = ("nangate45",)
 SOURCES = ("forge", "hls", "bambu", "xls")
 TOOL = {"forge": "forge", "hls": "vitis", "bambu": "bambu", "xls": "xls"}
 TOOL_ORDER = {"forge": 0, "vitis": 1, "bambu": 2, "xls": 3}
@@ -92,9 +92,8 @@ PERIPHERALS = r"snax_forge_(?:\w+_)?peripherals"
 DEFAULT_SIZE = {"rowsum": "m8_n64"}
 REF_SIZE = "n2048"
 REF_TECH_UNTIERED = "nangate45"           # X61: untiered n2048 runs on nangate45 only (CSYN1)
-NANGATE45_ONLY = ("untiered", "forge")
 # X62: Vitis dace cases rebuilt for the n2048 task only (hls-exercises' params.json gives the case its own sizes)
-N2048_ONLY = {("done", "dot", "dace"), ("untiered", "axpy", "dace"), ("untiered", "rowsum", "dace")}    # (tier, tool): CSYN1's forge points, nangate45 only (snax-forge D159)
+N2048_ONLY = {("done", "dot", "dace"), ("untiered", "axpy", "dace"), ("untiered", "rowsum", "dace")}
 POINT = re.compile(r"^(?P<tier>[^/]+)/(?P<kernel>[^/]+)/(?P<case>[a-z]+[0-9]*(?:_[a-z]+)?)_w(?P<w>\d+)$")
 
 KEY = ["tech", "tier", "kernel", "W", "tool", "case", "point", "size", "status"]
@@ -316,16 +315,6 @@ def main() -> int:
             if not got:
                 problems.append(f"{tech} {source}: no rows")
             rows += got
-    # the same points on both technologies
-    pts = defaultdict(set)
-    for r in rows:
-        pts[r["tech"]].add(r["point"])
-    tool_of = {r["point"]: (r["tier"], r["tool"]) for r in rows}
-    for a, b in ((TECHS[0], TECHS[1]), (TECHS[1], TECHS[0])):
-        for point in sorted(pts[a] - pts[b]):
-            if a == "nangate45" and tool_of[point] == NANGATE45_ONLY:
-                continue
-            problems.append(f"{point}: on {a} but not on {b}")
     check_sizes(rows, problems)
     keys = defaultdict(int)
     for r in rows:

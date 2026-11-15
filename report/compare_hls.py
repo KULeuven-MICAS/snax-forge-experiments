@@ -36,7 +36,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "results"
 OUT = RESULTS / "compare"
 README = OUT / "README.md"
-TECH, CHECK_TECH = "nangate45", "nangate15"
+TECH = "nangate45"
 T_CLK_NS = 10.0
 HLS_CASES = [("vitis", "opt"), ("vitis", "dace"), ("bambu", "bambu"), ("xls", "xls")]
 FORGE_CASES = [("forge", c) for c in ("forge", "forge2", "forge3", "forge4", "forge5", "forge6", "forge_baked")]
@@ -49,9 +49,6 @@ STYLE = {"opt": ("#1f77b4", "o", "-"), "dace": ("#9467bd", "s", "--"), "bambu": 
          "forge6": ("#17becf", "h", ":"), "forge_baked": ("#7f7f7f", "x", "--")}
 KERNELS = {"done": ["vecadd", "vecmul", "vsum", "dot"], "untiered": ["matadd", "relu", "axpy", "rowsum"]}
 SIZE = {"done": {k: "n2048" for k in KERNELS["done"]}, "untiered": {k: "n2048" for k in KERNELS["untiered"]}}
-# the nangate15 check: untiered has no n2048 there (X61), so it compares the larger cosim size
-CHECK_SIZE = {"done": SIZE["done"],
-              "untiered": {"matadd": "m16_n32", "relu": "n512", "axpy": "n512", "rowsum": "m8_n64"}}
 WS = [1, 2, 4, 8, 16]
 METRICS = [("area_um2", "Area", "µm²"), ("energy_nj", "Energy per task", "nJ"),
            ("cycles", "Latency per task", "cycles"), ("power_mw", "Power", "mW")]
@@ -165,37 +162,6 @@ def setup(rows: list[dict]) -> list[str]:
     return lines
 
 
-def tech_check(done: list[dict], untiered: list[dict]) -> list[str]:
-    """nangate45 against nangate15: values at W = 8, and how often the order of the cases is the same."""
-    lines = ["Values at W = 8 (nangate45 / nangate15); latency is the same on both. Tier done at n2048, untiered at "
-             "each kernel's larger cosim size (" + ", ".join(f"{k} {s}" for k, s in CHECK_SIZE["untiered"].items())
-             + "): untiered has no n2048 on nangate15, and forge's untiered points are nangate45 only.", "",
-             "| Kernel | Case | Area (µm²) | Energy (nJ) | Power (mW) |", "|---|---|---|---|---|"]
-    same = total = 0
-    for tier, rows in (("done", done), ("untiered", untiered)):
-        for kernel in KERNELS[tier]:
-            a, b = pick(rows, TECH, tier, kernel, CHECK_SIZE), pick(rows, CHECK_TECH, tier, kernel, CHECK_SIZE)
-            for _tool, case in CASES:
-                ra, rb = a.get((case, 8)), b.get((case, 8))
-                if ra and rb and ra["status"] == rb["status"] == "ok":
-                    lines.append(f"| {kernel} | {LABEL[case]} | {fmt(float(ra['area_um2']))} / "
-                                 f"{fmt(float(rb['area_um2']))} | {fmt(ra['energy_nj'])} / {fmt(rb['energy_nj'])} | "
-                                 f"{fmt(ra['power_mw'])} / {fmt(rb['power_mw'])} |")
-            for w in WS:
-                for key in ("area_um2", "energy_nj", "power_mw"):
-                    ca = [c for _t, c in CASES if (c, w) in a and a[(c, w)]["status"] == "ok"
-                          and (c, w) in b and b[(c, w)]["status"] == "ok"]
-                    if len(ca) < 2:
-                        continue
-                    oa = sorted(ca, key=lambda c: float(a[(c, w)][key]))
-                    ob = sorted(ca, key=lambda c: float(b[(c, w)][key]))
-                    total += 1
-                    same += oa == ob
-    lines += ["", f"The order of the cases (smallest to largest) is the same on both technologies in {same} of "
-              f"{total} comparisons (kernel, W and metric with at least two cases)."]
-    return lines
-
-
 # X65: the line on top of the README and of every kernel page (hand-written text, outside the markers)
 PERIPHERALS_LINE = "forge's figures exclude `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168): it is in neither the csr nor the total without csr."
 PARTS_BASIS = (
@@ -279,8 +245,7 @@ def template_readme() -> str:
              "(X45, X46, X61, X64); the text outside the `gen` markers is written by hand. One page per kernel.", "",
              "<!-- gen:index -->", "<!-- /gen -->", "", "## 1. Setup", "", "<!-- gen:setup -->", "<!-- /gen -->", "",
              "## 2. Across all kernels", "", "- (to write)", "", "## 3. Parts at n2048", "",
-             "<!-- gen:parts-basis -->", "<!-- /gen -->", "", "## 4. nangate15 check", "", "<!-- gen:tech -->",
-             "<!-- /gen -->", "", "## 5. Notes", "",
+             "<!-- gen:parts-basis -->", "<!-- /gen -->", "", "## 4. Notes", "",
              "- The rows behind every number are in `results/compare_done.csv` and `results/compare_untiered.csv`.", ""]
     return "\n".join(parts)
 
@@ -306,7 +271,6 @@ def main() -> int:
     text = fill(text, "index", index(), README)
     text = fill(text, "setup", setup(done + untiered), README)
     text = fill(text, "parts-basis", [PARTS_BASIS], README)
-    text = fill(text, "tech", tech_check(done, untiered), README)
     README.write_text(text)
     n = 0
     for tier, rows in (("done", done), ("untiered", untiered)):

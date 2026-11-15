@@ -128,7 +128,7 @@ STRM = ("streamer", "xbar")             # STRM1 (X52): generated TBs, one busy w
 HLS_TOOLS = ("hls", "bambu", "xls")     # an HLS tool's points: rtl/ folders with filelist.f and sizes.txt
 PT_SCRIPT = SIM / "scripts" / "pt_power.tcl"
 RUN_DO = SIM / "scripts" / "run.do"
-DC_READBACK = SIM / "probe" / "dc_readback.tcl"
+DC_READBACK = SIM / "scripts" / "dc_readback.tcl"
 TB_TOP, DUT = "tb", "dut"
 CLOCK_NS = 10.0
 SETUP_POINTS = {"hls": "done/vecadd/opt_w8", "forge": "done/vecadd/forge_w4", "bambu": "done/dot/bambu_w8",
@@ -136,8 +136,7 @@ SETUP_POINTS = {"hls": "done/vecadd/opt_w8", "forge": "done/vecadd/forge_w4", "b
 MIN_ANNOTATED = 99.0        # percent of nets annotated from the SAIF
 TOGGLE_BEATS = 64           # the input-toggle check fails a run from this many beats up
 # Questa cell models, next to each technology's .db, with the vlog options they need
-CELL_MODELS = {"nangate45": ("NangateOpenCellLibrary.v", []),
-               "nangate15": ("NanGate_15nm_OCL_functional.v", ["-timescale", "1ns/1ps"])}
+CELL_MODELS = {"nangate45": ("NangateOpenCellLibrary.v", [])}
 COLUMNS = ["point", "top", "tech", "clock_ns", "clk_gate", "W", "size", "config", "beats", "seed", "cycles",
            "expected_cycles", "expected_diff",
            "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "p_dyn_uw",
@@ -1209,7 +1208,7 @@ def _merge(path: Path, columns: list[str], key, rows: list[dict], drop: set) -> 
 
 def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
     out = RESULTS / tech
-    key = lambda r: (r["point"], syn.gate_flag(r), r["size"], str(r["seed"]))  # noqa: E731  X79: gated apart
+    key = lambda r: (r["point"], syn.gate_flag(r), r["size"], str(r["seed"]))  # gated rows apart  # noqa: E731
     rows = [r for r, _ in results]
     # a point that ran replaces its parked row (size and seed empty: 'skipped: needs a RAM macro', X62)
     ran = {(r["point"], syn.gate_flag(r)) for r in rows if r.get("size")}
@@ -1588,7 +1587,7 @@ def write_results_char(tech: str, results: list[tuple[dict, dict]]) -> None:
     """char_power.csv (merged on point, window and seed, in each kind's window order), and per ok window its
     reports in power_reports/<point>.zip as <window>/..., the point's tb.json once at its top (X51)."""
     out = RESULTS / tech
-    key = lambda r: (r["point"], syn.gate_flag(r), r["window"], str(r["seed"]))  # noqa: E731  X79: gated apart
+    key = lambda r: (r["point"], syn.gate_flag(r), r["window"], str(r["seed"]))  # gated rows apart  # noqa: E731
     rows = [r for r, _ in results]
     done = {key(r) for r in rows}
     table = []
@@ -1807,7 +1806,7 @@ def write_results_strm(tech: str, results: list[tuple[dict, dict]]) -> None:
     """power_pt.csv (merged on point and seed) and per ok point its PT reports and tb.json in
     power_reports/<point>.zip (X51)."""
     out = RESULTS / tech
-    key = lambda r: (r["point"], syn.gate_flag(r), str(r["seed"]))  # noqa: E731  X79: gated apart
+    key = lambda r: (r["point"], syn.gate_flag(r), str(r["seed"]))  # gated rows apart  # noqa: E731
     rows = [r for r, _ in results]
     _merge(out / "power_pt.csv", STRM_COLUMNS[SOURCE], key, rows, {key(r) for r in rows})
     for r, info in results:

@@ -127,7 +127,6 @@ C_SCALE (library capacitance units per fF), and dc_syn.tcl stops before reading
 any RTL if the library's own name or units differ from the tech file.
 
   syn/tech/nangate45.json  ../RTL_flow_Nangate15/tech/nangate45/NangateOpenCellLibrary_typical.db
-  syn/tech/nangate15.json  ../RTL_flow_Nangate15/tech/nangate15/NanGate_15nm_OCL_typical_conditional_nldm.db
 
 Each run works in syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>][_cg]/ (the
 clock tag only for a clock other than the default, _cg only with --clk-gate): WORK/, logs/, reports/,
@@ -177,7 +176,6 @@ Environment, all optional:
   SYN_RTL_XBAR_MIX    rtl/xbar_mix             (the xbar_mix points' zips)
   SYN_RTL_CLUSTER     rtl/cluster              (the cluster points' bundle zips, cluster/cluster.py)
   SYN_LIB_NANGATE45   the nangate45 .db, instead of the tech file's lib_default
-  SYN_LIB_NANGATE15   the nangate15 .db, instead of the tech file's lib_default
                       (in general: the tech file's lib_env)
 syn.py passes DC: SYN_FILELIST, SYN_LIB_DB, SYN_LIB_NAME, SYN_TIME_UNIT,
 SYN_CAP_UNIT, SYN_T_SCALE, SYN_C_SCALE, SYN_DRIVE_CELL, SYN_OUT_LOAD_FF,

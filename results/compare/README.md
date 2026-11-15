@@ -23,12 +23,12 @@ Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and t
 <!-- gen:setup -->
 | Case | Tool version | RTL measured at | Latency window |
 |---|---|---|---|
-| forge |  | 3c7ea00, f9764d5 | START to done (X13) |
-| forge 2 |  | 3c7ea00, f9764d5 | START to done (X13) |
-| forge 3 |  | 3c7ea00, f9764d5 | START to done (X13) |
-| forge 4 |  | 3c7ea00, f9764d5 | START to done (X13) |
-| forge 5 |  | 3c7ea00, f9764d5 | START to done (X13) |
-| forge 6 |  | 3c7ea00, f9764d5 | START to done (X13) |
+| forge |  | 3c7ea00 | START to done (X13) |
+| forge 2 |  | 3c7ea00 | START to done (X13) |
+| forge 3 |  | 3c7ea00 | START to done (X13) |
+| forge 4 |  | 3c7ea00 | START to done (X13) |
+| forge 5 |  | 3c7ea00 | START to done (X13) |
+| forge 6 |  | 3c7ea00 | START to done (X13) |
 | forge baked |  | 3c7ea00 | START to done (X13) |
 | Vitis opt | v2023.2.2 | 4ef8bc8 | ap_start to ap_done (X12) |
 | Vitis dace | v2023.2.2 | 4ef8bc8, f33338d | ap_start to ap_done (X12) |

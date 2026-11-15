@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "arc"))
 import arc  # noqa: E402  the bundles are zips (X51)
 
-TECHS = ("nangate45", "nangate15")
+TECHS = ("nangate45",)
 SLOPE_MIN = 0.7      # a LinkBuffer slope ratio below this calls for R2's diagnostic (not a gate)
 LANE_SERIES = {"ElementwiseLanes add": "lanes/add_w{}", "ElementwiseLanes mul": "lanes/mul_w{}",
                "Mac acc": "mac/acc_w{}", "LinkBuffer d1": "link/d1_w{}"}

@@ -9,46 +9,31 @@ numpy = ">=1.26,<2"
 matplotlib = ">=3.11.2,<4"
 
 [tasks]
+# The flows (docs/TOOL.md): synthesis, power, the bundles of each source
 syn = "python syn/syn.py"
 pwr = "python sim/pwr.py"
 forge-rtl = "python forge/bundles.py"
 char-rtl = "python char/blocks.py"
+strm-rtl = "python strm/gen.py"
+cluster = "python cluster/cluster.py"
+# CACTI 7 at a fixed commit into ram/cacti/ (git-ignored), built with the host g++; then the SRAM table and macros
+ram-build = "test -d ram/cacti/.git || git clone https://github.com/HewlettPackard/cacti ram/cacti && git -C ram/cacti checkout -q 1ffd8df && make -C ram/cacti"
+ram = "python ram/ram.py"
+# The tables HWCOST reads and the block model
+strm-table = "python report/strm_table.py"
+xbar-kinds = "python report/xbar_kinds.py"
 char-export = "python report/char_export.py"
-# CG2: char_export.py --clk-gate on synthetic gated rows (X83)
-char-export-test = "python report/test_char_export.py"
 char-table = "python report/char_table.py"
+# The cluster against HWCOST
+cluster-hwcost = "python cluster/hwcost.py"
+cluster-breakdown = "python report/cluster_breakdown.py"
+cluster-energy = "python report/cluster_energy.py"
+cluster-sweep = "python report/cluster_sweep.py"
+# forge against the HLS tools
 import-cycles = "python report/import_cycles.py"
 compare = "python report/compare.py"
 compare-hls = "python report/compare_hls.py"
-# RAM1: clone CACTI 7 at a fixed commit into ram/cacti/ (git-ignored) and build it with the host g++
-ram-build = "test -d ram/cacti/.git || git clone https://github.com/HewlettPackard/cacti ram/cacti && git -C ram/cacti checkout -q 1ffd8df && make -C ram/cacti"
-ram = "python ram/ram.py"
-# ARC1: outputs zipped one per point (X51): check, migrate, ls, cat; and the helpers' tests
+# The zips (check, ls, cat), the tests (no EDA tool) and the lint (ruff's F rules, fetched by pixi exec)
 arc = "python arc/arc.py"
-arc-test = "python arc/test_arc.py"
-# STRM1: the streamer reader and sparse interconnect bundles, rtl/streamer/ and rtl/xbar/ (strm/grid.json)
-strm-rtl = "python strm/gen.py"
-# STRM1 R1: the reader and interconnect tables and their reference interpolation (X53), and its tests
-strm-table = "python report/strm_table.py"
-strm-table-test = "python report/test_strm_table.py"
-xbar-kinds = "python report/xbar_kinds.py"
-xbar-kinds-test = "python report/test_xbar_kinds.py"
-# CSYN1 Part B: a snax-forge design in snax_cluster's whole cluster (X66, X67): rtl (R2), syn (R3), gls (R4)
-cluster = "python cluster/cluster.py"
-# CSYN1 Part B R3b: snax-forge's HWCOST for a cluster point, and the cluster's area in groups against it (X72)
-cluster-hwcost = "python cluster/hwcost.py"
-cluster-breakdown = "python report/cluster_breakdown.py"
-cluster-breakdown-test = "python report/test_cluster_breakdown.py"
-# PWR1 R3: the cluster's energy per window in groups, the run phase against HWCOST (X74)
-cluster-energy = "python report/cluster_energy.py"
-cluster-energy-test = "python report/test_cluster_energy.py"
-# PWR2 R2: a recipe's cluster points side by side over W, the run window and area beside HWCOST (X78)
-cluster-sweep = "python report/cluster_sweep.py"
-cluster-sweep-test = "python report/test_cluster_sweep.py"
-# CG1: the clock-gating switch (X79) in syn.py and pwr.py, without the tools
-clk-gate-test = "python syn/test_clk_gate.py"
-# CG2: dot_3's HWCOST parts priced with the ungated or the clock-gated tables (X83), and its test
-cg2-reprice = "python report/cg2_reprice.py"
-cg2-reprice-test = "python report/test_cg2_reprice.py"
-# CG2: the gated runs' inventory, gated/ungated pairs and the xbar_mix factor check, for the run notes (X82)
-cg2-check = "python report/cg2_check.py"
+test = "python arc/test_arc.py && python cluster/test_check.py && python cluster/test_mem.py && python cluster/test_power.py && python cluster/test_tree.py && python report/test_char_export.py && python report/test_cluster_breakdown.py && python report/test_cluster_energy.py && python report/test_cluster_sweep.py && python report/test_strm_table.py && python report/test_xbar_kinds.py && python strm/test_xbar_mix.py && python syn/test_clk_gate.py"
+lint = "pixi exec ruff check --isolated --select F ."

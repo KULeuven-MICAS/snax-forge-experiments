@@ -169,7 +169,7 @@ def gate_of(row: dict) -> str:
     return "1" if str(row.get("clk_gate", "")) == "1" else "0"
 
 
-def build(source: str, tech: str, gate: str = "0", root: Path = ROOT) -> list[dict]:
+def build(source: str, tech: str, gate: str = "1", root: Path = ROOT) -> list[dict]:
     """The table rows of `source` from its synth_dc.csv and power_pt.csv, the rows whose clk_gate is `gate`."""
     synth = {r["point"]: r for r in read_csv(root / "results" / source / tech / "synth_dc.csv") if gate_of(r) == gate}
     power = {r["point"]: r for r in read_csv(root / "results" / source / tech / "power_pt.csv") if gate_of(r) == gate}
@@ -264,58 +264,25 @@ def print_loo(name: str, axes: tuple[str, ...], res: dict[str, list[tuple]]) -> 
               f"{dict(zip(axes, worst[0]))} (actual {worst[1]:.4g}, predicted {worst[2]:.4g})")
 
 
-# ---------------------------------------------------------------- gated against ungated (CG2, X83)
-def ratios(gated: list[dict], ungated: list[dict], axes: tuple[str, ...], fields: tuple[str, ...]) -> list[dict]:
-    """Per point in both lists (both ok), {axes..., field: gated / ungated} for each field both have."""
-    base = {tuple(r[a] for a in axes): r for r in ungated if r["status"] == "ok"}
-    out = []
-    for g in gated:
-        u = base.get(tuple(g[a] for a in axes))
-        if g["status"] != "ok" or u is None:
-            continue
-        row = {a: g[a] for a in axes}
-        for f in fields:
-            if _f(g[f]) is not None and _f(u[f]):
-                row[f] = float(g[f]) / float(u[f])
-        out.append(row)
-    return out
-
-
-def print_ratios(name: str, rows: list[dict], axes: tuple[str, ...], fields: tuple[str, ...]) -> None:
-    print(f"{name}: gated / ungated at {len(rows)} points")
-    for r in rows:
-        print("  " + " ".join(f"{a} {r[a]}" for a in axes) + "  " +
-              "  ".join(f"{f} {r[f]:.4f}" for f in fields if f in r))
-    for f in fields:
-        v = [r[f] for r in rows if f in r]
-        if v:
-            print(f"  {f}: mean {statistics.mean(v):.4f}, {min(v):.4f} to {max(v):.4f}")
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tech", default="nangate45")
     ap.add_argument("--loo", action="store_true", help="also print the leave-one-out check")
-    ap.add_argument("--clk-gate", action="store_true", help="the clock-gated rows into streamer_cg.csv and xbar_cg.csv (X83)")
     args = ap.parse_args()
     out = ROOT / "results" / "strm" / args.tech
-    gate, sfx = ("1", "_cg") if args.clk_gate else ("0", "")
     for source, stem, cols, axes, e_col in (("streamer", "streamer", STREAMER_COLUMNS, READER_AXES, "e_beat_pj"),
                                             ("xbar", "xbar", XBAR_COLUMNS, XBAR_AXES, "e_access_pj")):
-        name = f"{stem}{sfx}.csv"
-        rows = build(source, args.tech, gate)
+        name = f"{stem}.csv"
+        rows = build(source, args.tech)
         write(rows, out / name, cols)
         bad = [r for r in rows if r["status"] != "ok"]
         print(f"{(out / name).relative_to(ROOT)}: {len(rows)} rows, {len(rows) - len(bad)} ok")
         for r in bad:
             print(f"  {' '.join(f'{a} {r[a]}' for a in axes)}: {r['status']}")
-        if args.clk_gate:
-            print_ratios(stem, ratios(rows, build(source, args.tech, "0"), axes, ("area_um2", e_col, "flops")),
-                         axes, ("area_um2", e_col, "flops"))
     if not args.loo:
         return 0
-    reader = load(out / f"streamer{sfx}.csv", READER_AXES, ("area_um2", "e_beat_pj"))
-    xbar = load(out / f"xbar{sfx}.csv", XBAR_AXES, ("area_um2", "e_access_pj"), XBAR_SCALES)
+    reader = load(out / "streamer.csv", READER_AXES, ("area_um2", "e_beat_pj"))
+    xbar = load(out / "xbar.csv", XBAR_AXES, ("area_um2", "e_access_pj"), XBAR_SCALES)
     print_loo("reader", READER_AXES, loo_reader(reader))
     print_loo("xbar", XBAR_AXES, loo_xbar(xbar))
     return 0

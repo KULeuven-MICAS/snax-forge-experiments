@@ -7,8 +7,8 @@ On synthetic tables over the real grids: grid points come back exactly; a functi
 (a + b d + c l + e ch + f d ch + ...) is reproduced exactly anywhere inside; queries outside the grid and missing
 values are refused; the interconnect's energy for inputs > banks is its value at inputs = banks; a query between
 grid values stays between the corner values; the interconnect's energy, linear in 1/inputs, reproduces
-a + b / inputs exactly while its area stays linear in inputs. CG2 (X83): build() takes only the rows of the clk_gate
-asked for, and ratios() pairs gated and ungated rows by point. Standard library only.
+a + b / inputs exactly while its area stays linear in inputs; build() takes only the rows of the clk_gate asked
+for, the gated ones by default. Standard library only.
 """
 from __future__ import annotations
 
@@ -150,11 +150,7 @@ class TestGated(unittest.TestCase):
                              [("1", "20", "2", "10"), ("4", "100", "20", "50")])
             self.assertEqual([(r["channels"], r["area_um2"], r["e_beat_pj"], r["flops"], r["status"]) for r in cg],
                              [("4", "80", "10", "53", "ok")])
-            got = st.ratios(cg, un, st.READER_AXES, ("area_um2", "e_beat_pj", "flops"))
-            self.assertEqual(len(got), 1)
-            self.assertAlmostEqual(got[0]["area_um2"], 0.8)
-            self.assertAlmostEqual(got[0]["e_beat_pj"], 0.5)
-            self.assertAlmostEqual(got[0]["flops"], 53 / 50)
+            self.assertEqual(st.build("streamer", "nangate45", root=Path(t)), cg)   # the gated rows by default
 
 
 if __name__ == "__main__":
