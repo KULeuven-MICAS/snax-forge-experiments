@@ -2,7 +2,7 @@
 
 forge's figures exclude `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168): it is in neither the csr nor the total without csr.
 
-Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs (X45, X64); the text outside the `gen` markers is written by hand. This page has the setup, the summary across kernels and the parts' basis; each kernel has its own page. These rows are ungated synthesis; they are rebuilt clock-gated in CG6 (X79 · X87 · X88).
+Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs (X45, X64); the text outside the `gen` markers is written by hand. This page has the setup, the summary across kernels and the parts' basis; each kernel has its own page. These rows are ungated synthesis on both sides. The HLS sources' committed rows are now clock-gated, so the pages are rebuilt, gated, once forge's points are; until then `pixi run compare` stops with "no clock-gated rows" for forge (X45 · X55 · X61, X79 · X87 · X88).
 
 <!-- gen:index -->
 | Tier | Kernels |

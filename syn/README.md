@@ -103,7 +103,7 @@ syn/runs/<source>/<tech>/<tier>/<kernel>/<point>[_c<clock>]/
 Every `run` keeps `results/<source>/<tech>/` in step, and that is what is committed (char's two CSVs are named `char_synth.csv` and `char_synth_modules.csv`):
 
 ```
-results/<source>/<tech>/synth_dc.csv            a copy of the summary
+results/<source>/<tech>/synth_dc.csv            each batch's rows merged in (PITFALLS DC18)
 results/<source>/<tech>/synth_dc_modules.csv    one row per hierarchical cell
 results/<source>/<tech>/reports/<tier>/<kernel>/<point>[_c<clock>][_cg].zip
                                            area.rpt, area_hierarchy.rpt, reference.rpt, power.rpt,
