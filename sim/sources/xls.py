@@ -1,32 +1,10 @@
 """sim/sources/xls.py - a Google XLS point -> tb.json.
 
-dslx-exercises is not changed for this: the adapter reads what it writes and the netlist.
-  - rtl/<tier>/<kernel>/xls_w<W>/filelist.f   the top module ('# top:')
-  - rtl/<tier>/<kernel>/xls_w<W>/sizes.txt    the sizes (--size all)
-  - kernels/<tier>/<kernel>/params.json       the input and output channels in order ("inputs", "outputs"),
-                                              the cfg fields in order and their expressions ("cfg"), sizes
-  - hls-exercises' params.json ("hls_exercises" there)  the same streams' names in sim/ref.py ("axis"),
-                                              matched by position
-  - the netlist's port list                   every port must be covered
-
-tb.json for the generated TB top (sim/pwr.py), as sources/hls.py's with:
-  source  "xls"
-  clock   {port}                               clk (syn/syn.py's SOURCES)
-  reset   {port, active: high, sync: true}     rst; the generated top drives it with the TB's ~rst_n
-  control {kind: "xls_cfg", data, valid, ready, bits, fields: [{name, bits, from: "config" | "data:<name>"}]}
-          one cfg beat on _cfg_TDATA, presented by sim/tb/xls_seq.sv; the fields packed in params.json's cfg
-          order, the first in the high bits (XLS flattens a tuple MSB first; dslx-exercises tb/: cfg carries
-          {loop_count, len}, loop_count in bits [63:32]); widths from CFG_BITS, their sum must be _cfg_TDATA's
-          width; config fields from the cfg expressions at the size, alpha drawn as a rand64 data pin after the
-          streams
-  streams [{arg, xls_arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   _<xls_arg>_TDATA/_TVALID/
-          _TREADY, inputs then outputs; arg is the hls-exercises name (sim/ref.py, the plusargs)
-  pins    []
-  sizes   as sources/hls.py's, from the config fields
-Expected cycles: the line a x loop_count + b through cycles (the cfg transfer to the last output beat) at the
-point's sizes in results/xls/xls_cycles.csv (status ok), plus 1: the window counts the rising edges from the cfg
-transfer edge to the last output's transfer edge, both included (XLS's datapath is combinational, so the last
-beat is computed in the cycle that ends at its transfer edge).
+dslx-exercises is not changed for this: the adapter reads what it writes (the point's filelist.f and sizes.txt, the
+kernel's params.json with its channels and cfg fields), hls-exercises' params.json for the streams' names in
+sim/ref.py (matched by position) and the netlist's port list, every port covered. build() writes tb.json as
+sources/hls.py's, with one cfg beat (its fields and the expected cycles in build()'s docstring); docs/power.md,
+"XLS", has the testbench and the window.
 """
 from __future__ import annotations
 
@@ -67,6 +45,25 @@ def params_of(point: str) -> dict:
 
 
 def build(point: str, netlist: Path) -> dict:
+    """tb.json for the generated TB top (sim/pwr.py), as sources/hls.py's with:
+      source  "xls"
+      clock   {port}                               clk (syn/syn.py's SOURCES)
+      reset   {port, active: high, sync: true}     rst; the generated top drives it with the TB's ~rst_n
+      control {kind: "xls_cfg", data, valid, ready, bits, fields: [{name, bits, from: "config" | "data:<name>"}]}
+              one cfg beat on _cfg_TDATA, presented by sim/tb/xls_seq.sv; the fields packed in params.json's cfg
+              order, the first in the high bits (XLS flattens a tuple MSB first; dslx-exercises tb/: cfg carries
+              {loop_count, len}, loop_count in bits [63:32]); widths from CFG_BITS, their sum must be _cfg_TDATA's
+              width; config fields from the cfg expressions at the size, alpha drawn as a rand64 data pin after the
+              streams
+      streams [{arg, xls_arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   _<xls_arg>_TDATA/_TVALID/
+              _TREADY, inputs then outputs; arg is the hls-exercises name (sim/ref.py, the plusargs)
+      pins    []
+      sizes   as sources/hls.py's, from the config fields
+    Expected cycles: the line a x loop_count + b through cycles (the cfg transfer to the last output beat) at the
+    point's sizes in results/xls/xls_cycles.csv (status ok), plus 1: the window counts the rising edges from the cfg
+    transfer edge to the last output's transfer edge, both included (XLS's datapath is combinational, so the last
+    beat is computed in the cycle that ends at its transfer edge).
+    """
     top = filelist(point)
     prm = params_of(point)
     case, w = hls.case_w(point)

@@ -1,44 +1,12 @@
 """sim/sources/forge.py - a snax-forge point -> tb.json.
 
-snax-forge is not changed for this: the adapter reads its bundle, rtl/forge/<point>.zip (forge/bundles.py), unpacked by sim/pwr.py
-and asks snax-forge's own code for the rest (forge/query.py, run in snax-forge's pixi environment):
-  - point.json          recipe, W, snax_forge_commit
-  - bundle.json         top, the design point (for the containers, through forge/query.py point)
-  - accelerator.json    its one group's CSRs by offset (START, JOBS, a unit's JOB_BEATS, STATUS, BUSY_COUNTER),
-                        its outer ports in order (inputs, then outputs) with lanes and dtype
-  - <tag>_streamer_<accelerator>.hjson (<tag>_streamer.hjson in the first bundles)  each mover's num_channel
-  - the netlist's port list  every port must be covered (snax-forge docs/CONTRACTS.md section 17, The wrapper)
-
-tb.json for the generated TB top (sim/pwr.py), as sources/hls.py's with:
-  tb_version, source "forge", point, kernel, recipe, top, case, W, snax_forge_commit
-  clock   {port: clk_i}
-  reset   {port: rst_ni, active: low, sync: false}
-  control {kind: "forge_csr", group, req_addr, req_data, req_write, req_valid, req_ready,
-           rsp_data, rsp_valid, rsp_ready, busy, done, csrs: {name: offset}}
-  streams [{arg, name, end, dir, kind: "stream", lanes, num_ch, dtype, data, valid, ready, beats, identity,
-            order}]
-           arg the container the design point binds the port to (the kernel's array, sim/ref.py's name);
-           name the TB's name for the stream: arg, or arg_in / arg_out when one container has an input and an
-           output stream (axpy's y, read and written in place); order the container's flat (row-major) element
-           of each element the stream carries, beat by beat, lane 0 first, as the bundle's streamer loops visit
-           them (forge/query.py program), null when it is the identity
-  pins    []
-  scalars [{container, dtype, unit, slot, csrs: [[offset, name], ...]}]  a slot read from a scalar container (a
-           CSR the program writes before START, C§17: K1, or K1_LO and K1_HI low word first at int64); its value
-           drawn as rand64 draws a data pin (sim/pwr.py)
-  baked   {container: value}  a scalar the recipe bakes (bake_scalar with a value, axpy_baked's alpha = 3): no CSR,
-           the value is the reference's
-  sizes   {n2048: {shape: {symbol: value}, jobs, beats: {unit: JOB_BEATS}, writes: [[offset, value, name], ...
-                   START last], stream_beats: {name: beats}, expected_cycles, expected_from}}
-          shape: the point's sets, the n2048 shape for its tier and kernel (sim/sources/hls.py's extra_sizes),
-          the size the design point was made at. writes: JOBS and each JOB_BEATS as snax-forge's LOWER writes
-          them for that design point (forge/query.py program: lower/derive.py's task list, lower/c.py's
-          job_writes), then START; sim/pwr.py adds the scalar writes before START. expected_cycles: the group's
-          busy cycles from snax-forge's model (forge/query.py cycles: gen/rtl.py's group_counter) with those
-          values; the TB's window is the measurement, the BUSY_COUNTER it reads back and this count are recorded
-          beside it, each within 5 % of it.
-
-One group only (dot 1 is not among the points). Every read-write CSR is START, JOBS, a unit's JOB_BEATS or a scalar's.
+snax-forge is not changed for this: the adapter reads its bundle, rtl/forge/<point>.zip (forge/bundles.py), unpacked by
+sim/pwr.py, and asks snax-forge's own code for the rest (forge/query.py, run in snax-forge's pixi environment):
+point.json (recipe, W, commit), bundle.json (the top, the design point), accelerator.json (its one group's CSRs by
+offset, its outer ports in order with lanes and dtype), the streamer's hjson (each mover's num_channel) and the
+netlist's port list, every port covered. build() writes tb.json (its fields in build()'s docstring); docs/power.md,
+"Forge", has the testbench and the window. One group only; every read-write CSR is START, JOBS, a unit's
+JOB_BEATS or a scalar's.
 """
 from __future__ import annotations
 
@@ -98,6 +66,37 @@ def streamer_channels(b: Path, tag: str, acc_name: str | None = None) -> dict:
 
 
 def build(point: str, netlist: Path, bundle: Path) -> dict:
+    """tb.json for the generated TB top (sim/pwr.py), as sources/hls.py's with:
+      tb_version, source "forge", point, kernel, recipe, top, case, W, snax_forge_commit
+      clock   {port: clk_i}
+      reset   {port: rst_ni, active: low, sync: false}
+      control {kind: "forge_csr", group, req_addr, req_data, req_write, req_valid, req_ready,
+               rsp_data, rsp_valid, rsp_ready, busy, done, csrs: {name: offset}}
+      streams [{arg, name, end, dir, kind: "stream", lanes, num_ch, dtype, data, valid, ready, beats, identity,
+                order}]
+               arg the container the design point binds the port to (the kernel's array, sim/ref.py's name);
+               name the TB's name for the stream: arg, or arg_in / arg_out when one container has an input and an
+               output stream (axpy's y, read and written in place); order the container's flat (row-major) element
+               of each element the stream carries, beat by beat, lane 0 first, as the bundle's streamer loops visit
+               them (forge/query.py program), null when it is the identity
+      pins    []
+      scalars [{container, dtype, unit, slot, csrs: [[offset, name], ...]}]  a slot read from a scalar container (a
+               CSR the program writes before START, C§17: K1, or K1_LO and K1_HI low word first at int64); its value
+               drawn as rand64 draws a data pin (sim/pwr.py)
+      baked   {container: value}  a scalar the recipe bakes (bake_scalar with a value, axpy_baked's alpha = 3): no CSR,
+               the value is the reference's
+      sizes   {n2048: {shape: {symbol: value}, jobs, beats: {unit: JOB_BEATS}, writes: [[offset, value, name], ...
+                       START last], stream_beats: {name: beats}, expected_cycles, expected_from}}
+              shape: the point's sets, the n2048 shape for its tier and kernel (sim/sources/hls.py's extra_sizes),
+              the size the design point was made at. writes: JOBS and each JOB_BEATS as snax-forge's LOWER writes
+              them for that design point (forge/query.py program: lower/derive.py's task list, lower/c.py's
+              job_writes), then START; sim/pwr.py adds the scalar writes before START. expected_cycles: the group's
+              busy cycles from snax-forge's model (forge/query.py cycles: gen/rtl.py's group_counter) with those
+              values; the TB's window is the measurement, the BUSY_COUNTER it reads back and this count are recorded
+              beside it, each within 5 % of it.
+
+    One group only (dot 1 is not among the points). Every read-write CSR is START, JOBS, a unit's JOB_BEATS or a scalar's.
+    """
     b = bundle_of(point, bundle)
     bundle = json.loads((b / "bundle.json").read_text())
     acc = json.loads((b / "accelerator.json").read_text())

@@ -1,24 +1,9 @@
 """sim/sources/hls.py - an hls-exercises point -> tb.json.
 
-hls-exercises is not changed for this: the adapter reads what it already writes.
-  - rtl/<tier>/<kernel>/<point>/filelist.f   the top module ('# top:'), its Verilog files, '# ram:'
-  - the top's Verilog port list               port names and widths (Vitis renames dot's out to out_r)
-  - bench/tier_<tier>/<kernel>/params.json    the stream args in order, the config pins and their
-                                              expressions, the scalar args, dtype, sizes, valid rule
-
-tb.json describes the DUT's ports for the generated TB top (sim/pwr.py):
-  tb_version, point, kernel, top, case, W
-  clock   {port}
-  reset   {port, active, sync}
-  control {kind: "ap_ctrl_hs", start, done, ready, idle}
-  streams [{arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   in params.json's axis order
-  pins    [{port, bits, vld, from: "config" | "data:<arg>"}]
-  sizes   {tag: {pin: value}}  cosim's sizes valid at this W, and 'b64' (64 beats) when every config
-                               pin equals loop_count at cosim's sizes (rowsum's len does not, so it
-                               has no b64 and runs at a cosim size), then the reference task n2048
-                               (EXTRA_SIZES: tier done N = 2048; untiered relu and axpy
-                               n = 2048, matadd m32_n64, rowsum m16_n128), from params.json's config
-                               expressions at those values
+hls-exercises is not changed for this: the adapter reads what it already writes: the point's filelist.f (the top
+module, its Verilog files, '# ram:'), the top's Verilog port list and bench/tier_<tier>/<kernel>/params.json (the
+stream args in order, the config pins and their expressions, the scalar args, dtype, sizes, valid rule). build()
+writes tb.json (its fields in build()'s docstring); docs/power.md, "Stages", has the testbench and the window.
 """
 from __future__ import annotations
 
@@ -133,6 +118,20 @@ def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | 
 
 
 def build(point: str) -> dict:
+    """tb.json describes the DUT's ports for the generated TB top (sim/pwr.py):
+      tb_version, point, kernel, top, case, W
+      clock   {port}
+      reset   {port, active, sync}
+      control {kind: "ap_ctrl_hs", start, done, ready, idle}
+      streams [{arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   in params.json's axis order
+      pins    [{port, bits, vld, from: "config" | "data:<arg>"}]
+      sizes   {tag: {pin: value}}  cosim's sizes valid at this W, and 'b64' (64 beats) when every config
+                                   pin equals loop_count at cosim's sizes (rowsum's len does not, so it
+                                   has no b64 and runs at a cosim size), then the reference task n2048
+                                   (EXTRA_SIZES: tier done N = 2048; untiered relu and axpy
+                                   n = 2048, matadd m32_n64, rowsum m16_n128), from params.json's config
+                                   expressions at those values
+    """
     fl = filelist(point)
     top = fl["top"]
     prm = params_of(point)

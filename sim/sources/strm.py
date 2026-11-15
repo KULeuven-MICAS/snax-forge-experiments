@@ -1,39 +1,10 @@
-"""sim/sources/strm.py - a streamer or xbar point (streamer reader or sparse interconnect) -> tb.json and its generated TB.
+"""sim/sources/strm.py - a streamer or xbar point -> tb.json and its generated TB.
 
-A streamer point is snax_cluster's reader alone, as the Streamer uses it (strm/gen.py, rtl/streamer/<point>.zip);
-an xbar point is the TCDM sparse interconnect (rtl/xbar/<point>.zip). Both are synthesized by syn/syn.py --source
-streamer|xbar. Neither has a done: the TB here is generated whole per point (the port names carry the channel and
-bank index), drives the work, checks every output and prints the window (sim/pwr.py --source streamer|xbar,
-docs/power.md, Streamer and interconnect).
-
-tb.json:
-  tb_version, source, point, params, top, snax_cluster_commit
-  clock    {port: clock}
-  reset    {port: reset, active: high, sync: false (reader) | true (xbar)}
-  control  {kind: "strm_reader" | "strm_xbar"}
-  reader:  bounds [b0 .. b{L-1}] (powers of two, product BEATS = 1024, the larger ones outermost: every stride
-           stays under the counter's 16-bit step, PITFALLS SC9),
-           strides [8 C, 8 C b0, ...] (unit strides: beat n reads words n C .. n C + C - 1), ptr 0, spatial
-           stride 8, beats 1024
-  xbar:    cycles 1024, inputs, banks, row_bits (log2 of the bank depth), bank_bits
-  window   the window's expected cycles: reader None (fill + beats, measured), xbar cycles + 1
-  seed     the root seed of the TB's $urandom calls: sim/pwr.py runs vsim -sv_seed <seed> (pwr run --seed, default 0)
-
-The stimuli:
-  reader  io_start for one cycle; every TCDM request granted at once (ready 1), its response valid the next cycle
-          with a new random 64-bit word; the output always ready. Window: from a quarter cycle before the edge that
-          takes io_start to a quarter cycle before the edge that takes the last beat. Checks: beats = 1024, every
-          beat = the responses in order per channel (channel i in bits 64 i), every request address
-          8 (n C + i), no X/Z, no cycle without a beat between the first and the last (stalls after the fill).
-  xbar    (inputs <= banks only) cycle t: input i requests bank (i + t) mod banks at a random row, write = t odd
-          for every input (reads and writes alternate), random write data, strb ff, amo, priority and user 0; the
-          memory side always ready, memRsps valid 1 (as sparse_interconnect_wrapper ties it), a read bank's data a
-          new random word at the next edge; tcdmRsps ready 1. Window: from a quarter cycle before the edge applying
-          cycle 0 to a quarter cycle before the edge after cycle `cycles` (its read responses): cycles + 1 edges.
-          Checks: every input granted every cycle (grants = inputs x cycles), each bank's request (row, write,
-          data, strb) its input's, no bank valid without an input, each read response valid with the bank's data.
-The window's rising edges are its own cycles and no event sits on a boundary (the char source's rule); the TB dumps
-from time 0 and sim/pwr.py cuts the window.
+A streamer point is snax_cluster's reader alone, as the Streamer uses it (strm/gen.py, rtl/streamer/<point>.zip); an
+xbar point is the TCDM sparse interconnect (rtl/xbar/<point>.zip). Neither has a done: the TB here is generated
+whole per point (the port names carry the channel and bank index), drives the work, checks every output and prints
+the window. build() writes tb.json (its fields and the stimuli in its docstring); docs/power.md, "Streamer and
+interconnect", has the testbench and the window.
 """
 from __future__ import annotations
 
@@ -71,6 +42,35 @@ def strides(bnds: list[int], channels: int) -> list[int]:
 
 
 def build(point: str, netlist: Path, seed: int = 0) -> dict:
+    """tb.json:
+      tb_version, source, point, params, top, snax_cluster_commit
+      clock    {port: clock}
+      reset    {port: reset, active: high, sync: false (reader) | true (xbar)}
+      control  {kind: "strm_reader" | "strm_xbar"}
+      reader:  bounds [b0 .. b{L-1}] (powers of two, product BEATS = 1024, the larger ones outermost: every stride
+               stays under the counter's 16-bit step, PITFALLS SC9),
+               strides [8 C, 8 C b0, ...] (unit strides: beat n reads words n C .. n C + C - 1), ptr 0, spatial
+               stride 8, beats 1024
+      xbar:    cycles 1024, inputs, banks, row_bits (log2 of the bank depth), bank_bits
+      window   the window's expected cycles: reader None (fill + beats, measured), xbar cycles + 1
+      seed     the root seed of the TB's $urandom calls: sim/pwr.py runs vsim -sv_seed <seed> (pwr run --seed, default 0)
+
+    The stimuli:
+      reader  io_start for one cycle; every TCDM request granted at once (ready 1), its response valid the next cycle
+              with a new random 64-bit word; the output always ready. Window: from a quarter cycle before the edge that
+              takes io_start to a quarter cycle before the edge that takes the last beat. Checks: beats = 1024, every
+              beat = the responses in order per channel (channel i in bits 64 i), every request address
+              8 (n C + i), no X/Z, no cycle without a beat between the first and the last (stalls after the fill).
+      xbar    (inputs <= banks only) cycle t: input i requests bank (i + t) mod banks at a random row, write = t odd
+              for every input (reads and writes alternate), random write data, strb ff, amo, priority and user 0; the
+              memory side always ready, memRsps valid 1 (as sparse_interconnect_wrapper ties it), a read bank's data a
+              new random word at the next edge; tcdmRsps ready 1. Window: from a quarter cycle before the edge applying
+              cycle 0 to a quarter cycle before the edge after cycle `cycles` (its read responses): cycles + 1 edges.
+              Checks: every input granted every cycle (grants = inputs x cycles), each bank's request (row, write,
+              data, strb) its input's, no bank valid without an input, each read response valid with the bank's data.
+    The window's rising edges are its own cycles and no event sits on a boundary (the char source's rule); the TB dumps
+    from time 0 and sim/pwr.py cuts the window.
+    """
     syn = _syn()
     source = syn.SOURCE
     cfg = syn.forge_json(point, "config.json")

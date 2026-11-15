@@ -2,14 +2,7 @@
 
 forge's figures exclude `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168): it is in neither the csr nor the total without csr.
 
-| Date | What changed on these pages |
-|---|---|
-| 5 Nov (HSYN1) | the four HLS cases side by side, insights written |
-| 10 Nov (CSYN1) | forge's cases added, every tier at n2048, one page per kernel (X64); insights reread |
-| 11 Nov (CTRL2) | forge remeasured on its leaner control unit; BUSY_COUNTER out of every figure (X65); the earlier numbers in [ctrl2_before_after.md](ctrl2_before_after.md) |
-| 12 Nov | a second figure per kernel, `<kernel>_ctrl_dp.png`: forge's ctrl + datapath against the HLS totals (X77) |
-
-Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs (X45, X64); the text outside the `gen` markers is written by hand. This page has the setup, the summary across kernels, the parts' basis and the nangate15 check; each kernel has its own page.
+Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs (X45, X64); the text outside the `gen` markers is written by hand. This page has the setup, the summary across kernels and the parts' basis; each kernel has its own page. These rows are ungated synthesis; they are rebuilt clock-gated in CG6 (X79 · X87 · X88).
 
 <!-- gen:index -->
 | Tier | Kernels |
@@ -55,7 +48,7 @@ forge without its CSR file, X63's like-for-like basis, against the best HLS case
 
 - **Energy:** forge has the lowest energy per element on seven of the eight kernels from W = 2 and on six at W = 1: 4 to 6 % below the best HLS case on dot, 7 to 9 % on vecmul, 9 to 12 % on axpy and 20 to 28 % on vecadd and matadd at every W, 4 to 17 % on vsum and rowsum from W = 2 (at W = 1 rowsum is 3 % below XLS and vsum 2 % above Vitis dace). relu is the exception: 4 % above XLS at W = 1, 1 % at W = 4, level from W = 8 (0.999 at W = 16).
 - **Area:** wherever 64-bit multipliers set it, forge is the smallest from W = 2 and within 1 % at W = 1: dot and vecmul 0.6 % above XLS at W = 1 and 0.1 to 1.8 % below it from W = 2, axpy 1 to 4 % below it at every W. vecadd and matadd are 1 % above XLS at W = 1 and 12 to 30 % below it from W = 2; vsum 7 % above Vitis dace at W = 1 (rowsum 3 % above XLS) and 1 to 12 % below the smallest from W = 2. relu is larger at every W, by 9 % (W = 16) to 39 % (W = 1).
-- **What CTRL2 changed (snax-forge D168, [before and after](ctrl2_before_after.md)):** the control unit reads JOBS and each JOB_BEATS live from the csr, so it lost its copy of JOBS (an elementwise ctrl 711 to 438 µm², 66 to 34 flops) and a fold also its copy of JOB_BEATS (1,294 to 760 µm², 131 to 67 flops). BUSY_COUNTER left the csr for `<tag>_peripherals` (279 µm², 0.24 to 0.25 pJ per cycle), which X65 keeps out of every figure, as Part A kept it out of this total by keeping it in the csr; so before and after share one basis and the whole control saving shows. The rows move most at W = 1: relu 1.40 / 2.14 to 1.04 / 1.39, vsum 1.22 / 1.43 to 1.02 / 1.07, vecadd and matadd 0.99 / 1.40 to 0.80 / 1.01, dot 3 0.98 / 1.07 to 0.95 / 1.01. The moves shrink as the datapath grows with W (W = 16: relu 1.03 / 1.29 to 1.00 / 1.09, vsum 0.95 / 0.96 to 0.89 / 0.88, vecmul and axpy within 0.01).
+- **What CTRL2 changed (snax-forge D168):** the control unit reads JOBS and each JOB_BEATS live from the csr, so it lost its copy of JOBS (an elementwise ctrl 711 to 438 µm², 66 to 34 flops) and a fold also its copy of JOB_BEATS (1,294 to 760 µm², 131 to 67 flops). BUSY_COUNTER left the csr for `<tag>_peripherals` (279 µm², 0.24 to 0.25 pJ per cycle), which X65 keeps out of every figure, as Part A kept it out of this total by keeping it in the csr; so before and after share one basis and the whole control saving shows. The rows move most at W = 1: relu 1.40 / 2.14 to 1.04 / 1.39, vsum 1.22 / 1.43 to 1.02 / 1.07, vecadd and matadd 0.99 / 1.40 to 0.80 / 1.01, dot 3 0.98 / 1.07 to 0.95 / 1.01. The moves shrink as the datapath grows with W (W = 16: relu 1.03 / 1.29 to 1.00 / 1.09, vsum 0.95 / 0.96 to 0.89 / 0.88, vecmul and axpy within 0.01).
 - **Why the rows fall with W:** forge's control is fixed, about 438 µm² for an elementwise unit and 760 µm² for a fold with JOB_BEATS, at every W, against XLS's 32 to 160 flops in total. It holds a counter per setting it reads from the csr (JOBS, each JOB_BEATS), the busy flag, the done pulse and the pipeline's valid bits (`ctrl/GroupRule.scala`): 34 flops for an elementwise unit, 67 with JOB_BEATS, as snax-forge's `estimate/bits.py` counts them at all 70 points. The busy-cycle BUSY_COUNTER (snax-forge D123, D168) is in `<tag>_peripherals`, a child of the csr, outside the ctrl and in no figure (X65). Where the datapath is a few hundred µm² (relu's 273 µm² at W = 4, a one-lane adder), the control decides; as W grows the datapath takes over.
 - **No flops per lane and no input gating:** forge's datapath is the arithmetic only, so its slope over W is the lowest (vecadd: 270 µm² per lane, against XLS 406, Vitis 679 and Bambu 1622).
 - **Latency:** forge is at par, one cycle per beat, the same cycles as before CTRL2 at every point. The exceptions are dot 5 and 6 (145 and 146 cycles at W = 16 against 129), from the stall and the holding buffer.
@@ -85,54 +78,7 @@ The parts' tables are on each kernel's page ("Parts at n2048"); this is the basi
 Every point at n2048 on nangate45 (2048 elements per input stream), per kernel and W. A part's energy per task is its energy per cycle (PT's hierarchical report of that run, `power_pt_modules.csv`, X60) times the window's cycles; pJ per element divides it by 2048. forge: csr, ctrl and datapath (the wrapper's three instances), the total (glue included), and the total without csr (ctrl, datapath and glue); the csr is the csr cell without its `<tag>_peripherals` child (BUSY_COUNTER, snax-forge D168, X65), and the total without csr is the total minus the whole csr cell, so the peripherals are in neither (only in the total). Bambu: ctrl and datapath (X41), the total (glue included). Vitis dace with a RAM: the RAM apart (X62: the macro's area and its counted accesses x CACTI's energies, or its flops' area and PT energy) and the logic without it. Vitis opt and XLS: totals only. **Basis (X63):** the HLS tools take their sizes on plain pins (`loop_count`, `len`, axpy's `alpha`) and have no CSR file, while forge holds them in `<tag>_csr`, its interface to the cluster; so forge's total without csr is the like-for-like figure against an HLS total. Integrating any HLS block into the cluster would need a register interface of its own, which none of these totals contains.
 <!-- /gen -->
 
-## 4. nangate15 check
+## 4. Notes
 
-<!-- gen:tech -->
-Values at W = 8 (nangate45 / nangate15); latency is the same on both. Tier done at n2048, untiered at each kernel's larger cosim size (matadd m16_n32, relu n512, axpy n512, rowsum m8_n64): untiered has no n2048 on nangate15, and forge's untiered points are nangate45 only.
-
-| Kernel | Case | Area (µm²) | Energy (nJ) | Power (mW) |
-|---|---|---|---|---|
-| vecadd | forge | 3,424 / 986.4 | 1.844 / 0.4962 | 0.7202 / 0.1938 |
-| vecadd | Vitis opt | 6,057 / 1,693 | 3.124 / 0.9773 | 1.211 / 0.3788 |
-| vecadd | Vitis dace | 6,459 / 1,807 | 3.221 / 1.002 | 1.244 / 0.3869 |
-| vecadd | Bambu | 13,777 / 3,813 | 6.413 / 2.159 | 2.486 / 0.8368 |
-| vecadd | XLS | 3,545 / 985.9 | 2.256 / 0.5825 | 0.8777 / 0.2267 |
-| vecmul | forge | 56,567 / 18,090 | 23.37 / 7.819 | 9.129 / 3.054 |
-| vecmul | Vitis opt | 59,302 / 18,793 | 25.33 / 8.317 | 9.816 / 3.224 |
-| vecmul | Vitis dace | 59,710 / 18,907 | 25.42 / 8.342 | 9.814 / 3.221 |
-| vecmul | Bambu | 66,948 / 20,840 | 30.1 / 9.7 | 11.67 / 3.76 |
-| vecmul | XLS | 56,467 / 17,931 | 24.97 / 7.977 | 9.718 / 3.104 |
-| vsum | forge | 4,548 / 1,361 | 1.502 / 0.4378 | 0.5844 / 0.1703 |
-| vsum | Vitis opt | 4,246 / 1,194 | 1.499 / 0.4096 | 0.5808 / 0.1587 |
-| vsum | Bambu | 7,703 / 2,134 | 2.992 / 0.9561 | 1.16 / 0.3706 |
-| vsum | XLS | 3,898 / 1,096 | 1.512 / 0.3941 | 0.5883 / 0.1533 |
-| dot | forge 2 | 64,277 / 20,167 | 25.34 / 8.508 | 9.82 / 3.298 |
-| dot | forge 3 | 59,845 / 19,062 | 23.83 / 7.936 | 9.272 / 3.088 |
-| dot | forge 4 | 65,647 / 20,776 | 26.13 / 8.736 | 10.13 / 3.386 |
-| dot | forge 5 | 64,584 / 20,487 | 25.59 / 8.657 | 9.658 / 3.267 |
-| dot | forge 6 | 68,296 / 21,406 | 26.42 / 8.869 | 9.933 / 3.334 |
-| dot | Vitis opt | 60,079 / 19,004 | 24.57 / 7.974 | 9.523 / 3.091 |
-| dot | Bambu | 66,374 / 20,686 | 31.33 / 10.43 | 6.095 / 2.029 |
-| dot | XLS | 59,137 / 18,587 | 25.92 / 8.06 | 10.08 / 3.136 |
-| matadd | Vitis opt | 6,057 / 1,693 | 0.7865 / 0.2465 | 1.192 / 0.3735 |
-| matadd | Vitis dace | 6,459 / 1,807 | 0.8107 / 0.2526 | 1.21 / 0.3771 |
-| matadd | Bambu | 13,777 / 3,813 | 1.621 / 0.5464 | 2.455 / 0.8278 |
-| matadd | XLS | 3,545 / 985.9 | 0.5719 / 0.1482 | 0.8798 / 0.228 |
-| relu | Vitis opt | 3,871 / 1,079 | 0.5798 / 0.1856 | 0.8785 / 0.2812 |
-| relu | Bambu | 8,776 / 2,425 | 0.9977 / 0.3508 | 1.512 / 0.5315 |
-| relu | XLS | 849.3 / 235.1 | 0.2537 / 0.0791 | 0.3904 / 0.1217 |
-| axpy | Vitis opt | 62,301 / 19,551 | 5.716 / 1.733 | 8.661 / 2.625 |
-| axpy | Bambu | 69,396 / 21,536 | 6.503 / 2.044 | 9.854 / 3.097 |
-| axpy | XLS | 56,854 / 18,274 | 5.335 / 1.662 | 8.208 / 2.557 |
-| rowsum | Vitis opt | 4,246 / 1,194 | 0.3851 / 0.1044 | 0.5835 / 0.1582 |
-| rowsum | Bambu | 7,703 / 2,134 | 0.7555 / 0.242 | 1.145 / 0.3667 |
-| rowsum | XLS | 3,898 / 1,096 | 0.3864 / 0.1008 | 0.5945 / 0.1551 |
-
-The order of the cases (smallest to largest) is the same on both technologies in 87 of 120 comparisons (kernel, W and metric with at least two cases).
-<!-- /gen -->
-
-## 5. Notes
-
-- Vitis dace_w1 of dot, axpy and rowsum: rebuilt for n2048 with their RAM as an SRAM macro (dot, axpy) or flops (rowsum), X62; parked on nangate15, which has no macros.
-- forge's tier done rows on nangate15 are CTRL1's RTL (`f9764d5`, the setup table's second commit), not rerun in CTRL2 R5, which is nangate45 only (snax-forge D159): in section 4 each forge cell sets CTRL2's nangate45 value beside CTRL1's nangate15 one, so forge's nangate45 areas there are 297 to 617 µm² below what CTRL1's RTL gave in Part A (its leaner ctrl and csr). The order agrees in 87 of 120 comparisons, one fewer than before CTRL2.
+- Vitis dace_w1 of dot, axpy and rowsum: rebuilt for n2048 with their RAM as an SRAM macro (dot, axpy) or flops (rowsum), X62.
 - The rows behind every number are in `results/compare_done.csv` and `results/compare_untiered.csv`.
