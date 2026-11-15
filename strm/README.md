@@ -1,22 +1,10 @@
 # strm
 
-The area and dynamic energy of snax_cluster's streamer reader and TCDM sparse interconnect on Nangate 45 nm, as tables snax-forge's HW cost model reads (docs X52, X53). A reader's cost also stands for a writer's.
+The area and dynamic energy of snax_cluster's streamer reader and TCDM sparse interconnect on Nangate 45 nm, as tables snax-forge's HW cost model reads (X52 · X82, X53 · X54). A reader's cost also stands for a writer's.
 
 ## The flow
 
-```bash
-pixi run strm-rtl [--only POINT ...] [--set streamer|xbar] [--list]      # rtl/streamer/, rtl/xbar/ (one zip per point)
-pixi run strm-rtl --set xbar_mix   # rtl/xbar_mix/, from rtl/xbar/'s SV
-pixi run syn run '*' --source xbar_mix --tech nangate45 -j 4 --cores 4
-pixi run python strm/test_xbar_mix.py
-pixi run syn run '*' --source xbar --tech nangate45 -j 4 --cores 4       # DC, largest first
-pixi run syn run '*' --source streamer --tech nangate45 -j 4 --cores 4
-pixi run pwr run '*' --source xbar --tech nangate45                      # zero-delay sim, SAIF, PT (inputs <= banks)
-pixi run pwr run '*' --source streamer --tech nangate45
-pixi run strm-table [--loo]                                              # results/strm/nangate45/streamer.csv, xbar.csv
-pixi run strm-table --clk-gate                                           # streamer_cg.csv, xbar_cg.csv from the gated rows (X83)
-pixi run strm-table-test
-```
+Generate the points (`strm-rtl`, `--set streamer|xbar|xbar_mix`), synthesize them (`syn run '*' --source xbar|streamer|xbar_mix`), measure their energy (`pwr run '*' --source xbar|streamer`, inputs <= banks for xbar), then make the tables (`strm-table`, `xbar-kinds`): every command is in [`docs/TOOL.md`](../docs/TOOL.md). The tables are made from the clock-gated rows (X83 · X85).
 
 ## Files
 
@@ -24,8 +12,8 @@ pixi run strm-table-test
 |---|---|
 | `grid.json` | the snax_cluster repo, checkout path, branch and commit; the image; the technology; per set (`streamer`, `xbar`) the point name pattern, the axes and the fixed values with where each comes from |
 | `gen.py` | `pixi run strm-rtl`: the bundles (below) and `flop_bits`, the register and memory bits a bundle's RTL declares, which `syn.py`'s flop check compares with DC's flops |
-| `xbar_mix.py` | (X70) `wrapper(sv_text, ro, wo)`, the module `xbar_mix` around a point's `SparseInterconnect` with read-only and write-only inputs and the cluster template's ties; `ports(sv_text)`, the module's ports as firtool writes them |
-| `test_xbar_mix.py` | its test on a stub SparseInterconnect (`pixi run python strm/test_xbar_mix.py`; the Verilator lint part runs only where `verilator` is on PATH, not on the host) |
+| `xbar_mix.py` | `wrapper(sv_text, ro, wo)`, the module `xbar_mix` around a point's `SparseInterconnect` with read-only and write-only inputs and the cluster template's ties; `ports(sv_text)`, the module's ports as firtool writes them |
+| `test_xbar_mix.py` | its test on a stub SparseInterconnect (`pixi run test`; the Verilator lint part runs only where `verilator` is on PATH, not on the host) |
 
 ## Generation (`gen.py`)
 

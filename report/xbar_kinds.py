@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT / "report"))
 import arc  # noqa: E402
 import strm_table  # noqa: E402
 
-CLUSTER = ("dot3_w16", "sparse_interconnect_i", 36, 32, 32, 1)   # point, instance, n, b, n_ro, n_wo
+CLUSTER = ("dot3_w16_cg", "sparse_interconnect_i", 35, 32, 32, 1)   # point, instance, n, b, n_ro, n_wo
 
 
 def rows(path: Path) -> list[dict]:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """report/test_strm_table.py - seeded tests of report/strm_table.py's reference interpolation.
 
-  pixi run strm-table-test
+  pixi run python report/test_strm_table.py
 
 On synthetic tables over the real grids: grid points come back exactly; a function multilinear in the raw values
 (a + b d + c l + e ch + f d ch + ...) is reproduced exactly anywhere inside; queries outside the grid and missing

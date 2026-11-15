@@ -1,6 +1,6 @@
 """report/cluster_energy.py on made-up PT hierarchies (no PT, no snax-forge).
 
-    pixi run cluster-energy-test
+    pixi run python report/test_cluster_energy.py
 """
 
 import json

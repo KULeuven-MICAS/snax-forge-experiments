@@ -4,20 +4,13 @@ SRAM bank area and dynamic energy per access for snax-forge's HW cost model (HWC
 
 ## Build CACTI
 
-```sh
-pixi run ram-build
-```
+`pixi run ram-build` ([`docs/TOOL.md`](../docs/TOOL.md#5-make-the-memories-ram-build-ram)):
 
 Clones https://github.com/HewlettPackard/cacti into `ram/cacti/` at commit `1ffd8df` and runs `make` with the host's g++ (8.5.0 here; 15 s; the makefile's default is the debug build, `-O0`, which runs a point in about 0.2 s). `ram/cacti/` is git-ignored: CACTI's source is never committed. If `ram/cacti/` exists, the task only checks out the commit and runs `make` again.
 
 ## Run
 
-```sh
-pixi run ram table -j 32                           # the lookup table -> results/ram/nangate45/ram_table.csv (X48)
-pixi run ram point 512 64                          # one point: config, run, parse, print every column
-pixi run ram point 512 64 --objective 0:0:0:100:0 --tag myvariant
-pixi run ram point 512 64 --ecc --tag ecc
-```
+`pixi run ram table`, `ram point`, `ram lib` and `ram libs` ([`docs/TOOL.md`](../docs/TOOL.md#5-make-the-memories-ram-build-ram)):
 
 - `table` runs every depth from 32 to 4096 in steps of 32 words and every width from 8 to 256 in steps of 8 bits (4,096 points; 4,095 are modelled, 32 x 8 is under 64 bytes and left out). About 4 minutes on 2 cores from scratch, seconds when cached. It stops if a cached point was run with another CACTI commit, objective or ECC setting.
 - Each point runs in a temporary folder under `tmp/` with `tech_params/` and `contention.dat` linked in: CACTI opens `tech_params/45nm.dat` relative to its working directory and segfaults without it (PITFALLS C1). What is kept of it, `key.json`, `rc`, `cacti.out` and `cacti.err`, goes into one zip, `ram/runs/cacti.zip` (git-ignored), as `d<depth>_w<width>[_<tag>]/...`; the folder, with `cacti.cfg`, CACTI's `cacti.cfg.out` and the links, is deleted (X51). The vdd check is `vdd_check/` in the same zip.

@@ -92,8 +92,8 @@ LICENCE_ERR = re.compile(r"(?i)(licen[sc]\w*\s+(error|fail\w*|not available|deni
 MASK64 = (1 << 64) - 1
 # The register start: +initreg+0 (vopt: every register and sequential UDP starts at 0, PITFALLS Q1), the default.
 # --initreg-seed N replaces it with Questa 2022.4's random start, for checking only (docs/power.md): vopt
-# +initreg=ru marks 4-state variables (r: nangate45's flops are behavioral regs) and sequential UDPs (u:
-# nangate15's) for randomization, and vsim +initreg+<N> seeds it. Such runs get the run tag suffix _r<N> and are
+# +initreg=ru marks 4-state variables (r: nangate45's flops are behavioral regs) and sequential UDPs (u) for
+# randomization, and vsim +initreg+<N> seeds it. Such runs get the run tag suffix _r<N> and are
 # not written to results/ (their SAIFs and PT reports stay in the point's zip in sim/runs/).
 INITREG_SEED: int | None = None
 # --clk-gate measures the clock-gated netlist of each point (syn.py --clk-gate's run, <point>_cg.zip): the

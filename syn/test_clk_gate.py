@@ -1,6 +1,6 @@
 """syn/test_clk_gate.py - the clock-gating switch in syn/syn.py and sim/pwr.py, without DC, Questa or PT.
 
-    pixi run clk-gate-test
+    pixi run python syn/test_clk_gate.py
 """
 
 import csv

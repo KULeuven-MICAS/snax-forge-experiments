@@ -1,6 +1,6 @@
 """report/cluster_sweep.py on made-up energy.json and breakdown.json entries (no PT, no DC, no snax-forge).
 
-    pixi run cluster-sweep-test
+    pixi run python report/test_cluster_sweep.py
 """
 
 import csv

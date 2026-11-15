@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""report/ctrl2_summary.py - the ratios behind results/compare/README.md's summary table (hand-written), per kernel and W.
+"""report/compare_summary.py - the ratios behind results/compare/README.md's summary table (hand-written), per kernel and W.
 
-  pixi run python report/ctrl2_summary.py [REV]
+  pixi run python report/compare_summary.py [REV]
 
 forge's energy per element and area against the lowest HLS case (Vitis opt, Vitis dace, Bambu, XLS), each metric apart,
 nangate45, n2048. Two bases: forge's total without csr (X63, X65: the total minus the whole csr cell, peripherals in no figure) and forge's ctrl + datapath. REV

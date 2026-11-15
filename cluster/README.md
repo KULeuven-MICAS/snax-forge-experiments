@@ -13,7 +13,7 @@ Each step takes snax_cluster from `SNAX_CLUSTER` (default `../snax_cluster`), cl
 | `gls` | step 2's netlist compiled into its own library (`work-vsim/gls`) and run in step 1's testbench through snax_cluster's `SIM_TYPE=gate_level_sim`, zero delay, `+initreg+0` | gates: the data line equal to the expected one and step 1's; cycles and every counter within 10 % of step 1's macro run; the netlist really loaded; `[SUCCESS]` in both runs. Reported: D123, and RAMCOUNT against step 1's macro run (one more read or write per instance allowed and listed, PITFALLS Q14) | `gls/` in the point's `sim/runs` zip |
 | `pwr` | part 1: the quiet ELF on the netlist, one VCD from time 0 to the check's mark, cut into one SAIF per program section (X73, X76); part 2: one PrimePower session over the windows (X74) | X9's SAIF checks per window; at least 95 % of the driven nets annotated | `pwr/` and `pt/` in the point's `sim/runs` zip; `results/cluster/nangate45/power_pt.csv` (one row per window) and `power_reports/<point>.zip` |
 
-`dot3_w16` on the one-core cluster (snax-forge D170): 1,261,630 µm², slack +1.232 ns at 10 ns, RTL and netlist PASS in 810 cycles.
+`dot3_w16_cg` on the one-core cluster (snax-forge D170), clock-gated: 1,173,293 µm², slack +1.676 ns at 10 ns, RTL and netlist PASS in 810 cycles.
 
 ## Files
 

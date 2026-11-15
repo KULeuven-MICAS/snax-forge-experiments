@@ -1,6 +1,6 @@
 """report/xbar_kinds.py on made-up grids with known answers (no CSV, no DC).
 
-    pixi run xbar-kinds-test
+    pixi run python report/test_xbar_kinds.py
 """
 
 import sys

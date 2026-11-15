@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """report/test_char_export.py - char_export.py --clk-gate on synthetic gated rows.
 
-  pixi run char-export-test
+  pixi run python report/test_char_export.py
 
 The committed nangate45 CSVs and char.json are copied into a temporary results/char/ (their ungated rows only), and
 every row gets a gated twin: integrated clock gates added as sequential cells (one CLKGATE_X1 per 64 bits), the combinational area and

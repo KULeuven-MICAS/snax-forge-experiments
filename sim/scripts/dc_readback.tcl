@@ -1,10 +1,10 @@
 #-----------------------------
-# sim/probe/dc_readback.tcl
+# sim/scripts/dc_readback.tcl
 # Design Compiler reads one mapped netlist back from syn/runs/ (no compile) and reports power
-# as dc_syn.tcl did, for comparisons with sim/probe/pt_power.tcl. Nothing under syn/runs/ is
+# as dc_syn.tcl did, for pwr.py's setup check against sim/scripts/pt_power.tcl. Nothing under syn/runs/ is
 # written: run it from a folder of its own.
 #
-#   dc_shell -f <repo>/sim/probe/dc_readback.tcl -output_log_file dc_shell.log < /dev/null
+#   dc_shell -f <repo>/sim/scripts/dc_readback.tcl -output_log_file dc_shell.log < /dev/null
 #
 # Environment:
 #   PWR_RUN    the syn run folder: syn/runs/hls/<tech>/<tier>/<kernel>/<point>

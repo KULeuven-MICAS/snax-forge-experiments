@@ -272,7 +272,7 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 ### X71 — The read-only and write-only inputs in the cost: factor form, crosspoint form as an option
 
 - **Decided:** `pixi run xbar-kinds` writes `results/strm/<tech>/xbar_kinds.json` with two forms of the interconnect's area: the factor form (default), `xbar.csv`'s area times $1 - f_{ro}\thinspace n_{ro}/n - f_{wo}\thinspace n_{wo}/n$, and the crosspoint form (an option), a least-squares cost per crosspoint of each kind. Energy stays `xbar.csv`'s per access.
-- **Why:** the factor form keeps `xbar.csv` as the source and adds two numbers; on the cluster it lands at +10.8 % (crosspoint +7.5 %), within HWCOST's 30 % target.
+- **Why:** the factor form keeps `xbar.csv` as the source and adds two numbers; on the one-core gated cluster it lands at +10.3 % (crosspoint +7.2 %), within HWCOST's 30 % target.
 - **Where:** `cost_tables.md`, "Read-only and write-only inputs"; `results/xbar_mix/runs/2026-11-11_csyn1_r3d.md`.
 
 ### X83 · X85 — The clock-gated block tables
