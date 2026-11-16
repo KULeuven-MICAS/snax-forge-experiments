@@ -8,8 +8,7 @@ parts (the index, the setup, the parts' basis) and per kernel <tier>/<kernel>.md
 latency and power against W, one line per case) and <kernel>_ctrl_dp.png (forge's ctrl + datapath against the HLS
 totals). Only the parts between <!-- gen:NAME --> and <!-- /gen --> are generated; the text outside is
 hand-written and kept, and a missing page is made from a template. Main view: nangate45, int64, 10 ns, n2048;
-power is E_run / (cycles x 10 ns). Each case is drawn on the basis its rows carry (clk_gate): the HLS cases gated,
-forge ungated until its points are synthesized gated; every figure and page says so (BASIS).
+power is E_run / (cycles x 10 ns). Every case is clock-gated (X79 · X87 · X88); every figure and page says so (BASIS).
 """
 from __future__ import annotations
 
@@ -42,7 +41,7 @@ STYLE = {"opt": ("#1f77b4", "o", "-"), "dace": ("#9467bd", "s", "--"), "bambu": 
 KERNELS = {"done": ["vecadd", "vecmul", "vsum", "dot"], "untiered": ["matadd", "relu", "axpy", "rowsum"]}
 SIZE = {"done": {k: "n2048" for k in KERNELS["done"]}, "untiered": {k: "n2048" for k in KERNELS["untiered"]}}
 WS = [1, 2, 4, 8, 16]
-BASIS = "HLS clock-gated, forge ungated"   # the tier CSVs' clk_gate column: 1 for the HLS cases, 0 for forge
+BASIS = "every case clock-gated"
 METRICS = [("area_um2", "Area", "µm²"), ("energy_nj", "Energy per task", "nJ"),
            ("cycles", "Latency per task", "cycles"), ("power_mw", "Power", "mW")]
 
@@ -134,20 +133,20 @@ def table(tier: str, kernel: str, pts: dict) -> list[str]:
 
 
 def setup(rows: list[dict]) -> list[str]:
-    ver, commit, gate = {}, defaultdict(set), {}
+    ver, commit = {}, defaultdict(set)
     for r in rows:
         if r["status"] == "ok":
             ver[r["case"]] = r["tool_version"]
             commit[r["case"]].add(r["rtl_commit"][:7])
-            gate[r["case"]] = "clock-gated" if r["clk_gate"] == "1" else "ungated"
     windows = {r["case"]: r["window"] for r in rows if r["window"]}
-    lines = ["| Case | Tool version | RTL measured at | Synthesis | Latency window |", "|---|---|---|---|---|"]
+    lines = ["| Case | Tool version | RTL measured at | Latency window |", "|---|---|---|---|"]
     for _tool, case in CASES:
         if case not in commit:
             continue
         lines.append(f"| {LABEL[case]} | {ver.get(case, '')} | {', '.join(sorted(commit[case]))} | "
-                     f"{gate.get(case, '')} | {windows.get(case, '')} |")
-    lines += ["", f"Main view: {TECH}, int64, every point synthesized at a 10 ns clock (the HLS tools scheduled at a "
+                     f"{windows.get(case, '')} |")
+    lines += ["", f"Main view: {TECH}, int64, every point synthesized clock-gated at a 10 ns clock (X79 · X87 · X88; "
+              "the HLS tools scheduled at a "
               "10 ns HLS clock), W = 1 to 16 lanes per stream. Size: n2048 everywhere, 2048 elements per input "
               "stream (X24, X55): tier done N = 2048, untiered relu and axpy n = 2048, matadd m32_n64, rowsum "
               "m16_n128. Energy is the dynamic energy of one task (PrimePower on simulated activity, X7); power is "
@@ -275,9 +274,7 @@ def main() -> int:
             pts = pick(rows, TECH, tier, kernel)
             fig = figure(tier, kernel, pts)
             fig_cd = figure(tier, kernel, pts, basis="ctrl_dp")
-            main_part = [f"![{kernel}]({fig})", "", f"{SIZE[tier][kernel]}, {TECH}, int64, 10 ns. {BASIS}: forge's "
-                         "points are not yet synthesized gated, and the insights below were written when both were "
-                         "ungated.", "",
+            main_part = [f"![{kernel}]({fig})", "", f"{SIZE[tier][kernel]}, {TECH}, int64, 10 ns, {BASIS}.", "",
                          f"[forge's ctrl + datapath against the HLS totals]({fig_cd}): forge without its csr, its "
                          "`<tag>_peripherals` and its glue; the HLS cases as above.", ""]
             body = fill(body, "main", main_part + table(tier, kernel, pts), md)

@@ -133,7 +133,7 @@ results/strm/nangate45/xbar.csv: 27 rows, 27 ok
 
 **`xbar-kinds`** (`report/xbar_kinds.py`) fits the interconnect's read-only and write-only inputs from the xbar_mix rows into `results/strm/<tech>/xbar_kinds.json`: the factor form and the crosspoint form, with their checks against the 36-input points and the cluster (X71).
 
-**`char-export`** (`report/char_export.py`) writes the block model, `results/char/<tech>/char.json` (X37); `--clk-gate` writes `char_cg.json` from the gated rows, its control factor taken from `char.json` (X83 · X85). It prints, per point, the gated value over the ungated one.
+**`char-export`** (`report/char_export.py`) writes the block model, `results/char/<tech>/char.json`, from the clock-gated rows (X37, X83 · X85): a clock gate counts as a sequential cell, the control factor is the mean over the tier-done forge points with a power row. It prints each block whose sequential cells differ from its bits (its clock gates).
 
 **`char-table`** (`report/char_table.py`) writes `results/char/char_table.md`, every number of the block model and its known limits.
 
@@ -165,7 +165,7 @@ results/cluster/nangate45/energy.json: dot3_w8_cg, dot3_w2_cg, dot3_w4_cg, dot3_
 
 ## 8. Compare forge with the HLS tools
 
-**`compare`** (`report/compare.py`) writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs, one row per tech, tier, kernel, W, tool, case and size: the HLS sources' clock-gated rows and forge's ungated rows until its points are synthesized gated (`clk_gate` says which), and writes nothing when a source has no rows on its basis or a point or size is missing (X45 · X55 · X61); `--check` checks only.
+**`compare`** (`report/compare.py`) writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs, one row per tech, tier, kernel, W, tool, case and size: every source's clock-gated rows, and writes nothing when a source has no gated rows or a point or size is missing (X45 · X55 · X61); `--check` checks only.
 
 ```
 $ pixi run compare

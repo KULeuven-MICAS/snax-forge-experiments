@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
-"""report/test_char_export.py - char_export.py --clk-gate on synthetic gated rows.
+"""report/test_char_export.py - char_export.py on the committed clock-gated rows.
 
   pixi run python report/test_char_export.py
 
-The committed nangate45 CSVs and char.json are copied into a temporary results/char/ (their ungated rows only), and
-every row gets a gated twin: integrated clock gates added as sequential cells (one CLKGATE_X1 per 64 bits), the combinational area and
-energy a little lower, the idle flop energy far lower. Checked: the ungated rows still load as before (the gated
-twins left out); char_cg.json keeps char.json's format and blocks; flop.area_um2 is the mean of seq_area /
-seq_cells; e_hold is the gated mean idle e_bit; ctrl's factor is rescaled so that E_ctrl is char.json's (within the
-factor's two decimals); the gated/ungated ratios come out as built. Standard library only.
+The committed nangate45 CSVs are copied into a temporary results/char/ and char_export.py's main() writes char.json
+there. Checked: it equals the committed char.json; flop.area_um2 is the mean of seq_area / seq_cells (a clock gate
+counts as a sequential cell, so it is below a DFFR's area); the control factor is the mean over the tier-done forge
+points with a power row (the W = 32 bundles made before snax-forge D168 have none) of ctrl's e_dyn over its cells x
+e_hold; E_ctrl is that factor x cells x cycles x e_hold. Standard library only.
 """
 from __future__ import annotations
 
 import csv
 import json
-import math
 import shutil
 import sys
 import tempfile
@@ -28,114 +26,70 @@ import char_export as ce  # noqa: E402
 import char_table as ct  # noqa: E402
 
 TECH = "nangate45"
-ICG_UM2 = 3.458
-COMB, IDLE = 0.97, 0.1          # the gated twin's comb area and e_comb scale, its idle e_bit scale
+DFFR_UM2 = 5.32                 # NangateOpenCellLibrary's DFFR_X1
+NO_POWER = {"done/dot/forge2_w32", "done/dot/forge4_w32", "done/dot/forge5_w32", "done/dot/forge6_w32",
+            "done/vecadd/forge_w32", "done/vecmul/forge_w32", "done/vsum/forge_w32"}
 
 
-def rows(path: Path) -> tuple[list[str], list[dict]]:
-    with path.open(newline="") as fh:
-        r = csv.DictReader(fh)
-        return list(r.fieldnames), list(r)
-
-
-def write(path: Path, cols: list[str], data: list[dict]) -> None:
-    with path.open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=cols)
-        w.writeheader()
-        w.writerows(data)
-
-
-def gated_synth(r: dict) -> dict:
-    g = dict(r, clk_gate="1")
-    n = int(r["seq_cells"])
-    icg = math.ceil(n / 64) if n else 0
-    g["seq_cells"] = str(n + icg)
-    g["seq_area_um2"] = f"{float(r['seq_area_um2']) + icg * ICG_UM2:.6f}"
-    g["comb_area_um2"] = f"{float(r['comb_area_um2']) * COMB:.6f}"
-    g["area_um2"] = f"{float(g['seq_area_um2']) + float(g['comb_area_um2']):.6f}"
-    return g
-
-
-def gated_power(r: dict, cells: dict) -> dict:
-    g = dict(r, clk_gate="1")
-    g["e_comb_pj"] = f"{float(r['e_comb_pj']) * COMB:.7g}"
-    n = cells[r["point"]]
-    if r["e_bit_pj"]:
-        e_bit = float(r["e_bit_pj"]) * (IDLE if r["window"] == "idle" else 1.0)
-        g["e_flop_pj"] = f"{e_bit * n:.7g}"
-        g["e_bit_pj"] = f"{float(g['e_flop_pj']) / n:.7g}"
-    return g
-
-
-class TestCharExportGated(unittest.TestCase):
+class TestCharExport(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.tmp = tempfile.TemporaryDirectory(dir=ct.ROOT)       # inside the repo: main_cg names paths from it
+        cls.tmp = tempfile.TemporaryDirectory(dir=ct.ROOT)
         cls.old = ct.CHAR
         char = Path(cls.tmp.name) / "char"
         (char / TECH).mkdir(parents=True)
-        shutil.copy(cls.old / TECH / "char.json", char / TECH / "char.json")
-        scols, srows = rows(cls.old / TECH / "char_synth.csv")
-        pcols, prows = rows(cls.old / TECH / "char_power.csv")
-        # the twins are made from the ungated rows; committed gated rows are left out
-        srows = [r for r in srows if r.get("clk_gate", "") != "1"]
-        prows = [r for r in prows if r.get("clk_gate", "") != "1"]
-        gs = [gated_synth(r) for r in srows]
-        cells = {r["point"]: int(r["seq_cells"]) for r in gs}
-        gp = [gated_power(r, cells) for r in prows]
-        scols = scols if "clk_gate" in scols else scols[:4] + ["clk_gate"] + scols[4:]
-        pcols = pcols if "clk_gate" in pcols else pcols[:8] + ["clk_gate"] + pcols[8:]
-        write(char / TECH / "char_synth.csv", scols, srows + gs)
-        write(char / TECH / "char_power.csv", pcols, prows + gp)
-        cls.srows, cls.gs, cls.gp = srows, gs, gp
+        for f in ("char_synth.csv", "char_power.csv"):
+            shutil.copy(cls.old / TECH / f, char / TECH / f)
         ct.CHAR = char
-        cls.points = json.loads(ct.POINTS.read_text())
-        cls.base = json.loads((char / TECH / "char.json").read_text())
         with redirect_stdout(StringIO()) as out:
-            ce.main_cg(cls.points)
+            ce.main()
         cls.out = out.getvalue()
-        cls.cg = json.loads(ce.path_cg(TECH).read_text())
+        cls.j = json.loads(ce.path(TECH).read_text())
+        cls.committed = (cls.old / TECH / "char.json").read_text()
+        cls.points = json.loads(ct.POINTS.read_text())
+        cls.d = ct.load(TECH, cls.points)
 
     @classmethod
     def tearDownClass(cls):
         ct.CHAR = cls.old
         cls.tmp.cleanup()
 
-    def test_ungated_rows_unchanged(self):
-        d = ct.load(TECH, self.points)
-        drop = lambda r: {k: v for k, v in r.items() if k != "clk_gate"}  # noqa: E731  the column the twins added
-        self.assertEqual({p: drop(v["synth"]) for p, v in d.items()}, {r["point"]: drop(r) for r in self.srows})
-
-    def test_format_and_blocks(self):
-        self.assertEqual(set(self.cg), set(self.base))
-        self.assertEqual(set(self.cg["flop"]), set(self.base["flop"]))
-        self.assertEqual(set(self.cg["blocks"]), set(self.base["blocks"]))
-        self.assertEqual(self.cg["source"]["clk_gate"], "1")
-        for dp, entries in self.cg["blocks"].items():
-            for x, y in zip(entries, self.base["blocks"][dp]):
-                self.assertEqual(x["params"], y["params"])
-                for q, r in zip(x["points"], y["points"]):
-                    self.assertAlmostEqual(q["comb_um2"], r["comb_um2"] * COMB, places=3)
-                    self.assertAlmostEqual(q["e_comb_pj"], r["e_comb_pj"] * COMB, delta=1e-6 * r["e_comb_pj"] + 1e-9)
+    def test_equals_the_committed_table(self):
+        self.assertEqual(ce.path(TECH).read_text(), self.committed)
+        self.assertEqual(self.j["source"]["clk_gate"], "1")
 
     def test_flop_area_is_the_mean(self):
-        a = [float(r["seq_area_um2"]) / int(r["seq_cells"]) for r in self.gs if int(r["seq_cells"])]
-        self.assertAlmostEqual(self.cg["flop"]["area_um2"], sum(a) / len(a), places=5)
-        self.assertLess(self.cg["flop"]["area_um2"], self.base["flop"]["area_um2"])   # a gate is smaller than a DFFR
+        a = [float(v["synth"]["seq_area_um2"]) / int(v["synth"]["seq_cells"]) for v in self.d.values()
+             if int(v["synth"]["seq_cells"])]
+        self.assertAlmostEqual(self.j["flop"]["area_um2"], sum(a) / len(a), places=5)
+        self.assertLess(self.j["flop"]["area_um2"], DFFR_UM2)   # a gate is smaller than a DFFR
 
-    def test_e_hold_and_ctrl(self):
-        hold = self.cg["flop"]["e_hold_fj"]
-        self.assertAlmostEqual(hold, self.base["flop"]["e_hold_fj"] * IDLE, delta=0.01 * hold)
+    def test_counter_factor(self):
+        area, hold = self.j["flop"]["area_um2"], self.j["flop"]["e_hold_fj"]
+        cf = ce.counter_factor(TECH, area, hold)
+        self.assertEqual(cf["n"], ce.FORGE_POINTS)
+        self.assertTrue(all(p.startswith("done/") for p in cf["points"]))
+        self.assertFalse(NO_POWER & set(cf["points"]))
+        for p, v in cf["points"].items():
+            self.assertAlmostEqual(v, cf["e_ctrl"][p] / (cf["bits"][p] * hold / 1000), places=9)
+        self.assertEqual(self.j["ctrl"]["counter_factor"], round(sum(cf["points"].values()) / cf["n"], 2))
+
+    def test_ctrl_cells_from_seq_area(self):
+        area = self.j["flop"]["area_um2"]
+        with (ct.RES / "forge" / TECH / "synth_dc_modules.csv").open(newline="") as fh:
+            seq = {r["point"]: float(r["seq_um2"]) for r in csv.DictReader(fh)
+                   if r["path"] == "ctrl/ctrl" and r.get("clk_gate") == "1"}
+        for p, n in ce.ctrl_bits(TECH, area).items():
+            self.assertEqual(n, round(seq[p] / area), p)
+            self.assertGreater(n, 0, p)
+
+    def test_e_ctrl(self):
         bits, cycles = 67, 257
-        e0, e1 = ce.e_ctrl(self.base, bits, cycles), ce.e_ctrl(self.cg, bits, cycles)
-        self.assertAlmostEqual(e1 / e0, 1.0, delta=0.005 / self.cg["ctrl"]["counter_factor"] + 1e-3)
+        want = self.j["ctrl"]["counter_factor"] * bits * cycles * self.j["flop"]["e_hold_fj"] / 1000
+        self.assertAlmostEqual(ce.e_ctrl(self.j, bits, cycles), want, places=12)
 
-    def test_ratios_printed(self):
-        self.assertIn("gated / ungated per point", self.out)
-        self.assertIn("lanes/mul_w8: area_um2", self.out)
-        line = next(ln for ln in self.out.splitlines() if ln.startswith("  tree/add_w8: area_um2"))
-        self.assertIn("seq_cells 1.0156", line)             # 65 / 64: one gate per 64 bits
-        self.assertIn("tree/add_w8: 65 sequential cells, its bits are 64", self.out)   # printed, not failed
+    def test_gates_printed_not_failed(self):
+        self.assertIn("tree/add_w8: 65 sequential cells, its bits are 64", self.out)
 
 
 if __name__ == "__main__":

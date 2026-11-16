@@ -8,7 +8,7 @@ Rules:
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; the text of a removed entry is in git history.
 - A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X89**.
 
-Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X25's diagnostic), X26, X27 and X43 (SYN1's and SYN2's analysis code and local runs, deleted), X36 (a draft block table, now X37), X46 (one comparison file, now X64).
+Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X25's diagnostic), X26, X27 and X43 (SYN1's and SYN2's analysis code and local runs, deleted), X36 (a draft block table, now X37), X46 (one comparison file, now X64), X35 (the LinkBuffer stream cheaper per flop than a held flop, a limit of the ungated table, gone with it).
 
 ## Environment and runs
 
@@ -95,9 +95,9 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 ### X79 · X87 · X88 — Clock-gated synthesis is the basis
 
 - **Decided:** `dc_syn.tcl`'s `CLK_GATE_ENABLE` (from `SYN_CLK_GATE_ENABLE`, default 0) turns on DC's clock gating for a run: `clock_gating.tcl` (stop if the library has no `latch_posedge` integrated gate; positive edge, `-minimum_bitwidth 2`, through the hierarchy, no test or negedge logic, no operand isolation), `compile_ultra -no_autoungroup -gate_clock`, and the three `clock_gating*.rpt`, kept whatever their size. `syn.py run --clk-gate` and `pwr.py run --clk-gate` tag a run `_cg` and its rows `clk_gate` 1, merged apart from ungated rows (an empty `clk_gate` reads as 0); a cluster point sets `"syn": {"clk_gate": true}` under its own name. The switch's default stays off; a point or source says `clk_gate` itself.
-- **Decided:** gated synthesis is the basis: new cluster points are gated and HWCOST's block tables are the gated ones (X83). The ungated data that had a gated twin was removed: the ungated STRM rows and tables, the ungated cluster points and their sweep, and the 15 nm library (X1). The HLS points (Vitis, Bambu, XLS) are gated, their ungated rows removed. The sources not yet gated (the accelerators alone, the `xbar_mix` grid) keep their ungated rows until they are synthesized gated; `char.json` stays until then, as the gated control factor comes from it.
+- **Decided:** gated synthesis is the basis: new cluster points are gated and HWCOST's block tables are the gated ones (X83). The ungated data that had a gated twin was removed: the ungated STRM rows and tables, the ungated cluster points and their sweep, and the 15 nm library (X1). The HLS points (Vitis, Bambu, XLS), the forge accelerators alone, the char blocks and the `xbar_mix` grid are gated, their ungated rows removed: every source is gated.
 - **Why:** clock gating is what a real design gets. The ungated run windows were 46 to 82 % idle clocking at W ≤ 16 and overstated the cluster's energy 2 to 5 times; with the gated tables HWCOST's streamers come within −3 to −7 % (−23 to −34 % ungated), while memory and the datapath do not move. On `dot3_w8_cg` DC gates 98.6 % of the registers with `CLKGATE_X1` cells; area −6.5 %.
-- **Where:** `syn/README.md`, "Clock gating"; `results/cluster/runs/2026-11-13_cg1_r1.md`, `2026-11-15_cg3_r3.md`, `2026-11-15_cg4_r1.md`; `results/runs/2026-11-15_cg6_r1.md`, `2026-11-15_cg6_r2.md`.
+- **Where:** `syn/README.md`, "Clock gating"; `results/cluster/runs/2026-11-13_cg1_r1.md`, `2026-11-15_cg3_r3.md`, `2026-11-15_cg4_r1.md`; `results/runs/2026-11-15_cg6_r1.md`, `2026-11-15_cg6_r2.md`, `2026-11-16_cg5_r1.md`, `2026-11-16_cg5_r2.md`.
 
 ## Power
 
@@ -228,8 +228,8 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X33 — char_power.csv and e_hold
 
-- **Decided:** `char_power.csv` has one row per point and window with the per-cycle energies. e_hold is the mean idle energy per flop bit of the registered blocks (7.1476 fJ ungated). A LinkBuffer that is not loading costs its flops x e_hold. A clock-gated run's spread is reported, not checked (X82).
-- **Why:** a held flop costs the same in every block (14 points within 0.2 %).
+- **Decided:** `char_power.csv` has one row per point and window with the per-cycle energies. e_hold is the mean idle energy per sequential cell of the registered blocks (0.0655 fJ, gated, X83). A LinkBuffer that is not loading costs its flops x e_hold. A clock-gated run's spread is reported, not checked (X82).
+- **Why:** a held register costs its clock gate's share in every block, so the 14 points spread only with the bits behind each gate (X83).
 - **Where:** `results/char/README.md`.
 
 ### X34 — busy_t1 and duty50 dropped
@@ -238,17 +238,11 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 - **Why:** `busy_t1` was within 5 % of busy, and `duty50` is a check, not a window the model uses.
 - **Where:** `results/char/char_table.md`, "Known limits".
 
-### X35 — nangate45's LinkBuffer slope kept as measured
-
-- **Decided:** LinkBuffer's stream energy is kept as PT gives it, although a streaming flop costs less than a held one there. A known limit.
-- **Why:** a first-order model; the cause is not established.
-- **Where:** `results/char/char_table.md`, "Known limits".
-
 ### X37 — char.json, the block model snax-forge reads
 
-- **Decided:** `pixi run char-export` writes `results/char/<tech>/char.json`: the flop constants (area, e_load, e_hold), control's counter factor, and per block its comb area and comb energy per fire, with a rule for other lane counts (`copy` or `interpolate`).
-- **Why:** a model snax-forge evaluates from a block's params and a task's fires and cycles, with a few constants; it landed within 0.99 to 1.04 of the forge accelerators' kernels.
-- **Where:** `results/char/README.md`, "The block model".
+- **Decided:** `pixi run char-export` writes `results/char/<tech>/char.json` from the clock-gated rows: the flop constants (area, e_load, e_hold, per sequential cell, X83), control's counter factor, and per block its comb area and comb energy per fire, with a rule for other lane counts (`copy` or `interpolate`). The counter factor is the mean, over the tier-done forge points with a power row, of `ctrl/ctrl`'s energy per cycle over its sequential cells (`seq_um2` / `flop.area_um2`, rounded) times e_hold: 41 points, as the 7 W = 32 bundles made before snax-forge D168 have no gated power.
+- **Why:** a model snax-forge evaluates from a block's params and a task's fires and cycles, with a few constants; on the gated rows it lands within 0.996 to 1.035 of the forge accelerators' kernels at W = 8 (0.99 to 1.04 ungated).
+- **Where:** `results/char/README.md`, "The block model"; `results/runs/2026-11-16_cg5_r2.md`.
 
 ### X52 · X82 — The streamer reader and the sparse interconnect, characterized
 
@@ -267,20 +261,20 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 - **Decided:** the `xbar_mix` source synthesizes the interconnect with some inputs tied as the cluster ties them (a reader's channel read-only, a writer's write-only) plus the cluster template's ties: inputs {16, 32, 64} x banks {16, 32, 64}, each all read-write, all read-only and all write-only, plus two 36-input points. Area only.
 - **Why:** HWCOST priced the cluster's interconnect at +74 % with every input read-write; DC removes what the constants make dead.
-- **Where:** `syn/README.md`, "The xbar_mix source"; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`.
+- **Where:** `syn/README.md`, "The xbar_mix source"; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`; clock-gated in `results/runs/2026-11-16_cg5_r1.md`.
 
 ### X71 — The read-only and write-only inputs in the cost: factor form, crosspoint form as an option
 
 - **Decided:** `pixi run xbar-kinds` writes `results/strm/<tech>/xbar_kinds.json` with two forms of the interconnect's area: the factor form (default), `xbar.csv`'s area times $1 - f_{ro}\thinspace n_{ro}/n - f_{wo}\thinspace n_{wo}/n$, and the crosspoint form (an option), a least-squares cost per crosspoint of each kind. Energy stays `xbar.csv`'s per access.
-- **Why:** the factor form keeps `xbar.csv` as the source and adds two numbers; on the one-core gated cluster it lands at +10.3 % (crosspoint +7.2 %), within HWCOST's 30 % target.
-- **Where:** `cost_tables.md`, "Read-only and write-only inputs"; `results/xbar_mix/runs/2026-11-11_csyn1_r3d.md`.
+- **Why:** the factor form keeps `xbar.csv` as the source and adds two numbers; fitted on the clock-gated grid, on the one-core gated cluster it lands at +10.5 % (crosspoint +7.6 %), within HWCOST's 30 % target.
+- **Where:** `cost_tables.md`, "Read-only and write-only inputs"; `results/xbar_mix/runs/2026-11-11_csyn1_r3d.md`, `results/runs/2026-11-16_cg5_r2.md`.
 
 ### X83 · X85 — The clock-gated block tables
 
-- **Decided:** the STRM tables are made from the `clk_gate` 1 rows (`streamer.csv`, `xbar.csv`), and `pixi run char-export --clk-gate` writes `results/char/nangate45/char_cg.json`, in `char.json`'s format, all read with X53's rules. An integrated clock gate is a sequential cell: `flops` is `seq_cells`, `flop.area_um2` the mean of `seq_area / seq_cells`, e_load and e_hold per sequential cell; the gate is not priced on its own. `xbar_kinds.json`'s f_ro and f_wo carry over. Control stays ungated: `char_cg.json`'s counter factor is `char.json`'s times `char.json`'s e_hold over its own, so E_ctrl is unchanged.
+- **Decided:** the cost tables are made from the `clk_gate` 1 rows: `streamer.csv`, `xbar.csv`, `xbar_kinds.json` and `char.json` (X37), all read with X53's rules. An integrated clock gate is a sequential cell: `flops` is `seq_cells`, `flop.area_um2` the mean of `seq_area / seq_cells`, e_load, e_hold and control's cells per sequential cell; the gate is not priced on its own.
 - **Decided:** a query beyond a table's grid continues the line through the axis's two outermost grid values, clamped at 0, as snax-forge's estimate does (`strm_table.Table.at(..., extrapolate=True)`); without it a query outside the grid is refused. snax-forge imports these tables and prices the gated cluster points itself (`pixi run cluster-hwcost`).
 - **Why:** a gated cluster has almost no idle clock. The per-cell constants undercount a register's bits by its gates' share (about 1/65 for 64 bits behind one gate), a first assumption (Ryan, 13 Nov). A gated register's idle energy is its gate's, about 4.9 fJ per cycle shared by the bits behind it, so the mean per cell (0.0655 fJ) spreads from 0.0024 (2,048 bits per gate) to 0.0754 fJ (64); snax-forge's estimate drops the hold term, which this makes negligible.
-- **Where:** `cost_tables.md`; `results/strm/runs/2026-11-14_cg2_r4.md`, `results/cluster/runs/2026-11-14_cg3_r1.md`.
+- **Where:** `cost_tables.md`; `results/strm/runs/2026-11-14_cg2_r4.md`, `results/cluster/runs/2026-11-14_cg3_r1.md`, `results/runs/2026-11-16_cg5_r2.md`.
 
 ## Sources
 
@@ -405,9 +399,9 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X45 · X55 · X61 — The tier comparison CSVs
 
-- **Decided:** `pixi run compare` writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs only: one row per tech, tier, kernel, W, tool, case and size, with areas, splits, energies, cycles and provenance, and no ratios. Every untiered point also runs its n2048 task and takes its parts from it; the compare scripts take every forge case by its design name (PITFALLS E5). The HLS sources are read on their clock-gated rows (X79 · X87 · X88); forge on its ungated rows until its points are synthesized gated (`CLK_GATE`), every row saying which in `clk_gate`, and the pages and figures saying "HLS clock-gated, forge ungated". It writes nothing if a source has no rows on its basis, a point or size is missing, a run failed, a key repeats or a split does not add up.
+- **Decided:** `pixi run compare` writes `results/compare_done.csv` and `compare_untiered.csv` from the committed CSVs only: one row per tech, tier, kernel, W, tool, case and size, with areas, splits, energies, cycles and provenance, and no ratios. Every untiered point also runs its n2048 task and takes its parts from it; the compare scripts take every forge case by its design name (PITFALLS E5). Every source is read on its clock-gated rows (X79 · X87 · X88), and the pages and figures say so. It writes nothing if a source has no gated rows, a point or size is missing, a run failed, a key repeats or a split does not add up.
 - **Why:** every comparison reads the same raw rows.
-- **Where:** `TOOL.md`; `report/compare.py`'s docstring.
+- **Where:** `TOOL.md`; `report/compare.py`'s docstring; `results/runs/2026-11-16_cg5_r3.md`.
 
 ### X63 · X65 — The parts at n2048, and forge's total without csr
 

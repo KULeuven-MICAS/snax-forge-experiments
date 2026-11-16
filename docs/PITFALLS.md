@@ -23,8 +23,8 @@ IDs are never reused; retired: LIB1, LIB3, LIB4 and PT5 (the 15 nm library, remo
 - **DC15. DC's tied-constant pseudo-cells look like unresolved black boxes.** `**logic_0**` and `**logic_1**` have no library cell; `cluster_check.tcl` lists them as constants, out of the reference and black-box gates.
 - **DC16. The cluster's interconnect has two levels in `area_hierarchy.rpt`.** `sparse_interconnect_wrapper` holds 193 µm² of its own beside `sparse_interconnect_i`; compare a lone SparseInterconnect with the inner level and say which level a number is.
 - **DC17. `syn.py run --dry-run -j N` interleaves its points' lines.** Compare dry runs at `-j 1`, where the order is fixed.
-- **DC18. The run summary on the server keeps rows that results/ no longer has.** `syn/runs/<source>/<tech>/summary.csv` is never pruned, so copying it over `synth_dc.csv` brought removed ungated rows and stale dates back; `syn.py` merges a batch's rows into the committed CSV instead (X79 · X87 · X88).
 - **DC18. An output port nothing loads stays in the netlist with no driver.** Such a port reads Z for the whole run although the logic behind it works; take an internal status from the RTL run, never from a netlist port.
+- **DC19. The run summary on the server keeps rows that results/ no longer has.** `syn/runs/<source>/<tech>/summary.csv` is never pruned, so copying it over `synth_dc.csv` brought removed ungated rows and stale dates back; `syn.py` merges a batch's rows into the committed CSV instead (X79 · X87 · X88).
 
 ## Libraries
 
@@ -94,6 +94,7 @@ IDs are never reused; retired: LIB1, LIB3, LIB4 and PT5 (the 15 nm library, remo
 - **E5. snax-forge's module names carry the design's name.** `snax_forge_<design>_shell_wrapper` and the renamed lanes block make every file differ; compare with `forge/sv_diff.py`, which masks them.
 - **E6. hls-exercises' CSVs have CRLF line ends, and `Path.read_text` hides them.** Edit them as bytes or with `newline=""`, and check `git diff --stat` before committing.
 - **E7. A snax-forge submodule off main's pin marks every bundle dirty.** A squash merge moves the pin, not the submodule's checkout; run `git -C ../snax-forge submodule update <sub>` before bundling.
+- **E8. A forge power run checks `sim/ref.py` against the kernels of whatever branch `../snax-forge` is on.** `forge/query.py ref` runs the checkout's kernel body, so a branch that changes one (PACK1a's `ACC = int32` in axpy and matadd) fails every run of that kernel; run forge power with snax-forge on main and record its branch and HEAD (CG5 R1).
 
 ## snax_cluster's generators
 

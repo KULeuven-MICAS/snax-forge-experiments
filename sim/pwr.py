@@ -1061,8 +1061,15 @@ def _do_point(stack: contextlib.ExitStack, point: str, tech: str, runs: list, th
             input_err = str(e)
         tb = build_tb(point, netlist, bundle)
     except (ValueError, KeyError, FileNotFoundError, Fail) as e:
+        # keyed as the runs would be (write_results: point, clk_gate, size, seed): the invocation's size and
+        # seed where every run names the same one ('' otherwise, and for the default or 'all' size)
+        sizes = {z for z, _, _ in runs}
+        seeds = {"forge" if stim == "forge" else seed for _, stim, seed in runs}
+        size = next(iter(sizes)) if len(sizes) == 1 else ""
         row = {c: "" for c in COLUMNS}
-        row.update({"point": point, "tech": tech, "size": "", "seed": "", "status": f"failed: tb.json: {e}"})
+        row.update({"point": point, "tech": tech, "clock_ns": _num(CLOCK_NS), "clk_gate": gate(),
+                    "size": "" if size in (None, "all") else size,
+                    "seed": next(iter(seeds)) if len(seeds) == 1 else "", "status": f"failed: tb.json: {e}"})
         return [(row, {})]
     pdir.mkdir(parents=True, exist_ok=True)     # the point's other runs stay in its zip (pack_point merges)
     for stale in ("work", "logs"):

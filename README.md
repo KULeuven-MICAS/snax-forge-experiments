@@ -20,7 +20,7 @@ The measuring side of [snax-forge](https://github.com/KULeuven-MICAS/snax-forge)
 | `arc/`, `tmp/` | the zip helpers (X51); `tmp/` holds one point unpacked at a time and is empty otherwise |
 | `rtl/` | the bundles, one zip per point (not committed; rebuilt from the commit their rows name) |
 | `results/<source>/<tech>/` | per source: `synth_dc.csv`, `synth_dc_modules.csv`, `power_pt.csv`, `power_pt_modules.csv`, the report zips; run notes in `results/<source>/runs/` |
-| `results/strm/`, `results/ram/`, `results/char/` | the tables snax-forge reads: `streamer.csv`, `xbar.csv`, `xbar_kinds.json` ([`docs/cost_tables.md`](docs/cost_tables.md)); `ram_table.csv`; `char_cg.json` |
+| `results/strm/`, `results/ram/`, `results/char/` | the tables snax-forge reads: `streamer.csv`, `xbar.csv`, `xbar_kinds.json` ([`docs/cost_tables.md`](docs/cost_tables.md)); `ram_table.csv`; `char.json` |
 | `results/cluster/` | the cluster points: synthesis, power per window, HWCOST, the breakdowns and the sweep over W |
 | `results/compare*` | forge against the HLS tools: `compare_done.csv`, `compare_untiered.csv` (raw rows) and `compare/` (one page and two figures per kernel) |
 | `results/runs/` | run notes of rounds that span several sources |
