@@ -451,6 +451,15 @@ def beats_hex(x: np.ndarray, lanes: int) -> str:
     return "".join(out)
 
 
+def words(x: np.ndarray, num_slc: int) -> np.ndarray:
+    """Elements packed num_slc to a 64-bit word, element 0 in the low bits (snax-forge D142), as int64."""
+    if num_slc == 1:
+        return x
+    bits = 64 // num_slc
+    u = (x.astype(np.int64).reshape(-1, num_slc).view(np.uint64) & np.uint64((1 << bits) - 1))
+    return np.bitwise_or.reduce(u << (np.arange(num_slc, dtype=np.uint64) * np.uint64(bits)), axis=1).view(np.int64)
+
+
 def untoggled_bits(x: np.ndarray, beats: int, lanes: int) -> int:
     seen = np.bitwise_or.reduce(x.view(np.uint64).reshape(beats, lanes), axis=0)
     return sum(64 - bin(int(v)).count("1") for v in seen)
@@ -461,7 +470,10 @@ def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
     by stream in tb.json order (a container once), then each scalar a CSR takes (axpy's alpha) as a data pin; a
     scalar the recipe bakes takes the baked value (axpy_baked's alpha = 3). The reference from sim/ref.py, an
     in-place output (axpy's y) its <container>_out. Each stream's data in the order its streamer visits the
-    container (tb.json's order, rowsum_2's A down the columns); every input bit must toggle (64 beats or more)."""
+    container (tb.json's order, rowsum_2's A down the columns); every input bit must toggle (64 beats or more).
+    A narrow stream (int8, int16, int32: tb.json's dtype) draws its container full-range at that dtype, its
+    output wrapped to it (the kernel's int32 out and ACC), and moves num_slc elements a word, little-endian, a
+    packed output's slices past its last result 0 (order -1); the data are those 64-bit words."""
     z = tb["sizes"][size]
     ins_s = [s for s in tb["streams"] if s["dir"] == "in"]
     rng = np.random.default_rng(seed)
@@ -469,7 +481,8 @@ def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
     ins = {}
     for s in ins_s:
         if s["arg"] not in ins:
-            ins[s["arg"]] = rng.integers(info.min, info.max, size=int(np.prod(s["shape"])), dtype=np.int64,
+            dinfo = np.iinfo(s.get("dtype", "int64"))
+            ins[s["arg"]] = rng.integers(dinfo.min, dinfo.max, size=int(np.prod(s["shape"])), dtype=np.int64,
                                          endpoint=True)
     pins = {sc["container"]: int(rng.integers(info.min, info.max, dtype=np.int64, endpoint=True))
             for sc in tb.get("scalars", [])}
@@ -483,14 +496,16 @@ def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
             if a not in got and f"{a}_out" not in got:
                 raise Fail(f"reference: sim/ref.py's {tb['kernel']} gives {sorted(got)}, no {a}")
             outs[a] = got[a] if a in got else got[f"{a}_out"]
+            outs[a] = np.asarray(outs[a]).astype(s.get("dtype", "int64")).astype(np.int64)   # wraps at int32
     data, untoggled = {}, {}
     for s in tb["streams"]:
         x = (ins if s["dir"] == "in" else outs)[s["arg"]].ravel()
         if s.get("order") is not None:
-            x = x[np.asarray(s["order"], dtype=np.int64)]
-        if len(x) != s["beats"] * s["lanes"]:
-            raise Fail(f"stream {sname(s)}: {len(x)} values, the streamer moves {s['beats']} beats of {s['lanes']}")
-        data[sname(s)] = np.ascontiguousarray(x)
+            x = np.append(x, 0)[np.asarray(s["order"], dtype=np.int64)]     # -1: a packed word's empty slice, 0
+        elems = s.get("elems", s["lanes"])
+        if len(x) != s["beats"] * elems:
+            raise Fail(f"stream {sname(s)}: {len(x)} values, the streamer moves {s['beats']} beats of {elems}")
+        data[sname(s)] = np.ascontiguousarray(words(x, s.get("num_slc", 1)))
         if s["dir"] == "in":
             k = untoggled_bits(data[sname(s)], s["beats"], s["lanes"])
             if k:

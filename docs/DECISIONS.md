@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse. It says what was decided, why, and where the detail lives, in a few short bullets. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; the text of a removed entry is in git history.
-- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X90**.
+- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X91**.
 
 Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X25's diagnostic), X26, X27 and X43 (SYN1's and SYN2's analysis code and local runs, deleted), X36 (a draft block table, now X37), X46 (one comparison file, now X64), X35 (the LinkBuffer stream cheaper per flop than a held flop, a limit of the ungated table, gone with it).
 
@@ -148,6 +148,12 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 - **Decided:** the default stimulus is rand64: full-range int64 from NumPy's `default_rng(0)`, stream by stream in `tb.json` order, then the data pins; the default HLS task is 64 beats (`b64`), and every input bit must toggle at least once. Expected cycles come from cosim's line a x loop_count + b through its two sizes.
 - **Why:** full-range data toggles every bit, so energy does not depend on how narrow the test values are.
 - **Where:** `power.md`, "Stages"; `results/hls/runs/2026-10-29_pwr_r1.md`.
+
+### X90 — A narrow forge point: rand64 at the element's dtype, in packed words
+
+- **Decided:** a forge point at a narrow type preset (`types=i8` or `i16` in its sets) draws each input container full-range at its element dtype (int8, int16) with X19's generator and seed, wraps the reference's outputs to the output dtype (int32, as snax-forge's ACC), and moves num_slc = 64 / bits elements a 64-bit word, little-endian (snax-forge D142); a packed output (D174, `d_out` > 1) is checked as a whole word, the slices past the last result 0. The reference check runs snax-forge's kernel body at the design point's dtypes and type parameters (`forge/query.py point`).
+- **Why:** full range at the element's width toggles every bit of every word, as rand64 does at int64; int64 values in an int8 port would be cut by the streamer, and the kernel's wrap at int32 is what the hardware computes.
+- **Where:** `power.md`, "Forge"; `results/runs/2026-11-16_char2_r7.md`.
 
 ### X20 · X60 · X74 — Power results
 

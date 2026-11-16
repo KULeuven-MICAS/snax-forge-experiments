@@ -26,6 +26,7 @@ RTL = ROOT / "rtl" / "forge"
 QUERY = ROOT / "forge" / "query.py"
 SIZE = "n2048"                   # the one size of a forge point: its shape is the point's sets
 CONTROL_KINDS = {"forge_csr"}
+BITS = {"int8": 8, "int16": 16, "int32": 32, "int64": 64}   # a stream's element dtypes: num_slc = 64 / bits a word
 CSR_PORTS = {"req_addr": "csr_req_addr_i", "req_data": "csr_req_data_i", "req_write": "csr_req_write_i",
              "req_valid": "csr_req_valid_i", "req_ready": "csr_req_ready_o", "rsp_data": "csr_rsp_data_o",
              "rsp_valid": "csr_rsp_valid_o", "rsp_ready": "csr_rsp_ready_i"}
@@ -72,8 +73,11 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
       reset   {port: rst_ni, active: low, sync: false}
       control {kind: "forge_csr", group, req_addr, req_data, req_write, req_valid, req_ready,
                rsp_data, rsp_valid, rsp_ready, busy, done, csrs: {name: offset}}
-      streams [{arg, name, end, dir, kind: "stream", lanes, num_ch, dtype, data, valid, ready, beats, identity,
-                order}]
+      streams [{arg, name, end, dir, kind: "stream", lanes, num_ch, dtype, num_slc, d_out, elems, data, valid, ready,
+                beats, identity, order}]
+               lanes the TB's 64-bit channels a beat (num_ch); dtype the port's element, num_slc of them in a word,
+               little-endian (snax-forge D142); elems the element slots a beat carries (num_ch x num_slc); d_out > 1 a
+               packed output (D174): d_out results in one word, the slices past the last result 0 (order -1)
                arg the container the design point binds the port to (the kernel's array, sim/ref.py's name);
                name the TB's name for the stream: arg, or arg_in / arg_out when one container has an input and an
                output stream (axpy's y, read and written in place); order the container's flat (row-major) element
@@ -119,7 +123,7 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
     ports = hls.ports_of(netlist, top)
 
     # the size: the point's sets are the n2048 shape (the design point was made at it, forge/bundles.py)
-    shape = {k: int(v) for k, v in (x.split("=", 1) for x in pj.get("sets", []))}
+    shape = {k: int(v) for k, v in (x.split("=", 1) for x in pj.get("sets", [])) if k != "types"}   # types=i8: a preset
     want = dict(hls.extra_sizes(point)).get(SIZE)
     if want is None or {k.lower(): v for k, v in shape.items()} != want:
         raise ValueError(f"{point}: bundle made with sets {pj.get('sets')}, the n2048 shape is {want}: "
@@ -167,14 +171,25 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
             num_ch = nch[side][k]
             if ports[data][1] != 64 * num_ch:
                 raise ValueError(f"{point}: {data} is {ports[data][1]} bits, num_channel {num_ch} gives {64 * num_ch}")
-            if p["dtype"] != "int64" or p["lanes"] != num_ch:
-                raise ValueError(f"{point}: {end} {p['dtype']} x {p['lanes']}: only int64, one lane per channel")
+            # a word packs num_slc elements (snax-forge D142): wire-sliced, lanes = num_ch x num_slc; or a packed
+            # output (D174, d_out > 1), d_out results of one lane in one word on one channel
+            if p["dtype"] not in BITS:
+                raise ValueError(f"{point}: {end} is {p['dtype']}; the streams take {sorted(BITS)}")
+            num_slc, d_out = 64 // BITS[p["dtype"]], int(p.get("d_out", 1))
+            if (num_ch, p["lanes"] * d_out) != ((1, num_slc) if d_out > 1 else (p["lanes"] // num_slc, p["lanes"])) \
+                    or (d_out == 1 and p["lanes"] % num_slc):
+                raise ValueError(f"{point}: {end} {p['dtype']} x {p['lanes']} (d_out {d_out}) is not {num_ch} "
+                                 f"channels of {num_slc} slices")
             o = order.get(end)
-            if o is None or o["container"] != container[end] or o["dir"] != side or o["lanes"] != p["lanes"]:
-                raise ValueError(f"{point}: {end}: the program's streamer task {o and {k: o[k] for k in ('container', 'dir', 'lanes')}} "
-                                 f"is not the port's ({container[end]}, {side}, {p['lanes']} lanes)")
+            want = (container[end], side, num_ch * num_slc, num_ch, num_slc, d_out, p["dtype"])
+            keys = ("container", "dir", "lanes", "num_ch", "num_slc", "d_out", "dtype")
+            if o is None or tuple(o.get(x, 1 if x in ("num_slc", "d_out") else None) for x in keys) != want:
+                raise ValueError(f"{point}: {end}: the program's streamer task {o and {x: o.get(x) for x in keys}} "
+                                 f"is not the port's {dict(zip(keys, want))}")
+            # lanes: the TB's 64-bit channels (num_ch words a beat); elems: the element slots a beat carries
             streams.append({"arg": container[end], "name": container[end], "end": end, "dir": side,
-                            "kind": "stream", "lanes": p["lanes"], "num_ch": num_ch, "dtype": p["dtype"], "data": data,
+                            "kind": "stream", "lanes": num_ch, "num_ch": num_ch, "dtype": p["dtype"],
+                            "num_slc": num_slc, "d_out": d_out, "elems": num_ch * num_slc, "data": data,
                             "valid": f"{pre}_{k}_valid_{'i' if side == 'in' else 'o'}",
                             "ready": f"{pre}_{k}_ready_{'o' if side == 'in' else 'i'}",
                             "beats": o["beats"], "shape": o["shape"], "identity": o["identity"],
@@ -206,7 +221,7 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
 
     return {"tb_version": TB_VERSION, "source": "forge", "point": point, "kernel": q["kernel"], "recipe": pj["recipe"],
             "top": top, "case": case, "W": w, "snax_forge_commit": pj["snax_forge_commit"],
-            "dtypes": pj.get("dtypes", {}), "symbols": prog["symbols"],
+            "dtypes": {**q.get("dtypes", {}), **pj.get("dtypes", {})}, "symbols": prog["symbols"],
             "clock": {"port": CLK}, "reset": {"port": RST, "active": "low", "sync": False},
             "control": control, "streams": streams, "pins": [], "scalars": scalars, "baked": q.get("baked", {}),
             "sizes": sizes}
@@ -219,8 +234,8 @@ def check(tb: dict) -> None:
     if tb["tb_version"] != TB_VERSION:
         raise ValueError(f"tb_version {tb['tb_version']}, expected {TB_VERSION}")
     for s in tb["streams"]:
-        if s["kind"] != "stream" or s["dtype"] != "int64":
-            raise ValueError(f"stream {s['arg']}: {s['kind']} {s['dtype']}, only int64 streams are built")
+        if s["kind"] != "stream" or s["dtype"] not in BITS:
+            raise ValueError(f"stream {s['arg']}: {s['kind']} {s['dtype']}, only {sorted(BITS)} streams are built")
     for tag, z in tb["sizes"].items():
         if not z["writes"] or z["writes"][-1][2] != "START":
             raise ValueError(f"size {tag}: the writes do not end with START")
