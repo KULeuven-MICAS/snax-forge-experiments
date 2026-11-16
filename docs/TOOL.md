@@ -133,7 +133,7 @@ results/strm/nangate45/xbar.csv: 27 rows, 27 ok
 
 **`xbar-kinds`** (`report/xbar_kinds.py`) fits the interconnect's read-only and write-only inputs from the xbar_mix rows into `results/strm/<tech>/xbar_kinds.json`: the factor form and the crosspoint form, with their checks against the 36-input points and the cluster (X71).
 
-**`char-export`** (`report/char_export.py`) writes the block model, `results/char/<tech>/char.json` (X37); `--clk-gate` writes `char_cg.json` from the gated rows, its control factor taken from `char.json` (X83 · X85). It prints, per point, the gated value over the ungated one.
+**`char-export`** (`report/char_export.py`) writes the block model, `results/char/<tech>/char.json`, from the clock-gated rows (X37, X83 · X85): a clock gate counts as a sequential cell, the control factor is the mean over the tier-done forge points with a power row. It prints each block whose sequential cells differ from its bits (its clock gates).
 
 **`char-table`** (`report/char_table.py`) writes `results/char/char_table.md`, every number of the block model and its known limits.
 

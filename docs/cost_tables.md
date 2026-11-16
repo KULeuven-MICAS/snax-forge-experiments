@@ -1,6 +1,6 @@
 # The cost tables
 
-snax-forge's first-order cost model (HWCOST) prices a design from four files made in this repo, all on Nangate 45 nm: the SRAM banks (`results/ram/nangate45/ram_table.csv`), the streamer's data mover (`results/strm/nangate45/streamer.csv`), the TCDM sparse interconnect (`results/strm/nangate45/xbar.csv`) and its read-only and write-only inputs (`results/strm/nangate45/xbar_kinds.json`). This page explains, for each one, what a number means, how it was measured, how a cost is read between grid points and how far that can be trusted. The costs are for comparing design variants with each other, not for sign-off. Only dynamic energy is used. The reader and interconnect tables come from clock-gated synthesis (X83 · X85); `xbar_kinds.json`'s factors are fitted on the `xbar_mix` grid, which is ungated until CG5 makes it again.
+snax-forge's first-order cost model (HWCOST) prices a design from four files made in this repo, all on Nangate 45 nm: the SRAM banks (`results/ram/nangate45/ram_table.csv`), the streamer's data mover (`results/strm/nangate45/streamer.csv`), the TCDM sparse interconnect (`results/strm/nangate45/xbar.csv`) and its read-only and write-only inputs (`results/strm/nangate45/xbar_kinds.json`). This page explains, for each one, what a number means, how it was measured, how a cost is read between grid points and how far that can be trusted. The costs are for comparing design variants with each other, not for sign-off. Only dynamic energy is used. Every table comes from clock-gated synthesis (X83 · X85), `xbar_kinds.json`'s factors included.
 
 ## Symbols
 
@@ -145,9 +145,9 @@ $n$ = 40, $b$ = 32. The energy takes the 32-bank row's value at $n$ = 32: 2.7526
 
 **The factor form (default).** Keep `xbar.csv` and scale its area:
 
-$$A = A_{\mathrm{table}}(n, b)\thinspace\Big(1 - f_{ro}\frac{n_{ro}}{n} - f_{wo}\frac{n_{wo}}{n}\Big), \qquad f_{ro} = 0.3965, \quad f_{wo} = 0.4108$$
+$$A = A_{\mathrm{table}}(n, b)\thinspace\Big(1 - f_{ro}\frac{n_{ro}}{n} - f_{wo}\frac{n_{wo}}{n}\Big), \qquad f_{ro} = 0.3953, \quad f_{wo} = 0.4097$$
 
-*How $f_{ro}$ and $f_{wo}$ are found:* at each of the 9 $(n, b)$ pairs, $1 - A(\text{all read-only}) / A(\text{all read-write})$, then the mean of the 9 (they range only 0.389–0.407); $f_{wo}$ the same with all write-only (0.407–0.415).
+*How $f_{ro}$ and $f_{wo}$ are found:* at each of the 9 $(n, b)$ pairs, $1 - A(\text{all read-only}) / A(\text{all read-write})$, then the mean of the 9 (they range only 0.388–0.404); $f_{wo}$ the same with all write-only (0.405–0.414). All on the clock-gated points.
 
 *Why the shares $n_{ro}/n$ and $n_{wo}/n$:* every input owns $b$ crosspoints of about the same size, $c_{rw} \approx A_{\mathrm{table}} / (n\thinspace b)$. A read-only input keeps its crosspoints but each loses its write side, a fraction $f_{ro}$ of its area; a write-only input loses its response side, $f_{wo}$. Summing over the inputs:
 
@@ -157,9 +157,9 @@ $$A = c_{rw}\thinspace b\thinspace\big[n_{rw} + (1 - f_{ro})\thinspace n_{ro} + 
 
 $$A = b\thinspace(c_{rw}\thinspace n_{rw} + c_{ro}\thinspace n_{ro} + c_{wo}\thinspace n_{wo}) + k_n\thinspace n + k_b\thinspace b + k_0$$
 
-with $c_{rw}$ = 159.34, $c_{ro}$ = 95.06, $c_{wo}$ = 93.65, $k_n$ = 26.30, $k_b$ = −19.43, $k_0$ = −201.0 µm².
+with $c_{rw}$ = 159.62, $c_{ro}$ = 95.48, $c_{wo}$ = 93.93, $k_n$ = 22.68, $k_b$ = −17.16, $k_0$ = −103.8 µm².
 
-*How they are found:* ordinary least squares (unweighted, in µm²) over the 27 grid points, the two 36-input points held out as checks; worst residual 2.9 %. The two forms agree: $1 - c_{ro}/c_{rw}$ = 0.403 ≈ $f_{ro}$ and $1 - c_{wo}/c_{rw}$ = 0.412 ≈ $f_{wo}$.
+*How they are found:* ordinary least squares (unweighted, in µm²) over the 27 grid points, the two 36-input points held out as checks; worst residual 2.8 %. The two forms agree: $1 - c_{ro}/c_{rw}$ = 0.402 ≈ $f_{ro}$ and $1 - c_{wo}/c_{rw}$ = 0.412 ≈ $f_{wo}$.
 
 Energy keeps `xbar.csv`'s $e_{\mathrm{access}}$ for every input kind.
 
@@ -167,20 +167,20 @@ Energy keeps `xbar.csv`'s $e_{\mathrm{access}}$ for every input kind.
 
 The mix as synthesized alone: $n$ = 36, $b$ = 32, with $n_{ro}$ = 32, $n_{wo}$ = 1, $n_{rw}$ = 3.
 
-*Factor form.* $A_{\mathrm{table}}(36, 32)$, linear between $n$ = 32 and 40: $164{,}995.0 + \frac{36 - 32}{40 - 32}(210{,}357.6 - 164{,}995.0) = 187{,}676.3$ µm². The factor: $1 - 0.3965 \cdot \frac{32}{36} - 0.4108 \cdot \frac{1}{36} = 0.6361$. So $A$ = 119,390 µm².
+*Factor form.* $A_{\mathrm{table}}(36, 32)$, linear between $n$ = 32 and 40: $164{,}995.0 + \frac{36 - 32}{40 - 32}(210{,}357.6 - 164{,}995.0) = 187{,}676.3$ µm². The factor: $1 - 0.3953 \cdot \frac{32}{36} - 0.4097 \cdot \frac{1}{36} = 0.6372$. So $A$ = 119,595 µm².
 
-*Crosspoint form.* $159.34 \cdot 32 \cdot 3 + 95.06 \cdot 32 \cdot 32 + 93.65 \cdot 32 \cdot 1 + 26.30 \cdot 36 - 19.43 \cdot 32 - 201.0 = 115{,}763$ µm².
+*Crosspoint form.* $159.62 \cdot 32 \cdot 3 + 95.48 \cdot 32 \cdot 32 + 93.93 \cdot 32 \cdot 1 + 22.68 \cdot 36 - 17.16 \cdot 32 - 103.8 = 116{,}264$ µm².
 
 | | Synthesized | Factor | Crosspoint | Every input read-write |
 |---|---|---|---|---|
-| The same mix alone (`i36_b32_r32_w1`) | 119,307 µm² | +0.1 % | −3.0 % | +57 % |
-| Inside the one-core cluster (`dot3_w16_cg`, $n$ = 35, $n_{rw}$ = 2) | 103,257 µm² | +10.3 % (113,891) | +7.2 % (110,638) | +76 % (182,006) |
+| The same mix alone (`i36_b32_r32_w1`) | 119,307 µm² | +0.2 % | −2.6 % | +57 % |
+| Inside the one-core cluster (`dot3_w16_cg`, $n$ = 35, $n_{rw}$ = 2) | 103,257 µm² | +10.5 % (114,095) | +7.6 % (111,137) | +76 % (182,006) |
 
-The cluster's remaining 7–10 % is constants the forms do not model (priority, user and strobe bits, bank outputs nothing reads).
+The cluster's remaining 8–10 % is constants the forms do not model (priority, user and strobe bits, bank outputs nothing reads).
 
 ### Example 6: all read-only
 
-$n$ = 16, $b$ = 16, every input read-only. Factor: 42,048.5 × (1 − 0.3965) = 25,376 µm². Crosspoint: $95.06 \cdot 16 \cdot 16 + 26.30 \cdot 16 - 19.43 \cdot 16 - 201.0 = 24{,}245$ µm². Synthesized (ungated): 24,970 µm² (factor +1.6 %, crosspoint −2.9 %). The factor's +1.6 % is mostly the cluster template's ties: $f_{ro}$ is measured with them on both points, while `xbar.csv` was synthesized without them and is about 2 % larger.
+$n$ = 16, $b$ = 16, every input read-only. Factor: 42,048.5 × (1 − 0.3953) = 25,427 µm². Crosspoint: $95.48 \cdot 16 \cdot 16 + 22.68 \cdot 16 - 17.16 \cdot 16 - 103.8 = 24{,}427$ µm². Synthesized: 25,132 µm² (factor +1.2 %, crosspoint −2.8 %). The factor's +1.2 % is mostly the cluster template's ties: $f_{ro}$ is measured with them on both points, while `xbar.csv` was synthesized without them and is about 2 % larger.
 
 **Range.** Both forms were checked for $n$ and $b$ in 16–64. Beyond 64 inputs both extrapolate linearly; the cost per crosspoint drifts up about 3 % from 40 inputs on, so a 128-input interconnect may land a few percent above the line. Not synthesized.
 
@@ -241,5 +241,5 @@ The SRAM table has every size as a row, so it needs no such check; fits of it we
 ## Sources
 
 - Decisions: X1–X4, X7–X9, X22 (the flows); X47–X50 (SRAM); X52 · X82, X53 · X54 (streamer and interconnect); X79, X83 · X85 (clock gating); X70, X71 (input kinds).
-- Run notes: `results/ram/runs/2026-11-05_ram1_r1.md`, `2026-11-06_ram1_r2.md`, `2026-11-06_ram1_r3.md`; `results/strm/runs/2026-11-06_strm1_r1.md`, `2026-11-06_strm1_r2.md`, `2026-11-13_cg2_r1.md` to `2026-11-14_cg2_r4.md`; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`, `2026-11-11_csyn1_r3d.md`.
+- Run notes: `results/ram/runs/2026-11-05_ram1_r1.md`, `2026-11-06_ram1_r2.md`, `2026-11-06_ram1_r3.md`; `results/strm/runs/2026-11-06_strm1_r1.md`, `2026-11-06_strm1_r2.md`, `2026-11-13_cg2_r1.md` to `2026-11-14_cg2_r4.md`; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`, `2026-11-11_csyn1_r3d.md`; `results/runs/2026-11-16_cg5_r1.md`, `2026-11-16_cg5_r2.md` (the grid clock-gated).
 - Code: `ram/ram.py`, `strm/gen.py`, `report/strm_table.py`, `strm/xbar_mix.py`, `report/xbar_kinds.py`.
