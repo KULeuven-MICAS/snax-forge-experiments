@@ -516,13 +516,14 @@ def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
 
 
 # The forge reference check: sim/ref.py against snax-forge's kernel body (forge/query.py ref), once per kernel,
-# size and seed in a batch (the inputs depend on N and the seed only, not on W)
+# size, seed and dtypes in a batch (the inputs depend on N, the seed and the dtypes, not on W: X90)
 REF_CHECKED: dict = {}
 REF_LOCK = threading.Lock()
 
 
 def forge_ref_check(tb: dict, size: str, seed: int, st: dict, rdir: Path) -> dict:
-    key = (tb["kernel"], size, seed, tuple(sorted(st["pins"].items())))     # axpy and axpy_baked: alpha apart
+    key = (tb["kernel"], size, seed, tuple(sorted(st["pins"].items())),     # axpy and axpy_baked: alpha apart
+           tuple(sorted((tb.get("dtypes") or {}).items())))                  # i8 and i16 apart
     with REF_LOCK:
         if key not in REF_CHECKED:
             ins = {**st["ins"], **{c: np.array(v, dtype=np.int64) for c, v in st["pins"].items()}}
