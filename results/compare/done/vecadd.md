@@ -42,10 +42,10 @@ n2048, nangate45, int64, 10 ns, every case clock-gated.
 
 ## Insights
 
-- At W = 16: XLS 6.8k µm², Vitis opt 11.5k, Vitis dace 11.9k, Bambu 26.7k. Per lane: XLS 406, Vitis 679, Bambu 1622 µm². The gap is registers: Vitis adds 64 flops per lane (the output beat), Bambu 192 (both input beats and the output beat), XLS none.
-- Energy per task barely moves from W = 4 on: XLS 2.2 to 2.7 nJ, Vitis opt 3.1 to 4.0, Bambu 6.4 to 7.4. Flops are 72 to 78 % of Vitis's energy, 60 to 64 % of Bambu's and 1 to 16 % of XLS's.
-- Vitis dace is opt with 30 to 50 more flops and, from W = 4, one more cycle.
-- forge: the datapath is the adders only, 270 µm² per lane and no flops; ctrl 438 µm² (34 flops, CTRL2), csr 548 µm² and its `<tag>_peripherals` (BUSY_COUNTER) 279 µm² at every W. Without its csr (its ctrl, datapath and glue; the peripherals in no figure, X65) it is 4.8k µm² at W = 16 against XLS's 6.8k, and 0.790 against 1.090 pJ per element; at W = 1 it is 1.01x XLS's area (709 against 702 µm²) and 0.80x its energy, and the smallest case from W = 2. With its CSR file it is still the smallest case at W = 16 (5.6k µm²) and the lowest-energy case from W = 4 (W = 16: 1.71 nJ). XLS's difference is its input gating (2,112 µm² of AND gates at W = 16, [the README's section 2](../README.md#2-across-all-kernels)).
+- At W = 16: XLS 6.8k µm², Vitis opt 9.5k, Vitis dace 9.9k, Bambu 20.9k. Per lane: XLS 406, Vitis 559, Bambu 1259 µm². The gap is registers: Vitis adds 64 per lane (the output beat), Bambu 192 (both input beats and the output beat), XLS none.
+- Energy per task barely moves from W = 4 on: XLS 2.2 to 2.3 nJ, Vitis opt 2.9 to 3.0, Bambu 6.0 to 6.3. Flop energy (clocks, registers and their gates) is 79 to 82 % of Vitis's energy, 69 to 74 % of Bambu's and 2 to 19 % of XLS's.
+- Vitis dace is opt with 29 to 59 more registers and, from W = 4, one more cycle.
+- forge: the datapath is the adders only, 270 µm² per lane and no registers; ctrl 440 µm² (34 registers), csr 473 µm² and its `<tag>_peripherals` (BUSY_COUNTER) 252 µm² at every W. Without its csr (its ctrl, datapath and glue; the peripherals in no figure, X65) it is 4.8k µm² at W = 16 against XLS's 6.8k, and 0.793 against 1.092 pJ per element; at W = 1 it is 1.06x XLS's area (712 against 674 µm²) and 0.81x its energy, and the smallest case from W = 2. With its CSR file it is still the smallest case at W = 16 (5.5k µm²) and the lowest-energy case from W = 4 (W = 16: 1.70 nJ). XLS's difference is its input gating (2,111 µm² of AND gates at W = 16, [the README's section 2](../README.md#2-across-all-kernels)).
 
 ## Parts at n2048
 

@@ -43,12 +43,12 @@ n2048, nangate45, int64, 10 ns, every case clock-gated.
 
 ## Insights
 
-- Multiplier-bound, like vecmul: at W = 16, XLS 112.7k µm², Vitis opt 123.5k, Bambu 138.0k.
-- XLS's 96 flops are its loop count and alpha; Vitis registers alpha as a pin and the output beat (135 fixed flops plus 64 per lane, 199 at W = 1); Bambu reads alpha as a held wire but registers x, y and the output beat (192 flops per lane).
-- Energy per task: XLS 21.5 to 22.7 nJ, Vitis 22.9 to 24.8, Bambu 26.2 to 27.2, so Bambu is 20 to 22 % above XLS at every W.
-- forge with α in a CSR (K1_LO and K1_HI): without its csr it is 1 to 4 % smaller than XLS at every W and 9 to 12 % lower in energy (W = 16: 9.55 against 10.58 pJ per element). Its CSR file is the largest of the kernels, 1,073 µm² without its `<tag>_peripherals` (X65), for α's two words.
-- forge baked bakes α = 3 into a shift and an add per lane: 9.3k µm² and 1.17 pJ per element at W = 16, 12x less area and 9x less energy than the best run-time α case (XLS). It is not like-for-like; it shows what the design-time choice is worth.
-- Vitis dace_w1 (X62): 58.2k µm², 49.3k of it the macro holding DaCe's α·x; 4101 cycles; 73.5 nJ per task, 45.3 of it the macro.
+- Multiplier-bound, like vecmul: at W = 16, XLS 112.8k µm², Vitis opt 121.5k, Bambu 132.2k.
+- XLS's 96 registers are its loop count and alpha; Vitis registers alpha as a pin and the output beat (135 fixed registers plus 64 per lane, 199 at W = 1); Bambu reads alpha as a held wire but registers x, y and the output beat (192 per lane).
+- Energy per task: XLS 21.4 to 21.9 nJ, Vitis 22.7 to 23.4, Bambu 25.8 to 27.2, so Bambu is 19 to 24 % above XLS.
+- forge with α in a CSR (K1_LO and K1_HI): without its csr it is 1 to 4 % smaller than XLS at every W and 8 to 9 % lower in energy (W = 16: 9.55 against 10.55 pJ per element). Its CSR file is the largest of the kernels, 912 µm² without its `<tag>_peripherals` (X65), for α's two words.
+- forge baked bakes α = 3 into a shift and an add per lane: 9.0k µm² and 1.16 pJ per element at W = 16 without its csr, 12x less area and 9x less energy than the best run-time α case (XLS). It is not like-for-like; it shows what the design-time choice is worth.
+- Vitis dace_w1 (X62): 58.0k µm², 49.3k of it the macro holding DaCe's α·x; 4101 cycles; 69.9 nJ per task, 45.2 of it the macro.
 
 ## Parts at n2048
 

@@ -42,9 +42,9 @@ n2048, nangate45, int64, 10 ns, every case clock-gated.
 
 ## Insights
 
-- The 64-bit multiplier is about 7k µm² per lane for every tool, so the areas stay within 18 % (W = 16: XLS 112.9k, Vitis opt 118.0k, Bambu 133.1k).
-- Bambu spends about 20 % more energy per task (30 against 25 nJ); its flops are 18 to 20 % of its energy, against 9 to 12 % for Vitis and 0 to 2 % for XLS. The registered beats are the same as in vecadd.
-- forge without its csr has the smallest area from W = 2 (0.1 to 1.8 % below XLS's; 0.6 % above it at W = 1) and is 7 to 9 % lower in energy per element than the best HLS case at every W (W = 16: 11.29 pJ against Vitis opt's 12.30 and XLS's 12.39). Its totals with the CSR file are the lowest-energy case at every W (23.2 to 25.2 nJ). CTRL2 took 274 µm² off forge's ctrl, 3.2 % of its total at W = 1 and under 1 % from W = 4.
+- The 64-bit multiplier is about 7k µm² per lane for every tool, so the areas stay within 13 % (W = 16: XLS 113.3k, Vitis opt 116.0k, Bambu 127.2k).
+- Bambu spends 18 to 20 % more energy per task than Vitis opt (29.7 to 31.1 against 25.0 to 25.9 nJ); its flop energy is 20 to 23 % of its energy, against 9 to 11 % for Vitis and 0.1 to 2 % for XLS. The registered beats are the same as in vecadd.
+- forge without its csr has the smallest area from W = 2 (0.8 to 2.0 % below XLS's; 0.4 % above it at W = 1) and is 8 % lower in energy per element than the best HLS case at every W (W = 16: 11.29 pJ against Vitis opt's 12.23 and XLS's 12.67). Its totals with the CSR file are the lowest-energy case at every W (23.2 to 25.0 nJ).
 
 ## Parts at n2048
 

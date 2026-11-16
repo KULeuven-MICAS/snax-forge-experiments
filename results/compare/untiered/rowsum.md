@@ -43,9 +43,9 @@ n2048, nangate45, int64, 10 ns, every case clock-gated.
 
 ## Insights
 
-- Every tool builds the same hardware as for vsum (identical area, flops and cycles at n2048): restarting the sum every `len` beats costs nothing synthesis can see, and the energies differ from vsum's by at most about 2 %.
-- forge's rowsum (the tree, TreeAccumulate, JOB_BEATS = N / W) follows vsum's ratios. rowsum 2 (LaneAccumulate, W lanes across rows) has the same cycles but W 64-bit sums switching every cycle: its datapath is 2.0x rowsum's at W = 4 (3.4k against 1.6k µm²) and 2.8x at W = 16 (13.5k against 4.8k), and its energy per element without csr 2.3x and 4.0x (CTRL2 took the same 534 µm² of control off both, so rowsum 2's ratios grew a little). It is measured with ideal feed, so the bank conflicts of its column walk are not in these numbers. At W = 1 both build one adder and one register and come out identical.
-- Vitis dace_w1 (X62): `y_buf` (16 x 64) built from flops, 9.2k of its 18.8k µm²; 2137 cycles; 32.9 nJ per task.
+- Every tool builds the same hardware as for vsum (identical area, registers and cycles at n2048): restarting the sum every `len` beats costs nothing synthesis can see, and the energies differ from vsum's by at most about 3 %.
+- forge's rowsum (the tree, TreeAccumulate, JOB_BEATS = N / W) follows vsum's ratios. rowsum 2 (LaneAccumulate, W lanes across rows) has the same cycles but W 64-bit sums switching every cycle: its datapath is 1.8x rowsum's at W = 4 (2.7k against 1.5k µm²) and 2.3x at W = 16 (10.9k against 4.7k), and its energy per element without csr 2.3x and 3.7x. It is measured with ideal feed, so the bank conflicts of its column walk are not in these numbers. At W = 1 both build one adder and one register and come out identical.
+- Vitis dace_w1 (X62): `y_buf` (16 x 64) built from flops, 7.2k of its 15.8k µm²; 2137 cycles; 17.4 nJ per task, 9.7 of it the buffer.
 
 ## Parts at n2048
 

@@ -58,12 +58,12 @@ n2048, nangate45, int64, 10 ns, every case clock-gated.
 
 ## Insights
 
-- Bambu runs at II = 2 at W = 4 and 8: 1026 and 514 cycles, twice the others, with the same lanes. Its energy per task rises at W = 4 (32.8 nJ against 31.3 at W = 2), and its power is lower than the others' there.
-- Vitis opt at 10 ns cuts its adder tree with 64-bit partial-sum registers at W = 8 (two) and W = 16 (four), `add_ln21_*_reg` in its Verilog; that is where its flops grow from 264 to 328 and 456.
-- XLS's combinational energy is 5 to 9 % above Vitis opt's at every W, while its flops are fewer (160). XLS gates every input bit with its idle state before the multipliers; how much of the gap that explains is not measured.
-- The areas stay within 12 % (W = 16: XLS 117.4k µm², Vitis opt 118.4k, Bambu 131.7k).
-- forge's dot 3 (the fused tree) is its best variant at every W, and without its csr it has the lowest energy of every case at every W, 4 to 6 % below the best HLS case (W = 16: 11.38 pJ per element against Vitis opt's 11.82 and XLS's 12.61), with the smallest area from W = 2 (116.2k µm² against XLS's 117.4k at W = 16) and 0.6 % above XLS's at W = 1. CTRL2 took 533 to 587 µm² off each variant's ctrl (dot 3 1,295 to 761 µm², dot 2 2,086 to 1,501, 196 to 132 flops): 5.3 % of dot 3's total at W = 1, 1.7 % at W = 4 and 0.5 % at W = 16. At W = 16, dot 2, 4, 5 and 6 cost 7, 10, 8 and 14 % more area than dot 3, and dot 5 and 6 take 145 and 146 cycles against 129 (the MAC's stall and the holding buffer's drain).
-- Vitis dace_w1 (X62): 57.7k µm², 49.3k of it the 2048 x 64 macro holding DaCe's products; 4101 cycles, its two loops one after the other; 75.5 nJ per task, 45.3 of it the macro's counted 2048 writes and 2051 reads.
+- Bambu runs at II = 2 at W = 4 and 8: 1026 and 514 cycles, twice the others, with the same lanes, so its power there is lower than the others'.
+- Vitis opt at 10 ns cuts its adder tree with 64-bit partial-sum registers at W = 8 (two) and W = 16 (four), `add_ln21_*_reg` in its Verilog; that is where its registers grow from 264 to 328 and 456.
+- XLS's energy per task is 6 % below Vitis opt's at W = 1 and 5 to 8 % above it from W = 4 (W = 16: 26.0 against 24.1 nJ), with fewer registers (160). XLS gates every input bit with its idle state before the multipliers; how much of the gap that explains is not measured.
+- The areas stay within 8 % (W = 16: Vitis opt 117.9k µm², XLS 118.1k, Bambu 127.1k).
+- forge's dot 3 (the fused tree) is its smallest variant at every W and its lowest-energy one from W = 2 (at W = 1 dot 4 to 6 are 2 % below it). Without its csr it has the lowest energy of every case at every W, 4 to 7 % below the best HLS case (W = 16: 11.31 pJ per element against Vitis opt's 11.78 and XLS's 12.71), and the smallest area from W = 2 (116.0k µm² against Vitis opt's 117.9k at W = 16), 0.6 % above XLS's at W = 1. Its ctrl is 711 µm² against dot 2's 1,379. At W = 16, dot 2, 4, 5 and 6 cost 6, 8, 6 and 11 % more area than dot 3, and dot 5 and 6 take 145 and 146 cycles against 129 (the MAC's stall and the holding buffer's drain).
+- Vitis dace_w1 (X62): 57.6k µm², 49.3k of it the 2048 x 64 macro holding DaCe's products; 4101 cycles, its two loops one after the other; 72.8 nJ per task, 45.3 of it the macro's counted 2048 writes and 2051 reads.
 
 ## Parts at n2048
 

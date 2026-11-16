@@ -38,11 +38,11 @@ n2048, nangate45, int64, 10 ns, every case clock-gated.
 
 ## Insights
 
-- The cheapest operation, so registers decide everything: XLS needs 69 µm² per lane (a sign select), Vitis opt is 59 to 68 % registers (the output beat, 64 flops per lane), and Bambu registers both the input and the output beat (128 per lane, 1002 µm² per lane).
-- Energy per task at W = 8: XLS 0.96 nJ, Vitis 2.24, Bambu 3.88. Flops are 86 to 89 % of Vitis's energy, 61 to 67 % of Bambu's, and 3 to 31 % of XLS's.
+- The cheapest operation, so registers decide everything: XLS needs 69 µm² per lane (a sign select), Vitis opt is 66 to 78 % sequential area (the output beat, 64 registers per lane), and Bambu registers both the input and the output beat (128 per lane, 762 µm² per lane).
+- Energy per task at W = 8: XLS 0.97 nJ, Vitis 2.19, Bambu 3.73. Flop energy is 91 % of Vitis's energy, 70 to 76 % of Bambu's, and 4 to 36 % of XLS's.
 - Each lane's sign bit is constant 0 after relu; Vitis's synthesis warns about it (LINT-52, LINT-31). Vitis dace exists only at W = 1.
-- forge: the datapath is the same sign select as XLS's (273 µm² at W = 4, against XLS's 253 AND gates, 269 µm²), so the whole gap is control. Since CTRL2 (snax-forge D168) forge's ctrl reads JOBS live from the csr and keeps 34 flops (busy, the 32-bit jobs counter, done): 438 µm², 181 of them flops, against XLS's 32 flops (145 µm²); its `<tag>_peripherals` holds BUSY_COUNTER, 279 µm² and 0.24 pJ per cycle.
-- Without its csr (X63; the peripherals in no figure, X65) forge is 9 % (W = 16) to 39 % (W = 1) above XLS's area (508 against 364 µm² at W = 1) and 4 % above its energy at W = 1, 1 % at W = 4, level from W = 8 (W = 16: 0.452 against 0.453 pJ per element). Before CTRL2 it was 29 % to 2.1x and 3 to 40 %: the JOBS copy left the ctrl (711 to 438 µm²). relu is the one kernel where XLS has the smaller area at every W.
+- forge: the datapath is the same sign select as XLS's (273 µm² at W = 4, against XLS's 253 AND gates, 269 µm²), so the whole gap is control: forge's ctrl reads JOBS live from the csr and keeps 34 registers (busy, the 32-bit jobs counter, done), 435 µm², against XLS's 32 registers; its `<tag>_peripherals` holds BUSY_COUNTER, 252 µm² and 0.29 pJ per cycle.
+- Without its csr (X63; the peripherals in no figure, X65) forge is 11 % (W = 16) to 50 % (W = 1) above XLS's area (505 against 337 µm² at W = 1) and 5 % above its energy at W = 1, 2 % at W = 4, level at W = 16 (0.455 pJ per element for both). relu is the one kernel where XLS has the smaller area at every W.
 
 ## Parts at n2048
 

@@ -42,7 +42,7 @@ n2048, nangate45, int64, 10 ns, every case clock-gated.
 
 ## Insights
 
-- Every tool builds the same hardware as for vecadd: the 2-D loops become one flat run of M x N / W beats, and forge's streamers carry the 2-D pattern. At n2048 (m32_n64) area, flops, cycles and energy equal vecadd's at every W for every case, forge included, so vecadd's insights hold as they are.
+- Every tool builds the same hardware as for vecadd: the 2-D loops become one flat run of M x N / W beats, and forge's streamers carry the 2-D pattern. At n2048 (m32_n64) area, registers, cycles and energy equal vecadd's at every W for every case, forge included, so vecadd's insights hold as they are.
 
 ## Parts at n2048
 

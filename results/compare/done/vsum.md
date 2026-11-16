@@ -38,11 +38,11 @@ n2048, nangate45, int64, 10 ns, every case clock-gated.
 
 ## Insights
 
-- No per-lane registers in Vitis opt (264 flops at every W) or XLS (160); Bambu registers the input beat, 64 flops per lane, so its area grows 711 µm² per lane against 267 (Vitis) and 336 (XLS).
-- The fixed part dominates at small W: about 2.1k µm² for Vitis and 2.2k for Bambu against 1.2k for XLS, which has 104 fewer flops than Vitis.
+- No per-lane registers in Vitis opt (264 at every W) or XLS (160); Bambu registers the input beat, about 68 per lane, so its area grows 582 µm² per lane against 267 (Vitis) and 336 (XLS).
+- The fixed part dominates at small W: about 1.9k µm² for Vitis and Bambu against 1.2k for XLS, which has 104 fewer registers than Vitis.
 - Energy per task drops from W = 1 to 16 by 6x for Vitis, 4x for XLS and 3x for Bambu: the fixed per-cycle cost is spread over fewer cycles, but Bambu's input registers grow with W.
-- Vitis dace exists only at W = 1 (1.5k µm², 166 flops), smaller than opt there (2.4k µm², 264 flops).
-- forge (vsum_tree: TreeAccumulate) carries a fold's fixed control, 760 µm² with JOB_BEATS since CTRL2 (1,294 before: the copies of JOBS and JOB_BEATS are gone, 131 to 67 flops), against XLS's 160 flops in total. At W = 1 its total without csr (the peripherals in no figure, X65) is 1.6k µm² against 1.5k for Vitis dace and 1.55k for XLS, and 2 % more energy than Vitis dace, the best case (22 % before CTRL2), 3 % less than XLS's. From W = 2 forge has the lowest energy and the smallest area (W = 2: 1.39 pJ per element against XLS's 1.45; W = 4: 0.870 against 0.972; W = 16: 0.482 against Vitis opt's 0.540, 5.6k µm² against 6.4k).
+- Vitis dace exists only at W = 1 (1.4k µm², 166 registers), smaller than opt there (2.2k µm², 264 registers).
+- forge (vsum_tree: TreeAccumulate) carries a fold's fixed control, 711 µm² with JOB_BEATS (67 registers), against XLS's 160 registers in total. At W = 1 its total without csr (the peripherals in no figure, X65) is 1.4k µm² against 1.36k for Vitis dace and 1.49k for XLS, with 0.6 % more energy than Vitis dace, the best case, and 17 % less than XLS. From W = 2 forge has the lowest energy and the smallest area (W = 2: 1.14 pJ per element against XLS's 1.41; W = 4: 0.746 against 0.954; W = 16: 0.451 against Vitis opt's 0.512, 5.4k µm² against 6.2k).
 
 ## Parts at n2048
 
