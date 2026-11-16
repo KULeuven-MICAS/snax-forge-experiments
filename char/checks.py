@@ -7,7 +7,8 @@
 Read from the committed CSVs (char_synth.csv, char_synth_modules.csv, char_power.csv, and the forge points'
 synth_dc_modules.csv and power_pt_modules.csv) and the local bundle zips; none is a gate. Synthesis: each block's
 RTL against the same file in the forge bundles, each point alone against the same cell inside the forge points,
-the lane copies and the flop area. Power: the registered blocks' idle e_bit and its mean e_hold, LinkBuffer's
+the lane copies, the flop area and each point's flops against its register bits (the packer's
+(d_out - 1) w + ceil(log2 d_out)), a clock gate counted as a sequential cell. Power: the registered blocks' idle e_bit and its mean e_hold, LinkBuffer's
 depth sweep against 64 e_hold, the lane copies, the folds against W, and busy alone against inside the forge
 points. Standard library and arc/arc.py only.
 """
@@ -27,7 +28,7 @@ import arc  # noqa: E402  the bundles are zips
 
 TECHS = ("nangate45",)
 SLOPE_MIN = 0.7      # a LinkBuffer slope ratio below this calls for R2's diagnostic (not a gate)
-LANE_SERIES = {"ElementwiseLanes add": "lanes/add_w{}", "ElementwiseLanes mul": "lanes/mul_w{}",
+LANE_SERIES = {"SimdLanes add": "lanes/add_w{}", "SimdLanes mul": "lanes/mul_w{}",
                "Mac acc": "mac/acc_w{}", "LinkBuffer d1": "link/d1_w{}"}
 
 
@@ -116,6 +117,60 @@ def flops_table(char: list[dict]) -> str:
             + f"\n\nDistinct values: {', '.join(f'{x:.4f}' for x in sorted(per))}.")
 
 
+def width(t: str) -> int:
+    return int(t.removeprefix("u").removeprefix("int"))
+
+
+def n_bits(datapath: str, params: dict) -> int:
+    """A block's register bits from its params (its Chisel source's registers)."""
+    w = params.get("lanes", 1)
+    if datapath == "SimdLanes":
+        return 0
+    if datapath == "Mac":
+        return w * width(params["outType"]) if params["accumulate"] or params["regOut"] else 0
+    if datapath in ("TreeAccumulate", "SerialAccumulate"):
+        return width(params["outType"])
+    if datapath == "LinkBuffer":
+        return w * params["depth"] * width(params["dtype"])
+    if datapath == "FifoPacker":                   # the held slots and the slice counter
+        chunk = params["inLanes"] * width(params["laneType"])
+        r = params["words"] * 64 // chunk
+        return (r - 1) * chunk + (r - 1).bit_length()
+    raise KeyError(f"{datapath}: no register rule")
+
+
+def gating(tech: str, r: dict) -> tuple[int, int] | None:
+    """(registers, clock gates) from the row's clock_gating.rpt in its report zip, None without one."""
+    z = ROOT / "results" / "char" / tech / "reports" / f"{r['point']}{'_cg' if r.get('clk_gate') == '1' else ''}.zip"
+    if not z.is_file() or not arc.has(z, "clock_gating.rpt"):
+        return None
+    text = arc.read(z, "clock_gating.rpt")
+    text = text.decode() if isinstance(text, bytes) else text
+    regs = re.search(r"Total number of registers\s*\|\s*(\d+)", text)
+    gates = re.search(r"Number of Clock gating elements\s*\|\s*(\d+)", text)
+    return (int(regs.group(1)), int(gates.group(1))) if regs and gates else None
+
+
+def bits_table(tech: str, char: list[dict]) -> str:
+    """Each point's sequential cells against its register bits: DC's registers (clock_gating.rpt) equal to the bits,
+    and seq_cells the registers plus the clock gates."""
+    params = {p["point"]: (p["datapath"], p["params"]) for p in json.loads((ROOT / "char" / "points.json").read_text())}
+    body, off = [], []
+    for r in char:
+        if r["point"] not in params:
+            continue
+        want = n_bits(*params[r["point"]])
+        g = gating(tech, r)
+        cells = int(r["seq_cells"] or 0)
+        ok = g is not None and g[0] == want and cells == g[0] + g[1]
+        if not ok:
+            off.append(r["point"])
+        body.append([r["point"], r.get("in_type", ""), r.get("out_type", ""), want, g[0] if g else "-",
+                     g[1] if g else "-", cells, "yes" if ok else "**no**"])
+    return (table(["point", "in", "out", "bits", "DC registers", "clock gates", "seq_cells", "as expected"], body)
+            + "\n\nNot as expected: " + (", ".join(f"`{p}`" for p in off) or "none") + ".")
+
+
 def pct(a: float, b: float) -> str:
     return f"{100 * (a - b) / b:+.2f}" if b else "-"
 
@@ -142,7 +197,7 @@ def power_tables(tech: str) -> tuple[str, dict]:
 
     # hold: idle e_bit of the registered blocks
     body, bits = [], []
-    for p in sorted(rows_of, key=lambda p: (synth[p]["datapath"], int(synth[p]["lanes"]))):
+    for p in sorted(rows_of, key=lambda p: (synth[p]["datapath"], int(synth[p]["lanes"] or 0), p)):
         if synth[p]["datapath"] not in ("Mac", "TreeAccumulate", "SerialAccumulate"):
             continue
         b = 1000 * e(p, "idle", "e_bit_pj")
@@ -177,13 +232,14 @@ def power_tables(tech: str) -> tuple[str, dict]:
         p = f"link/d1_w{w}"
         if p in rows_of and "link/d1_w1" in rows_of:
             body.append([p] + [f"{e(p, 'stream', c) / (w * e('link/d1_w1', 'stream', c)):.4f}"
+                               if e("link/d1_w1", "stream", c) else "-"      # d1_w1's stream e_comb is 0 gated
                                for c in ("e_comb_pj", "e_flop_pj", "e_dyn_pj")])
     out += ["\n" + table(["point", "e_comb / (W d1_w1)", "e_flop / (W d1_w1)", "e_dyn / (W d1_w1)"], body)]
 
     # lanes: lane copies
     body = []
-    for name, pat, win in (("ElementwiseLanes add busy", "lanes/add_w{}", "busy"),
-                           ("ElementwiseLanes mul busy", "lanes/mul_w{}", "busy"),
+    for name, pat, win in (("SimdLanes add busy", "lanes/add_w{}", "busy"),
+                           ("SimdLanes mul busy", "lanes/mul_w{}", "busy"),
                            ("Mac busy", "mac/acc_w{}", "busy"), ("Mac idle", "mac/acc_w{}", "idle")):
         one = e(pat.format(1), win)
         body.append([name, f"{one:.4f}"] + [x for w in (8, 32) for x in
@@ -244,6 +300,8 @@ def main() -> int:
         print(lanes_table(char))
         print(f"\n## {tech}: seq area per flop\n")
         print(flops_table(char))
+        print(f"\n## {tech}: flops against the register bits\n")
+        print(bits_table(tech, char))
     return 0
 
 
