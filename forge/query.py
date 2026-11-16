@@ -5,7 +5,7 @@
   python forge/query.py program BUNDLE_DIR          LOWER's writes, scalars and stream orders for the design point
   python forge/query.py cycles BUNDLE_DIR JOBS BEATS_JSON    the group's busy cycles
   python forge/query.py ctrl_bits ACCELERATOR_JSON  the control units' registers and bits
-  python forge/query.py ref KERNEL IN_NPZ OUT_NPZ [SYMBOLS_JSON [DTYPES_JSON]]   the kernel's NumPy body
+  python forge/query.py ref KERNEL IN_NPZ OUT_NPZ [SYMBOLS_JSON [DTYPES_JSON]]   the kernel's NumPy body, a type parameter (ACC) rebound
 
 Runs inside snax-forge's pixi environment, with snax-forge as the working directory (sim/sources/forge.py calls it
 as forge/bundles.py calls snax-forge's tasks), and prints one JSON object on stdout. What each answer holds is in
@@ -157,6 +157,10 @@ def cmd_ref(kernel: str, in_npz: str, out_npz: str, symbols: str = "", dtypes: s
     n = len(next(v for v in ins.values() if v.ndim))
     sym = json.loads(symbols) if symbols else None
     dts = json.loads(dtypes) if dtypes else {}
+    params = {k: v for k, v in dts.items() if k in getattr(spec, "types", {})}
+    if params:      # a type parameter (ACC in A.astype(ACC)): the body's global rebound, as the bundle's
+        spec = spec.with_types(params, "dtypes")
+    dts = {k: v for k, v in dts.items() if k not in params}
     arrays = {}
     for name, desc in spec.descriptors.items():
         dt = np.dtype(dts[name]) if name in dts else desc.dtype.as_numpy_dtype()
