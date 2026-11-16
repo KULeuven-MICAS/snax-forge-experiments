@@ -14,21 +14,21 @@ Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and t
 ## 1. Setup
 
 <!-- gen:setup -->
-| Case | Tool version | RTL measured at | Synthesis | Latency window |
-|---|---|---|---|---|
-| forge |  | 3c7ea00 | ungated | START to done (X13) |
-| forge 2 |  | 3c7ea00 | ungated | START to done (X13) |
-| forge 3 |  | 3c7ea00 | ungated | START to done (X13) |
-| forge 4 |  | 3c7ea00 | ungated | START to done (X13) |
-| forge 5 |  | 3c7ea00 | ungated | START to done (X13) |
-| forge 6 |  | 3c7ea00 | ungated | START to done (X13) |
-| forge baked |  | 3c7ea00 | ungated | START to done (X13) |
-| Vitis opt | v2023.2.2 | 4ef8bc8 | clock-gated | ap_start to ap_done (X12) |
-| Vitis dace | v2023.2.2 | 4ef8bc8, f33338d | clock-gated | ap_start to ap_done (X12) |
-| Bambu | PandA 2026.11 rev cda4db2e | 542fa32 | clock-gated | start_port to done_port (X44) |
-| XLS | v0.0.0-10782-g5ddc35c4e | 46fa843, 9ae29ea, faf5a3d | clock-gated | cfg transfer to last output, last edge included (X44) |
+| Case | Tool version | RTL measured at | Latency window |
+|---|---|---|---|
+| forge |  | 3c7ea00 | START to done (X13) |
+| forge 2 |  | 3c7ea00 | START to done (X13) |
+| forge 3 |  | 3c7ea00 | START to done (X13) |
+| forge 4 |  | 3c7ea00 | START to done (X13) |
+| forge 5 |  | 3c7ea00 | START to done (X13) |
+| forge 6 |  | 3c7ea00 | START to done (X13) |
+| forge baked |  | 3c7ea00 | START to done (X13) |
+| Vitis opt | v2023.2.2 | 4ef8bc8 | ap_start to ap_done (X12) |
+| Vitis dace | v2023.2.2 | 4ef8bc8, f33338d | ap_start to ap_done (X12) |
+| Bambu | PandA 2026.11 rev cda4db2e | 542fa32 | start_port to done_port (X44) |
+| XLS | v0.0.0-10782-g5ddc35c4e | 46fa843, 9ae29ea, faf5a3d | cfg transfer to last output, last edge included (X44) |
 
-Main view: nangate45, int64, every point synthesized at a 10 ns clock (the HLS tools scheduled at a 10 ns HLS clock), W = 1 to 16 lanes per stream. Size: n2048 everywhere, 2048 elements per input stream (X24, X55): tier done N = 2048, untiered relu and axpy n = 2048, matadd m32_n64, rowsum m16_n128. Energy is the dynamic energy of one task (PrimePower on simulated activity, X7); power is E_run / (cycles x 10 ns). The latency windows differ by a cycle or two by definition. forge's cases: dot 2 to 6 (forge2 to forge6), axpy with alpha baked to 3 (forge baked), rowsum 2 (forge2).
+Main view: nangate45, int64, every point synthesized clock-gated at a 10 ns clock (X79 · X87 · X88; the HLS tools scheduled at a 10 ns HLS clock), W = 1 to 16 lanes per stream. Size: n2048 everywhere, 2048 elements per input stream (X24, X55): tier done N = 2048, untiered relu and axpy n = 2048, matadd m32_n64, rowsum m16_n128. Energy is the dynamic energy of one task (PrimePower on simulated activity, X7); power is E_run / (cycles x 10 ns). The latency windows differ by a cycle or two by definition. forge's cases: dot 2 to 6 (forge2 to forge6), axpy with alpha baked to 3 (forge baked), rowsum 2 (forge2).
 <!-- /gen -->
 
 ## 2. Across all kernels

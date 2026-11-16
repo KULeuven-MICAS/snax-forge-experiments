@@ -7,50 +7,50 @@ Part of [the comparison](../README.md): setup, summary across kernels and the pa
 <!-- gen:main -->
 ![dot](dot.png)
 
-n2048, nangate45, int64, 10 ns. HLS clock-gated, forge ungated: forge's points are not yet synthesized gated, and the insights below were written when both were ungated.
+n2048, nangate45, int64, 10 ns, every case clock-gated.
 
 [forge's ctrl + datapath against the HLS totals](dot_ctrl_dp.png): forge without its csr, its `<tag>_peripherals` and its glue; the HLS cases as above.
 
 | W | Case | Area (µm²) | Energy (nJ) | Latency (cycles) | Power (mW) |
 |---|---|---|---|---|---|
-| 1 | forge 2 | 10,792 | 31.51 | 2050 | 1.537 |
-| 1 | forge 3 | 9,590 | 29 | 2049 | 1.416 |
-| 1 | forge 4 | 10,307 | 29.31 | 2050 | 1.43 |
-| 1 | forge 5 | 10,281 | 29.29 | 2050 | 1.429 |
-| 1 | forge 6 | 10,778 | 30.24 | 2051 | 1.474 |
+| 1 | forge 2 | 10,307 | 29.53 | 2050 | 1.44 |
+| 1 | forge 3 | 9,262 | 27.56 | 2049 | 1.345 |
+| 1 | forge 4 | 9,864 | 27.09 | 2050 | 1.321 |
+| 1 | forge 5 | 9,866 | 27.09 | 2050 | 1.321 |
+| 1 | forge 6 | 10,244 | 27.12 | 2051 | 1.322 |
 | 1 | Vitis opt | 9,100 | 29.06 | 2050 | 1.418 |
 | 1 | Vitis dace | 57,610 | 72.79 | 4101 | 1.775 |
 | 1 | Bambu | 9,708 | 34.29 | 2050 | 1.673 |
 | 1 | XLS | 8,257 | 27.42 | 2049 | 1.338 |
-| 2 | forge 2 | 18,431 | 28.02 | 1026 | 2.731 |
-| 2 | forge 3 | 16,767 | 26.17 | 1025 | 2.553 |
-| 2 | forge 4 | 18,205 | 27.46 | 1026 | 2.676 |
-| 2 | forge 5 | 18,400 | 27.38 | 1027 | 2.666 |
-| 2 | forge 6 | 19,333 | 28.02 | 1028 | 2.726 |
+| 2 | forge 2 | 17,860 | 26.91 | 1026 | 2.623 |
+| 2 | forge 3 | 16,441 | 25.19 | 1025 | 2.457 |
+| 2 | forge 4 | 17,616 | 26.42 | 1026 | 2.575 |
+| 2 | forge 5 | 17,771 | 26.31 | 1027 | 2.562 |
+| 2 | forge 6 | 18,530 | 26.17 | 1028 | 2.545 |
 | 2 | Vitis opt | 16,292 | 26.41 | 1026 | 2.574 |
 | 2 | Bambu | 17,469 | 31.13 | 1026 | 3.034 |
 | 2 | XLS | 15,509 | 27.07 | 1025 | 2.641 |
-| 4 | forge 2 | 33,713 | 26.25 | 514 | 5.107 |
-| 4 | forge 3 | 31,127 | 24.65 | 513 | 4.805 |
-| 4 | forge 4 | 34,014 | 26.6 | 514 | 5.176 |
-| 4 | forge 5 | 33,842 | 26.36 | 517 | 5.098 |
-| 4 | forge 6 | 35,647 | 26.99 | 518 | 5.211 |
+| 4 | forge 2 | 32,968 | 25.62 | 514 | 4.985 |
+| 4 | forge 3 | 30,799 | 24.13 | 513 | 4.704 |
+| 4 | forge 4 | 33,116 | 26.11 | 514 | 5.079 |
+| 4 | forge 5 | 32,893 | 25.76 | 517 | 4.983 |
+| 4 | forge 6 | 34,402 | 25.71 | 518 | 4.963 |
 | 4 | Vitis opt | 30,677 | 25.04 | 514 | 4.871 |
 | 4 | Bambu | 32,990 | 30.01 | 1026 | 2.925 |
 | 4 | XLS | 30,076 | 26.32 | 513 | 5.13 |
-| 8 | forge 2 | 64,277 | 25.34 | 258 | 9.82 |
-| 8 | forge 3 | 59,845 | 23.83 | 257 | 9.272 |
-| 8 | forge 4 | 65,647 | 26.13 | 258 | 10.13 |
-| 8 | forge 5 | 64,584 | 25.59 | 265 | 9.658 |
-| 8 | forge 6 | 68,296 | 26.42 | 266 | 9.933 |
+| 8 | forge 2 | 63,182 | 24.96 | 258 | 9.674 |
+| 8 | forge 3 | 59,515 | 23.54 | 257 | 9.16 |
+| 8 | forge 4 | 64,114 | 25.91 | 258 | 10.04 |
+| 8 | forge 5 | 63,047 | 25.37 | 265 | 9.575 |
+| 8 | forge 6 | 66,052 | 25.45 | 266 | 9.568 |
 | 8 | Vitis opt | 59,733 | 24.44 | 258 | 9.474 |
 | 8 | Bambu | 64,038 | 28.93 | 514 | 5.628 |
 | 8 | XLS | 59,149 | 25.93 | 257 | 10.09 |
-| 16 | forge 2 | 125,400 | 24.89 | 130 | 19.15 |
-| 16 | forge 3 | 117,278 | 23.43 | 129 | 18.16 |
-| 16 | forge 4 | 128,813 | 25.95 | 130 | 19.96 |
-| 16 | forge 5 | 126,139 | 25.43 | 145 | 17.53 |
-| 16 | forge 6 | 133,541 | 26.29 | 146 | 18.01 |
+| 16 | forge 2 | 123,618 | 24.63 | 130 | 18.95 |
+| 16 | forge 3 | 116,948 | 23.24 | 129 | 18.01 |
+| 16 | forge 4 | 126,137 | 25.85 | 130 | 19.89 |
+| 16 | forge 5 | 123,415 | 25.25 | 145 | 17.41 |
+| 16 | forge 6 | 129,418 | 25.39 | 146 | 17.39 |
 | 16 | Vitis opt | 117,856 | 24.12 | 130 | 18.55 |
 | 16 | Bambu | 127,130 | 28.53 | 131 | 21.78 |
 | 16 | XLS | 118,095 | 26.02 | 129 | 20.17 |
@@ -70,31 +70,31 @@ n2048, nangate45, int64, 10 ns. HLS clock-gated, forge ungated: forge's points a
 <!-- gen:parts -->
 | W | Case | Part | Area (µm²) | Energy (nJ) | pJ per element |
 |---|---|---|---|---|---|
-| 1 | forge 2 | csr | 794.3 | 1.44 | 0.7032 |
-| 1 | forge 2 | ctrl | 1,502 | 1.989 | 0.971 |
-| 1 | forge 2 | datapath | 8,215 | 27.6 | 13.47 |
-| 1 | forge 2 | total | 10,792 | 31.51 | 15.38 |
-| 1 | forge 2 | total without csr | 9,719 | 29.58 | 14.45 |
-| 1 | forge 3 | csr | 794.3 | 1.439 | 0.7029 |
-| 1 | forge 3 | ctrl | 761 | 1.014 | 0.4949 |
-| 1 | forge 3 | datapath | 7,753 | 26.07 | 12.73 |
-| 1 | forge 3 | total | 9,590 | 29 | 14.16 |
-| 1 | forge 3 | total without csr | 8,516 | 27.08 | 13.22 |
-| 1 | forge 4 | csr | 794.3 | 1.44 | 0.7032 |
-| 1 | forge 4 | ctrl | 1,141 | 1.501 | 0.7327 |
-| 1 | forge 4 | datapath | 8,091 | 25.89 | 12.64 |
-| 1 | forge 4 | total | 10,307 | 29.31 | 14.31 |
-| 1 | forge 4 | total without csr | 9,234 | 27.39 | 13.37 |
-| 1 | forge 5 | csr | 794.3 | 1.44 | 0.7032 |
-| 1 | forge 5 | ctrl | 1,116 | 1.5 | 0.7326 |
-| 1 | forge 5 | datapath | 8,091 | 25.87 | 12.63 |
-| 1 | forge 5 | total | 10,281 | 29.29 | 14.3 |
-| 1 | forge 5 | total without csr | 9,208 | 27.37 | 13.36 |
-| 1 | forge 6 | csr | 794.3 | 1.441 | 0.7036 |
-| 1 | forge 6 | ctrl | 1,151 | 1.516 | 0.7403 |
-| 1 | forge 6 | datapath | 8,553 | 26.8 | 13.09 |
-| 1 | forge 6 | total | 10,778 | 30.24 | 14.77 |
-| 1 | forge 6 | total without csr | 9,705 | 28.32 | 13.83 |
+| 1 | forge 2 | csr | 701.2 | 0.6226 | 0.304 |
+| 1 | forge 2 | ctrl | 1,379 | 1.27 | 0.6203 |
+| 1 | forge 2 | datapath | 7,974 | 27.06 | 13.21 |
+| 1 | forge 2 | total | 10,307 | 29.53 | 14.42 |
+| 1 | forge 2 | total without csr | 9,353 | 28.33 | 13.83 |
+| 1 | forge 3 | csr | 701.2 | 0.6223 | 0.3039 |
+| 1 | forge 3 | ctrl | 711 | 0.6507 | 0.3177 |
+| 1 | forge 3 | datapath | 7,596 | 25.71 | 12.56 |
+| 1 | forge 3 | total | 9,262 | 27.56 | 13.46 |
+| 1 | forge 3 | total without csr | 8,308 | 26.36 | 12.87 |
+| 1 | forge 4 | csr | 701.2 | 0.6226 | 0.304 |
+| 1 | forge 4 | ctrl | 1,046 | 0.6762 | 0.3302 |
+| 1 | forge 4 | datapath | 7,864 | 25.21 | 12.31 |
+| 1 | forge 4 | total | 9,864 | 27.09 | 13.23 |
+| 1 | forge 4 | total without csr | 8,910 | 25.89 | 12.64 |
+| 1 | forge 5 | csr | 701.2 | 0.6226 | 0.304 |
+| 1 | forge 5 | ctrl | 1,049 | 0.6762 | 0.3302 |
+| 1 | forge 5 | datapath | 7,864 | 25.22 | 12.31 |
+| 1 | forge 5 | total | 9,866 | 27.09 | 13.23 |
+| 1 | forge 5 | total without csr | 8,913 | 25.89 | 12.64 |
+| 1 | forge 6 | csr | 701.2 | 0.6229 | 0.3042 |
+| 1 | forge 6 | ctrl | 1,048 | 0.6906 | 0.3372 |
+| 1 | forge 6 | datapath | 8,242 | 25.23 | 12.32 |
+| 1 | forge 6 | total | 10,244 | 27.12 | 13.24 |
+| 1 | forge 6 | total without csr | 9,291 | 25.92 | 12.66 |
 | 1 | Vitis opt | total | 9,100 | 29.06 | 14.19 |
 | 1 | Vitis dace | RAM (macro) | 49,275 | 45.26 | 22.1 |
 | 1 | Vitis dace | logic without the RAM | 8,335 | 27.54 | 13.44 |
@@ -103,121 +103,121 @@ n2048, nangate45, int64, 10 ns. HLS clock-gated, forge ungated: forge's points a
 | 1 | Bambu | datapath | 9,632 | 34.24 | 16.72 |
 | 1 | Bambu | total | 9,708 | 34.29 | 16.75 |
 | 1 | XLS | total | 8,257 | 27.42 | 13.39 |
-| 2 | forge 2 | csr | 794.3 | 0.7209 | 0.352 |
-| 2 | forge 2 | ctrl | 1,501 | 1.004 | 0.4901 |
-| 2 | forge 2 | datapath | 15,854 | 26.05 | 12.72 |
-| 2 | forge 2 | total | 18,431 | 28.02 | 13.68 |
-| 2 | forge 2 | total without csr | 17,357 | 27.06 | 13.21 |
-| 2 | forge 3 | csr | 794.3 | 0.7202 | 0.3516 |
-| 2 | forge 3 | ctrl | 760.8 | 0.511 | 0.2495 |
-| 2 | forge 3 | datapath | 14,931 | 24.69 | 12.06 |
-| 2 | forge 3 | total | 16,767 | 26.17 | 12.78 |
-| 2 | forge 3 | total without csr | 15,693 | 25.2 | 12.31 |
-| 2 | forge 4 | csr | 794.3 | 0.7209 | 0.352 |
-| 2 | forge 4 | ctrl | 1,142 | 0.7553 | 0.3688 |
-| 2 | forge 4 | datapath | 15,988 | 25.74 | 12.57 |
-| 2 | forge 4 | total | 18,205 | 27.46 | 13.41 |
-| 2 | forge 4 | total without csr | 17,131 | 26.49 | 12.94 |
-| 2 | forge 5 | csr | 794.3 | 0.7216 | 0.3523 |
-| 2 | forge 5 | ctrl | 1,150 | 0.7634 | 0.3727 |
-| 2 | forge 5 | datapath | 16,175 | 25.65 | 12.52 |
-| 2 | forge 5 | total | 18,400 | 27.38 | 13.37 |
-| 2 | forge 5 | total without csr | 17,326 | 26.41 | 12.9 |
-| 2 | forge 6 | csr | 794.3 | 0.7223 | 0.3527 |
-| 2 | forge 6 | ctrl | 1,160 | 0.7715 | 0.3767 |
-| 2 | forge 6 | datapath | 17,098 | 26.28 | 12.83 |
-| 2 | forge 6 | total | 19,333 | 28.02 | 13.68 |
-| 2 | forge 6 | total without csr | 18,259 | 27.05 | 13.21 |
+| 2 | forge 2 | csr | 701.2 | 0.3117 | 0.1522 |
+| 2 | forge 2 | ctrl | 1,379 | 0.644 | 0.3144 |
+| 2 | forge 2 | datapath | 15,528 | 25.66 | 12.53 |
+| 2 | forge 2 | total | 17,860 | 26.91 | 13.14 |
+| 2 | forge 2 | total without csr | 16,907 | 26.31 | 12.84 |
+| 2 | forge 3 | csr | 701.2 | 0.3114 | 0.1521 |
+| 2 | forge 3 | ctrl | 711 | 0.3295 | 0.1609 |
+| 2 | forge 3 | datapath | 14,775 | 24.26 | 11.84 |
+| 2 | forge 3 | total | 16,441 | 25.19 | 12.3 |
+| 2 | forge 3 | total without csr | 15,487 | 24.59 | 12.01 |
+| 2 | forge 4 | csr | 701.2 | 0.3117 | 0.1522 |
+| 2 | forge 4 | ctrl | 1,046 | 0.3428 | 0.1674 |
+| 2 | forge 4 | datapath | 15,616 | 25.48 | 12.44 |
+| 2 | forge 4 | total | 17,616 | 26.42 | 12.9 |
+| 2 | forge 4 | total without csr | 16,662 | 25.82 | 12.61 |
+| 2 | forge 5 | csr | 701.2 | 0.312 | 0.1524 |
+| 2 | forge 5 | ctrl | 1,047 | 0.3501 | 0.171 |
+| 2 | forge 5 | datapath | 15,770 | 25.36 | 12.38 |
+| 2 | forge 5 | total | 17,771 | 26.31 | 12.85 |
+| 2 | forge 5 | total without csr | 16,818 | 25.71 | 12.55 |
+| 2 | forge 6 | csr | 701.2 | 0.3123 | 0.1525 |
+| 2 | forge 6 | ctrl | 1,053 | 0.3575 | 0.1746 |
+| 2 | forge 6 | datapath | 16,523 | 25.21 | 12.31 |
+| 2 | forge 6 | total | 18,530 | 26.17 | 12.78 |
+| 2 | forge 6 | total without csr | 17,576 | 25.56 | 12.48 |
 | 2 | Vitis opt | total | 16,292 | 26.41 | 12.89 |
 | 2 | Bambu | ctrl | 71.29 | 0.02191 | 0.0107 |
 | 2 | Bambu | datapath | 17,392 | 31.1 | 15.18 |
 | 2 | Bambu | total | 17,469 | 31.13 | 15.2 |
 | 2 | XLS | total | 15,509 | 27.07 | 13.22 |
-| 4 | forge 2 | csr | 794.3 | 0.3612 | 0.1764 |
-| 4 | forge 2 | ctrl | 1,501 | 0.5074 | 0.2478 |
-| 4 | forge 2 | datapath | 31,137 | 25.26 | 12.33 |
-| 4 | forge 2 | total | 33,713 | 26.25 | 12.82 |
-| 4 | forge 2 | total without csr | 32,640 | 25.76 | 12.58 |
-| 4 | forge 3 | csr | 794.3 | 0.3605 | 0.176 |
-| 4 | forge 3 | ctrl | 760.8 | 0.2579 | 0.1259 |
-| 4 | forge 3 | datapath | 29,291 | 23.91 | 11.67 |
-| 4 | forge 3 | total | 31,127 | 24.65 | 12.04 |
-| 4 | forge 3 | total without csr | 30,054 | 24.16 | 11.8 |
-| 4 | forge 4 | csr | 794.3 | 0.3612 | 0.1764 |
-| 4 | forge 4 | ctrl | 1,143 | 0.3809 | 0.186 |
-| 4 | forge 4 | datapath | 31,797 | 25.74 | 12.57 |
-| 4 | forge 4 | total | 34,014 | 26.6 | 12.99 |
-| 4 | forge 4 | total without csr | 32,941 | 26.12 | 12.75 |
-| 4 | forge 5 | csr | 794.3 | 0.3633 | 0.1774 |
-| 4 | forge 5 | ctrl | 1,178 | 0.3914 | 0.1911 |
-| 4 | forge 5 | datapath | 31,590 | 25.48 | 12.44 |
-| 4 | forge 5 | total | 33,842 | 26.36 | 12.87 |
-| 4 | forge 5 | total without csr | 32,769 | 25.87 | 12.63 |
-| 4 | forge 6 | csr | 794.3 | 0.364 | 0.1777 |
-| 4 | forge 6 | ctrl | 1,170 | 0.3955 | 0.1931 |
-| 4 | forge 6 | datapath | 33,402 | 26.11 | 12.75 |
-| 4 | forge 6 | total | 35,647 | 26.99 | 13.18 |
-| 4 | forge 6 | total without csr | 34,573 | 26.5 | 12.94 |
+| 4 | forge 2 | csr | 701.2 | 0.1563 | 0.07631 |
+| 4 | forge 2 | ctrl | 1,379 | 0.3269 | 0.1596 |
+| 4 | forge 2 | datapath | 30,635 | 24.99 | 12.2 |
+| 4 | forge 2 | total | 32,968 | 25.62 | 12.51 |
+| 4 | forge 2 | total without csr | 32,014 | 25.32 | 12.36 |
+| 4 | forge 3 | csr | 701.2 | 0.156 | 0.07616 |
+| 4 | forge 3 | ctrl | 711 | 0.1673 | 0.08169 |
+| 4 | forge 3 | datapath | 29,133 | 23.66 | 11.55 |
+| 4 | forge 3 | total | 30,799 | 24.13 | 11.78 |
+| 4 | forge 3 | total without csr | 29,845 | 23.83 | 11.64 |
+| 4 | forge 4 | csr | 701.2 | 0.1563 | 0.07631 |
+| 4 | forge 4 | ctrl | 1,046 | 0.1743 | 0.08511 |
+| 4 | forge 4 | datapath | 31,116 | 25.63 | 12.51 |
+| 4 | forge 4 | total | 33,116 | 26.11 | 12.75 |
+| 4 | forge 4 | total without csr | 32,163 | 25.8 | 12.6 |
+| 4 | forge 5 | csr | 701.2 | 0.1572 | 0.07676 |
+| 4 | forge 5 | ctrl | 1,059 | 0.1773 | 0.08659 |
+| 4 | forge 5 | datapath | 30,880 | 25.28 | 12.34 |
+| 4 | forge 5 | total | 32,893 | 25.76 | 12.58 |
+| 4 | forge 5 | total without csr | 31,940 | 25.46 | 12.43 |
+| 4 | forge 6 | csr | 701.2 | 0.1575 | 0.0769 |
+| 4 | forge 6 | ctrl | 1,066 | 0.1809 | 0.08833 |
+| 4 | forge 6 | datapath | 32,382 | 25.22 | 12.31 |
+| 4 | forge 6 | total | 34,402 | 25.71 | 12.55 |
+| 4 | forge 6 | total without csr | 33,448 | 25.4 | 12.4 |
 | 4 | Vitis opt | total | 30,677 | 25.04 | 12.23 |
 | 4 | Bambu | ctrl | 79.53 | 0.1725 | 0.08425 |
 | 4 | Bambu | datapath | 32,906 | 29.83 | 14.57 |
 | 4 | Bambu | total | 32,990 | 30.01 | 14.66 |
 | 4 | XLS | total | 30,076 | 26.32 | 12.85 |
-| 8 | forge 2 | csr | 794.3 | 0.1814 | 0.08857 |
-| 8 | forge 2 | ctrl | 1,501 | 0.2574 | 0.1257 |
-| 8 | forge 2 | datapath | 61,700 | 24.83 | 12.13 |
-| 8 | forge 2 | total | 64,277 | 25.34 | 12.37 |
-| 8 | forge 2 | total without csr | 63,203 | 25.09 | 12.25 |
-| 8 | forge 3 | csr | 794.3 | 0.1807 | 0.08823 |
-| 8 | forge 3 | ctrl | 760.8 | 0.1304 | 0.06367 |
-| 8 | forge 3 | datapath | 58,009 | 23.45 | 11.45 |
-| 8 | forge 3 | total | 59,845 | 23.83 | 11.64 |
-| 8 | forge 3 | total without csr | 58,771 | 23.58 | 11.52 |
-| 8 | forge 4 | csr | 795.6 | 0.1814 | 0.08856 |
-| 8 | forge 4 | ctrl | 1,142 | 0.1927 | 0.0941 |
-| 8 | forge 4 | datapath | 63,394 | 25.69 | 12.55 |
-| 8 | forge 4 | total | 65,647 | 26.13 | 12.76 |
-| 8 | forge 4 | total without csr | 64,538 | 25.89 | 12.64 |
-| 8 | forge 5 | csr | 795.6 | 0.1863 | 0.09096 |
-| 8 | forge 5 | ctrl | 1,174 | 0.2037 | 0.09944 |
-| 8 | forge 5 | datapath | 62,299 | 25.14 | 12.27 |
-| 8 | forge 5 | total | 64,584 | 25.59 | 12.5 |
-| 8 | forge 5 | total without csr | 63,475 | 25.34 | 12.37 |
-| 8 | forge 6 | csr | 795.6 | 0.187 | 0.0913 |
-| 8 | forge 6 | ctrl | 1,195 | 0.2067 | 0.1009 |
-| 8 | forge 6 | datapath | 65,990 | 25.96 | 12.68 |
-| 8 | forge 6 | total | 68,296 | 26.42 | 12.9 |
-| 8 | forge 6 | total without csr | 67,187 | 26.17 | 12.78 |
+| 8 | forge 2 | csr | 701.2 | 0.07856 | 0.03836 |
+| 8 | forge 2 | ctrl | 1,379 | 0.1666 | 0.08134 |
+| 8 | forge 2 | datapath | 60,849 | 24.64 | 12.03 |
+| 8 | forge 2 | total | 63,182 | 24.96 | 12.19 |
+| 8 | forge 2 | total without csr | 62,229 | 24.8 | 12.11 |
+| 8 | forge 3 | csr | 701.2 | 0.07826 | 0.03821 |
+| 8 | forge 3 | ctrl | 711 | 0.0851 | 0.04155 |
+| 8 | forge 3 | datapath | 57,850 | 23.3 | 11.38 |
+| 8 | forge 3 | total | 59,515 | 23.54 | 11.49 |
+| 8 | forge 3 | total without csr | 58,562 | 23.39 | 11.42 |
+| 8 | forge 4 | csr | 701.2 | 0.07856 | 0.03836 |
+| 8 | forge 4 | ctrl | 1,046 | 0.08911 | 0.04351 |
+| 8 | forge 4 | datapath | 62,114 | 25.66 | 12.53 |
+| 8 | forge 4 | total | 64,114 | 25.91 | 12.65 |
+| 8 | forge 4 | total without csr | 63,161 | 25.75 | 12.57 |
+| 8 | forge 5 | csr | 701.2 | 0.08068 | 0.0394 |
+| 8 | forge 5 | ctrl | 1,069 | 0.09131 | 0.04458 |
+| 8 | forge 5 | datapath | 61,025 | 25.12 | 12.27 |
+| 8 | forge 5 | total | 63,047 | 25.37 | 12.39 |
+| 8 | forge 5 | total without csr | 62,094 | 25.22 | 12.31 |
+| 8 | forge 6 | csr | 701.2 | 0.08099 | 0.03954 |
+| 8 | forge 6 | ctrl | 1,074 | 0.09327 | 0.04554 |
+| 8 | forge 6 | datapath | 64,024 | 25.2 | 12.3 |
+| 8 | forge 6 | total | 66,052 | 25.45 | 12.43 |
+| 8 | forge 6 | total without csr | 65,098 | 25.29 | 12.35 |
 | 8 | Vitis opt | total | 59,733 | 24.44 | 11.94 |
 | 8 | Bambu | ctrl | 79.53 | 0.08642 | 0.0422 |
 | 8 | Bambu | datapath | 63,953 | 28.84 | 14.08 |
 | 8 | Bambu | total | 64,038 | 28.93 | 14.12 |
 | 8 | XLS | total | 59,149 | 25.93 | 12.66 |
-| 16 | forge 2 | csr | 794.3 | 0.09148 | 0.04467 |
-| 16 | forge 2 | ctrl | 1,501 | 0.1314 | 0.06418 |
-| 16 | forge 2 | datapath | 122,824 | 24.63 | 12.03 |
-| 16 | forge 2 | total | 125,400 | 24.89 | 12.15 |
-| 16 | forge 2 | total without csr | 124,327 | 24.77 | 12.09 |
-| 16 | forge 3 | csr | 794.3 | 0.09078 | 0.04433 |
-| 16 | forge 3 | ctrl | 760.8 | 0.06618 | 0.03232 |
-| 16 | forge 3 | datapath | 115,442 | 23.24 | 11.35 |
-| 16 | forge 3 | total | 117,278 | 23.43 | 11.44 |
-| 16 | forge 3 | total without csr | 116,204 | 23.3 | 11.38 |
-| 16 | forge 4 | csr | 794.3 | 0.09148 | 0.04467 |
-| 16 | forge 4 | ctrl | 1,142 | 0.09832 | 0.04801 |
-| 16 | forge 4 | datapath | 126,596 | 25.73 | 12.56 |
-| 16 | forge 4 | total | 128,813 | 25.95 | 12.67 |
-| 16 | forge 4 | total without csr | 127,739 | 25.83 | 12.61 |
-| 16 | forge 5 | csr | 794.3 | 0.102 | 0.04981 |
-| 16 | forge 5 | ctrl | 1,170 | 0.1132 | 0.05528 |
-| 16 | forge 5 | datapath | 123,894 | 25.17 | 12.29 |
-| 16 | forge 5 | total | 126,139 | 25.43 | 12.41 |
-| 16 | forge 5 | total without csr | 125,066 | 25.29 | 12.35 |
-| 16 | forge 6 | csr | 794.3 | 0.1027 | 0.05016 |
-| 16 | forge 6 | ctrl | 1,202 | 0.1152 | 0.05625 |
-| 16 | forge 6 | datapath | 131,265 | 26.04 | 12.72 |
-| 16 | forge 6 | total | 133,541 | 26.29 | 12.84 |
-| 16 | forge 6 | total without csr | 132,467 | 26.16 | 12.77 |
+| 16 | forge 2 | csr | 701.2 | 0.0397 | 0.01938 |
+| 16 | forge 2 | ctrl | 1,379 | 0.08541 | 0.04171 |
+| 16 | forge 2 | datapath | 121,286 | 24.47 | 11.95 |
+| 16 | forge 2 | total | 123,618 | 24.63 | 12.03 |
+| 16 | forge 2 | total without csr | 122,665 | 24.56 | 11.99 |
+| 16 | forge 3 | csr | 701.2 | 0.03939 | 0.01924 |
+| 16 | forge 3 | ctrl | 711 | 0.04357 | 0.02127 |
+| 16 | forge 3 | datapath | 115,282 | 23.12 | 11.29 |
+| 16 | forge 3 | total | 116,948 | 23.24 | 11.35 |
+| 16 | forge 3 | total without csr | 115,994 | 23.16 | 11.31 |
+| 16 | forge 4 | csr | 701.7 | 0.0397 | 0.01938 |
+| 16 | forge 4 | ctrl | 1,047 | 0.04603 | 0.02247 |
+| 16 | forge 4 | datapath | 124,136 | 25.73 | 12.56 |
+| 16 | forge 4 | total | 126,137 | 25.85 | 12.62 |
+| 16 | forge 4 | total without csr | 125,184 | 25.77 | 12.59 |
+| 16 | forge 5 | csr | 701.7 | 0.04425 | 0.02161 |
+| 16 | forge 5 | ctrl | 1,075 | 0.04865 | 0.02375 |
+| 16 | forge 5 | datapath | 121,386 | 25.12 | 12.26 |
+| 16 | forge 5 | total | 123,415 | 25.25 | 12.33 |
+| 16 | forge 5 | total without csr | 122,462 | 25.16 | 12.29 |
+| 16 | forge 6 | csr | 701.7 | 0.04455 | 0.02175 |
+| 16 | forge 6 | ctrl | 1,082 | 0.04977 | 0.0243 |
+| 16 | forge 6 | datapath | 127,381 | 25.25 | 12.33 |
+| 16 | forge 6 | total | 129,418 | 25.39 | 12.4 |
+| 16 | forge 6 | total without csr | 128,464 | 25.3 | 12.36 |
 | 16 | Vitis opt | total | 117,856 | 24.12 | 11.78 |
 | 16 | Bambu | ctrl | 145 | 0.005115 | 0.002498 |
 | 16 | Bambu | datapath | 126,980 | 28.53 | 13.93 |
