@@ -5,14 +5,15 @@
 
 Reads results/char/<tech>/char_synth.csv and char_power.csv, char/points.json and blocks.json at the blocks'
 snax-forge commit (git show in the sibling checkout) for the params, and for the control factor the tier-done forge
-points' power_pt_modules.csv and synth_dc_modules.csv. Writes the flop constants (area, e_load, e_hold), the control
-factor and per block its comb area and energy per fire with a lanes rule (copy or interpolate). The fields and the
-model are in results/char/README.md; a clock gate counts as a sequential cell (X83 · X85).
+points' power_pt_modules.csv and synth_dc_modules.csv. Writes the flop constants (area, e_load, e_hold, from the int64
+points), the control factor and per block and type pair its comb area and energy per fire with a lanes rule (copy,
+interpolate, slope; X89). The narrow points that check a rule (char_table.check_only) are not written. The fields and
+the model are in results/char/README.md; a clock gate counts as a sequential cell (X83 · X85).
 """
 from __future__ import annotations
 
 import json
-import re
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -21,9 +22,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import char_table as ct  # noqa: E402
 
 BLOCKS_JSON = ct.ROOT.parent / "snax-forge" / "hw" / "chisel" / "blocks.json"
-RULES = {"ElementwiseLanes": "copy", "Mac": "copy", "LinkBuffer": "copy", "TreeAccumulate": "interpolate",
-         "SerialAccumulate": "interpolate"}
+RULES = {"SimdLanes": "copy", "Mac": "copy", "LinkBuffer": "copy", "TreeAccumulate": "interpolate",
+         "SerialAccumulate": "interpolate", "FifoPacker": "none"}
 SHAPE = ("lanes", "depth")
+SLOPE_WS = (8, 32)              # a fold's int64 cost per lane is taken between these lanes (X89)
+# FifoPacker is not in blocks.json (the flow places it on a packed output, snax-forge D174): its params here
+PACKER = {"inLanes": {"type": "int", "min": 1}, "laneType": {"type": "dtype", "values": [f"{u}int{w}" for u in ("", "u") for w in (8, 16, 32, 64)]},
+          "words": {"type": "int", "min": 1}}
+COMB = ("comb_um2", "e_comb_pj")
 LOAD_KINDS = ("Mac", "TreeAccumulate", "SerialAccumulate")    # busy: every flop loads every cycle
 # the tier-done points with a gated power row: 48 but the 7 W = 32 bundles made before snax-forge D168 (X37)
 FORGE_POINTS = 41
@@ -33,18 +39,31 @@ def fail(msg: str) -> None:
     sys.exit(f"char_export: {msg}")
 
 
-def width(dtype: str) -> int:
-    m = re.fullmatch(r"u?int(\d+)", dtype)
-    if not m:
-        fail(f"dtype {dtype}: not an integer type")
-    return int(m.group(1))
+width = ct.width
+
+
+def packer_r(params: dict) -> int:
+    """A FifoPacker's in-beats per out-beat (d_out for one lane in)."""
+    return params["words"] * 64 // width(params["laneType"]) // params["inLanes"]
+
+
+def load_bits(datapath: str, params: dict) -> float:
+    """The bits that load on a fire: every register bit, but a FifoPacker's, where one held slot of r - 1 loads on
+    r - 1 of r pushes (the r-th sends) and the counter on every push."""
+    if datapath != "FifoPacker":
+        return n_bits(datapath, params)
+    r = packer_r(params)
+    return (r - 1) / r * params["inLanes"] * width(params["laneType"]) + math.ceil(math.log2(r))
 
 
 def n_bits(datapath: str, params: dict) -> int:
     """A block's flops from its params: its registers' bits."""
     w = params.get("lanes", 1)
-    if datapath == "ElementwiseLanes":
+    if datapath == "SimdLanes":
         return 0
+    if datapath == "FifoPacker":
+        r = packer_r(params)
+        return (r - 1) * params["inLanes"] * width(params["laneType"]) + math.ceil(math.log2(r))
     if datapath == "Mac":
         return w * width(params["outType"]) if params["accumulate"] or params["regOut"] else 0
     if datapath in ("TreeAccumulate", "SerialAccumulate"):
@@ -64,13 +83,15 @@ def stats(vals: list[float]) -> dict:
 def flop_area(d: dict) -> dict:
     """The mean of seq_area / seq_cells over the points with sequential cells (flops and clock gates), its spread."""
     a = {p: float(v["synth"]["seq_area_um2"]) / int(v["synth"]["seq_cells"]) for p, v in d.items()
-         if int(v["synth"]["seq_cells"])}
+         if int(v["synth"]["seq_cells"]) and ct.is64(v["params"])}
     return {**stats(list(a.values())), "points": a}
 
 
 def e_load(d: dict) -> dict:
     vals = {}
     for p, v in d.items():
+        if not ct.is64(v["params"]):
+            continue
         if v["datapath"] in LOAD_KINDS:
             vals[p] = 1000 * ct.e(d, p, "busy", "e_bit_pj")
         elif v["datapath"] == "LinkBuffer" and v["params"]["depth"] == 1:
@@ -80,7 +101,8 @@ def e_load(d: dict) -> dict:
 
 def e_hold(d: dict) -> dict:
     """char_table.md's e_hold: the mean idle e_bit of the registered blocks."""
-    vals = {p: 1000 * ct.e(d, p, "idle", "e_bit_pj") for p, v in d.items() if v["datapath"] in ct.REGISTERED}
+    vals = {p: 1000 * ct.e(d, p, "idle", "e_bit_pj") for p, v in d.items()
+            if v["datapath"] in ct.REGISTERED and ct.is64(v["params"])}
     s = stats(list(vals.values()))
     if abs(s["mean"] - ct.ehold(d)["mean"]) > 1e-12:
         fail("e_hold differs from char_table.md's")
@@ -123,7 +145,7 @@ def catalogue_at(commit: str) -> dict:
 
 
 def check_params(datapath: str, params: dict, cat: dict, where: str) -> None:
-    spec = cat.get(datapath)
+    spec = {"params": PACKER} if datapath == "FifoPacker" else cat.get(datapath)
     if spec is None:
         fail(f"{where}: {datapath} is not in blocks.json")
     if set(params) != set(spec["params"]):
@@ -132,38 +154,61 @@ def check_params(datapath: str, params: dict, cat: dict, where: str) -> None:
         s = spec["params"][k]
         ok = {"dtype": lambda: v in s["values"], "op": lambda: v in s["values"],
               "dtypes": lambda: isinstance(v, list) and all(x in s["values"] for x in v),
-              "int": lambda: isinstance(v, int) and v >= s.get("min", v), "bool": lambda: isinstance(v, bool)}
+              "int": lambda: isinstance(v, int) and v >= s.get("min", v), "bool": lambda: isinstance(v, bool),
+              "const": lambda: v is None or (isinstance(v, (int, float)) and not isinstance(v, bool))}
         if s["type"] not in ok or not ok[s["type"]]():
             fail(f"{where}: {k} = {v!r} not allowed by blocks.json ({s})")
 
 
+def type_free(params: dict) -> dict:
+    """params with every type at int64: the int64 entry a narrow fold takes its cost per lane from."""
+    out = {}
+    for k, v in params.items():
+        out[k] = (["int64"] * len(v) if isinstance(v, list) else "int64") if k in ct.TYPE_KEYS else v
+    return out
+
+
 def blocks(d: dict, points: list[dict], cat: dict) -> dict:
-    """char.json's blocks: params checked against blocks.json; seq_cells against the bits printed where they differ
-    (a clock gate is a sequential cell)."""
+    """char.json's blocks: per block one entry per params (lanes and depth aside, so one per type pair), params
+    checked against blocks.json; seq_cells against the bits printed where they differ (a clock gate is a sequential
+    cell). A narrow fold's entry has one point, at W0, and the slope rule: the int64 entry's cost per lane between
+    SLOPE_WS times w_in / 64 (X89). The points char_table.check_only names are left out."""
     out: dict = {}
     for p in points:
         name, dp, params = p["point"], p["datapath"], p["params"]
         check_params(dp, params, cat, name)
+        if ct.check_only(dp, params):
+            continue
         flops = int(d[name]["synth"]["seq_cells"])
         if flops != n_bits(dp, params):
             print(f"{name}: {flops} sequential cells, its bits are {n_bits(dp, params)}")
         key = {k: v for k, v in params.items() if k not in SHAPE}
         win = "stream" if dp == "LinkBuffer" else "busy"
-        pt = {"lanes": params["lanes"], **({"depth": params["depth"]} if dp == "LinkBuffer" else {}),
-              "comb_um2": float(d[name]["synth"]["comb_area_um2"]), "e_comb_pj": ct.e(d, name, win, "e_comb_pj")}
+        comb = {"comb_um2": float(d[name]["synth"]["comb_area_um2"]), "e_comb_pj": ct.e(d, name, win, "e_comb_pj")}
+        if dp == "FifoPacker":
+            pt = {**comb, "flops": n_bits(dp, params), "load_bits": round(load_bits(dp, params), 6)}
+        else:
+            pt = {"lanes": params["lanes"], **({"depth": params["depth"]} if dp == "LinkBuffer" else {}), **comb}
         entries = out.setdefault(dp, [])
         entry = next((x for x in entries if x["params"] == key), None)
         if entry is None:
-            entry = {"params": key, "lanes_rule": RULES[dp], "points": []}
+            rule = "slope" if dp in ct.FOLDS and not ct.is64(params) else RULES[dp]
+            entry = {"params": key, "lanes_rule": rule, "points": []}
             entries.append(entry)
         entry["points"].append(pt)
     for dp, entries in out.items():
         for x in entries:
-            x["points"].sort(key=lambda q: (q.get("depth", 0), q["lanes"]))
-            have = {(q["lanes"], q.get("depth", 1)) for q in x["points"]}
-            need = {(1, q.get("depth", 1)) for q in x["points"]} if x["lanes_rule"] == "copy" else set()
-            if not need <= have:
-                fail(f"{dp} {x['params']}: copy without its lanes-1 points {sorted(need - have)}")
+            x["points"].sort(key=lambda q: (q.get("depth", 0), q.get("lanes", 0)))
+            if x["lanes_rule"] == "slope":
+                base = next((y for y in entries if y["params"] == type_free(x["params"])), None)
+                if base is None:
+                    fail(f"{dp} {x['params']}: no int64 entry to take the cost per lane from")
+                at = {q["lanes"]: q for q in base["points"]}
+                lo, hi = SLOPE_WS
+                if lo not in at or hi not in at:
+                    fail(f"{dp} {base['params']}: the slope needs int64 points at lanes {SLOPE_WS}")
+                w_in = ct.pair(x["params"])[0]
+                x["slope"] = {c: round((at[hi][c] - at[lo][c]) / (hi - lo) * w_in / 64, 6) for c in COMB}
     return out
 
 
@@ -191,38 +236,56 @@ def build(tech: str, d: dict, points: list[dict]) -> tuple[dict, dict]:
 
 
 # ---------------------------------------------------------------- the model, read from char.json
-def entry_of(j: dict, datapath: str, params: dict) -> dict:
+def entry_of(j: dict, datapath: str, params: dict) -> tuple[dict, float]:
+    """(the entry for params, the factor its values take): a LinkBuffer at a dtype with no entry reads the int64
+    entry scaled by its width over 64 (X89)."""
     key = {k: v for k, v in params.items() if k not in SHAPE}
     for x in j["blocks"].get(datapath, []):
         if x["params"] == key:
-            return x
+            return x, 1.0
+    if datapath == "LinkBuffer":
+        k64 = {**key, "dtype": "int64"}
+        for x in j["blocks"]["LinkBuffer"]:
+            if x["params"] == k64:
+                return x, width(key["dtype"]) / 64
     fail(f"{j['tech']}: no {datapath} entry with params {key}")
 
 
-def e_comb_at(j: dict, datapath: str, params: dict, rule_only: bool = False) -> float:
-    """e_comb at params' lanes (and depth): the point itself when char.json has it (unless rule_only), else the
-    entry's lanes_rule: copy, lanes x the lanes-1 point at that depth; interpolate, linear in lanes."""
-    x = entry_of(j, datapath, params)
+def comb_at(j: dict, datapath: str, params: dict, col: str = "e_comb_pj", rule_only: bool = False) -> float:
+    """A comb column (`comb_um2` or `e_comb_pj`) at params' lanes (and depth): the point itself when char.json has
+    it (unless rule_only), else the entry's lanes_rule: copy, lanes x the smallest-lanes point per lane; interpolate,
+    linear in lanes; slope, the point nearest in lanes plus the entry's slope per lane; none, the one point."""
+    x, scale = entry_of(j, datapath, params)
+    if x["lanes_rule"] == "none":
+        return x["points"][0][col]
     lanes, depth = params.get("lanes", 1), params.get("depth")
-    pts = [q for q in x["points"] if q.get("depth") == depth]
-    at = {q["lanes"]: q["e_comb_pj"] for q in pts}
+    at = {q["lanes"]: q[col] for q in x["points"] if q.get("depth") == depth}
+    if not at:
+        fail(f"{datapath} {params}: no point at depth {depth}")
     if lanes in at and not (rule_only and x["lanes_rule"] == "copy"):
-        return at[lanes]
+        return scale * at[lanes]
     if x["lanes_rule"] == "copy":
-        if 1 not in at:
-            fail(f"{datapath} {params}: no lanes-1 point to copy")
-        return lanes * at[1]
+        w0 = min(at)
+        return scale * lanes * at[w0] / w0
+    if x["lanes_rule"] == "slope":
+        w0 = min(at, key=lambda w: (abs(w - lanes), w))
+        return scale * (at[w0] + (lanes - w0) * x["slope"][col])
     lo = max((w for w in at if w <= lanes), default=None)
     hi = min((w for w in at if w >= lanes), default=None)
     if lo is None or hi is None:
         fail(f"{datapath} {params}: lanes {lanes} outside the points {sorted(at)}")
-    return at[lo] if lo == hi else at[lo] + (at[hi] - at[lo]) * (lanes - lo) / (hi - lo)
+    return scale * (at[lo] if lo == hi else at[lo] + (at[hi] - at[lo]) * (lanes - lo) / (hi - lo))
+
+
+def e_comb_at(j: dict, datapath: str, params: dict, rule_only: bool = False) -> float:
+    """e_comb per fire at params' lanes (comb_at)."""
+    return comb_at(j, datapath, params, "e_comb_pj", rule_only)
 
 
 def e_fire(j: dict, datapath: str, params: dict, rule_only: bool = False) -> float:
-    """pJ per fire: e_comb + n_bits (e_load - e_hold)."""
+    """pJ per fire: e_comb + the bits that load (e_load - e_hold)."""
     f = j["flop"]
-    return e_comb_at(j, datapath, params, rule_only) + n_bits(datapath, params) * (f["e_load_fj"] - f["e_hold_fj"]) / 1000
+    return e_comb_at(j, datapath, params, rule_only) + load_bits(datapath, params) * (f["e_load_fj"] - f["e_hold_fj"]) / 1000
 
 
 def e_hold_pj(j: dict, bits: int) -> float:
@@ -254,7 +317,8 @@ def dumps(j: dict) -> str:
         es = []
         for x in entries:
             pts = ",\n".join(f"     {one(q)}" for q in x["points"])
-            es.append(f'   {{"params": {one(x["params"])}, "lanes_rule": {one(x["lanes_rule"])},\n'
+            slope = f', "slope": {one(x["slope"])}' if "slope" in x else ""
+            es.append(f'   {{"params": {one(x["params"])}, "lanes_rule": {one(x["lanes_rule"])}{slope},\n'
                       f'    "points": [\n{pts}\n    ]}}')
         dps.append(f'  {one(dp)}: [\n' + ",\n".join(es) + "\n  ]")
     out += ",\n".join(dps) + "\n }\n}\n"

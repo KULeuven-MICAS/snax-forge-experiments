@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""report/char_table.py - the blocks alone, the table: results/char/char_table.md.
+"""report/char_table.py - the blocks alone at every type pair, the table: results/char/char_table.md.
 
   pixi run char-table          (after pixi run char-export)
 
@@ -29,13 +29,55 @@ R1_NOTE = "results/char/runs/2026-11-03_char1_r1.md"
 TECHS = ["nangate45"]
 N = 2048                      # the forge points' task, the dot 4 to 6 Mac comparison
 CLOCK, SEED, CYCLES = "10", "0", 128
-BLOCKS = [("ElementwiseLanes", "lanes"), ("Mac", "mac"), ("TreeAccumulate", "tree"),
-          ("SerialAccumulate", "serial"), ("LinkBuffer", "link")]
+BLOCKS = [("SimdLanes", "lanes"), ("Mac", "mac"), ("TreeAccumulate", "tree"),
+          ("SerialAccumulate", "serial"), ("LinkBuffer", "link"), ("FifoPacker", "pack")]
 REGISTERED = ("Mac", "TreeAccumulate", "SerialAccumulate")
+FOLDS = ("TreeAccumulate", "SerialAccumulate")
+TYPE_KEYS = ("inTypes", "opType", "outType", "inType", "dtype", "laneType")
+W0 = {"SimdLanes": 1, "Mac": 8, "TreeAccumulate": 8, "SerialAccumulate": 8}   # the lanes each pair is measured at
+PAIRS = [(i, o) for i in (8, 16, 32, 64) for o in (8, 16, 32, 64) if o >= i]
 
 
 def fail(msg: str) -> None:
     sys.exit(f"char_table: {msg}")
+
+
+def width(dtype: str) -> int:
+    m = re.fullmatch(r"u?int(\d+)", dtype)
+    if not m:
+        fail(f"dtype {dtype}: not an integer type")
+    return int(m.group(1))
+
+
+def types(params: dict) -> list[str]:
+    """Every type a block's params name (inputs, op, output, a buffer's or a packer's lane)."""
+    out = []
+    for k in TYPE_KEYS:
+        v = params.get(k)
+        out += v if isinstance(v, list) else [v] if v else []
+    return out
+
+
+def is64(params: dict) -> bool:
+    """A point of the int64 set: every type int64 (the set the flop constants and the lanes rules come from)."""
+    return all(t == "int64" for t in types(params))
+
+
+def pair(params: dict) -> tuple[int, int]:
+    """(w_in, w_out): the widest input and the output (LinkBuffer: its dtype twice; FifoPacker: its laneType)."""
+    if "dtype" in params or "laneType" in params:
+        w = width(params.get("dtype") or params["laneType"])
+        return w, w
+    ins = params.get("inTypes") or [params["inType"]]
+    return max(width(t) for t in ins), width(params["outType"])
+
+
+def check_only(datapath: str, params: dict) -> bool:
+    """A narrow point measured to check a rule, not a char.json point: a narrow LinkBuffer (its comb scales with
+    its dtype's width), or a narrow point of a block at other lanes than the pair's measured W0."""
+    if is64(params) or datapath == "FifoPacker":
+        return False
+    return datapath == "LinkBuffer" or params.get("lanes") != W0[datapath]
 
 
 def read_csv(path: Path, at: str | None = None, gate: str = "1") -> list[dict]:
@@ -104,7 +146,8 @@ def e(d: dict, p: str, w: str, col: str = "e_dyn_pj") -> float:
 
 
 def ehold(d: dict) -> dict:
-    bits = {p: 1000 * e(d, p, "idle", "e_bit_pj") for p, v in d.items() if v["datapath"] in REGISTERED}
+    bits = {p: 1000 * e(d, p, "idle", "e_bit_pj") for p, v in d.items()
+            if v["datapath"] in REGISTERED and is64(v["params"])}
     vals = list(bits.values())
     mean = sum(vals) / len(vals)
     sd = (sum((x - mean) ** 2 for x in vals) / (len(vals) - 1)) ** 0.5
@@ -114,18 +157,20 @@ def ehold(d: dict) -> dict:
 # ---------------------------------------------------------------- the block sections
 def params_cell(v: dict) -> list[str]:
     p = v["params"]
-    return [str(p.get("lanes", "")), str(p.get("depth", "-")), str(p.get("op", "-"))]
+    w_in, w_out = pair(p)
+    return [str(p.get("lanes", "-")), str(p.get("depth", "-")), str(p.get("op", "-")), f"i{w_in}", f"i{w_out}"]
 
 
 def block_rows(D: dict, prefix: str) -> tuple[list[str], list[list]]:
     windows = ["stream"] if prefix == "link" else ["busy", "idle"]
-    head = ["point", "lanes", "depth", "op"]
+    head = ["point", "lanes", "depth", "op", "in", "out"]
     for t in TECHS:
         tag = t.removeprefix("nangate")
         head += [f"{tag} area", f"{tag} comb", f"{tag} seq", f"{tag} flops"]
         head += [f"{tag} {w} {g}" for w in windows for g in ("e_comb", "e_flop", "e_dyn")]
     pts = [p for p in D[TECHS[0]] if p.startswith(prefix + "/")]
-    pts.sort(key=lambda p: (D[TECHS[0]][p]["params"].get("op", ""), int(D[TECHS[0]][p]["params"].get("lanes", 0)),
+    pts.sort(key=lambda p: (not is64(D[TECHS[0]][p]["params"]), D[TECHS[0]][p]["params"].get("op", ""),
+                            pair(D[TECHS[0]][p]["params"]), int(D[TECHS[0]][p]["params"].get("lanes", 0)),
                             int(D[TECHS[0]][p]["params"].get("depth", 0))))
     rows = []
     for p in pts:
@@ -172,6 +217,15 @@ def scaling(D: dict, prefix: str) -> list[str]:
             idle = [e(d, pat.format(w), "idle") for w in ws]
             lines.append(f"- {t}: busy e_comb at W = {', '.join(map(str, ws))}: {vals} pJ; busy e_flop {min(flop):.3f} to "
                          f"{max(flop):.3f} pJ and idle {min(idle):.4f} to {max(idle):.4f} pJ at every W (64 flops).")
+        return lines
+    if prefix == "pack":
+        lines = []
+        for t in TECHS:
+            d = D[t]
+            per = ", ".join(f"d_out {r} ({t_}) {e(d, f'pack/d{r}_{t_}', 'busy'):.4f}"
+                            for r, t_ in ((2, "i32"), (4, "i16"), (8, "i8")))
+            lines.append(f"- {t}: busy e_dyn a push: {per} pJ; idle is its clock gates' (and at d_out 2 its "
+                         "ungated 1-bit counter's).")
         return lines
     lines = []
     for t in TECHS:
@@ -235,6 +289,74 @@ def limit_mac(D: dict) -> list[str]:
                    "busy / inside", "model / inside"], rows)]
 
 
+
+# ---------------------------------------------------------------- the type axis (X89)
+def point_name(prefix: str, case: str, w: int, i: int, o: int) -> str:
+    return f"{prefix}/{case}_w{w}" if (i, o) == (64, 64) else f"{prefix}/{case}_w{w}_i{i}_i{o}"
+
+
+def rule_of(datapath: str) -> str:
+    return "width" if datapath == "LinkBuffer" else "slope" if datapath in FOLDS else "copy"
+
+
+def types_section(D: dict, J: dict) -> list[str]:
+    """The pairs per block, the bits each computes (SimdLanes), each rule against the points that check it, and the
+    narrow registers' load energy."""
+    import char_export as ce
+    out = []
+    for t in TECHS:
+        d, j = D[t], J[t]
+        comb = lambda p, w="busy": (float(d[p]["synth"]["comb_area_um2"]), e(d, p, w, "e_comb_pj"))  # noqa: E731
+        rows = []
+        for i, o in PAIRS:
+            wp = min(2 * i, o)
+            (aa, ea), (am, em) = comb(point_name("lanes", "add", 1, i, o)), comb(point_name("lanes", "mul", 1, i, o))
+            rows.append([f"i{i}", f"i{o}", wp, f(aa, 1), f(aa / i, 2), f(ea, 4), f(am, 1), f(am / (i * wp), 3), f(em, 4)])
+        trend = table(["in", "out", "w_p", "add comb µm²", "add µm² / w_in", "add e_comb pJ", "mul comb µm²",
+                       "mul µm² / (w_in w_p)", "mul e_comb pJ"], rows)
+        rows = []
+        for i, o in PAIRS:
+            r = [f"i{i}", f"i{o}"]
+            for prefix, case in (("mac", "acc"), ("tree", "add"), ("serial", "sum")):
+                a, en = comb(point_name(prefix, case, 8, i, o))
+                r += [f(a, 1), f(en, 4)]
+            rows.append(r)
+        folds = table(["in", "out", "Mac comb µm²", "Mac e_comb pJ", "TreeAccumulate comb µm²", "TreeAccumulate e_comb pJ",
+                       "SerialAccumulate comb µm²", "SerialAccumulate e_comb pJ"], rows)
+        slopes = []
+        for dp, prefix, case in (("TreeAccumulate", "tree", "add"), ("SerialAccumulate", "serial", "sum")):
+            lo, hi = ce.SLOPE_WS
+            (a8, e8), (a32, e32) = comb(f"{prefix}/{case}_w{lo}"), comb(f"{prefix}/{case}_w{hi}")
+            slopes.append(f"{dp} {(a32 - a8) / (hi - lo):.2f} µm² and {(e32 - e8) / (hi - lo):.4f} pJ a lane")
+        rows = []
+        for p in sorted(x for x, v in d.items() if check_only(v["datapath"], v["params"])):
+            v = d[p]
+            a, en = comb(p, "stream" if v["datapath"] == "LinkBuffer" else "busy")
+            ma, me = (ce.comb_at(j, v["datapath"], v["params"], c) for c in ("comb_um2", "e_comb_pj"))
+            rows.append([f"`{p}`", rule_of(v["datapath"]), f(a, 1), f(ma, 1), f"{a / ma:.3f}", f(en, 4), f(me, 4),
+                         f"{en / me:.3f}"])
+        checks = table(["point", "rule", "comb µm²", "rule µm²", "ratio", "e_comb pJ", "rule pJ", "ratio"], rows)
+        bits = {p: 1000 * e(d, p, "busy", "e_bit_pj") for p, v in d.items()
+                if v["datapath"] in REGISTERED and not is64(v["params"]) and not check_only(v["datapath"], v["params"])}
+        same = [x for p, x in bits.items() if pair(d[p]["params"])[0] == pair(d[p]["params"])[1]]
+        wider = [x for p, x in bits.items() if pair(d[p]["params"])[0] < pair(d[p]["params"])[1]]
+        out += [f"**{t}: what SimdLanes computes at each pair** (W = 1). DC removes the logic on an input's copied sign "
+                "bits, so an add costs about its input width and a multiply about w_in x w_p, w_p = min(2 w_in, w_out) "
+                "the product bits it keeps; a wider output only copies the sign. 8 → 16 is the one outlier: its 16-bit "
+                "multiplier is built larger than 8 → 32's 32-bit one, for the same product. This is a finding, not the "
+                "model: the model reads each pair's own point.", "", trend, "",
+                f"**{t}: the Mac and the folds at each pair** (W = 8):", "", folds, "",
+                f"**{t}: the rules against the points that check them.** copy: W / W0 x the pair's point; slope: the "
+                "pair's point at W0 = 8 plus (W - 8) x the int64 cost per lane between W = 8 and 32 x w_in / 64 "
+                f"({'; '.join(slopes)}): a lane is a leaf or a mux input at the input's width, while the accumulator's "
+                "adder and register stay at the output's; width: the int64 LinkBuffer x w / 64.", "", checks, "",
+                f"**{t}: narrow registers load fewer toggling bits.** The busy e_bit of the narrow Mac and folds is "
+                f"{min(same):.1f} to {max(same):.1f} fJ where in = out and {min(wider):.1f} to {max(wider):.1f} fJ where "
+                f"in < out (the upper bits copy the sign), against e_load {j['flop']['e_load_fj']:.1f} fJ: the model "
+                "prices those registers high by up to "
+                f"{j['flop']['e_load_fj'] / min(wider):.1f}x, a pessimistic price as the rand64 data's.", ""]
+    return out
+
 # ---------------------------------------------------------------- the model (char.json against the forge points)
 MODEL_DESIGNS = [("vecmul", "done/vecmul/forge_w{}"), ("vsum", "done/vsum/forge_w{}"), ("dot 4", "done/dot/forge4_w{}"),
                  ("dot 5", "done/dot/forge5_w{}")]
@@ -245,11 +367,6 @@ LIMIT_MAC_WS = (1, 8)
 def unit_of(design: str, top: str) -> str:
     """A unit's name from its cell's design: the top's tag (snax_forge_ or snax_forge_<design>_) removed."""
     return design.removeprefix(top.removesuffix("shell_wrapper"))
-
-
-def block_design(design: str) -> str:
-    """A forge block's module under the name the char blocks have (SimdLanes was ElementwiseLanes)."""
-    return design.replace("SimdLanes", "ElementwiseLanes", 1)
 
 
 def model_json(D: dict, points: list[dict]) -> tuple[dict, dict]:
@@ -302,6 +419,8 @@ def model_points(D: dict, J: dict) -> list[str]:
         for br in brows:
             p = br[0].strip("`")
             v = D[TECHS[0]][p]
+            if check_only(dp, v["params"]):
+                continue
             row = [br[0], ce.n_bits(dp, v["params"])]
             for t in TECHS:
                 j = J[t]
@@ -324,7 +443,7 @@ def syn2_units(t: str, D: dict, point: str, w: int, mods: list[dict], top: str) 
         if len(blk) != 1:
             fail(f"{t}: {point}: {m['path']}: {len(blk)} block cells")
         chars = [p for p, v in D[t].items() if v["params"].get("lanes") == w
-                 and re.fullmatch(rf"{v['synth']['top']}(_\d+)?", block_design(blk[0]["design"]))]
+                 and re.fullmatch(rf"{v['synth']['top']}(_\d+)?", blk[0]["design"])]
         if len(chars) != 1:
             fail(f"{t}: {point}: {blk[0]['design']}: {len(chars)} char points at W = {w}")
         v = D[t][chars[0]]
@@ -402,7 +521,7 @@ def main() -> int:
     if any(next(iter(D[t].values()))["synth"]["snax_forge_commit"] != commits["snax_forge"] for t in TECHS):
         fail("the technologies name different snax-forge commits")
 
-    L = ["# CHAR1: snax-forge's blocks alone (int64)", "",
+    L = ["# The blocks alone, int8 to int64", "",
          "Generated by `report/char_table.py` (`pixi run char-table`) from `results/char/<tech>/char_synth.csv` and "
          "`char_power.csv`; the known limits also read the files they cite. Do not edit by hand.", "",
          f"- **Commits:** snax-forge `{commits['snax_forge']}` (every row); snax-forge-experiments `{commits['sfe']}` "
@@ -413,16 +532,20 @@ def main() -> int:
          "inputs at the rising edge, a lead-in slot before each window, the VCD cut per window (X31, X32).",
          "- **Units:** area µm²; energy pJ per cycle of the window (e_comb, e_flop = clock + register + sequential, "
          "e_dyn = the two); e_bit and e_hold fJ per sequential cell per cycle.",
-         "- **Windows:** busy (a fire every cycle) and idle (the enable at 0, every other input held) for "
-         "ElementwiseLanes, Mac, TreeAccumulate and SerialAccumulate; stream for LinkBuffer (a load every cycle at "
-         "full occupancy), a link that is not loading costing its flops x e_hold (X33).", "",
+         "- **Windows:** busy (a fire every cycle; FifoPacker a push every cycle, its output always ready) and idle "
+         "(the enable at 0, every other input held) for SimdLanes, Mac, TreeAccumulate, SerialAccumulate and "
+         "FifoPacker; stream for LinkBuffer (a load every cycle at full occupancy), a link that is not loading costing "
+         "its flops x e_hold (X33).",
+         "- **Types:** the int64 set (CHAR1's 27 points) gives the flop constants and the lanes rules; every compute "
+         "block has its 10 (in, out) pairs, out at least in, the op at out, at one lane count W0 (SimdLanes 1, the "
+         "others 8), each input port at its own width with rand64's low bits (X89).", "",
          "## e_hold", ""]
     rows = []
     for t in TECHS:
         h = ehold(D[t])
         rows.append([t, h["n"], f(h["mean"]), f(h["min"]), f(h["max"]), f(h["sd"]),
                      f"{100 * (h['max'] - h['min']) / h['mean']:.2f} %"])
-    L += ["The mean idle e_bit of the registered blocks (Mac, TreeAccumulate, SerialAccumulate), fJ per sequential cell "
+    L += ["The mean idle e_bit of the registered int64 blocks (Mac, TreeAccumulate, SerialAccumulate), fJ per sequential cell "
           "per cycle. A gated register holds at its clock gate's cost, shared by the bits behind it, so the spread follows "
           "the bits per gate (X83):",
           "", table(["tech", "points", "e_hold", "min", "max", "sd", "range"], rows), ""]
@@ -430,6 +553,7 @@ def main() -> int:
         head, rows = block_rows(D, prefix)
         L += [f"## {dp}", "", table(head, rows), "", "How it scales:", "", *scaling(D, prefix), ""]
     J, S = model_json(D, points)
+    L += ["## The type axis", "", *types_section(D, J)]
     designs, units = model_syn2(D, J)
     L += ["## Model", "",
           "The table snax-forge reads is `results/char/<tech>/char.json` (`report/char_export.py`, `pixi run "
@@ -444,11 +568,13 @@ def main() -> int:
           "### Per block point", "",
           "e_fire = e_comb + n_bits (e_load - e_hold), pJ per fire, and the hold term n_bits e_hold, pJ per cycle, "
           "from char.json at each measured point. n_bits is the block's register bits from its params (lanes x depth "
-          "x the output's width; ElementwiseLanes none); `seq_cells` adds the block's clock gates, one per register "
+          "x the output's width; SimdLanes none; FifoPacker its held slots and counter, of which (r - 1) / r of a slot "
+          "and the counter load per push, r = d_out); `seq_cells` adds the block's clock gates, one per register "
           "enable (`pixi run char-export` prints each). A lanes value "
-          "char.json does not hold takes the entry's `lanes_rule`: `copy`, W x the lanes-1 point (ElementwiseLanes, "
+          "char.json does not hold takes the entry's `lanes_rule`: `copy`, W / W0 x the point at W0 (SimdLanes, "
           "Mac, LinkBuffer, whose W = 8 and 32 points are the copy's checks above); `interpolate`, linear in lanes "
-          "(TreeAccumulate, SerialAccumulate).", "",
+          "(the int64 TreeAccumulate and SerialAccumulate); `slope`, a narrow fold's point at W0 = 8 plus its slope per "
+          "lane (the type axis, above); a LinkBuffer at a narrower dtype is the int64 one x w / 64.", "",
           *model_points(D, J), "",
           "### Against the forge points", "",
           f"vecmul, vsum, dot 4 and dot 5 at W = {', '.join(map(str, MODEL_WS))} (their W = 32 points have no gated power), "
@@ -460,7 +586,7 @@ def main() -> int:
           "seq_um2 / flop area). forge is `power_pt_modules.csv`'s e_dyn per cycle x cycles: datapath `dp`, ctrl "
           "`ctrl/ctrl`, kernel the two, each unit its block cell. Model uses char.json's point at the design's W; "
           "the last column, \"ratio, rules only\", takes every e_comb from the lanes rule instead (W x the lanes-1 point for "
-          "ElementwiseLanes and Mac).", "",
+          "SimdLanes and Mac).", "",
           *designs, "",
           "Per unit:", "", *units, "",
           "The model leaves out the csr, the memory and the streamers. A sum that fires once (dot 4's) or W times "
