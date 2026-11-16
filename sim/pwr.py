@@ -451,6 +451,15 @@ def beats_hex(x: np.ndarray, lanes: int) -> str:
     return "".join(out)
 
 
+def words(x: np.ndarray, num_slc: int) -> np.ndarray:
+    """Elements packed num_slc to a 64-bit word, element 0 in the low bits (snax-forge D142), as int64."""
+    if num_slc == 1:
+        return x
+    bits = 64 // num_slc
+    u = (x.astype(np.int64).reshape(-1, num_slc).view(np.uint64) & np.uint64((1 << bits) - 1))
+    return np.bitwise_or.reduce(u << (np.arange(num_slc, dtype=np.uint64) * np.uint64(bits)), axis=1).view(np.int64)
+
+
 def untoggled_bits(x: np.ndarray, beats: int, lanes: int) -> int:
     seen = np.bitwise_or.reduce(x.view(np.uint64).reshape(beats, lanes), axis=0)
     return sum(64 - bin(int(v)).count("1") for v in seen)
@@ -461,7 +470,10 @@ def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
     by stream in tb.json order (a container once), then each scalar a CSR takes (axpy's alpha) as a data pin; a
     scalar the recipe bakes takes the baked value (axpy_baked's alpha = 3). The reference from sim/ref.py, an
     in-place output (axpy's y) its <container>_out. Each stream's data in the order its streamer visits the
-    container (tb.json's order, rowsum_2's A down the columns); every input bit must toggle (64 beats or more)."""
+    container (tb.json's order, rowsum_2's A down the columns); every input bit must toggle (64 beats or more).
+    A narrow stream (int8, int16, int32: tb.json's dtype) draws its container full-range at that dtype, its
+    output wrapped to it (the kernel's int32 out and ACC), and moves num_slc elements a word, little-endian, a
+    packed output's slices past its last result 0 (order -1); the data are those 64-bit words."""
     z = tb["sizes"][size]
     ins_s = [s for s in tb["streams"] if s["dir"] == "in"]
     rng = np.random.default_rng(seed)
@@ -469,7 +481,8 @@ def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
     ins = {}
     for s in ins_s:
         if s["arg"] not in ins:
-            ins[s["arg"]] = rng.integers(info.min, info.max, size=int(np.prod(s["shape"])), dtype=np.int64,
+            dinfo = np.iinfo(s.get("dtype", "int64"))
+            ins[s["arg"]] = rng.integers(dinfo.min, dinfo.max, size=int(np.prod(s["shape"])), dtype=np.int64,
                                          endpoint=True)
     pins = {sc["container"]: int(rng.integers(info.min, info.max, dtype=np.int64, endpoint=True))
             for sc in tb.get("scalars", [])}
@@ -483,14 +496,16 @@ def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
             if a not in got and f"{a}_out" not in got:
                 raise Fail(f"reference: sim/ref.py's {tb['kernel']} gives {sorted(got)}, no {a}")
             outs[a] = got[a] if a in got else got[f"{a}_out"]
+            outs[a] = np.asarray(outs[a]).astype(s.get("dtype", "int64")).astype(np.int64)   # wraps at int32
     data, untoggled = {}, {}
     for s in tb["streams"]:
         x = (ins if s["dir"] == "in" else outs)[s["arg"]].ravel()
         if s.get("order") is not None:
-            x = x[np.asarray(s["order"], dtype=np.int64)]
-        if len(x) != s["beats"] * s["lanes"]:
-            raise Fail(f"stream {sname(s)}: {len(x)} values, the streamer moves {s['beats']} beats of {s['lanes']}")
-        data[sname(s)] = np.ascontiguousarray(x)
+            x = np.append(x, 0)[np.asarray(s["order"], dtype=np.int64)]     # -1: a packed word's empty slice, 0
+        elems = s.get("elems", s["lanes"])
+        if len(x) != s["beats"] * elems:
+            raise Fail(f"stream {sname(s)}: {len(x)} values, the streamer moves {s['beats']} beats of {elems}")
+        data[sname(s)] = np.ascontiguousarray(words(x, s.get("num_slc", 1)))
         if s["dir"] == "in":
             k = untoggled_bits(data[sname(s)], s["beats"], s["lanes"])
             if k:
@@ -501,13 +516,14 @@ def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
 
 
 # The forge reference check: sim/ref.py against snax-forge's kernel body (forge/query.py ref), once per kernel,
-# size and seed in a batch (the inputs depend on N and the seed only, not on W)
+# size, seed and dtypes in a batch (the inputs depend on N, the seed and the dtypes, not on W: X90)
 REF_CHECKED: dict = {}
 REF_LOCK = threading.Lock()
 
 
 def forge_ref_check(tb: dict, size: str, seed: int, st: dict, rdir: Path) -> dict:
-    key = (tb["kernel"], size, seed, tuple(sorted(st["pins"].items())))     # axpy and axpy_baked: alpha apart
+    key = (tb["kernel"], size, seed, tuple(sorted(st["pins"].items())),     # axpy and axpy_baked: alpha apart
+           tuple(sorted((tb.get("dtypes") or {}).items())))                  # i8 and i16 apart
     with REF_LOCK:
         if key not in REF_CHECKED:
             ins = {**st["ins"], **{c: np.array(v, dtype=np.int64) for c, v in st["pins"].items()}}
@@ -1201,7 +1217,7 @@ def power_zip(tech: str, point: str) -> Path:
 
 
 # ---------------------------------------------------------------- char: a block alone, per window
-CHAR_COLUMNS = ["point", "datapath", "lanes", "depth", "op", "form", "tech", "clock_ns", "clk_gate", "window", "cycles", "fires",
+CHAR_COLUMNS = ["point", "datapath", "lanes", "depth", "op", "form", "in_type", "out_type", "tech", "clock_ns", "clk_gate", "window", "cycles", "fires",
                 "seed", "e_clk_pj", "e_reg_pj", "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "e_bit_pj", "status",
                 "snax_forge_commit"]
 CHAR_KEPT = ("power.rpt", "switching_activity.rpt")
@@ -1209,7 +1225,8 @@ CHAR_KEPT = ("power.rpt", "switching_activity.rpt")
 
 def tb_top_char(tb: dict, netlist: Path) -> str:
     """The char top: the kind's sequencer on the block's data, pins and outputs; a pin of no bits is absent from
-    the netlist and left open on the sequencer."""
+    the netlist and left open on the sequencer. Each data port has a 64-bit slot of the sequencer's data and out: a
+    port of fewer bits takes its slot's low bits, and an output's slot is zero above them."""
     kind, ni, no = tb["kind"], len(tb["data_in"]), len(tb["outs"])
     pins = tb["pins"]
     params = {"T_NS": CLOCK_NS, "NI": ni, "NO": no}
@@ -1224,6 +1241,8 @@ def tb_top_char(tb: dict, netlist: Path) -> str:
         sw = max(1, pins.get("wslot", {}).get("bits", 0))
         params.update({"D": tb["depth"], "SW": sw})
         wires = [("load", 1), ("wslot", sw), ("rslot", sw)]
+    elif kind == "pack":
+        wires = [("in_valid", 1), ("out_ready", 1), ("clear", 1), ("last", 1)]
     L = ["// Generated by sim/pwr.py from tb.json (source char): do not edit.", "`timescale 1ns/1ps", "",
          f"module {TB_TOP};", f"    wire {tb['clock']['port']}, {tb['reset']['port']};", f"    wire [{64 * ni - 1}:0] data;",
          f"    wire [{64 * no - 1}:0] out;"]
@@ -1231,8 +1250,10 @@ def tb_top_char(tb: dict, netlist: Path) -> str:
     conn = [f".clk({tb['clock']['port']})", f".rst({tb['reset']['port']})", ".data(data)", ".out(out)"] + [f".{n}(p_{n})" for n, _ in wires]
     L += ["", f"    char_{kind}_seq #({', '.join(f'.{k}({v})' for k, v in params.items())}) seq ({', '.join(conn)});", ""]
     ports = [tb["clock"]["port"], tb["reset"]["port"]]
-    ports += [f"{p}(data[{64 * i + 63}:{64 * i}])" for i, p in enumerate(tb["data_in"])]
-    ports += [f"{p}(out[{64 * i + 63}:{64 * i}])" for i, p in enumerate(tb["outs"])]
+    sel = lambda i, b: f"[{64 * i + b - 1}:{64 * i}]" if b > 1 else f"[{64 * i}]"  # noqa: E731
+    ports += [f"{d['port']}(data{sel(i, d['bits'])})" for i, d in enumerate(tb["data_in"])]
+    ports += [f"{d['port']}(out{sel(i, d['bits'])})" for i, d in enumerate(tb["outs"])]
+    L += [f"    assign out[{64 * i + 63}:{64 * i + d['bits']}] = '0;" for i, d in enumerate(tb["outs"]) if d["bits"] < 64]
     for n, p in pins.items():
         sel = "" if p["bits"] == 1 else f"[{p['bits'] - 1}:0]"
         ports.append(f"{p['port']}(p_{n}{sel})")
@@ -1253,14 +1274,16 @@ def char_seq_cells(tech: str, point: str) -> int | None:
 
 def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
     """rand64: per data input port in tb.json order, one stream of full-range int64, as many values as the
-    slots take new beats; the expected outputs from sim/ref.py's char_ref. Every data input bit must take both
-    values in the working window's beats (busy, or link's stream: it toggles there). For link's stream the
+    slots take new beats, each value the port's low bits; the expected outputs from sim/ref.py's char_ref. Every
+    bit of every data input must take both values in the working window's beats (busy, or link's stream: it
+    toggles there). For link's stream the
     reference is checked against the FIFO it is: the output at stream slot t is the beat loaded D slots before."""
     n_new = sum(1 for s in slots if s["new"])
     rng = np.random.default_rng(seed)
     info = np.iinfo(np.int64)
     streams = [rng.integers(info.min, info.max, size=n_new, dtype=np.int64, endpoint=True) for _ in tb["data_in"]]
-    beats = [[int(x[b]) & MASK64 for x in streams] for b in range(n_new)]
+    masks = [(1 << d["bits"]) - 1 for d in tb["data_in"]]
+    beats = [[int(x[b]) & m for x, m in zip(streams, masks)] for b in range(n_new)]
     busy, b = [], 0
     for s in slots:
         if s["new"]:
@@ -1268,12 +1291,12 @@ def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
                 busy.append(b)
             b += 1
     untoggled = {}
-    for i, port in enumerate(tb["data_in"]):
+    for i, d in enumerate(tb["data_in"]):
         v = np.array([beats[j][i] for j in busy], dtype=np.uint64)
         ones, zeros = np.bitwise_or.reduce(v), np.bitwise_or.reduce(~v)
-        k = 64 - bin(int(ones & zeros)).count("1")
+        k = d["bits"] - bin(int(ones & zeros & np.uint64(masks[i]))).count("1")
         if k:
-            untoggled[port] = k
+            untoggled[d["port"]] = k
     if untoggled:
         raise Fail(f"stimulus: data bits that never toggle in the working window: {untoggled}")
     exps = char_ref(tb["datapath"], tb["params"], slots, beats)
@@ -1389,7 +1412,8 @@ def _do_point_char(stack: contextlib.ExitStack, point: str, tech: str, seed: int
     extra = syn.char_extra(point)
     base = {c: "" for c in CHAR_COLUMNS}
     base.update({"point": point, "tech": tech, "clock_ns": _num(CLOCK_NS), "clk_gate": gate(), "seed": seed,
-                 **{k: extra[k] for k in ("datapath", "lanes", "depth", "op", "form", "snax_forge_commit")}})
+                 **{k: extra[k] for k in ("datapath", "lanes", "depth", "op", "form", "in_type", "out_type",
+                                          "snax_forge_commit")}})
     try:
         syn_d, netlist, bundle = point_inputs(stack, tech, point)
         tb = build_tb(point, netlist, bundle)

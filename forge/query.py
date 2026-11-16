@@ -5,7 +5,7 @@
   python forge/query.py program BUNDLE_DIR          LOWER's writes, scalars and stream orders for the design point
   python forge/query.py cycles BUNDLE_DIR JOBS BEATS_JSON    the group's busy cycles
   python forge/query.py ctrl_bits ACCELERATOR_JSON  the control units' registers and bits
-  python forge/query.py ref KERNEL IN_NPZ OUT_NPZ [SYMBOLS_JSON [DTYPES_JSON]]   the kernel's NumPy body
+  python forge/query.py ref KERNEL IN_NPZ OUT_NPZ [SYMBOLS_JSON [DTYPES_JSON]]   the kernel's NumPy body, a type parameter (ACC) rebound
 
 Runs inside snax-forge's pixi environment, with snax-forge as the working directory (sim/sources/forge.py calls it
 as forge/bundles.py calls snax-forge's tasks), and prints one JSON object on stdout. What each answer holds is in
@@ -64,14 +64,18 @@ def cmd_point(bundle_dir: str) -> dict:
     recipe = Recipe.load(find_recipe(point["recipe"], Path.cwd()))
     baked = {st.params["container"]: st.params["value"] for st in recipe.steps
              if st.transform == "bake_scalar" and isinstance(st.params.get("value"), int)}
-    return {"kernel": recipe.kernel, "recipe": point["recipe"], "ports": ports, "baked": baked}
+    # the dtypes the bundle was made at: each kernel container's and the type parameters (ACC), after the
+    # recipe's dtypes and its --set types= preset
+    dtypes = {c: d.dtype for c, d in p.graph.containers.items() if not d.transient}
+    dtypes.update(p.graph.type_params)
+    return {"kernel": recipe.kernel, "recipe": point["recipe"], "ports": ports, "baked": baked, "dtypes": dtypes}
 
 
 def cmd_program(bundle_dir: str) -> dict:
     import numpy as np
 
     from snax_forge.design import DesignPoint
-    from snax_forge.design.streamers import instance_nodes
+    from snax_forge.design.streamers import instance_nodes, word_bounds
     from snax_forge.gen.accelerator import scalar_csrs
     from snax_forge.lower.c import accelerators, job_writes
     from snax_forge.lower.derive import addresses, task_list
@@ -105,21 +109,26 @@ def cmd_program(bundle_dir: str) -> dict:
     streams = []
     for c in tl.of_type("streamer"):
         st = p.streamers[c.component]
-        if st.num_slc != 1:
-            raise SystemExit(f"{c.component}: num_slc {st.num_slc}; only one element per channel word is mapped")
         node = nodes[st.instance]
         m = (node.outputs if st.write else node.inputs)[st.port]
         lay = p.memory.layouts[m.data]["l1"]
-        visit = addresses(c.values, list(st.spatial_bounds))              # (beats, lanes) byte addresses
+        # (beats, channels) word addresses: a word packs num_slc elements little-endian (num_slc 1: one int64);
+        # a packed output (d_out > 1) is one word per write on one channel, its slices above the last result 0
+        visit = addresses(c.values, list(word_bounds(st)))
+        size = np.dtype(st.dtype).itemsize
         idx = np.indices(lay.shape).reshape(len(lay.shape), -1).T         # every element, row-major
         where = {int(x): i for i, x in enumerate(lay.address(idx))}
-        try:
-            order = [where[int(x)] for x in visit.ravel()]
-        except KeyError as e:
-            raise SystemExit(f"{c.component}: address {e} is no element of {m.data}'s L1 layout") from None
+        slots = (visit[..., None] + size * np.arange(st.num_slc)).reshape(visit.shape[0], -1)
+        if not all(int(x) in where for x in visit.ravel()):
+            bad = next(int(x) for x in visit.ravel() if int(x) not in where)
+            raise SystemExit(f"{c.component}: address {bad} is no element of {m.data}'s L1 layout")
+        order = [where.get(int(x), -1) for x in slots.ravel()]           # -1: a packed word's slice past the end
+        if -1 in order and not (st.write and st.d_out > 1):
+            raise SystemExit(f"{c.component}: a word of {st.num_slc} {st.dtype} slices runs past {m.data}")
         streams.append({"end": f"{st.instance}.{st.port}", "component": c.component,
                         "dir": "out" if st.write else "in", "container": m.data, "shape": list(lay.shape),
-                        "beats": int(visit.shape[0]), "lanes": int(visit.shape[1]), "order": order,
+                        "beats": int(visit.shape[0]), "lanes": int(slots.shape[1]), "num_ch": int(visit.shape[1]),
+                        "num_slc": int(st.num_slc), "d_out": int(st.d_out), "dtype": st.dtype, "order": order,
                         "identity": order == list(range(len(order)))})
     return {"symbols": {k: int(v) for k, v in p.graph.bound_symbols.items()}, "task": a.task_name,
             "n": int(a.values["n"]) if not linked else None, "writes": writes, "scalars": scalars,
@@ -157,6 +166,10 @@ def cmd_ref(kernel: str, in_npz: str, out_npz: str, symbols: str = "", dtypes: s
     n = len(next(v for v in ins.values() if v.ndim))
     sym = json.loads(symbols) if symbols else None
     dts = json.loads(dtypes) if dtypes else {}
+    params = {k: v for k, v in dts.items() if k in getattr(spec, "types", {})}
+    if params:      # a type parameter (ACC in A.astype(ACC)): the body's global rebound, as the bundle's
+        spec = spec.with_types(params, "dtypes")
+    dts = {k: v for k, v in dts.items() if k not in params}
     arrays = {}
     for name, desc in spec.descriptors.items():
         dt = np.dtype(dts[name]) if name in dts else desc.dtype.as_numpy_dtype()

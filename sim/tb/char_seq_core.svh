@@ -1,6 +1,7 @@
-// sim/tb/char_seq_core.svh - the part every CHAR1 sequencer shares (sim/tb/char_<kind>_seq.sv), `include'd in
-// the module body. The module declares the parameters T_NS, NI (64-bit data inputs) and NO (64-bit outputs) and
-// the ports clk, rst, data [64*NI-1:0] and out [64*NO-1:0].
+// sim/tb/char_seq_core.svh - the part every char sequencer shares (sim/tb/char_<kind>_seq.sv), `include'd in
+// the module body. The module declares the parameters T_NS, NI (data inputs) and NO (outputs compared) and the
+// ports clk, rst, data [64*NI-1:0] and out [64*NO-1:0]: a 64-bit slot per port, a narrower port on its low bits
+// (the generated top ties an output slot's bits above its port to 0).
 //
 // Clock T_NS (10 ns). Reset asynchronous, active high: rst high from time 0 for 5 rising edges, released at a
 // falling edge (no race with the flops' asynchronous reset). Then slots, one per cycle (sim/sources/char.py,

@@ -36,65 +36,116 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
 
 
 # ---------------------------------------------------------------- the blocks alone, cycle by cycle
-# snax-forge's datapaths (hw/chisel/src/main/scala/snax/forge/datapath/, at the commit of the point) at int64,
-# wrapping at 64 bits, stepped one slot at a time as sim/sources/char.py's schedule() drives them. A slot's
-# inputs are applied at its rising edge, the TB samples the outputs at its falling edge (the registers still hold
-# what the slots before left, the combinational outputs see the slot's inputs), and the next rising edge takes it.
-#   ElementwiseLanes  out_l = a_l op b_l (combinational: the slot's own inputs)
-#   Mac (accumulate)  on fire: s_l <- first ? a_l b_l : s_l + a_l b_l; out_l = s_l
-#   TreeAccumulate    on fire: acc <- first ? sum_l in_l : acc + sum_l in_l; out = acc
-#   SerialAccumulate  on read: acc <- (first and lane = 0 ? 0 : acc) + in_lane (in_0 at lanes 1); out = acc
+# snax-forge's datapaths (hw/chisel/src/main/scala/snax/forge/datapath/ and stream/FifoPacker.scala, at the commit
+# of the point) at their types (D175), stepped one slot at a time as sim/sources/char.py's schedule() drives them. A
+# value is its port's bits, unsigned; cast(x, t, u) extends x from type t to u by t's signedness (sign-extended from
+# a signed t) or keeps u's low bits. A slot's inputs are applied at its rising edge, the TB samples the outputs at
+# its falling edge (the registers still hold what the slots before left, the combinational outputs see the slot's
+# inputs), and the next rising edge takes it.
+#   SimdLanes         out_l = cast(cast(a_l, A, op) op cast(b_l, B, op) at op, op, out) (combinational)
+#   Mac (accumulate)  p_l = cast(cast(a_l, A, op) cast(b_l, B, op) at op, op, out);
+#                     on fire: s_l <- first ? p_l : s_l + p_l at out; out_l = s_l
+#   TreeAccumulate    on fire: acc <- first ? beat : acc + beat, beat = sum_l cast(in_l, in, out) at out; out = acc
+#   SerialAccumulate  on read: acc <- (first and lane = 0 ? 0 : acc) + cast(in_lane, in, out) at out; out = acc
 #   LinkBuffer        on load: slot[wslot] <- in; out = slot[rslot] (combinational read; slot 0 at depth 1); in
-#                     R2's stream window rslot = wslot = t mod D, so out at slot t is the beat loaded at t - D
-# Every register starts at 0 (RegInit), as after the TB's reset.
+#                     the stream window rslot = wslot = t mod D, so out at slot t is the beat loaded at t - D
+#   FifoPacker        r = words 64 / (width inLanes) pushes to a beat, element e at bits [w(e+1)-1 : we]; sending =
+#                     count = r - 1 or last; out_valid = in_valid sending, in_ready = not sending or out_ready;
+#                     out_bits: slot u the push when u = count, held[u] when u < count, zero above; on a push
+#                     (in_valid in_ready): count <- 0 when sending, else held[count] <- in, count + 1; clear: count <- 0
+# Every register starts at 0 (RegInit), as after the TB's reset; the packer's held slots are written before read.
 M64 = (1 << 64) - 1
-CHAR_OPS = {"add": lambda a, b: (a + b) & M64, "mul": lambda a, b: (a * b) & M64}
+CHAR_OPS = {"add": lambda a, b: a + b, "mul": lambda a, b: a * b}
+
+
+def _width(t: str) -> int:
+    return int(t.removeprefix("u").removeprefix("int"))
+
+
+def _cast(x: int, frm: str, to: str) -> int:
+    """x, a value of type frm (its bits), as type to: extended by frm's signedness, or wrapped to to's width."""
+    wf, wt = _width(frm), _width(to)
+    x &= (1 << wf) - 1
+    if not frm.startswith("u") and wt > wf and x >> (wf - 1):
+        x |= ((1 << wt) - 1) ^ ((1 << wf) - 1)
+    return x & ((1 << wt) - 1)
 
 
 def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[int]]) -> list[list[int]]:
-    """The expected outputs (one list of lane values, unsigned 64-bit) at every slot's falling edge. `beats` are
-    the new data beats in the order the slots take them, each a list of the data inputs' values in tb.json's
-    data_in order; a slot without new data holds the last beat (0 before any)."""
+    """The expected outputs (one list of the compared outputs' values, unsigned, in tb.json's outs order) at every
+    slot's falling edge. `beats` are the new data beats in the order the slots take them, each a list of the data
+    inputs' values in tb.json's data_in order (already the ports' bits); a slot without new data holds the last beat
+    (0 before any)."""
     w = params.get("lanes", 1)
-    cur, nb = [0] * (2 * w if datapath in ("ElementwiseLanes", "Mac") else w), 0
-    if datapath == "ElementwiseLanes":
-        op = CHAR_OPS[params["op"]]
-    elif datapath == "Mac":
-        s = [0] * w
+    cur, nb = [0] * (2 * w if datapath in ("SimdLanes", "Mac") else max(w, params.get("inLanes", 1))), 0
+    if datapath in ("SimdLanes", "Mac"):
+        ta, tb = params["inTypes"][:2]
+        top, tout = params["opType"], params["outType"]
+        mo = (1 << _width(tout)) - 1
+        prod = lambda i: _cast(_cast(cur[i], ta, top) * _cast(cur[w + i], tb, top), top, tout)  # noqa: E731
+        if datapath == "SimdLanes":
+            op = CHAR_OPS[params["op"]]
+        else:
+            s = [0] * w
     elif datapath in ("TreeAccumulate", "SerialAccumulate"):
+        tin, tout = params["inType"], params["outType"]
+        mo = (1 << _width(tout)) - 1
         acc = 0
     elif datapath == "LinkBuffer":
         depth = params["depth"]
         mem = [[0] * w for _ in range(depth)]
+    elif datapath == "FifoPacker":
+        lw, nl = _width(params["laneType"]), params["inLanes"]
+        r = params["words"] * 64 // (lw * nl)
+        chunk = lw * nl
+        count, held = 0, [0] * max(r - 1, 0)
     else:
         raise KeyError(f"sim/ref.py has no char reference for {datapath}")
     out = []
     for sl in slots:
         if sl["new"]:
-            cur = [v & M64 for v in beats[nb]]
+            cur = list(beats[nb])
             nb += 1
         p = sl["pins"]
         # the falling edge: what the registers hold, the combinational outputs of this slot's inputs
-        if datapath == "ElementwiseLanes":
-            out.append([op(cur[i], cur[w + i]) for i in range(w)])
+        if datapath == "SimdLanes":
+            out.append([_cast(op(_cast(cur[i], ta, top), _cast(cur[w + i], tb, top)), top, tout) for i in range(w)])
         elif datapath == "Mac":
             out.append(list(s))
         elif datapath in ("TreeAccumulate", "SerialAccumulate"):
             out.append([acc])
-        else:
+        elif datapath == "LinkBuffer":
             out.append(list(mem[p["rslot"] if depth > 1 else 0]))
+        else:
+            x = sum(v << (lw * i) for i, v in enumerate(cur[:nl]))
+            sending = r == 1 or count == r - 1 or bool(p["last"])
+            ready = (not sending) or bool(p["out_ready"])
+            beat = 0
+            for u in range(r):
+                v = x if u == count else held[u] if u < count and u < r - 1 else 0
+                beat |= v << (chunk * u)
+            out.append([(beat >> (64 * k)) & M64 for k in range(params["words"])]
+                       + [int(bool(p["in_valid"]) and sending), int(ready)])
         # the next rising edge takes the slot
         if datapath == "Mac" and p["fire"]:
-            prod = [(cur[i] * cur[w + i]) & M64 for i in range(w)]
-            s = prod if p["first"] else [(s[i] + prod[i]) & M64 for i in range(w)]
+            s = [prod(i) if p["first"] else (s[i] + prod(i)) & mo for i in range(w)]
         elif datapath == "TreeAccumulate" and p["fire"]:
-            beat = sum(cur) & M64
-            acc = beat if p["first"] else (acc + beat) & M64
+            b = sum(_cast(x, tin, tout) for x in cur[:w]) & mo
+            acc = b if p["first"] else (acc + b) & mo
         elif datapath == "SerialAccumulate" and p["read"]:
             lane = p["lane"] if w > 1 else 0
-            acc = ((0 if p["first"] and lane == 0 else acc) + cur[lane]) & M64
+            acc = ((0 if p["first"] and lane == 0 else acc) + _cast(cur[lane], tin, tout)) & mo
         elif datapath == "LinkBuffer" and p["load"]:
             mem[p["wslot"] if depth > 1 else 0] = list(cur)
+        elif datapath == "FifoPacker":
+            if p["in_valid"] and ready and r > 1:
+                if sending:
+                    count = 0
+                else:
+                    held[count] = x
+                    count += 1
+            if p["clear"]:
+                count = 0
     if nb != len(beats):
         raise ValueError(f"char_ref: {len(beats)} beats given, the slots take {nb}")
     return out
