@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
-"""report/char_export.py - the block model snax-forge reads, results/char/<tech>/char.json.
+"""report/char_export.py - the block model snax-forge reads, results/char/<tech>/char.json, from the clock-gated rows.
 
-  pixi run char-export                     char.json from the ungated rows
-  pixi run char-export --clk-gate          char_cg.json from the clock-gated rows (nangate45)
+  pixi run char-export
 
-Reads results/char/<tech>/char_synth.csv and char_power.csv, char/points.json and the sibling snax-forge's
-hw/chisel/blocks.json for the params, and for the control factor the forge points' power_pt_modules.csv and
-synth_dc_modules.csv. Writes the flop constants (area, e_load, e_hold), the control factor and per block its comb
-area and energy per fire with a lanes rule (copy or interpolate). The fields and the model are in
-results/char/README.md; the gated table counts a clock gate as a sequential cell and keeps E_ctrl (X83 · X85), and
-prints, per point, the gated value over the ungated one.
+Reads results/char/<tech>/char_synth.csv and char_power.csv, char/points.json and blocks.json at the blocks'
+snax-forge commit (git show in the sibling checkout) for the params, and for the control factor the tier-done forge
+points' power_pt_modules.csv and synth_dc_modules.csv. Writes the flop constants (area, e_load, e_hold), the control
+factor and per block its comb area and energy per fire with a lanes rule (copy or interpolate). The fields and the
+model are in results/char/README.md; a clock gate counts as a sequential cell (X83 · X85).
 """
 from __future__ import annotations
 
-import argparse
 import json
 import re
 import subprocess
@@ -27,9 +24,9 @@ BLOCKS_JSON = ct.ROOT.parent / "snax-forge" / "hw" / "chisel" / "blocks.json"
 RULES = {"ElementwiseLanes": "copy", "Mac": "copy", "LinkBuffer": "copy", "TreeAccumulate": "interpolate",
          "SerialAccumulate": "interpolate"}
 SHAPE = ("lanes", "depth")
-CTRL = "snax_forge_shell_wrapper/ctrl/ctrl"
 LOAD_KINDS = ("Mac", "TreeAccumulate", "SerialAccumulate")    # busy: every flop loads every cycle
-FORGE_POINTS = 48
+# the tier-done points with a gated power row: 48 but the 7 W = 32 bundles made before snax-forge D168 (X37)
+FORGE_POINTS = 41
 
 
 def fail(msg: str) -> None:
@@ -64,13 +61,11 @@ def stats(vals: list[float]) -> dict:
             "range_pct": 100 * (max(vals) - min(vals)) / mean}
 
 
-def flop_area(d: dict) -> float:
+def flop_area(d: dict) -> dict:
+    """The mean of seq_area / seq_cells over the points with sequential cells (flops and clock gates), its spread."""
     a = {p: float(v["synth"]["seq_area_um2"]) / int(v["synth"]["seq_cells"]) for p, v in d.items()
          if int(v["synth"]["seq_cells"])}
-    vals = sorted(set(round(x, 6) for x in a.values()))        # char_synth.csv's areas have 6 decimals
-    if len(vals) != 1:
-        fail(f"seq_area / seq_cells is not one constant: {vals}")
-    return vals[0]
+    return {**stats(list(a.values())), "points": a}
 
 
 def e_load(d: dict) -> dict:
@@ -93,32 +88,38 @@ def e_hold(d: dict) -> dict:
 
 
 def ctrl_bits(tech: str, area: float) -> dict:
-    """{forge point: ctrl/ctrl's flops}, seq_um2 / the flop's area, an integer."""
-    out = {}
-    for r in ct.read_csv(ct.RES / "forge" / tech / "synth_dc_modules.csv"):
-        if r["path"] == "ctrl/ctrl":
-            n = float(r["seq_um2"]) / area
-            if abs(n - round(n)) > 1e-3:
-                fail(f"{tech}: {r['point']}: ctrl/ctrl's seq_um2 / {area} = {n}, not an integer")
-            out[r["point"]] = round(n)
-    return out
+    """{forge point: ctrl/ctrl's sequential cells}, seq_um2 / the mean cell area, rounded (a clock gate counts as one)."""
+    return {r["point"]: round(float(r["seq_um2"]) / area)
+            for r in ct.read_csv(ct.RES / "forge" / tech / "synth_dc_modules.csv") if r["path"] == "ctrl/ctrl"}
+
+
+def is_ctrl(path: str) -> bool:
+    """power_pt_modules.csv's ctrl/ctrl under the point's top, whatever the top's name."""
+    return path.count("/") == 2 and path.endswith("/ctrl/ctrl")
 
 
 def counter_factor(tech: str, area: float, hold_fj: float) -> dict:
-    bits = ctrl_bits(tech, area)
+    """f_ctrl, the mean over the tier-done forge points with a power row of ctrl/ctrl's e_dyn per cycle over its
+    cells x e_hold."""
+    ok = {r["point"] for r in ct.read_csv(ct.RES / "forge" / tech / "power_pt.csv")
+          if r["status"] == "ok" and r["size"] == f"n{ct.N}"}
     e_ctrl = {r["point"]: float(r["e_dyn_pj"]) for r in ct.read_csv(ct.RES / "forge" / tech / "power_pt_modules.csv")
-              if r["path"] == CTRL}
+              if is_ctrl(r["path"]) and r["point"] in ok and r["point"].startswith("done/")}
+    bits = {p: n for p, n in ctrl_bits(tech, area).items() if p in e_ctrl}
     if set(bits) != set(e_ctrl) or len(bits) != FORGE_POINTS:
-        fail(f"{tech}: ctrl/ctrl in {len(bits)} synthesis and {len(e_ctrl)} power rows, {FORGE_POINTS} expected")
+        fail(f"{tech}: tier done's ctrl/ctrl in {len(bits)} synthesis and {len(e_ctrl)} power rows, {FORGE_POINTS} expected")
     per = {p: e_ctrl[p] / (bits[p] * hold_fj / 1000) for p in bits}
     s = stats(list(per.values()))
     return {**s, "value": round(s["mean"], 2), "points": per, "bits": bits, "e_ctrl": e_ctrl}
 
 
-def catalogue() -> dict:
-    if not BLOCKS_JSON.is_file():
-        fail(f"no {BLOCKS_JSON} (the sibling snax-forge checkout)")
-    return json.loads(BLOCKS_JSON.read_text())
+def catalogue_at(commit: str) -> dict:
+    """blocks.json at snax-forge `commit` (git show in the sibling checkout, read only)."""
+    done = subprocess.run(["git", "-C", str(BLOCKS_JSON.parents[2]), "show", f"{commit}:hw/chisel/blocks.json"],
+                          capture_output=True, text=True)
+    if done.returncode:
+        fail(f"no blocks.json at snax-forge {commit} in {BLOCKS_JSON.parents[2]} (fetch that commit)")
+    return json.loads(done.stdout)
 
 
 def check_params(datapath: str, params: dict, cat: dict, where: str) -> None:
@@ -136,18 +137,15 @@ def check_params(datapath: str, params: dict, cat: dict, where: str) -> None:
             fail(f"{where}: {k} = {v!r} not allowed by blocks.json ({s})")
 
 
-def blocks(d: dict, points: list[dict], cat: dict | None, strict: bool = True) -> dict:
-    """char.json's blocks. strict (char.json): params checked against blocks.json, seq_cells = bits or exit;
-    not strict (char_cg.json): params checked when cat is given, seq_cells against bits printed."""
+def blocks(d: dict, points: list[dict], cat: dict) -> dict:
+    """char.json's blocks: params checked against blocks.json; seq_cells against the bits printed where they differ
+    (a clock gate is a sequential cell)."""
     out: dict = {}
     for p in points:
         name, dp, params = p["point"], p["datapath"], p["params"]
-        if cat is not None:
-            check_params(dp, params, cat, name)
+        check_params(dp, params, cat, name)
         flops = int(d[name]["synth"]["seq_cells"])
         if flops != n_bits(dp, params):
-            if strict:
-                fail(f"{name}: {flops} flops, its bits are {n_bits(dp, params)}")
             print(f"{name}: {flops} sequential cells, its bits are {n_bits(dp, params)}")
         key = {k: v for k, v in params.items() if k not in SHAPE}
         win = "stream" if dp == "LinkBuffer" else "busy"
@@ -174,103 +172,22 @@ def sfe_commit(tech: str) -> str:
                   f"results/char/{tech}/char_power.csv")
 
 
-def build(tech: str, d: dict, points: list[dict], cat: dict) -> tuple[dict, dict]:
-    """(char.json, the spreads behind its constants)."""
+def build(tech: str, d: dict, points: list[dict]) -> tuple[dict, dict]:
+    """(char.json, the spreads behind its constants) from the gated rows `d`."""
+    commit = next(iter(d.values()))["synth"]["snax_forge_commit"]
     area = flop_area(d)
+    area_um2 = round(area["mean"], 6)
     load, hold = e_load(d), e_hold(d)
     hold_fj = round(hold["mean"], 4)
-    cf = counter_factor(tech, area, hold_fj)
-    commit = next(iter(d.values()))["synth"]["snax_forge_commit"]
-    j = {"tech": tech, "clock_ns": float(ct.CLOCK),
-         "units": {"area": "um2", "energy": "pJ", "flop_energy": "fJ per flop per cycle"},
-         "source": {"snax_forge": commit, "snax_forge_experiments": sfe_commit(tech), "stimulus": f"rand64 seed {ct.SEED}"},
-         "flop": {"area_um2": area, "e_load_fj": round(load["mean"], 4), "e_hold_fj": hold_fj},
-         "ctrl": {"counter_factor": cf["value"]},
-         "blocks": blocks(d, points, cat)}
-    return j, {"load": load, "hold": hold, "ctrl": cf}
-
-
-# ---------------------------------------------------------------- the clock-gated table
-CG_TECH = "nangate45"
-CTRL_NOTE = "ctrl ungated: counter_factor is char.json's x char.json's e_hold / this e_hold (CG2, X83)"
-
-
-def path_cg(tech: str) -> Path:
-    return ct.CHAR / tech / "char_cg.json"
-
-
-def catalogue_at(commit: str) -> dict | None:
-    """blocks.json at snax-forge `commit` (git show in the sibling checkout, read only), None when not there."""
-    done = subprocess.run(["git", "-C", str(BLOCKS_JSON.parents[2]), "show", f"{commit}:hw/chisel/blocks.json"],
-                          capture_output=True, text=True)
-    return json.loads(done.stdout) if done.returncode == 0 else None
-
-
-def flop_area_mean(d: dict) -> dict:
-    """The mean of seq_area / seq_cells over the points with sequential cells, and its spread."""
-    a = {p: float(v["synth"]["seq_area_um2"]) / int(v["synth"]["seq_cells"]) for p, v in d.items()
-         if int(v["synth"]["seq_cells"])}
-    return {**stats(list(a.values())), "points": a}
-
-
-def build_cg(tech: str, d: dict, points: list[dict], base: dict) -> tuple[dict, dict]:
-    """(char_cg.json, its spreads) from the gated rows `d`, with ctrl's factor rescaled from `base` (char.json)."""
-    commit = next(iter(d.values()))["synth"]["snax_forge_commit"]
-    cat = catalogue_at(commit)
-    if cat is None:
-        print(f"{tech}: no blocks.json at snax-forge {commit} in {BLOCKS_JSON.parents[2]}: params not checked")
-    area = flop_area_mean(d)
-    load, hold = e_load(d), e_hold(d)
-    hold_fj = round(hold["mean"], 4)
-    # NB (X83): control stays ungated; the factor keeps f_ctrl x e_hold, so E_ctrl is char.json's
-    factor = round(base["ctrl"]["counter_factor"] * base["flop"]["e_hold_fj"] / hold_fj, 2)
+    cf = counter_factor(tech, area_um2, hold_fj)
     j = {"tech": tech, "clock_ns": float(ct.CLOCK),
          "units": {"area": "um2", "energy": "pJ", "flop_energy": "fJ per flop per cycle"},
          "source": {"snax_forge": commit, "snax_forge_experiments": sfe_commit(tech),
-                    "stimulus": f"rand64 seed {ct.SEED}", "clk_gate": "1", "ctrl": CTRL_NOTE},
-         "flop": {"area_um2": round(area["mean"], 6), "e_load_fj": round(load["mean"], 4), "e_hold_fj": hold_fj},
-         "ctrl": {"counter_factor": factor},
-         "blocks": blocks(d, points, cat, strict=False)}
-    return j, {"area": area, "load": load, "hold": hold}
-
-
-def gated_ratios(g: dict, u: dict) -> list[tuple[str, dict]]:
-    """Per point in both: the gated value over the ungated one (synthesis and the busy or stream window)."""
-    out = []
-    for p in g:
-        if p not in u:
-            continue
-        gs, us = g[p]["synth"], u[p]["synth"]
-        r = {k: float(gs[k]) / float(us[k]) for k in ("area_um2", "comb_area_um2", "seq_cells") if float(us[k] or 0)}
-        win = "stream" if g[p]["datapath"] == "LinkBuffer" else "busy"
-        for w, cols in ((win, ("e_comb_pj", "e_dyn_pj", "e_bit_pj")), ("idle", ("e_bit_pj",))):
-            if w in g[p]["windows"] and w in u[p]["windows"]:
-                for c in cols:
-                    a, b = g[p]["windows"][w].get(c, ""), u[p]["windows"][w].get(c, "")
-                    if a not in ("", None) and b not in ("", None) and float(b):
-                        r[f"{w} {c}"] = float(a) / float(b)
-        out.append((p, r))
-    return out
-
-
-def main_cg(points: list[dict]) -> int:
-    t = CG_TECH
-    d = ct.load(t, points, gate="1")
-    j, s = build_cg(t, d, points, json.loads(path(t).read_text()))
-    path_cg(t).write_text(dumps(j))
-    a = s["area"]
-    print(f"{t}: flop area {j['flop']['area_um2']} um2, the mean of seq_area / seq_cells over {a['n']} points, "
-          f"{a['min']:.4f} to {a['max']:.4f} (range {a['range_pct']:.2f} %)")
-    for k, name in (("load", "e_load"), ("hold", "e_hold")):
-        x = s[k]
-        print(f"{t}: {name} {x['mean']:.4f} fJ over {x['n']} points, {x['min']:.4f} to {x['max']:.4f} "
-              f"(range {x['range_pct']:.2f} %, sd {x['sd']:.4f})")
-    print(f"{t}: counter factor {j['ctrl']['counter_factor']:.2f} (ctrl ungated, rescaled from char.json)")
-    print(f"wrote {path_cg(t).relative_to(ct.ROOT)}")
-    print(f"{t}: gated / ungated per point")
-    for p, r in gated_ratios(d, ct.load(t, points, gate="0")):
-        print(f"  {p}: " + ", ".join(f"{k} {v:.4f}" for k, v in r.items()))
-    return 0
+                    "stimulus": f"rand64 seed {ct.SEED}", "clk_gate": "1"},
+         "flop": {"area_um2": area_um2, "e_load_fj": round(load["mean"], 4), "e_hold_fj": hold_fj},
+         "ctrl": {"counter_factor": cf["value"]},
+         "blocks": blocks(d, points, catalogue_at(commit))}
+    return j, {"area": area, "load": load, "hold": hold, "ctrl": cf}
 
 
 # ---------------------------------------------------------------- the model, read from char.json
@@ -347,18 +264,14 @@ def dumps(j: dict) -> str:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--clk-gate", action="store_true", help="char_cg.json from the clock-gated rows")
-    args = ap.parse_args()
     points = json.loads(ct.POINTS.read_text())
-    if args.clk_gate:
-        return main_cg(points)
-    cat = catalogue()
     for t in ct.TECHS:
         d = ct.load(t, points)
-        j, s = build(t, d, points, cat)
+        j, s = build(t, d, points)
         path(t).write_text(dumps(j))
-        print(f"{t}: flop area {j['flop']['area_um2']} um2")
+        a = s["area"]
+        print(f"{t}: flop area {j['flop']['area_um2']} um2, the mean of seq_area / seq_cells over {a['n']} points, "
+              f"{a['min']:.4f} to {a['max']:.4f} (range {a['range_pct']:.2f} %)")
         for k, name in (("load", "e_load"), ("hold", "e_hold")):
             x = s[k]
             print(f"{t}: {name} {x['mean']:.4f} fJ over {x['n']} points, {x['min']:.4f} to {x['max']:.4f} "
