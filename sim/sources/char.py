@@ -18,17 +18,20 @@ from . import ports as _ports
 
 CLK, RST = _ports("char")    # clock, reset: syn/syn.py's SOURCES
 
-TB_VERSION = 1
+TB_VERSION = 2
 ROOT = Path(__file__).resolve().parents[2]
 RTL = ROOT / "rtl" / "char"
 SETTLE = 4          # slots with every input low after reset
 CYCLES = 128        # each window's cycles (beats for serial's firing windows)
-KINDS = {"ElementwiseLanes": "lanes", "Mac": "fold", "TreeAccumulate": "fold", "SerialAccumulate": "serial",
-         "LinkBuffer": "link"}
-INS = {"ElementwiseLanes": ["a", "b"], "Mac": ["a", "b"], "TreeAccumulate": ["in"], "SerialAccumulate": ["in"],
-       "LinkBuffer": ["in"]}
-PINS = {"lanes": [], "fold": ["fire", "first"], "serial": ["read", "lane", "first"], "link": ["load", "wslot", "rslot"]}
-WINDOWS = {"lanes": ["busy", "idle"], "fold": ["busy", "idle"], "serial": ["busy", "idle"], "link": ["stream"]}
+KINDS = {"SimdLanes": "lanes", "Mac": "fold", "TreeAccumulate": "fold", "SerialAccumulate": "serial",
+         "LinkBuffer": "link", "FifoPacker": "pack"}
+INS = {"SimdLanes": ["a", "b"], "Mac": ["a", "b"], "TreeAccumulate": ["in"], "SerialAccumulate": ["in"],
+       "LinkBuffer": ["in"], "FifoPacker": ["in_bits"]}
+OUTS = {"FifoPacker": ["out_bits", "out_valid", "in_ready"]}    # the others: out
+PINS = {"lanes": [], "fold": ["fire", "first"], "serial": ["read", "lane", "first"], "link": ["load", "wslot", "rslot"],
+        "pack": ["in_valid", "out_ready", "clear", "last"]}
+WINDOWS = {"lanes": ["busy", "idle"], "fold": ["busy", "idle"], "serial": ["busy", "idle"], "link": ["stream"],
+           "pack": ["busy", "idle"]}
 SEQ_FILES = {k: [f"char_{k}_seq.sv"] for k in PINS}
 CORE = "char_seq_core.svh"
 
@@ -53,11 +56,34 @@ def pin_bits(datapath: str, params: dict) -> dict:
     return {p: 1 for p in PINS[KINDS[datapath]]}
 
 
+def width(dtype: str) -> int:
+    """An int dtype's bits (int8, uint32)."""
+    return int(dtype.removeprefix("u").removeprefix("int"))
+
+
+def port_bits(datapath: str, params: dict) -> dict:
+    """{port base: bits} of the data ports from the params, what the netlist must show (D175's types)."""
+    if datapath in ("SimdLanes", "Mac"):
+        a, b = (width(t) for t in params["inTypes"][:2])
+        return {"a": a, "b": b, "out": width(params["outType"])}
+    if datapath in ("TreeAccumulate", "SerialAccumulate"):
+        return {"in": width(params["inType"]), "out": width(params["outType"])}
+    if datapath == "LinkBuffer":
+        return {"in": width(params["dtype"]), "out": width(params["dtype"])}
+    return {"in_bits": width(params["laneType"]), "out_bits": 64, "out_valid": 1, "in_ready": 1}
+
+
+def _base(p: str, bases: list[str]) -> tuple[int, int] | None:
+    """(the base's index, the lane) of port io_<base> or io_<base>_<lane>, None for another port."""
+    for i, b in enumerate(bases):
+        m = re.fullmatch(rf"io_{b}(?:_(\d+))?", p)
+        if m:
+            return i, int(m.group(1) or 0)
+    return None
+
+
 def _order(ports: list[str], bases: list[str]) -> list[str]:
-    def key(p: str):
-        m = re.fullmatch(r"io_([a-z]+)(?:_(\d+))?", p)
-        return bases.index(m.group(1)), int(m.group(2) or 0)
-    return sorted(ports, key=key)
+    return sorted(ports, key=lambda p: _base(p, bases))
 
 
 def build(point: str, netlist: Path, bundle: Path) -> dict:
@@ -66,18 +92,20 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
       clock    {port: clock}
       reset    {port: reset, active: high, sync: false}
       control  {kind: "char_<kind>"}
-      data_in  [port, ...]   every 64-bit data input, one per lane, in the catalogue's port order then lane order
-                             (ElementwiseLanes and Mac: a_0 .. a_{W-1}, b_0 ..; the others in_0 ..): rand64 draws
-                             one stream per port in this order
-      outs     [port, ...]   every 64-bit data output (out, or out_0 .. out_{W-1})
+      data_in  [{port, bits}]  every data input, one per lane, its width from the netlist (its type's), in the
+                             catalogue's port order then lane order (SimdLanes and Mac: a_0 .. a_{W-1}, b_0 ..;
+                             FifoPacker in_bits_0 ..; the others in_0 ..): rand64 draws one stream per port in this
+                             order and keeps the port's low bits
+      outs     [{port, bits}]  every output compared (out, or out_0 .. out_{W-1}; FifoPacker out_bits_0 ..,
+                             out_valid, in_ready), its width from the netlist
       pins     {name: {port, bits}}  the kind's pins present in the netlist: a pin of no bits is absent (LinkBuffer's
                              wslot and rslot at depth 1, SerialAccumulate's lane at lanes 1)
       windows  [{name, cycles, fires}]  in the order the sequencer runs them (schedule())
       tb_files [sim/tb/ files]  the kind's sequencer and the shared core it includes
 
-    The ports must be exactly clock, reset, data_in, outs and the present pins (ElementwiseLanes keeps an unused clock
-    and reset). The kinds, by datapath: lanes (ElementwiseLanes), fold (Mac in its accumulating form, TreeAccumulate),
-    serial (SerialAccumulate), link (LinkBuffer).
+    The ports must be exactly clock, reset, data_in, outs and the present pins (SimdLanes keeps an unused clock and
+    reset), each data port as wide as its type (port_bits). The kinds, by datapath: lanes (SimdLanes), fold (Mac in its
+    accumulating form, TreeAccumulate), serial (SerialAccumulate), link (LinkBuffer), pack (FifoPacker).
 
     """
     d = point_dir(point, bundle)
@@ -92,16 +120,19 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
     ports = hls.ports_of(netlist, top)
     bits = pin_bits(dp, params)
     pins = {n: {"port": f"io_{n}", "bits": b} for n, b in bits.items() if b}
-    data_re = re.compile(rf"io_({'|'.join(INS[dp])})(_\d+)?")
-    data_in = [p for p, (dr, _) in ports.items() if dr == "in" and data_re.fullmatch(p)]
-    outs = [p for p, (dr, _) in ports.items() if dr == "out" and re.fullmatch(r"io_out(_\d+)?", p)]
+    out_bases = OUTS.get(dp, ["out"])
+    data_in = [p for p, (dr, _) in ports.items() if dr == "in" and _base(p, INS[dp])]
+    outs = [p for p, (dr, _) in ports.items() if dr == "out" and _base(p, out_bases)]
     known = {CLK, RST, *data_in, *outs, *(p["port"] for p in pins.values())}
     if set(ports) != known:
         raise ValueError(f"{point}: netlist ports not as expected: missing {sorted(known - set(ports))}, "
                          f"not covered {sorted(set(ports) - known)}")
+    want = port_bits(dp, params)
+    bases = INS[dp] + out_bases
     for p in data_in + outs:
-        if ports[p][1] != 64:
-            raise ValueError(f"{point}: {p} is {ports[p][1]} bits, not one int64 lane")
+        b = want[bases[_base(p, bases)[0]]]
+        if ports[p][1] != b:
+            raise ValueError(f"{point}: {p} is {ports[p][1]} bits, its type's {b}")
     for n, p in pins.items():
         if ports[p["port"]] != ("in", p["bits"]):
             raise ValueError(f"{point}: pin {p['port']} is {ports[p['port']]}, expected an input of {p['bits']} bits")
@@ -113,7 +144,8 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
           "snax_forge_commit": pj["snax_forge_commit"],
           "clock": {"port": CLK}, "reset": {"port": RST, "active": "high", "sync": False},
           "control": {"kind": f"char_{kind}"},
-          "data_in": _order(data_in, INS[dp]), "outs": _order(outs, ["out"]), "pins": pins,
+          "data_in": [{"port": p, "bits": ports[p][1]} for p in _order(data_in, INS[dp])],
+          "outs": [{"port": p, "bits": ports[p][1]} for p in _order(outs, out_bases)], "pins": pins,
           "tb_files": SEQ_FILES[kind]}
     slots = schedule(tb)
     tb["windows"] = [{"name": w, "cycles": sum(1 for s in slots if s["window"] == w),
@@ -139,7 +171,9 @@ def schedule(tb: dict) -> list[dict]:
     """schedule(tb) is the sequence of slots the kind's sequencer drives after reset, slot by slot: 4 settle slots with
     every pin and data input low, then per window a lead-in of the window's own kind (outside every window) and the
     window's slots. The windows: lanes, fold and serial have busy (a fire every cycle; serial a read every
-    cycle, 128 beats of W) and idle (the enable at 0, every other input held), each after one lead-in slot; link has
+    cycle, 128 beats of W) and idle (the enable at 0, every other input held), each after one lead-in slot; pack has
+    the start (clear, no push, outside every window), then busy (a push every cycle, out_ready high, clear and last
+    low) and idle (no push, every other input held), each after one lead-in slot of its own kind; link has
     stream only, a FIFO at full rate: a lead-in of D loads round the ring (the fill), then 128 cycles with a load of
     new data every cycle into slot t mod D and rslot the oldest slot, the same slot (read before the edge that
     overwrites it), so out at cycle t is the beat loaded at t - D. A slot's inputs are applied at its rising edge (after the flops have taken the slot
@@ -150,7 +184,7 @@ def schedule(tb: dict) -> list[dict]:
     window's cycles and fires and sim/pwr.py checks them against this.
 
     Every slot after reset: {window (None while settling), new (a new data beat), fire (the block works:
-    new data for lanes, fire, read or load), pins {name: value}} (docs/power.md, Char).
+    new data for lanes, fire, read, load or push), pins {name: value}} (docs/power.md, Char).
     """
     kind, w = tb["kind"], tb["W"]
     depth = tb["depth"] or 1
@@ -183,6 +217,14 @@ def schedule(tb: dict) -> list[dict]:
         slot(None, 0, 0, read=0, lane=w - 1, first=0)
         for i in range(CYCLES):
             slot("idle", 0, 0, read=0, lane=w - 1, first=0)        # lane held at the last read's
+    elif kind == "pack":
+        slot(None, 0, 0, in_valid=0, out_ready=1, clear=1, last=0)     # the start: the slice pointer cleared
+        slot(None, 1, 1, in_valid=1, out_ready=1, clear=0, last=0)     # lead-in: a push
+        for i in range(CYCLES):
+            slot("busy", 1, 1, in_valid=1, out_ready=1, clear=0, last=0)
+        slot(None, 0, 0, in_valid=0, out_ready=1, clear=0, last=0)
+        for i in range(CYCLES):
+            slot("idle", 0, 0, in_valid=0, out_ready=1, clear=0, last=0)
     elif kind == "link":
         for t in range(depth):                            # the lead-in: the fill, D loads round the ring
             slot(None, 1, 1, load=1, wslot=t, rslot=t)

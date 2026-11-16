@@ -1,4 +1,4 @@
-// sim/tb/char_lanes_seq.sv - CHAR1 sequencer of kind lanes (ElementwiseLanes): no pins, data only.
+// sim/tb/char_lanes_seq.sv - CHAR1 sequencer of kind lanes (SimdLanes): no pins, data only.
 // The windows (sim/sources/char.py schedule(), CYCLES = 128 each) after 4 settle slots, each after one lead-in
 // slot of its own kind (outside every window, char_seq_core.svh):
 //   busy    new a, b every cycle (lead-in: new data)
