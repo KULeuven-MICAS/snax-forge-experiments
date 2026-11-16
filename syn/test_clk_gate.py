@@ -110,6 +110,28 @@ def test_pwr_merge_keeps_gated_and_ungated_apart() -> None:
         assert got == [("", "5"), ("1", "3")], got
 
 
+def test_pwr_tb_failure_row_keyed_like_a_run() -> None:
+    """A point whose tb.json cannot be built (here: no netlist) gets a failure row keyed as its runs would be: a
+    --clk-gate --size n2048 invocation's row has clk_gate 1, size n2048 and seed 0, never an ungated-looking row."""
+    import contextlib
+    pwr.use_source("forge")
+    try:
+        pwr.CLK_GATE = True
+        with contextlib.ExitStack() as stack:
+            [(row, info)] = pwr._do_point(stack, "no/such/point_w1", "nangate45", [("n2048", "rand64", 0)], 1)
+        assert row["status"].startswith("failed: tb.json: ") and info == {}, row
+        assert (row["clk_gate"], row["size"], row["seed"], row["clock_ns"]) == ("1", "n2048", 0, "10"), row
+        with contextlib.ExitStack() as stack:     # sizes that differ, or the default size: no size
+            [(row, _)] = pwr._do_point(stack, "no/such/point_w1", "nangate45",
+                                       [("n2048", "rand64", 0), ("b64", "rand64", 0)], 1)
+        assert row["size"] == "" and row["clk_gate"] == "1", row
+        with contextlib.ExitStack() as stack:
+            [(row, _)] = pwr._do_point(stack, "no/such/point_w1", "nangate45", [(None, "rand64", 0)], 1)
+        assert row["size"] == "", row
+    finally:
+        pwr.CLK_GATE = False
+        pwr.use_source("hls")
+
 
 def test_cluster_gate_leaves_out_the_libraries_icgs() -> None:
     """DC marks Nangate's CLKGATE (a statetable) a black box; the gate leaves out the integrated clock gates
