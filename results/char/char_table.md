@@ -211,9 +211,9 @@ $$E_{\mathit{unit}} = n_{\mathit{fire}}\thinspace\big(e_{\mathit{comb}} + n_{\ma
 |---|---|---|---|---|---|---|---|
 | nangate45 | `flop.e_load_fj` | 17.8153 | 17 | 17.3557 | 17.9869 | 0.1595 | 3.54 % |
 | nangate45 | `flop.e_hold_fj` | 0.0655 | 14 | 0.0024 | 0.0754 | 0.0253 | 111.49 % |
-| nangate45 | `ctrl.counter_factor` | 82.87 | 41 | 49.2494 | 146.8615 | 36.5755 | 117.79 % |
+| nangate45 | `ctrl.counter_factor` | 83.20 | 48 | 43.2954 | 148.2543 | 37.4544 | 126.16 % |
 
-e_load is the mean busy e_bit of the points whose flops all load every cycle (Mac, TreeAccumulate and SerialAccumulate busy, LinkBuffer depth 1 stream); e_hold the mean idle e_bit (as above); the counter factor, per tier-done forge point ctrl/ctrl's e_dyn per cycle (`power_pt_modules.csv`) over its sequential cells x e_hold, the mean over the 41 points with a power row rounded to two decimals (tier done's 48 but the 7 W = 32 bundles made before snax-forge D168, which have none). `synth_dc_modules.csv` has no per-module `seq_cells`: ctrl's cells are its `seq_um2` / `flop.area_um2`, rounded. The factor spreads widely: a gated control unit's energy follows its counters' activity more than its cell count.
+e_load is the mean busy e_bit of the points whose flops all load every cycle (Mac, TreeAccumulate and SerialAccumulate busy, LinkBuffer depth 1 stream); e_hold the mean idle e_bit (as above); the counter factor, per tier-done forge point ctrl/ctrl's e_dyn per cycle (`power_pt_modules.csv`) over its sequential cells x e_hold, the mean over the 48 points with a power row rounded to two decimals (the 48 int64 tier-done points, forge/points.json's without a `types=` set). `synth_dc_modules.csv` has no per-module `seq_cells`: ctrl's cells are its `seq_um2` / `flop.area_um2`, rounded. The factor spreads widely: a gated control unit's energy follows its counters' activity more than its cell count.
 
 ### Per block point
 
@@ -299,27 +299,111 @@ e_fire = e_comb + n_bits (e_load - e_hold), pJ per fire, and the hold term n_bit
 
 ### Against the forge points
 
-vecmul, vsum, dot 4 and dot 5 at W = 8 (their W = 32 points have no gated power), n = 2048, energy per task in nJ. Per design its units in block order, each firing along the chain from `power_pt.csv`'s config: the sink gives JOBS results, a unit before it the sink's T per result, and a unit fires its results x its T x its span (blocks.json's; SerialAccumulate's is lanes): the streaming unit N / W, a T = 1 TreeAccumulate sum once, a SerialAccumulate sum W times. C_acc is the run's cycles (`power_pt.csv`), ctrl's bits its sequential cells (`synth_dc_modules.csv`, seq_um2 / flop area). forge is `power_pt_modules.csv`'s e_dyn per cycle x cycles: datapath `dp`, ctrl `ctrl/ctrl`, kernel the two, each unit its block cell. Model uses char.json's point at the design's W; the last column, "ratio, rules only", takes every e_comb from the lanes rule instead (W x the lanes-1 point for SimdLanes and Mac).
+vecmul, vsum, dot 4 and dot 5 at W = 8, 32, n = 2048, energy per task in nJ. Per design its units in block order, each firing along the chain from `power_pt.csv`'s config: the sink gives JOBS results, a unit before it the sink's T per result, and a unit fires its results x its T x its span (blocks.json's; SerialAccumulate's is lanes): the streaming unit N / W, a T = 1 TreeAccumulate sum once, a SerialAccumulate sum W times. C_acc is the run's cycles (`power_pt.csv`), ctrl's bits its sequential cells (`synth_dc_modules.csv`, seq_um2 / flop area). forge is `power_pt_modules.csv`'s e_dyn per cycle x cycles: datapath `dp`, ctrl `ctrl/ctrl`, kernel the two, each unit its block cell. Model uses char.json's point at the design's W; the last column, "ratio, rules only", takes every e_comb from the lanes rule instead (W x the lanes-1 point for SimdLanes and Mac).
 
 | tech | design | W | units, n_fire | C_acc | ctrl bits | datapath model | datapath forge | ratio | ctrl model | ctrl forge | ratio | kernel model | kernel forge | ratio | ratio, rules only |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| nangate45 | vecmul | 8 | SimdLanes 256 | 256 | 34 | 23.137 | 23.111 | 1.001 | 0.047 | 0.083 | 0.570 | 23.184 | 23.194 | 1.000 | 0.994 |
-| nangate45 | vsum | 8 | TreeAccumulate 256 | 257 | 67 | 1.033 | 1.045 | 0.988 | 0.093 | 0.085 | 1.099 | 1.126 | 1.131 | 0.996 | 0.996 |
-| nangate45 | dot 4 | 8 | Mac 256, TreeAccumulate 1 | 258 | 100 | 25.938 | 25.664 | 1.011 | 0.140 | 0.089 | 1.572 | 26.079 | 25.753 | 1.013 | 1.008 |
-| nangate45 | dot 5 | 8 | Mac 256, SerialAccumulate 8 | 265 | 103 | 25.952 | 25.124 | 1.033 | 0.148 | 0.091 | 1.623 | 26.100 | 25.215 | 1.035 | 1.030 |
+| nangate45 | vecmul | 8 | SimdLanes 256 | 256 | 34 | 23.137 | 23.111 | 1.001 | 0.047 | 0.083 | 0.572 | 23.184 | 23.194 | 1.000 | 0.994 |
+| nangate45 | vecmul | 32 | SimdLanes 64 | 64 | 34 | 23.183 | 23.118 | 1.003 | 0.012 | 0.021 | 0.561 | 23.195 | 23.139 | 1.002 | 0.994 |
+| nangate45 | vsum | 8 | TreeAccumulate 256 | 257 | 67 | 1.033 | 1.045 | 0.988 | 0.094 | 0.085 | 1.103 | 1.127 | 1.131 | 0.997 | 0.997 |
+| nangate45 | vsum | 32 | TreeAccumulate 64 | 65 | 67 | 0.802 | 0.800 | 1.002 | 0.024 | 0.023 | 1.053 | 0.825 | 0.823 | 1.003 | 1.003 |
+| nangate45 | dot 4 | 8 | Mac 256, TreeAccumulate 1 | 258 | 100 | 25.938 | 25.664 | 1.011 | 0.141 | 0.089 | 1.578 | 26.079 | 25.753 | 1.013 | 1.008 |
+| nangate45 | dot 4 | 32 | Mac 64, TreeAccumulate 1 | 66 | 100 | 25.954 | 25.831 | 1.005 | 0.036 | 0.024 | 1.481 | 25.990 | 25.855 | 1.005 | 1.000 |
+| nangate45 | dot 5 | 8 | Mac 256, SerialAccumulate 8 | 265 | 103 | 25.952 | 25.124 | 1.033 | 0.149 | 0.091 | 1.629 | 26.101 | 25.215 | 1.035 | 1.030 |
+| nangate45 | dot 5 | 32 | Mac 64, SerialAccumulate 32 | 97 | 105 | 26.024 | 25.280 | 1.029 | 0.056 | 0.029 | 1.922 | 26.079 | 25.309 | 1.030 | 1.025 |
 
 Per unit:
 
 | tech | design | W | unit | n_fire | n_bits | C_acc | n_fire e_fire | C_acc n_bits e_hold | model | forge | ratio |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | nangate45 | vecmul | 8 | acc: SimdLanes | 256 | 0 | 256 | 23.137 | 0.000 | 23.137 | 23.111 | 1.001 |
+| nangate45 | vecmul | 32 | acc: SimdLanes | 64 | 0 | 64 | 23.183 | 0.000 | 23.183 | 23.118 | 1.003 |
 | nangate45 | vsum | 8 | acc: TreeAccumulate | 256 | 64 | 257 | 1.032 | 0.001 | 1.033 | 1.045 | 0.988 |
+| nangate45 | vsum | 32 | acc: TreeAccumulate | 64 | 64 | 65 | 0.801 | 0.000 | 0.802 | 0.800 | 1.002 |
 | nangate45 | dot 4 | 8 | mac: Mac | 256 | 512 | 258 | 25.925 | 0.009 | 25.933 | 25.016 | 1.037 |
 | nangate45 | dot 4 | 8 | sum: TreeAccumulate | 1 | 64 | 258 | 0.004 | 0.001 | 0.005 | 0.648 | 0.008 |
+| nangate45 | dot 4 | 32 | mac: Mac | 64 | 2048 | 66 | 25.932 | 0.009 | 25.941 | 25.133 | 1.032 |
+| nangate45 | dot 4 | 32 | sum: TreeAccumulate | 1 | 64 | 66 | 0.013 | 0.000 | 0.013 | 0.698 | 0.018 |
 | nangate45 | dot 5 | 8 | mac: Mac | 256 | 512 | 265 | 25.925 | 0.009 | 25.934 | 24.952 | 1.039 |
 | nangate45 | dot 5 | 8 | sum: SerialAccumulate | 8 | 64 | 265 | 0.017 | 0.001 | 0.018 | 0.172 | 0.108 |
+| nangate45 | dot 5 | 32 | mac: Mac | 64 | 2048 | 97 | 25.932 | 0.013 | 25.945 | 25.150 | 1.032 |
+| nangate45 | dot 5 | 32 | sum: SerialAccumulate | 32 | 64 | 97 | 0.078 | 0.000 | 0.078 | 0.129 | 0.605 |
 
 The model leaves out the csr, the memory and the streamers. A sum that fires once (dot 4's) or W times (dot 5's) costs, inside its design, its inputs' toggling every cycle, which a per-fire model does not see; it is under 3 % of the kernel. dot 4's sum alone keeps the feedback adder its tied `first` removes inside dot 4 (the free `first`, below): it costs area, which this check does not compare.
+
+### Against the narrow forge points
+
+The forge points of `forge/points.json` with a `types=` set (int8 or int16 in, int32 out and ACC), the same check: each unit priced at its width pair from char.json (a lanes count no char point has takes the pair's rule), n = 2048, energy per task in nJ (X89).
+
+| tech | design | W | units, n_fire | C_acc | ctrl bits | datapath model | datapath forge | ratio | ctrl model | ctrl forge | ratio | kernel model | kernel forge | ratio | ratio, rules only |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| nangate45 | vecmul i8 | 8 | SimdLanes 256 | 256 | 34 | 1.322 | 1.408 | 0.939 | 0.047 | 0.083 | 0.572 | 1.370 | 1.491 | 0.919 | 0.919 |
+| nangate45 | vecmul i16 | 8 | SimdLanes 256 | 256 | 34 | 3.910 | 3.946 | 0.991 | 0.047 | 0.083 | 0.572 | 3.958 | 4.028 | 0.982 | 0.982 |
+| nangate45 | vsum_tree i8 | 8 | TreeAccumulate 256 | 257 | 67 | 0.246 | 0.171 | 1.443 | 0.094 | 0.085 | 1.103 | 0.340 | 0.256 | 1.330 | 1.330 |
+| nangate45 | vsum_tree i16 | 8 | TreeAccumulate 256 | 257 | 67 | 0.339 | 0.271 | 1.253 | 0.094 | 0.085 | 1.103 | 0.433 | 0.356 | 1.217 | 1.217 |
+| nangate45 | dot_4 i8 | 8 | Mac 256, TreeAccumulate 1 | 258 | 100 | 2.228 | 1.817 | 1.226 | 0.141 | 0.089 | 1.577 | 2.369 | 1.906 | 1.243 | 1.243 |
+| nangate45 | dot_4 i16 | 8 | Mac 256, TreeAccumulate 1 | 258 | 100 | 4.704 | 4.572 | 1.029 | 0.141 | 0.089 | 1.578 | 4.844 | 4.662 | 1.039 | 1.039 |
+| nangate45 | dot_5 i8 | 8 | Mac 256, SerialAccumulate 8 | 265 | 103 | 2.235 | 1.673 | 1.336 | 0.149 | 0.091 | 1.629 | 2.383 | 1.764 | 1.351 | 1.351 |
+| nangate45 | dot_5 i16 | 8 | Mac 256, SerialAccumulate 8 | 265 | 103 | 4.710 | 4.306 | 1.094 | 0.149 | 0.091 | 1.629 | 4.859 | 4.397 | 1.105 | 1.105 |
+| nangate45 | dot_3 i8 | 8 | SimdLanes 256, TreeAccumulate 256 | 257 | 67 | 1.834 | 1.301 | 1.410 | 0.094 | 0.085 | 1.103 | 1.928 | 1.386 | 1.391 | 1.391 |
+| nangate45 | dot_3 i8 | 32 | SimdLanes 64, TreeAccumulate 64 | 65 | 67 | 1.722 | 1.223 | 1.408 | 0.024 | 0.023 | 1.051 | 1.746 | 1.246 | 1.401 | 1.401 |
+
+Per unit:
+
+| tech | design | W | unit | n_fire | n_bits | C_acc | n_fire e_fire | C_acc n_bits e_hold | model | forge | ratio |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| nangate45 | vecmul i8 | 8 | acc: SimdLanes | 256 | 0 | 256 | 1.322 | 0.000 | 1.322 | 1.408 | 0.939 |
+| nangate45 | vecmul i16 | 8 | acc: SimdLanes | 256 | 0 | 256 | 3.910 | 0.000 | 3.910 | 3.946 | 0.991 |
+| nangate45 | vsum_tree i8 | 8 | acc: TreeAccumulate | 256 | 32 | 257 | 0.246 | 0.001 | 0.246 | 0.171 | 1.443 |
+| nangate45 | vsum_tree i16 | 8 | acc: TreeAccumulate | 256 | 32 | 257 | 0.339 | 0.001 | 0.339 | 0.271 | 1.253 |
+| nangate45 | dot_4 i8 | 8 | mac: Mac | 256 | 256 | 258 | 2.221 | 0.004 | 2.225 | 1.639 | 1.358 |
+| nangate45 | dot_4 i8 | 8 | sum: TreeAccumulate | 1 | 32 | 258 | 0.002 | 0.001 | 0.003 | 0.177 | 0.014 |
+| nangate45 | dot_4 i16 | 8 | mac: Mac | 256 | 256 | 258 | 4.697 | 0.004 | 4.701 | 4.258 | 1.104 |
+| nangate45 | dot_4 i16 | 8 | sum: TreeAccumulate | 1 | 32 | 258 | 0.002 | 0.001 | 0.003 | 0.314 | 0.008 |
+| nangate45 | dot_5 i8 | 8 | mac: Mac | 256 | 256 | 265 | 2.221 | 0.004 | 2.225 | 1.624 | 1.370 |
+| nangate45 | dot_5 i8 | 8 | sum: SerialAccumulate | 8 | 32 | 265 | 0.009 | 0.001 | 0.009 | 0.049 | 0.188 |
+| nangate45 | dot_5 i16 | 8 | mac: Mac | 256 | 256 | 265 | 4.697 | 0.004 | 4.701 | 4.227 | 1.112 |
+| nangate45 | dot_5 i16 | 8 | sum: SerialAccumulate | 8 | 32 | 265 | 0.009 | 0.001 | 0.009 | 0.079 | 0.116 |
+| nangate45 | dot_3 i8 | 8 | mul: SimdLanes | 256 | 0 | 257 | 1.322 | 0.000 | 1.322 | 0.933 | 1.418 |
+| nangate45 | dot_3 i8 | 8 | sum: TreeAccumulate | 256 | 32 | 257 | 0.511 | 0.001 | 0.512 | 0.368 | 1.389 |
+| nangate45 | dot_3 i8 | 32 | mul: SimdLanes | 64 | 0 | 65 | 1.322 | 0.000 | 1.322 | 0.934 | 1.416 |
+| nangate45 | dot_3 i8 | 32 | sum: TreeAccumulate | 64 | 32 | 65 | 0.400 | 0.000 | 0.400 | 0.290 | 1.380 |
+
+The packed output's packer, outside the datapath, a push per result: the model prices its pushes; inside a design it also sees the unit before it change every cycle, which a per-push model does not see (as a sum fed by another unit).
+
+| tech | design | W | packer | pushes | C_acc | model nJ | forge nJ | ratio |
+|---|---|---|---|---|---|---|---|---|
+| nangate45 | vsum_tree i8 | 8 | acc_out_packer | 1 | 257 | 0.0014 | 0.0322 | 0.042 |
+| nangate45 | vsum_tree i16 | 8 | acc_out_packer | 1 | 257 | 0.0014 | 0.0543 | 0.025 |
+| nangate45 | dot_4 i8 | 8 | sum_out_packer | 1 | 258 | 0.0014 | 0.0036 | 0.372 |
+| nangate45 | dot_4 i16 | 8 | sum_out_packer | 1 | 258 | 0.0014 | 0.0034 | 0.399 |
+| nangate45 | dot_5 i8 | 8 | sum_out_packer | 1 | 265 | 0.0014 | 0.0057 | 0.240 |
+| nangate45 | dot_5 i16 | 8 | sum_out_packer | 1 | 265 | 0.0014 | 0.0060 | 0.228 |
+| nangate45 | dot_3 i8 | 8 | sum_out_packer | 1 | 257 | 0.0014 | 0.0512 | 0.026 |
+| nangate45 | dot_3 i8 | 32 | sum_out_packer | 1 | 65 | 0.0009 | 0.0146 | 0.064 |
+
+Area: each design's datapath against the model's, every unit at its pair and lanes (comb, and its bits x the flop area), the int64 designs beside them:
+
+| tech | design | W | datapath model µm² | datapath forge µm² | ratio |
+|---|---|---|---|---|---|
+| nangate45 | vecmul | 8 | 55300.3 | 55300.3 | 1.000 |
+| nangate45 | vecmul | 32 | 221201.3 | 221201.3 | 1.000 |
+| nangate45 | vsum | 8 | 2548.6 | 2553.6 | 0.998 |
+| nangate45 | vsum | 32 | 8958.2 | 8963.1 | 0.999 |
+| nangate45 | dot 4 | 8 | 62391.9 | 62114.2 | 1.004 |
+| nangate45 | dot 4 | 32 | 248355.0 | 248137.3 | 1.001 |
+| nangate45 | dot 5 | 8 | 61004.1 | 61024.7 | 1.000 |
+| nangate45 | dot 5 | 32 | 241971.5 | 242027.5 | 1.000 |
+| nangate45 | vecmul i8 | 8 | 2351.4 | 2353.6 | 0.999 |
+| nangate45 | vecmul i16 | 8 | 8992.9 | 8992.9 | 1.000 |
+| nangate45 | vsum_tree i8 | 8 | 571.1 | 575.4 | 0.993 |
+| nangate45 | vsum_tree i16 | 8 | 807.4 | 811.6 | 0.995 |
+| nangate45 | dot_4 i8 | 8 | 6026.3 | 5896.7 | 1.022 |
+| nangate45 | dot_4 i16 | 8 | 11977.0 | 11847.4 | 1.011 |
+| nangate45 | dot_5 i8 | 8 | 5356.6 | 5370.5 | 0.997 |
+| nangate45 | dot_5 i16 | 8 | 11307.2 | 11321.2 | 0.999 |
+| nangate45 | dot_3 i8 | 8 | 3605.4 | 3343.6 | 1.078 |
+| nangate45 | dot_3 i8 | 32 | 13864.5 | 12398.0 | 1.118 |
 
 ## Known limits
 
@@ -345,13 +429,16 @@ The model leaves out the csr, the memory and the streamers. A sum that fires onc
 | `serial/sum_w8` | 2.2090 | 0.4575 | 1.3734 | 1.3332 | +3.0 % |
 | `tree/add_w8` | 4.3801 | 0.4571 | 3.1359 | 2.4186 | +29.7 % |
 
-**The Mac inside dot 4 to 6.** The Mac fires N / W of the run's cycles, the rest being the sum's tail (N = 2048), so its energy per cycle inside sits below busy alone; busy and idle reproduce the tail: model = (fires E_busy + (cycles - fires) E_idle) / cycles, the cycles from the forge point's `power_pt.csv`, inside from its `power_pt_modules.csv`. What is left is the Mac alone against inside, at W = 1, 8 (W = 32 has no gated power):
+**The Mac inside dot 4 to 6.** The Mac fires N / W of the run's cycles, the rest being the sum's tail (N = 2048), so its energy per cycle inside sits below busy alone; busy and idle reproduce the tail: model = (fires E_busy + (cycles - fires) E_idle) / cycles, the cycles from the forge point's `power_pt.csv`, inside from its `power_pt_modules.csv`. What is left is the Mac alone against inside, at W = 1, 8, 32 (W = 32 has no gated power):
 
 | tech | design | W | cycles | fires | busy alone pJ | model pJ | inside pJ | busy / inside | model / inside |
 |---|---|---|---|---|---|---|---|---|---|
 | nangate45 | dot 4 | 1 | 2050 | 2048 | 12.615 | 12.603 | 12.175 | 1.036 | 1.035 |
 | nangate45 | dot 4 | 8 | 258 | 256 | 101.352 | 100.566 | 96.962 | 1.045 | 1.037 |
+| nangate45 | dot 4 | 32 | 66 | 64 | 405.472 | 393.185 | 380.804 | 1.065 | 1.033 |
 | nangate45 | dot 5 | 1 | 2050 | 2048 | 12.615 | 12.603 | 12.176 | 1.036 | 1.035 |
 | nangate45 | dot 5 | 8 | 265 | 256 | 101.352 | 97.910 | 94.160 | 1.076 | 1.040 |
+| nangate45 | dot 5 | 32 | 97 | 64 | 405.472 | 267.530 | 259.283 | 1.564 | 1.032 |
 | nangate45 | dot 6 | 1 | 2051 | 2048 | 12.615 | 12.597 | 12.171 | 1.036 | 1.035 |
 | nangate45 | dot 6 | 8 | 266 | 256 | 101.352 | 97.542 | 93.731 | 1.081 | 1.041 |
+| nangate45 | dot 6 | 32 | 98 | 64 | 405.472 | 264.800 | 256.464 | 1.581 | 1.033 |
