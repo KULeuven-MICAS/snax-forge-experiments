@@ -1,8 +1,8 @@
 # The blocks alone
 
-snax-forge's catalogue datapaths characterized on their own (no csr, no ctrl), at int64, clock-gated (X79 · X87 · X88): area and dynamic energy per cycle on nangate45, for a first-order model of each block (X28–X37). Each block is emitted alone by snax-forge's `gen-block`, synthesized with the forge settings (X30) and simulated through fixed windows: busy and idle for the compute blocks, stream for LinkBuffer (X31).
+snax-forge's catalogue datapaths and the output packer characterized on their own (no csr, no ctrl), from int8 to int64, clock-gated (X79 · X87 · X88): area and dynamic energy per cycle on nangate45, for a first-order model of each block (X28–X37, X89). Each block is emitted alone by snax-forge's `gen-block`, synthesized with the forge settings (X30) and simulated through fixed windows: busy and idle for the compute blocks and the packer, stream for LinkBuffer (X31).
 
-**Start with [`char_table.md`](char_table.md):** every block, how each scales, the model's constants and the model against the forge accelerators, and the known limits. snax-forge reads `nangate45/char.json` (X37, X83 · X85), and its estimate drops the hold term, which gating makes negligible (snax-forge D154 · D172).
+**Start with [`char_table.md`](char_table.md):** every block, how each scales over lanes and types, the model's constants and the model against the forge accelerators, and the known limits. snax-forge reads `nangate45/char.json` (X37, X83 · X85), and its estimate drops the hold term, which gating makes negligible (snax-forge D154 · D172).
 
 ## The block model
 
@@ -12,7 +12,7 @@ snax-forge prices a unit's energy for a task from a few constants per technology
 |---|---|---|
 | $n_{fire}$ | the unit's fires in the task (one fire = one beat processed) | the task |
 | $T$ | the task's cycles | the task |
-| $n_{bits}$ | the unit's register bits: lanes × depth × the output's width (0 for SimdLanes) | the block's params; DC's `seq_cells` adds one clock gate per register enable (X83) |
+| $n_{bits}$ | the unit's register bits: lanes × depth × the output's width (0 for SimdLanes; a FifoPacker's held slots and counter, of which $(d_{out} - 1)/d_{out}$ of a slot and the counter load per push) | the block's params; DC's `seq_cells` adds one clock gate per register enable (X83) |
 | $e_{comb}$ | the block's combinational energy per fire | its busy window's `e_comb_pj` (LinkBuffer: its stream, per load), per point in `char.json` |
 | $e_{load}$ | energy per flop bit per cycle when the flop loads new data | the mean busy `e_bit_pj` of the blocks whose flops all load every cycle (Mac, TreeAccumulate, SerialAccumulate busy, LinkBuffer at depth 1), per sequential cell: 17.82 fJ on nangate45 |
 | $e_{hold}$ | energy per flop bit per cycle when the flop holds | the mean idle `e_bit_pj` of the registered blocks, per sequential cell: 0.0655 fJ on nangate45, a gate's idle energy shared by the bits behind it, so it spreads with the bits per gate (X33, X83) |
@@ -25,22 +25,31 @@ $$E_{unit} = n_{fire}\thinspace\big(e_{comb} + n_{bits}\thinspace(e_{load} - e_{
 
 $$E_{ctrl} = f_{ctrl}\thinspace n_{bits,ctrl}\thinspace T\thinspace e_{hold}$$
 
-$e_{fire} = e_{comb} + n_{bits}(e_{load} - e_{hold})$ is the energy of one fire on top of holding. A lane count `char.json` does not hold takes the block's `lanes_rule`: `copy` (W × the 1-lane point: SimdLanes, Mac, LinkBuffer) or `interpolate` (linear in lanes: TreeAccumulate, SerialAccumulate). Against the forge accelerators (vecmul, vsum, dot 4, dot 5 at W = 8, N = 2048; their W = 32 points have no gated power) the model's ctrl + datapath lands at 0.996 to 1.035 of the measured energy. It leaves out the csr, the memory and the streamers, which HWCOST prices from [`docs/cost_tables.md`](../../docs/cost_tables.md).
+$e_{fire} = e_{comb} + n_{bits}(e_{load} - e_{hold})$ is the energy of one fire on top of holding.
 
-Known limits (numbers in `char_table.md`): an isolated fire of an accumulator costs 25–30 % more than a back-to-back one (X34, measured before clock gating); a rarely firing sum inside a design costs its inputs' toggling every cycle, which a per-fire model does not see.
+**Types and lanes (X89).** $e_{comb}$ and the comb area are read at the unit's width pair, $w_{in}$ its widest input and $w_{out}$ its output (8, 16, 32 or 64 bits). Every compute block has its 10 pairs ($w_{out} \ge w_{in}$, the op at $w_{out}$) measured at one lane count $W_0$ (SimdLanes 1, the Mac and the folds 8; the int64 set at every lane count CHAR1 has), and over lanes it is that point plus a cost per lane $L$:
+
+$$X(W, w_{in}, w_{out}) = X(W_0, w_{in}, w_{out}) + (W - W_0)\thinspace L$$
+
+- `copy` (SimdLanes, Mac, LinkBuffer: lane copies, no fixed part): $L = X(W_0)/W_0$.
+- `interpolate` (the int64 TreeAccumulate and SerialAccumulate): linear between their measured lanes.
+- `slope` (a narrow TreeAccumulate or SerialAccumulate): $L = S_{64}\thinspace w_{in}/64$, with $S_{64} = (X(32, 64, 64) - X(8, 64, 64))/24$ the int64 cost per lane: a lane is a leaf or a mux input at $w_{in}$, while the accumulator's adder and register stay at $w_{out}$. TreeAccumulate at 8/32 and W = 32: 401.66 + 24 × 267.06 × 8/64 = 1202.9 µm² against 1214.3 measured.
+- A LinkBuffer at a narrower dtype is the int64 one times $w/64$; FifoPacker has one point per type (d_out 2, 4, 8 at int32, int16, int8). Against the forge accelerators (vecmul, vsum, dot 4, dot 5 at W = 8, N = 2048; their W = 32 points have no gated power) the model's ctrl + datapath lands at 0.996 to 1.035 of the measured energy. It leaves out the csr, the memory and the streamers, which HWCOST prices from [`docs/cost_tables.md`](../../docs/cost_tables.md).
+
+Known limits (numbers in `char_table.md`): an isolated fire of an accumulator costs 25–30 % more than a back-to-back one (X34, measured before clock gating); a rarely firing sum inside a design costs its inputs' toggling every cycle, which a per-fire model does not see. At a narrow pair with $w_{in} < w_{out}$ a register's upper bits copy the sign and toggle less, so $e_{load}$ prices it high by up to 2.2×; SerialAccumulate's narrow lanes cost more energy than $w_{in}/64$ of an int64 lane (32 % above the slope rule at 8/32, W = 32, on 0.4 pJ a fire).
 
 ## What this folder holds
 
 | Path | What it holds |
 |---|---|
 | `char_table.md` | The table (`pixi run char-table`), generated from the CSVs below and `char.json` (refused if not current). |
-| `<tech>/char.json` | The table snax-forge reads (`pixi run char-export`, X37), from the clock-gated rows: `flop` (`area_um2`, the mean of `seq_area / seq_cells`, `e_load_fj`, `e_hold_fj`), `ctrl.counter_factor` ($f_{ctrl}$), and per block its params, `lanes_rule` and points (`lanes`, `depth`, `comb_um2`, `e_comb_pj`). |
-| `<tech>/char_synth.csv`, `char_synth_modules.csv` | One row per point and per hierarchical cell (`syn.py --source char`): `synth_dc.csv`'s columns plus `datapath`, `lanes`, `depth`, `op`, `form`, `snax_forge_commit` (X30). |
+| `<tech>/char.json` | The table snax-forge reads (`pixi run char-export`, X37, X89), from the clock-gated rows: `flop` (`area_um2`, the mean of `seq_area / seq_cells`, `e_load_fj`, `e_hold_fj`, from the int64 points), `ctrl.counter_factor` ($f_{ctrl}$), and per block one entry per params (so one per type pair) with its `lanes_rule`, a narrow fold's `slope` (`comb_um2`, `e_comb_pj` per lane) and points (`lanes`, `depth`, `comb_um2`, `e_comb_pj`; FifoPacker's `flops` and `load_bits`). The points that check a rule (W = 8 SimdLanes and W = 32 folds at a narrow pair, the narrow LinkBuffers) are in `char_table.md`, not here. |
+| `<tech>/char_synth.csv`, `char_synth_modules.csv` | One row per point and per hierarchical cell (`syn.py --source char`): `synth_dc.csv`'s columns plus `datapath`, `lanes`, `depth`, `op`, `form`, `in_type`, `out_type`, `snax_forge_commit` (X30). |
 | `<tech>/char_power.csv` | One row per point and window (`pwr.py --source char`, X33): cycles, fires, the energy groups per cycle, `e_flop_pj`, `e_dyn_pj`, `e_bit_pj`. |
 | `<tech>/reports/<point>.zip`, `power_reports/<point>.zip` | DC's kept reports; PT's reports per window and the point's `tb.json` (X51). |
 | `runs/` | The run notes, one per round. |
 
-The points are `char/points.json`: 27 blocks at int64, named `<block>/<case>_w<W>` (`lanes/add_w8`, `mac/acc_w32`, `tree/add_w4`, `serial/sum_w16`, `link/d4_w1`; X29).
+The points are `char/points.json`: 27 blocks at int64, named `<block>/<case>_w<W>` (`lanes/add_w8`, `mac/acc_w32`, `tree/add_w4`, `serial/sum_w16`, `link/d4_w1`; X29), and 54 narrow points named with their pair, `<block>/<case>_w<W>_i<in>_i<out>` (`lanes/mul_w1_i8_i32`, `mac/acc_w8_i16_i64`), `link/d4_w1_i<w>` and `pack/d<d_out>_i<w>` (X89).
 
 ## How to rebuild
 

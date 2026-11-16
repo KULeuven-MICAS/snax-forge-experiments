@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse. It says what was decided, why, and where the detail lives, in a few short bullets. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; the text of a removed entry is in git history.
-- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X89**.
+- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X90**.
 
 Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X25's diagnostic), X26, X27 and X43 (SYN1's and SYN2's analysis code and local runs, deleted), X36 (a draft block table, now X37), X46 (one comparison file, now X64), X35 (the LinkBuffer stream cheaper per flop than a held flop, a limit of the ungated table, gone with it).
 
@@ -204,7 +204,7 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X29 — The block grid
 
-- **Decided:** 27 points at int64: ElementwiseLanes (now SimdLanes) add and mul at W = 1, 8, 32; the accumulating Mac at W = 1, 8, 32; TreeAccumulate at W = 1–32; SerialAccumulate at W = 2–32; LinkBuffer at D = 1–16 (W = 1) and D = 1 at W = 8, 32.
+- **Decided:** 27 points at int64: SimdLanes add and mul at W = 1, 8, 32; the accumulating Mac at W = 1, 8, 32; TreeAccumulate at W = 1–32; SerialAccumulate at W = 2–32; LinkBuffer at D = 1–16 (W = 1) and D = 1 at W = 8, 32. Beside them the type axis's points (X89).
 - **Why:** the blocks and forms forge's accelerators use, enough points for a first-order model.
 - **Where:** `char/points.json`.
 
@@ -240,9 +240,15 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X37 — char.json, the block model snax-forge reads
 
-- **Decided:** `pixi run char-export` writes `results/char/<tech>/char.json` from the clock-gated rows: the flop constants (area, e_load, e_hold, per sequential cell, X83), control's counter factor, and per block its comb area and comb energy per fire, with a rule for other lane counts (`copy` or `interpolate`). The counter factor is the mean, over the tier-done forge points with a power row, of `ctrl/ctrl`'s energy per cycle over its sequential cells (`seq_um2` / `flop.area_um2`, rounded) times e_hold: 41 points, as the 7 W = 32 bundles made before snax-forge D168 have no gated power.
+- **Decided:** `pixi run char-export` writes `results/char/<tech>/char.json` from the clock-gated rows: the flop constants (area, e_load, e_hold, per sequential cell, X83, from the int64 points), control's counter factor, and per block and type pair its comb area and comb energy per fire, with a rule for other lane counts (`copy`, `interpolate`, or a narrow fold's `slope`, X89). The counter factor is the mean, over the tier-done forge points with a power row, of `ctrl/ctrl`'s energy per cycle over its sequential cells (`seq_um2` / `flop.area_um2`, rounded) times e_hold: 41 points, as the 7 W = 32 bundles made before snax-forge D168 have no gated power.
 - **Why:** a model snax-forge evaluates from a block's params and a task's fires and cycles, with a few constants; on the gated rows it lands within 0.996 to 1.035 of the forge accelerators' kernels at W = 8 (0.99 to 1.04 ungated).
 - **Where:** `results/char/README.md`, "The block model"; `results/runs/2026-11-16_cg5_r2.md`.
+
+### X89 — The type axis: each pair at one lane count, one rule over lanes
+
+- **Decided:** every compute block is measured at its 10 width pairs (w_in, w_out in 8, 16, 32, 64, w_out ≥ w_in, the op at w_out) at one lane count W0: SimdLanes add and mul at W0 = 1, the accumulating Mac, TreeAccumulate and SerialAccumulate at W0 = 8; each input port is driven at its own width with rand64's low bits, outputs checked at theirs against D175's arithmetic; FifoPacker (one lane in, one word out) at int32, int16, int8 with busy (a push every cycle) and idle windows. Over lanes a block is its pair's point plus a cost per lane: the point per lane for the lane-copy blocks (`copy`), and for a narrow fold the int64 cost per lane between W = 8 and 32 times w_in / 64 (`slope`). A narrow LinkBuffer is the int64 one times w / 64. The flop constants stay the int64 points'.
+- **Why:** DC removes the logic on copied sign bits, so a block's comb follows the bits it computes (an add about w_in, a multiply about w_in x min(2 w_in, w_out)) in a way that differs per block: scaling the other blocks by SimdLanes' ratios missed by up to 2x, while each block's own pairs need about 20 minutes of DC. A fold's lane is a leaf or a mux input at w_in while its accumulator stays at w_out, which the int64 shape over lanes does not carry (0.67 to 0.78 of the measured area at W = 32): the slope rule lands within 1 to 5 % on area and 2 to 32 % on energy (SerialAccumulate's, on 0.4 pJ a fire).
+- **Where:** `results/char/char_table.md`, "The type axis"; `power.md`, "Char"; `results/char/runs/2026-11-16_char2_r2.md`, `_r4.md`.
 
 ### X52 · X82 — The streamer reader and the sparse interconnect, characterized
 
