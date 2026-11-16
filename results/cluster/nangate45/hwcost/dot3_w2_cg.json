@@ -1,11 +1,11 @@
 {
  "W": 2,
  "cost": {
-  "area": 494877.2837672537,
-  "area_design": 62150.88376725366,
-  "energy": 63.493307920075,
+  "area": 494906.66992867104,
+  "area_design": 62180.26992867101,
+  "energy": 63.3472509602,
   "extrapolated": [],
-  "kernel_energy": 25.504519491074998,
+  "kernel_energy": 25.358462531199997,
   "memory": {
    "area": 432726.4,
    "banks": 32,
@@ -23,10 +23,10 @@
   "parts": {
    "control": {
     "area": 709.714652,
-    "energy": 0.520308239875
+    "energy": 0.3742512800000001
    },
    "crossbar": {
-    "area": 25297.005259253652,
+    "area": 25326.39142067101,
     "energy": 11.277340745
    },
    "datapath": {
@@ -44,15 +44,14 @@
   },
   "source": {
    "clk_gate": "1",
-   "ctrl": "ctrl ungated: counter_factor is char.json's x char.json's e_hold / this e_hold (CG2, X83)",
-   "snax_forge": "e8611d51d5653e4c6e246184831136ec363727f5",
-   "snax_forge_experiments": "cd90a2c5a2619a32e47d39163ab28fa0b8fe8d0c",
+   "snax_forge": "04165576384c4f3031e3b2d27d0ee9c058498b51",
+   "snax_forge_experiments": "aa790f437294f1dc2597d5b7a7a76676670cd5f6",
    "stimulus": "rand64 seed 0"
   },
   "tech": "nangate45",
   "xbar": {
    "accesses": 4097,
-   "area": 25297.005259253652,
+   "area": 25326.39142067101,
    "banks": 32,
    "e_access": 2.752585,
    "energy": 11.277340745,
@@ -70,6 +69,6 @@
   "N=2048"
  ],
  "snax_forge_clean": true,
- "snax_forge_commit": "f074aa8aeba3e37812210cfb272d45d8ec1fccc6",
+ "snax_forge_commit": "217c0bea34e6095c2a183c25e513510aed208b43",
  "tech": "nangate45"
 }
