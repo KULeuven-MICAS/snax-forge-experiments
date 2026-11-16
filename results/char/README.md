@@ -17,7 +17,7 @@ snax-forge prices a unit's energy for a task from a few constants per technology
 | $e_{load}$ | energy per flop bit per cycle when the flop loads new data | the mean busy `e_bit_pj` of the blocks whose flops all load every cycle (Mac, TreeAccumulate, SerialAccumulate busy, LinkBuffer at depth 1), per sequential cell: 17.82 fJ on nangate45 |
 | $e_{hold}$ | energy per flop bit per cycle when the flop holds | the mean idle `e_bit_pj` of the registered blocks, per sequential cell: 0.0655 fJ on nangate45, a gate's idle energy shared by the bits behind it, so it spreads with the bits per gate (X33, X83) |
 | $n_{bits,ctrl}$ | the control unit's sequential cells | the design |
-| $f_{ctrl}$ | ctrl's energy per cycle over its flops × $e_{hold}$ | the mean over the 41 tier-done forge points with a power row (the 7 W = 32 bundles made before snax-forge D168 have none): 82.87 on nangate45, spread 49 to 147 |
+| $f_{ctrl}$ | ctrl's energy per cycle over its flops × $e_{hold}$ | the mean over the 48 int64 tier-done forge points: 83.20 on nangate45, spread 43 to 148 |
 
 A flop costs $e_{hold}$ every cycle and $e_{load} - e_{hold}$ more on the cycles it loads; a block's logic costs $e_{comb}$ per fire. So a unit's energy over a task, and its control unit's, are
 
@@ -34,7 +34,7 @@ $$X(W, w_{in}, w_{out}) = X(W_0, w_{in}, w_{out}) + (W - W_0)\thinspace L$$
 - `copy` (SimdLanes, Mac, LinkBuffer: lane copies, no fixed part): $L = X(W_0)/W_0$.
 - `interpolate` (the int64 TreeAccumulate and SerialAccumulate): linear between their measured lanes.
 - `slope` (a narrow TreeAccumulate or SerialAccumulate): $L = S_{64}\thinspace w_{in}/64$, with $S_{64} = (X(32, 64, 64) - X(8, 64, 64))/24$ the int64 cost per lane: a lane is a leaf or a mux input at $w_{in}$, while the accumulator's adder and register stay at $w_{out}$. TreeAccumulate at 8/32 and W = 32: 401.66 + 24 × 267.06 × 8/64 = 1202.9 µm² against 1214.3 measured.
-- A LinkBuffer at a narrower dtype is the int64 one times $w/64$; FifoPacker has one point per type (d_out 2, 4, 8 at int32, int16, int8). Against the forge accelerators (vecmul, vsum, dot 4, dot 5 at W = 8, N = 2048; their W = 32 points have no gated power) the model's ctrl + datapath lands at 0.996 to 1.035 of the measured energy. It leaves out the csr, the memory and the streamers, which HWCOST prices from [`docs/cost_tables.md`](../../docs/cost_tables.md).
+- A LinkBuffer at a narrower dtype is the int64 one times $w/64$; FifoPacker has one point per type (d_out 2, 4, 8 at int32, int16, int8). Against the forge accelerators (vecmul, vsum, dot 4, dot 5 at W = 8 and 32, N = 2048) the model's ctrl + datapath lands at 0.997 to 1.035 of the measured energy; against their narrow twins (int8 and int16 in, dot 3 at W = 8 and 32) at 0.92 to 1.40, high on int8 (1.24 to 1.40), and their datapath area at 0.99 to 1.12. It leaves out the csr, the memory and the streamers, which HWCOST prices from [`docs/cost_tables.md`](../../docs/cost_tables.md).
 
 Known limits (numbers in `char_table.md`): an isolated fire of an accumulator costs 25–30 % more than a back-to-back one (X34, measured before clock gating); a rarely firing sum inside a design costs its inputs' toggling every cycle, which a per-fire model does not see. At a narrow pair with $w_{in} < w_{out}$ a register's upper bits copy the sign and toggle less, so $e_{load}$ prices it high by up to 2.2×; SerialAccumulate's narrow lanes cost more energy than $w_{in}/64$ of an int64 lane (32 % above the slope rule at 8/32, W = 32, on 0.4 pJ a fire).
 

@@ -246,9 +246,9 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X37 — char.json, the block model snax-forge reads
 
-- **Decided:** `pixi run char-export` writes `results/char/<tech>/char.json` from the clock-gated rows: the flop constants (area, e_load, e_hold, per sequential cell, X83, from the int64 points), control's counter factor, and per block and type pair its comb area and comb energy per fire, with a rule for other lane counts (`copy`, `interpolate`, or a narrow fold's `slope`, X89). The counter factor is the mean, over the tier-done forge points with a power row, of `ctrl/ctrl`'s energy per cycle over its sequential cells (`seq_um2` / `flop.area_um2`, rounded) times e_hold: 41 points, as the 7 W = 32 bundles made before snax-forge D168 have no gated power.
-- **Why:** a model snax-forge evaluates from a block's params and a task's fires and cycles, with a few constants; on the gated rows it lands within 0.996 to 1.035 of the forge accelerators' kernels at W = 8 (0.99 to 1.04 ungated).
-- **Where:** `results/char/README.md`, "The block model"; `results/runs/2026-11-16_cg5_r2.md`.
+- **Decided:** `pixi run char-export` writes `results/char/<tech>/char.json` from the clock-gated rows: the flop constants (area, e_load, e_hold, per sequential cell, X83, from the int64 points), control's counter factor, and per block and type pair its comb area and comb energy per fire, with a rule for other lane counts (`copy`, `interpolate`, or a narrow fold's `slope`, X89). The counter factor is the mean, over the tier-done forge points with a power row, of `ctrl/ctrl`'s energy per cycle over its sequential cells (`seq_um2` / `flop.area_um2`, rounded) times e_hold: the 48 int64 points (forge/points.json's tier-done points without a `types=` set).
+- **Why:** a model snax-forge evaluates from a block's params and a task's fires and cycles, with a few constants; on the gated rows it lands within 0.997 to 1.035 of the forge accelerators' kernels at W = 8 and 32 (0.99 to 1.04 ungated); on the narrow ones (int8 and int16 in) at 0.92 to 1.40 in energy, 0.99 to 1.12 in area (X89).
+- **Where:** `results/char/README.md`, "The block model"; `results/runs/2026-11-16_cg5_r2.md`, `2026-11-16_char2_r7.md`.
 
 ### X89 — The type axis: each pair at one lane count, one rule over lanes
 
