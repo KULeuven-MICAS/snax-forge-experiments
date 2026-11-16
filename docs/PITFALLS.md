@@ -94,6 +94,7 @@ IDs are never reused; retired: LIB1, LIB3, LIB4 and PT5 (the 15 nm library, remo
 - **E5. snax-forge's module names carry the design's name.** `snax_forge_<design>_shell_wrapper` and the renamed lanes block make every file differ; compare with `forge/sv_diff.py`, which masks them.
 - **E6. hls-exercises' CSVs have CRLF line ends, and `Path.read_text` hides them.** Edit them as bytes or with `newline=""`, and check `git diff --stat` before committing.
 - **E7. A snax-forge submodule off main's pin marks every bundle dirty.** A squash merge moves the pin, not the submodule's checkout; run `git -C ../snax-forge submodule update <sub>` before bundling.
+- **E8. A forge power run checks `sim/ref.py` against the kernels of whatever branch `../snax-forge` is on.** `forge/query.py ref` runs the checkout's kernel body, so a branch that changes one (PACK1a's `ACC = int32` in axpy and matadd) fails every run of that kernel; run forge power with snax-forge on main and record its branch and HEAD (CG5 R1).
 
 ## snax_cluster's generators
 
