@@ -6,7 +6,7 @@
 The committed nangate45 CSVs are copied into a temporary results/char/ and char_export.py's main() writes char.json
 there. Checked: it equals the committed char.json; flop.area_um2 is the mean of seq_area / seq_cells over the int64
 points (a clock gate counts as a sequential cell, so it is below a DFFR's area); the control factor is the mean over
-the tier-done forge points with a power row (the W = 32 bundles made before snax-forge D168 have none) of ctrl's e_dyn
+the 48 int64 tier-done forge points (the narrow ones, a types= set, are T7's check) of ctrl's e_dyn
 over its cells x e_hold; E_ctrl is that factor x cells x cycles x e_hold; the type axis's rules (X89): copy from a
 pair's point at W0, a narrow fold's slope, a narrow LinkBuffer's width, the packer's bits, the check points left out.
 Standard library only.
@@ -29,8 +29,7 @@ import char_table as ct  # noqa: E402
 
 TECH = "nangate45"
 DFFR_UM2 = 5.32                 # NangateOpenCellLibrary's DFFR_X1
-NO_POWER = {"done/dot/forge2_w32", "done/dot/forge4_w32", "done/dot/forge5_w32", "done/dot/forge6_w32",
-            "done/vecadd/forge_w32", "done/vecmul/forge_w32", "done/vsum/forge_w32"}
+NARROW = {"done/vecmul/forge_w8_i8", "done/dot/forge3_w32_i8"}
 
 
 class TestCharExport(unittest.TestCase):
@@ -71,7 +70,8 @@ class TestCharExport(unittest.TestCase):
         cf = ce.counter_factor(TECH, area, hold)
         self.assertEqual(cf["n"], ce.FORGE_POINTS)
         self.assertTrue(all(p.startswith("done/") for p in cf["points"]))
-        self.assertFalse(NO_POWER & set(cf["points"]))
+        self.assertFalse(NARROW & set(cf["points"]))
+        self.assertIn("done/dot/forge4_w32", cf["points"])
         for p, v in cf["points"].items():
             self.assertAlmostEqual(v, cf["e_ctrl"][p] / (cf["bits"][p] * hold / 1000), places=9)
         self.assertEqual(self.j["ctrl"]["counter_factor"], round(sum(cf["points"].values()) / cf["n"], 2))

@@ -31,8 +31,16 @@ PACKER = {"inLanes": {"type": "int", "min": 1}, "laneType": {"type": "dtype", "v
           "words": {"type": "int", "min": 1}}
 COMB = ("comb_um2", "e_comb_pj")
 LOAD_KINDS = ("Mac", "TreeAccumulate", "SerialAccumulate")    # busy: every flop loads every cycle
-# the tier-done points with a gated power row: 48 but the 7 W = 32 bundles made before snax-forge D168 (X37)
-FORGE_POINTS = 41
+# the int64 tier-done points, every one with a gated power row (X37); the narrow ones (a types= set) are T7's check
+FORGE_POINTS = 48
+FORGE_LIST = ct.ROOT / "forge" / "points.json"
+
+
+def forge_int64() -> set[str]:
+    """forge/points.json's tier-done points at int64: no `types=` among their sets."""
+    pts = json.loads(FORGE_LIST.read_text())
+    return {p["point"] for p in pts if p["point"].startswith("done/")
+            and not any(s.startswith("types=") for s in p.get("sets", []))}
 
 
 def fail(msg: str) -> None:
@@ -121,10 +129,10 @@ def is_ctrl(path: str) -> bool:
 
 
 def counter_factor(tech: str, area: float, hold_fj: float) -> dict:
-    """f_ctrl, the mean over the tier-done forge points with a power row of ctrl/ctrl's e_dyn per cycle over its
-    cells x e_hold."""
+    """f_ctrl, the mean over the int64 tier-done forge points of ctrl/ctrl's e_dyn per cycle over its cells x
+    e_hold."""
     ok = {r["point"] for r in ct.read_csv(ct.RES / "forge" / tech / "power_pt.csv")
-          if r["status"] == "ok" and r["size"] == f"n{ct.N}"}
+          if r["status"] == "ok" and r["size"] == f"n{ct.N}"} & forge_int64()
     e_ctrl = {r["point"]: float(r["e_dyn_pj"]) for r in ct.read_csv(ct.RES / "forge" / tech / "power_pt_modules.csv")
               if is_ctrl(r["path"]) and r["point"] in ok and r["point"].startswith("done/")}
     bits = {p: n for p, n in ctrl_bits(tech, area).items() if p in e_ctrl}

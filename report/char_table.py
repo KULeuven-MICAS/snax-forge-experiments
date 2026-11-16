@@ -360,8 +360,8 @@ def types_section(D: dict, J: dict) -> list[str]:
 # ---------------------------------------------------------------- the model (char.json against the forge points)
 MODEL_DESIGNS = [("vecmul", "done/vecmul/forge_w{}"), ("vsum", "done/vsum/forge_w{}"), ("dot 4", "done/dot/forge4_w{}"),
                  ("dot 5", "done/dot/forge5_w{}")]
-MODEL_WS = (8,)                 # W = 32's vecmul, vsum, dot 4 and dot 5 have no gated power (bundles before D168)
-LIMIT_MAC_WS = (1, 8)
+MODEL_WS = (8, 32)
+LIMIT_MAC_WS = (1, 8, 32)
 
 
 def unit_of(design: str, top: str) -> str:
@@ -401,7 +401,7 @@ def model_constants(J: dict, S: dict) -> list[str]:
             "SerialAccumulate busy, LinkBuffer depth 1 stream); e_hold the mean idle e_bit (as above); the counter "
             "factor, per tier-done forge point ctrl/ctrl's e_dyn per cycle (`power_pt_modules.csv`) over its sequential "
             f"cells x e_hold, the mean over the {S[TECHS[0]]['ctrl']['n']} points with a power row rounded to two "
-            "decimals (tier done's 48 but the 7 W = 32 bundles made before snax-forge D168, which have none). "
+            "decimals (the 48 int64 tier-done points, forge/points.json's without a `types=` set). "
             "`synth_dc_modules.csv` has no per-module `seq_cells`: ctrl's cells are its `seq_um2` / `flop.area_um2`, "
             "rounded. The factor spreads widely: a gated control unit's energy follows its counters' activity more than "
             "its cell count."]
@@ -444,11 +444,15 @@ def syn2_units(t: str, D: dict, point: str, w: int, mods: list[dict], top: str) 
             fail(f"{t}: {point}: {m['path']}: {len(blk)} block cells")
         chars = [p for p, v in D[t].items() if v["params"].get("lanes") == w
                  and re.fullmatch(rf"{v['synth']['top']}(_\d+)?", blk[0]["design"])]
+        if not chars:   # a narrow block at lanes no char point has: the same block at other lanes
+            lanes_free = lambda x: re.sub(r"_n\d+", "", x)  # noqa: E731
+            chars = sorted(p for p, v in D[t].items()
+                           if re.fullmatch(rf"{lanes_free(v['synth']['top'])}(_\d+)?", lanes_free(blk[0]["design"])))[:1]
         if len(chars) != 1:
             fail(f"{t}: {point}: {blk[0]['design']}: {len(chars)} char points at W = {w}")
         v = D[t][chars[0]]
         out.append({"k": int(mm.group(1)), "name": unit, "design": blk[0]["design"], "char": chars[0],
-                    "datapath": v["datapath"], "params": v["params"], "e": float(blk[0]["e_dyn_pj"])})
+                    "datapath": v["datapath"], "params": {**v["params"], "lanes": w}, "e": float(blk[0]["e_dyn_pj"])})
     return sorted(out, key=lambda u: u["k"])
 
 
@@ -472,45 +476,86 @@ def fires(t: str, point: str, w: int, config: str, units: list[dict], cat: dict)
     return out
 
 
-def model_syn2(D: dict, J: dict) -> tuple[list[str], list[str]]:
+def narrow_designs() -> list[tuple[str, str, int]]:
+    """(label, forge point, W) of forge/points.json's narrow tier-done points (a types= set): T7's check."""
+    out = []
+    for p in json.loads((ROOT / "forge" / "points.json").read_text()):
+        types = [x.removeprefix("types=") for x in p.get("sets", []) if x.startswith("types=")]
+        if types and p["point"].startswith("done/"):
+            out.append((f"{p['recipe']} {types[0]}", p["point"], p["W"]))
+    return out
+
+
+def model_syn2(D: dict, J: dict, designs: list[tuple[str, str, int]] | None = None) -> tuple[list[str], list[str]]:
+    """The model against the forge points `designs` ((label, point, W); MODEL_DESIGNS at MODEL_WS by default)."""
     import char_export as ce
     cat = ce.catalogue_at(next(iter(D[TECHS[0]].values()))["synth"]["snax_forge_commit"])
-    drows, urows = [], []
+    if designs is None:
+        designs = [(name, pat.format(w), w) for name, pat in MODEL_DESIGNS for w in MODEL_WS]
+    drows, urows, prows = [], [], []
     for t in TECHS:
         j = J[t]
         pwr = {r["point"]: r for r in read_csv(RES / "forge" / t / "power_pt.csv") if r["size"] == f"n{N}"}
         mods = read_csv(RES / "forge" / t / "power_pt_modules.csv")
         bits = ce.ctrl_bits(t, j["flop"]["area_um2"])
-        for name, pat in MODEL_DESIGNS:
-            for w in MODEL_WS:
-                p = pat.format(w)
-                cyc = int(pwr[p]["cycles"])
-                top = pwr[p]["top"]
-                units = syn2_units(t, D, p, w, mods, top)
-                nf = fires(t, p, w, pwr[p]["config"], units, cat)
-                per = {m["path"]: float(m["e_dyn_pj"]) for m in mods if m["point"] == p}
-                dp_s, ctrl_s = per[f"{top}/dp"] * cyc, per[f"{top}/ctrl/ctrl"] * cyc
-                dp_m = dp_r = 0.0
-                for u, n in zip(units, nf):
-                    nb = ce.n_bits(u["datapath"], u["params"])
-                    fire_part = n * ce.e_fire(j, u["datapath"], u["params"])
-                    hold_part = cyc * ce.e_hold_pj(j, nb)
-                    um, us = fire_part + hold_part, u["e"] * cyc
-                    dp_m += um
-                    dp_r += ce.e_unit(j, u["datapath"], u["params"], n, cyc, rule_only=True)
-                    urows.append([t, name, w, f"{u['name']}: {u['datapath']}", n, nb, cyc, f(fire_part / 1000, 3),
-                                  f(hold_part / 1000, 3), f(um / 1000, 3), f(us / 1000, 3), f"{um / us:.3f}"])
-                cm = ce.e_ctrl(j, bits[p], cyc)
-                km, ks, kr = dp_m + cm, dp_s + ctrl_s, dp_r + cm
-                drows.append([t, name, w, ", ".join(f"{u['datapath']} {n}" for u, n in zip(units, nf)), cyc, bits[p],
-                              f(dp_m / 1000, 3), f(dp_s / 1000, 3), f"{dp_m / dp_s:.3f}",
-                              f(cm / 1000, 3), f(ctrl_s / 1000, 3), f"{cm / ctrl_s:.3f}",
-                              f(km / 1000, 3), f(ks / 1000, 3), f"{km / ks:.3f}", f"{kr / ks:.3f}"])
+        for name, p, w in designs:
+            cyc = int(pwr[p]["cycles"])
+            top = pwr[p]["top"]
+            units = syn2_units(t, D, p, w, mods, top)
+            nf = fires(t, p, w, pwr[p]["config"], units, cat)
+            per = {m["path"]: float(m["e_dyn_pj"]) for m in mods if m["point"] == p}
+            dp_s, ctrl_s = per[f"{top}/dp"] * cyc, per[f"{top}/ctrl/ctrl"] * cyc
+            dp_m = dp_r = 0.0
+            for u, n in zip(units, nf):
+                nb = ce.n_bits(u["datapath"], u["params"])
+                fire_part = n * ce.e_fire(j, u["datapath"], u["params"])
+                hold_part = cyc * ce.e_hold_pj(j, nb)
+                um, us = fire_part + hold_part, u["e"] * cyc
+                dp_m += um
+                dp_r += ce.e_unit(j, u["datapath"], u["params"], n, cyc, rule_only=True)
+                urows.append([t, name, w, f"{u['name']}: {u['datapath']}", n, nb, cyc, f(fire_part / 1000, 3),
+                              f(hold_part / 1000, 3), f(um / 1000, 3), f(us / 1000, 3), f"{um / us:.3f}"])
+            cm = ce.e_ctrl(j, bits[p], cyc)
+            km, ks, kr = dp_m + cm, dp_s + ctrl_s, dp_r + cm
+            drows.append([t, name, w, ", ".join(f"{u['datapath']} {n}" for u, n in zip(units, nf)), cyc, bits[p],
+                          f(dp_m / 1000, 3), f(dp_s / 1000, 3), f"{dp_m / dp_s:.3f}",
+                          f(cm / 1000, 3), f(ctrl_s / 1000, 3), f"{cm / ctrl_s:.3f}",
+                          f(km / 1000, 3), f(ks / 1000, 3), f"{km / ks:.3f}", f"{kr / ks:.3f}"])
+            for path, e_pk in sorted(per.items()):     # a packed output's packer, beside the kernel (D174)
+                if not re.fullmatch(rf"{top}/\w+_packer", path):
+                    continue
+                design = next(m["design"] for m in mods if m["point"] == p and m["path"] == path)
+                mm = re.fullmatch(r"FifoPacker_n(\d+)_i(\d+)_w(\d+)", design)
+                pp = {"inLanes": int(mm.group(1)), "laneType": f"int{mm.group(2)}", "words": int(mm.group(3))}
+                pushes = int(dict(x.split("=") for x in pwr[p]["config"].split())["JOBS"])
+                pm = pushes * ce.e_fire(j, "FifoPacker", pp) + cyc * ce.e_hold_pj(j, ce.n_bits("FifoPacker", pp))
+                prows.append([t, name, w, path.removeprefix(top + "/"), pushes, cyc, f(pm / 1000, 4),
+                              f(e_pk * cyc / 1000, 4), f"{pm / (e_pk * cyc):.3f}"])
     dt = table(["tech", "design", "W", "units, n_fire", "C_acc", "ctrl bits", "datapath model", "datapath forge", "ratio",
                 "ctrl model", "ctrl forge", "ratio", "kernel model", "kernel forge", "ratio", "ratio, rules only"], drows)
     ut = table(["tech", "design", "W", "unit", "n_fire", "n_bits", "C_acc", "n_fire e_fire", "C_acc n_bits e_hold",
                 "model", "forge", "ratio"], urows)
-    return [dt], [ut]
+    pt = table(["tech", "design", "W", "packer", "pushes", "C_acc", "model nJ", "forge nJ", "ratio"], prows) if prows else ""
+    return [dt], [ut], [pt]
+
+
+def model_area(D: dict, J: dict, designs: list[tuple[str, str, int]]) -> list[str]:
+    """Each design's datapath area against the model's: per unit its comb at its pair and lanes plus its bits x the
+    flop area (`synth_dc_modules.csv`'s `dp`)."""
+    import char_export as ce
+    rows = []
+    for t in TECHS:
+        j = J[t]
+        mods = read_csv(RES / "forge" / t / "power_pt_modules.csv")
+        syn = {r["point"]: float(r["area_um2"]) for r in read_csv(RES / "forge" / t / "synth_dc_modules.csv")
+               if r["path"] == "dp"}
+        pwr = {r["point"]: r for r in read_csv(RES / "forge" / t / "power_pt.csv") if r["size"] == f"n{N}"}
+        for name, p, w in designs:
+            units = syn2_units(t, D, p, w, mods, pwr[p]["top"])
+            m = sum(ce.comb_at(j, u["datapath"], u["params"], "comb_um2")
+                    + ce.n_bits(u["datapath"], u["params"]) * j["flop"]["area_um2"] for u in units)
+            rows.append([t, name, w, f(m, 1), f(syn[p], 1), f"{m / syn[p]:.3f}"])
+    return [table(["tech", "design", "W", "datapath model µm²", "datapath forge µm²", "ratio"], rows)]
 
 
 def main() -> int:
@@ -554,7 +599,8 @@ def main() -> int:
         L += [f"## {dp}", "", table(head, rows), "", "How it scales:", "", *scaling(D, prefix), ""]
     J, S = model_json(D, points)
     L += ["## The type axis", "", *types_section(D, J)]
-    designs, units = model_syn2(D, J)
+    designs, units, _ = model_syn2(D, J)
+    n_designs, n_units, n_packers = model_syn2(D, J, narrow_designs())
     L += ["## Model", "",
           "The table snax-forge reads is `results/char/<tech>/char.json` (`report/char_export.py`, `pixi run "
           "char-export`; X37). Registers are bits: a flop that loads costs e_load per cycle, one that holds e_hold; a "
@@ -577,7 +623,7 @@ def main() -> int:
           "lane (the type axis, above); a LinkBuffer at a narrower dtype is the int64 one x w / 64.", "",
           *model_points(D, J), "",
           "### Against the forge points", "",
-          f"vecmul, vsum, dot 4 and dot 5 at W = {', '.join(map(str, MODEL_WS))} (their W = 32 points have no gated power), "
+          f"vecmul, vsum, dot 4 and dot 5 at W = {', '.join(map(str, MODEL_WS))}, "
           f"n = {N}, energy per task in nJ. Per design its units in "
           "block order, each firing along the chain from `power_pt.csv`'s config: the sink gives JOBS results, a unit "
           "before it the sink's T per result, and a unit fires its results x its T x its span (blocks.json's; "
@@ -592,7 +638,20 @@ def main() -> int:
           "The model leaves out the csr, the memory and the streamers. A sum that fires once (dot 4's) or W times "
           "(dot 5's) costs, inside its design, its inputs' toggling every cycle, which a per-fire model does not see; "
           "it is under 3 % of the kernel. dot 4's sum alone keeps the feedback adder its tied `first` removes inside "
-          "dot 4 (the free `first`, below): it costs area, which this check does not compare.", ""]
+          "dot 4 (the free `first`, below): it costs area, which this check does not compare.", "",
+          "### Against the narrow forge points", "",
+          "The forge points of `forge/points.json` with a `types=` set (int8 or int16 in, int32 out and ACC), the same "
+          "check: each unit priced at its width pair from char.json (a lanes count no char point has takes the "
+          "pair's rule), n = 2048, energy per task in nJ (X89).", "",
+          *n_designs, "",
+          "Per unit:", "", *n_units, "",
+          "The packed output's packer, outside the datapath, a push per result: the model prices its pushes; inside a "
+          "design it also sees the unit before it change every cycle, which a per-push model does not see (as a sum "
+          "fed by another unit).", "",
+          *n_packers, "",
+          "Area: each design's datapath against the model's, every unit at its pair and lanes (comb, and its bits x "
+          "the flop area), the int64 designs beside them:", "",
+          *model_area(D, J, [(n, pat.format(w), w) for n, pat in MODEL_DESIGNS for w in MODEL_WS] + narrow_designs()), ""]
     L += ["## Known limits", "",
           "**The free `first`.** A TreeAccumulate alone has its `first` driven; inside dot 4 it is tied and firtool "
           "folds it (R0, `results/char/runs/2026-11-03_char1_r0.md`), so the block alone is larger than dot 4's sum by:",
