@@ -401,9 +401,10 @@ def port_guard(point: str) -> str:
 
 
 def char_extra(point: str) -> dict:
-    """A char row's CHAR_COLUMNS from point.json: the datapath, the params that apply (FifoPacker's inLanes as
-    lanes), a Mac's form, and the type pair: in_type the widest input (SimdLanes' and Mac's inTypes, a fold's
-    inType), out_type the output's (outType); LinkBuffer's dtype and FifoPacker's laneType for both."""
+    """A char row's CHAR_COLUMNS from point.json: the datapath, the params that apply (FifoPacker's inLanes and
+    FifoSlicer's outLanes as lanes), a Mac's form, and the type pair: in_type the widest input (SimdLanes' and Mac's
+    inTypes, a fold's inType), out_type the output's (outType); LinkBuffer's dtype and a stream block's laneType for
+    both."""
     pj = forge_json(point, "point.json")
     params = pj.get("params", {})
     form = ""
@@ -412,7 +413,7 @@ def char_extra(point: str) -> dict:
     bits = lambda t: int(t.removeprefix("u").removeprefix("int"))  # noqa: E731
     one = params.get("dtype") or params.get("laneType")
     ins = params.get("inTypes") or [params.get("inType") or one or ""]
-    return {"datapath": pj.get("datapath", ""), "lanes": params.get("lanes", params.get("inLanes", "")),
+    return {"datapath": pj.get("datapath", ""), "lanes": params.get("lanes", params.get("inLanes", params.get("outLanes", ""))),
             "depth": params.get("depth", ""), "op": params.get("op", ""), "form": form,
             "in_type": max(ins, key=lambda t: bits(t) if t else 0), "out_type": params.get("outType") or one or "",
             "snax_forge_commit": pj.get("snax_forge_commit", "")}
