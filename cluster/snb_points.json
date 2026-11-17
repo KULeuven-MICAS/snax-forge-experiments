@@ -23,6 +23,7 @@
     "dot":    {"sizes": {"N": 2048}, "n_op": "2*N"},
     "rowsum": {"sizes": {"M": 16, "N": 128}, "n_op": "M*(N-1)"},
     "matvec": {"sizes": {"M": 16, "N": 512}, "n_op": "2*M*N"},
-    "matadd": {"sizes": {"M": 32, "N": 64}, "n_op": "M*N"}
+    "matadd": {"sizes": {"M": 32, "N": 64}, "n_op": "M*N"},
+    "mvt":    {"sizes": {"M": 64, "N": 64}, "n_op": "4*M*N"}
   }
 }
