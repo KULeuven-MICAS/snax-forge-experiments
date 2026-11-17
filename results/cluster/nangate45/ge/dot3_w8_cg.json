@@ -2,7 +2,7 @@
  "tech": "nangate45",
  "source": {
   "snax_forge": "04165576384c4f3031e3b2d27d0ee9c058498b51",
-  "snax_forge_experiments": "aa790f437294f1dc2597d5b7a7a76676670cd5f6",
+  "snax_forge_experiments": "508e1d000dbbf34835e768116463e59b2248aa65",
   "stimulus": "rand64 seed 0",
   "clk_gate": "1"
  },
@@ -16,7 +16,8 @@
    "mul_b": {"write": false, "channels": 8, "e_beat": 22.49923},
    "sum_out": {"write": true, "channels": 1, "e_beat": 3.229712}
   },
-  "e_access": 2.752585,
+  "e_xbar_ro": 1.8392993176799999,
+  "e_xbar_wo": 1.454512707945,
   "e_rd": 3.53819,
   "e_wr": 6.4677
  },
@@ -488,10 +489,10 @@
      "datapath": 24.1695160832,
      "control": 0.09493203200000001,
      "streamers": 11.545334702,
-     "crossbar": 11.299361424999999,
+     "crossbar": 7.549938912466664,
      "memory": 14.49889394
     },
-    "total": 61.608038182200005,
+    "total": 57.85861566966667,
     "counts": {
      "fires": 512,
      "cycles": 260,
@@ -663,7 +664,7 @@
   "datapath": 24.1695160832,
   "control": 0.09493203200000001,
   "streamers": 11.545334702,
-  "crossbar": 11.299361424999999,
+  "crossbar": 7.549938912466664,
   "memory": 14.49889394
  },
  "static": {
@@ -671,10 +672,10 @@
    "datapath": 24.1695160832,
    "control": 0.0938366624,
    "streamers": 11.522835472,
-   "crossbar": 11.277340745,
+   "crossbar": 7.535224517925224,
    "memory": 14.49889394
   },
-  "total": 61.562422902600005,
+  "total": 57.820306675525224,
   "counts": {
    "fires": 512,
    "cycles": 257,
