@@ -136,6 +136,9 @@ def n_bits(datapath: str, params: dict) -> int:
         chunk = params["inLanes"] * width(params["laneType"])
         r = params["words"] * 64 // chunk
         return (r - 1) * chunk + (r - 1).bit_length()
+    if datapath == "FifoSlicer":                   # the held word, the pop counter and the full flag
+        r = params["words"] * 64 // (params["outLanes"] * width(params["laneType"]))
+        return params["words"] * 64 + (r - 1).bit_length() + 1
     raise KeyError(f"{datapath}: no register rule")
 
 

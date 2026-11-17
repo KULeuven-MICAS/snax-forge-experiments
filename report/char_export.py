@@ -7,8 +7,10 @@ Reads results/char/<tech>/char_synth.csv and char_power.csv, char/points.json an
 snax-forge commit (git show in the sibling checkout) for the params, and for the control factor the tier-done forge
 points' power_pt_modules.csv and synth_dc_modules.csv. Writes the flop constants (area, e_load, e_hold, from the int64
 points), the control factor and per block and type pair its comb area and energy per fire with a lanes rule (copy,
-interpolate, slope; X89). The narrow points that check a rule (char_table.check_only) are not written. The fields and
-the model are in results/char/README.md; a clock gate counts as a sequential cell (X83 · X85).
+interpolate, slope; X89; the stream blocks none, one point per entry, X94). The narrow points that check a rule
+(char_table.check_only) are not written. The fields and the model are in results/char/README.md; a clock gate counts
+as a sequential cell (X83 · X85). A block whose rows name another snax-forge commit than the first row's (FifoSlicer's)
+has it as source.snax_forge_<block>.
 """
 from __future__ import annotations
 
@@ -23,12 +25,15 @@ import char_table as ct  # noqa: E402
 
 BLOCKS_JSON = ct.ROOT.parent / "snax-forge" / "hw" / "chisel" / "blocks.json"
 RULES = {"SimdLanes": "copy", "Mac": "copy", "LinkBuffer": "copy", "TreeAccumulate": "interpolate",
-         "SerialAccumulate": "interpolate", "FifoPacker": "none"}
+         "SerialAccumulate": "interpolate", "FifoPacker": "none", "FifoSlicer": "none"}
 SHAPE = ("lanes", "depth")
 SLOPE_WS = (8, 32)              # a fold's int64 cost per lane is taken between these lanes (X89)
-# FifoPacker is not in blocks.json (the flow places it on a packed output, snax-forge D174): its params here
-PACKER = {"inLanes": {"type": "int", "min": 1}, "laneType": {"type": "dtype", "values": [f"{u}int{w}" for u in ("", "u") for w in (8, 16, 32, 64)]},
-          "words": {"type": "int", "min": 1}}
+# FifoPacker and FifoSlicer are not in blocks.json (the flow places them on a packed output and a sliced input,
+# snax-forge D174, D180): their params here
+LANE_TYPES = {"type": "dtype", "values": [f"{u}int{w}" for u in ("", "u") for w in (8, 16, 32, 64)]}
+PACKER = {"inLanes": {"type": "int", "min": 1}, "laneType": LANE_TYPES, "words": {"type": "int", "min": 1}}
+SLICER = {"words": {"type": "int", "min": 1}, "laneType": LANE_TYPES, "outLanes": {"type": "int", "min": 1}}
+STREAM = {"FifoPacker": PACKER, "FifoSlicer": SLICER}
 COMB = ("comb_um2", "e_comb_pj")
 LOAD_KINDS = ("Mac", "TreeAccumulate", "SerialAccumulate")    # busy: every flop loads every cycle
 # the int64 tier-done points, every one with a gated power row (X37); the narrow ones (a types= set) are T7's check
@@ -55,9 +60,18 @@ def packer_r(params: dict) -> int:
     return params["words"] * 64 // width(params["laneType"]) // params["inLanes"]
 
 
+def slicer_r(params: dict) -> int:
+    """A FifoSlicer's pops per in-beat (d_in at one word in)."""
+    return params["words"] * 64 // width(params["laneType"]) // params["outLanes"]
+
+
 def load_bits(datapath: str, params: dict) -> float:
-    """The bits that load on a fire: every register bit, but a FifoPacker's, where one held slot of r - 1 loads on
-    r - 1 of r pushes (the r-th sends) and the counter on every push."""
+    """The bits that load on a fire: every register bit, but a stream block's: a FifoPacker's one held slot of r - 1
+    on r - 1 of r pushes (the r-th sends) and the counter on every push; a FifoSlicer's word on one pop of r (the
+    last pop's take), so 64 words / r a pop, and the counter on every pop (its full flag holds while it streams)."""
+    if datapath == "FifoSlicer":
+        r = slicer_r(params)
+        return params["words"] * 64 / r + math.ceil(math.log2(r))
     if datapath != "FifoPacker":
         return n_bits(datapath, params)
     r = packer_r(params)
@@ -72,6 +86,8 @@ def n_bits(datapath: str, params: dict) -> int:
     if datapath == "FifoPacker":
         r = packer_r(params)
         return (r - 1) * params["inLanes"] * width(params["laneType"]) + math.ceil(math.log2(r))
+    if datapath == "FifoSlicer":                    # the held word, its pop count and its full flag
+        return params["words"] * 64 + math.ceil(math.log2(slicer_r(params))) + 1
     if datapath == "Mac":
         return w * width(params["outType"]) if params["accumulate"] or params["regOut"] else 0
     if datapath in ("TreeAccumulate", "SerialAccumulate"):
@@ -153,7 +169,7 @@ def catalogue_at(commit: str) -> dict:
 
 
 def check_params(datapath: str, params: dict, cat: dict, where: str) -> None:
-    spec = {"params": PACKER} if datapath == "FifoPacker" else cat.get(datapath)
+    spec = {"params": STREAM[datapath]} if datapath in STREAM else cat.get(datapath)
     if spec is None:
         fail(f"{where}: {datapath} is not in blocks.json")
     if set(params) != set(spec["params"]):
@@ -193,7 +209,7 @@ def blocks(d: dict, points: list[dict], cat: dict) -> dict:
         key = {k: v for k, v in params.items() if k not in SHAPE}
         win = "stream" if dp == "LinkBuffer" else "busy"
         comb = {"comb_um2": float(d[name]["synth"]["comb_area_um2"]), "e_comb_pj": ct.e(d, name, win, "e_comb_pj")}
-        if dp == "FifoPacker":
+        if dp in STREAM:
             pt = {**comb, "flops": n_bits(dp, params), "load_bits": round(load_bits(dp, params), 6)}
         else:
             pt = {"lanes": params["lanes"], **({"depth": params["depth"]} if dp == "LinkBuffer" else {}), **comb}
@@ -228,6 +244,8 @@ def sfe_commit(tech: str) -> str:
 def build(tech: str, d: dict, points: list[dict]) -> tuple[dict, dict]:
     """(char.json, the spreads behind its constants) from the gated rows `d`."""
     commit = next(iter(d.values()))["synth"]["snax_forge_commit"]
+    others = {f"snax_forge_{v['datapath']}": v["synth"]["snax_forge_commit"] for v in d.values()
+              if v["synth"]["snax_forge_commit"] != commit}
     area = flop_area(d)
     area_um2 = round(area["mean"], 6)
     load, hold = e_load(d), e_hold(d)
@@ -235,7 +253,7 @@ def build(tech: str, d: dict, points: list[dict]) -> tuple[dict, dict]:
     cf = counter_factor(tech, area_um2, hold_fj)
     j = {"tech": tech, "clock_ns": float(ct.CLOCK),
          "units": {"area": "um2", "energy": "pJ", "flop_energy": "fJ per flop per cycle"},
-         "source": {"snax_forge": commit, "snax_forge_experiments": sfe_commit(tech),
+         "source": {"snax_forge": commit, **others, "snax_forge_experiments": sfe_commit(tech),
                     "stimulus": f"rand64 seed {ct.SEED}", "clk_gate": "1"},
          "flop": {"area_um2": area_um2, "e_load_fj": round(load["mean"], 4), "e_hold_fj": hold_fj},
          "ctrl": {"counter_factor": cf["value"]},
