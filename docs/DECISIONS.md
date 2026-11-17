@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse. It says what was decided, why, and where the detail lives, in a few short bullets. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; the text of a removed entry is in git history.
-- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X94**.
+- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X95**.
 
 Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X25's diagnostic), X26, X27 and X43 (SYN1's and SYN2's analysis code and local runs, deleted), X36 (a draft block table, now X37), X46 (one comparison file, now X64), X35 (the LinkBuffer stream cheaper per flop than a held flop, a limit of the ungated table, gone with it).
 
@@ -210,7 +210,7 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X29 — The block grid
 
-- **Decided:** 27 points at int64: SimdLanes add and mul at W = 1, 8, 32; the accumulating Mac at W = 1, 8, 32; TreeAccumulate at W = 1–32; SerialAccumulate at W = 2–32; LinkBuffer at D = 1–16 (W = 1) and D = 1 at W = 8, 32. Beside them the type axis's points (X89).
+- **Decided:** 27 points at int64: SimdLanes add and mul at W = 1, 8, 32; the accumulating Mac at W = 1, 8, 32; TreeAccumulate at W = 1–32; SerialAccumulate at W = 2–32; LinkBuffer at D = 1–16 (W = 1) and D = 1 at W = 8, 32. Beside them the type axis's points (X89) and the input slicer's (X94).
 - **Why:** the blocks and forms forge's accelerators use, enough points for a first-order model.
 - **Where:** `char/points.json`.
 
@@ -255,6 +255,12 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 - **Decided:** every compute block is measured at its 10 width pairs (w_in, w_out in 8, 16, 32, 64, w_out ≥ w_in, the op at w_out) at one lane count W0: SimdLanes add and mul at W0 = 1, the accumulating Mac, TreeAccumulate and SerialAccumulate at W0 = 8; each input port is driven at its own width with rand64's low bits, outputs checked at theirs against D175's arithmetic; FifoPacker (one lane in, one word out) at int32, int16, int8 with busy (a push every cycle) and idle windows. Over lanes a block is its pair's point plus a cost per lane: the point per lane for the lane-copy blocks (`copy`), and for a narrow fold the int64 cost per lane between W = 8 and 32 times w_in / 64 (`slope`). A narrow LinkBuffer is the int64 one times w / 64. The flop constants stay the int64 points'.
 - **Why:** DC removes the logic on copied sign bits, so a block's comb follows the bits it computes (an add about w_in, a multiply about w_in x min(2 w_in, w_out)) in a way that differs per block: scaling the other blocks by SimdLanes' ratios missed by up to 2x, while each block's own pairs need about 20 minutes of DC. A fold's lane is a leaf or a mux input at w_in while its accumulator stays at w_out, which the int64 shape over lanes does not carry (0.67 to 0.78 of the measured area at W = 32): the slope rule lands within 1 to 5 % on area and 2 to 32 % on energy (SerialAccumulate's, on 0.4 pJ a fire).
 - **Where:** `results/char/char_table.md`, "The type axis"; `power.md`, "Char"; `results/char/runs/2026-11-16_char2_r2.md`, `_r4.md`.
+
+### X94 — The input slicer: six points by lane type, lanes and d_in, priced per pop
+
+- **Decided:** `FifoSlicer` (snax-forge D180, one 64-bit word in, `outLanes` lanes of `laneType` out a pop, d_in = 64 / (width · outLanes) pops a word) at `words` 1: int32 with 1 lane, int16 with 1 and 2, int8 with 1, 2 and 4 (d_in 8, 4 and 2), clock-gated as the packer. Windows (`pwr.py --source char`, kind `slice`): after the start (`clear`), `busy` (the input always valid, the output always ready, `enable` high: a pop every cycle, a take every d_in cycles) and `idle` (`enable` low, the output not ready, the inputs held), every output checked against `sim/ref.py`'s slicer, `out_bits` through `out_valid` (its data register has no reset). `char.json` has one entry per lane type and lanes, `lanes_rule` `none`, its point's `flops` = 64 + ⌈log₂ d_in⌉ + 1 (the word, the pop counter, the full flag; DC's sequential cells add one or two clock gates) and `load_bits` per pop = 64 / d_in + ⌈log₂ d_in⌉ (the word on the last pop's take, the counter every pop); a fire is a pop.
+- **Why:** HWCOST named the slicer in `char.missing` and its dynamic energy left it out. The points at one d_in are one netlist (a pop is 64 / d_in bits of the word, the lanes only wiring), so d_in sets the cost; the model's pop lands at 1.11 to 1.30 of the busy window, high because the word's bits load below e_load.
+- **Where:** `results/char/char_table.md`, "FifoSlicer"; `power.md`, "Char"; `results/char/runs/2026-11-17_tiera1_r5d.md`.
 
 ### X52 · X82 — The streamer reader and the sparse interconnect, characterized
 
