@@ -129,6 +129,14 @@ Reads what cluster-breakdown and cluster-energy wrote (`breakdown.json`, `energy
 
 A part's share is $s_p = E_p / \sum_q E_q$ over the five parts, on each side. No normalization, no check on the trend: the data is laid out, its reading is the user's. `sweep.csv` is long form (point, W, source, window, group, metric, value; source `gls` the netlist, `hwcost` snax-forge's estimate, `alone` the shell alone). The figures: `sweep_energy.png` and `sweep_area.png`, per W the netlist's bar beside HWCOST's, absolute on the left and in % of the five parts on the right; `sweep_energy_five.png` and `sweep_area_five.png`, the absolute panel alone with the five parts only, each bar's total above it. The bars stack memory, control, streamers, crossbar and datapath from the bottom, the netlist's not-priced part on top. `--md` prints the tables as Markdown.
 
+### ge-check
+
+`ge/<point>.json` is snax-forge's energy run (`pixi run flow ... --energy`, its D177) of a cluster point's recipe, W and sets: the quiet build on SNAX-GVSoC, each window between two marks priced at HWCOST's prices per transaction, beside the static estimate's one run. `pixi run ge-check` lays out the run window of the recipe's points with such a file, in order of W, from three sources in HWCOST's five parts: the netlist (`energy.json`'s `run`, the groups `groups.json`'s `hwcost` maps to each part), the static estimate (`hwcost/<point>.json`) and GE1 (the file's `run` window). Each estimate's ratio to the netlist per part, the counts beside them (requests, busy cycles), the crossbar at the read-write price from the same counts (before snax-forge D178), and Kendall's tau-a over W of each estimate against the netlist, per part and for the five parts:
+
+$$\tau = \frac{n_c - n_d}{\binom{m}{2}}$$
+
+over the m points' pairs, $n_c$ the pairs both series order the same way, $n_d$ those they order oppositely (a tie in either is neither). Writes `ge/ge_check.csv` (point, W, part, source, energy_nj; part `crossbar_rw` for the read-write price) and `ge/ge_energy_five.png` (per W the netlist's, the static and GE1's bars, stacked by part, totals above); `--md` prints the tables. No check on the trend: the data is laid out, its reading is the user's.
+
 ## snb: the Snitch-only clusters
 
 snax_cluster's own clusters with no accelerator (`cfg/snax_snitch_cluster_{1,5,9}.hjson`: 1, 5 or 9 rv32ima cores in one hive, the logarithmic TCDM interconnect, forge's 128 KiB L1), running snitch-forge's plain C kernels, as E11's baseline (X91, X92). `snb.py` drives them through the same four steps as a forge point, with cluster.py's and power.py's helpers; what differs is where the program comes from and what is checked.

@@ -10,7 +10,7 @@ Every command of snax-forge-experiments, grouped by job. Each entry says what th
 | Measure the energy | `pwr` | 4 |
 | Make the memories | `ram-build`, `ram` | 5 |
 | Make the tables HWCOST reads | `strm-table`, `xbar-kinds`, `char-export`, `char-table` | 6 |
-| Take a design through the whole cluster | `cluster`, `cluster/batch.sh`, `cluster-hwcost`, `cluster-breakdown`, `cluster-energy`, `cluster-sweep` | 7 |
+| Take a design through the whole cluster | `cluster`, `cluster/batch.sh`, `cluster-hwcost`, `cluster-breakdown`, `cluster-energy`, `cluster-sweep`, `ge-check` | 7 |
 | Compare forge with the HLS tools | `compare`, `compare-hls` | 8 |
 | Keep the repository clean | `arc`, `test`, `lint` | 9 |
 
@@ -154,6 +154,7 @@ A cluster point (`cluster/points.json`) is a snax-forge design built into snax_c
 | `cluster-energy [--md]` | the energy per window in groups, the run window against HWCOST, `energy.json` |
 | `cluster-sweep [--recipe dot_3] [--md]` | the recipe's points over W beside HWCOST: `sweep.csv` and four figures (X78 · X80 · X86) |
 | `cluster-sweep --points A,B,... --out NAME [--md]` | chosen points side by side in `NAME/`, for a look, not committed |
+| `ge-check [--recipe dot_3] [--md]` | snax-forge's dynamic energy (`ge/<point>.json`, its D177) beside the static estimate (`hwcost/`) and the netlist's run window (`energy.json`), per part and W, with Kendall's tau over W: `ge/ge_check.csv` and `ge/ge_energy_five.png` (cluster/README.md, "ge-check") |
 
 ```
 $ pixi run cluster-breakdown
