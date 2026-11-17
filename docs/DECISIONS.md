@@ -415,10 +415,10 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 - **Why:** these programs have no SNAX-GVSoC model and no expected file, and R7's 26 netlist runs equalled the RTL to the cycle; the flow's own helpers keep the baseline measured the way forge's points are.
 - **Where:** `cluster/README.md`, "snb"; `results/snb/runs/2026-11-16_snb1_r7.md`, `2026-11-17_snb1_r6.md`.
 
-### X92 — E11's energy is dynamic only, leakage left out
+### X92 — E11's energy is dynamic only, leakage a side number
 
-- **Decided:** E11's $E_\text{run}$ and $\eta_E$ use the run window's dynamic energy (internal plus switching, power_pt.csv's `e_win_pj`, the macros as PT measures them, X75). Leakage is left out of the report for now; PT's per-window power.rpt keeps it.
-- **Why:** the Snitch runs take 50 to 200 times forge's cycles, so leakage over the window would swamp the comparison with a number set by the macros' CACTI leakage and the clock period, not by the work; forge's cluster rows are dynamic only too (Ryan, 17 Nov).
+- **Decided:** E11's $E_\text{run}$ and $\eta_E$ use the run window's dynamic energy (internal plus switching, power_pt.csv's `e_win_pj`, the macros as PT measures them, X75). Leakage, $E_\text{leak} = P_\text{leak}\thinspace C_w\thinspace t_\text{clk}$ from the window's power.rpt, is reported beside it with the macros' part, never added in.
+- **Why:** the Snitch runs take 50 to 200 times forge's cycles, so leakage over the window would swamp the comparison with a number set by the macros' CACTI leakage and the clock period, not by the work; forge's cluster rows are dynamic only too.
 - **Where:** `cluster/README.md`, "snb"; `report/snb_report.py`.
 
 ## Reports and comparison
