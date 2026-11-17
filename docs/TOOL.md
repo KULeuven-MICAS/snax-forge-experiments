@@ -169,7 +169,7 @@ snax_cluster's Snitch-only clusters go through the same steps with `snb` (`clust
 | `snb syn CONFIG [--cores 16] [--again] [--allow-branch]` | DC on the whole cluster; a kept netlist equal to the config's `netlist_sha256` is adopted with no DC |
 | `snb gls RUN [--allow-branch]` | the config's netlist in the same testbench, the plain ELF on it (X91) |
 | `snb pwr RUN [--cores 16] [--again] [--allow-branch]` | the quiet ELF on the netlist, one SAIF per section, one PT session |
-| `snb-report [--md]` | E11's numbers: area in four parts, $n_\text{op}$, $C_\text{run}$, $\eta_A$, and $E_\text{run}$, $\eta_E$, $E_\text{leak}$ where power exists (X92), into `results/snb/nangate45/e11.json` |
+| `snb-report [--md]` | E11's numbers: area in four parts, $n_\text{op}$, $C_\text{run}$, $\eta_A$, and $E_\text{run}$ and $\eta_E$ where power exists (dynamic only, X92), into `results/snb/nangate45/e11.json` |
 
 ```
 $ pixi run snb syn snitch1_cg

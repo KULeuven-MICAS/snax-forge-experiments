@@ -164,7 +164,7 @@ Left out against a forge point (X91): the plain RTL run beside the macro run, D1
 $$\eta_A = \frac{n_\text{op}}{C_\text{run}\thinspace t_\text{clk}\thinspace A} \quad [\text{GOPS/mm}^2]$$
 
 - **Energy per task,** $E_\text{run}$: the run window's dynamic energy as power_pt.csv has it (internal plus switching, the macros as PT measures them), $E_\text{run} = P_{\text{dyn},\text{run}}\thinspace C_w\thinspace t_\text{clk}$ with $C_w$ the window's cycles, and $\eta_E = n_\text{op} / E_\text{run}$ in op/pJ.
-- **Leakage,** a side number (X92): $E_\text{leak} = P_\text{leak}\thinspace C_w\thinspace t_\text{clk}$, $P_\text{leak}$ the window's `Cell Leakage Power` in power.rpt, with the macros' part beside it; never added into $E_\text{run}$.
+- **Leakage** is left out for now (X92): the report has no $E_\text{leak}$. PT's per-window reports keep it, should it be wanted: power.rpt's `Cell Leakage Power`, of which the macros' (`black_box`) is most.
 
 Worked example, dot at int64 on `snitch9_cg` (R7's numbers): $n_\text{op} = 2 \cdot 2048 = 4096$, $C_\text{run} = 11944$, $A = 1.185665$ mm², so
 

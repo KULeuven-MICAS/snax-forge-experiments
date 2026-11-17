@@ -21,24 +21,6 @@ arc, cb, tree = sr.arc, sr.cb, sr.tree
 CFG = json.loads(sr.GROUPS.read_text())
 COMMITTED = ROOT / "results" / "snb" / "nangate45"
 
-POWER = """                        Internal             Switching            Leakage              Total
-Power Group             Power                Power                Power                Power               (     %)   Attrs
-----------------------------------------------------------------------------------------------------------------------------
-clock_network           3.770675e-03         4.225871e-04         8.112363e-05         4.274386e-03        ( 3.41%)   i
-register                2.393287e-03         3.119723e-04         5.271285e-03         7.976544e-03        ( 6.37%)
-combinational           7.032944e-03         1.024089e-02         7.915485e-03         2.518932e-02        (20.12%)
-memory                  0.000000e+00         0.000000e+00         0.000000e+00         0.000000e+00        ( 0.00%)
-black_box               7.883210e-03         8.165342e-05         7.977507e-02         8.773994e-02        (70.09%)
-
-  Net Switching Power  = 1.105710e-02          ( 8.83%)
-  Cell Internal Power  = 2.108012e-02          (16.84%)
-  Cell Leakage Power   = 9.304296e-02          (74.33%)
-                         -------------------------
-Total Power            = 1.251802e-01         (100.00%)
-"""
-UNITS = "Leakage_power_unit          : 1e-09 Watt\nUser Specified Power Unit   : 1 Watt\n"
-
-
 def close(a: float, b: float, rel: float = 1e-3) -> bool:
     return abs(a - b) <= rel * abs(b)
 
@@ -85,17 +67,6 @@ def test_committed_snitch9():
     assert abs(a["groups_um2"]["tcdm_banks"] + a["groups_um2"]["icache_macros"] - float(row["macro_um2"])) < 1.0
 
 
-def test_leakage():
-    lk = sr.leakage(POWER, UNITS)
-    assert close(lk["p_leak_uw"], 93042.96) and close(lk["p_leak_macro_uw"], 79775.07)
-    try:
-        sr.leakage("no table", UNITS)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("no leakage line passed")
-
-
 def test_report_end_to_end():
     # runs.csv, power_pt.csv and a power report zip made up, the committed DC reports copied in
     with tempfile.TemporaryDirectory() as d:
@@ -118,8 +89,6 @@ def test_report_end_to_end():
             w.writeheader()
             w.writerow({"point": "snitch9_cg_dot_int64", "mark": 2, "kind": "run", "cycles": 11950, "p_dyn_uw": 20000.0,
                         "e_win_pj": 2390000.0, "e_macro_pj": 30.0, "ann_pct": 99.9, "status": "ok"})
-        arc.write(res / "power_reports" / "snitch9_cg_dot_int64.zip",
-                  {"2_run/power.rpt": POWER.encode(), "2_run/units.rpt": UNITS.encode()})
         sr.results = lambda tech: res          # noqa: E731  the made-up folder in place of results/snb/<tech>
         rep = sr.report("nangate45")
         assert list(rep["configs"]) == ["snitch1_cg", "snitch5_cg", "snitch9_cg"]
@@ -130,10 +99,10 @@ def test_report_end_to_end():
         assert close(r["eta_a_gops_mm2"], 0.028925)
         assert close(r["e_run_pj"], 2390000.0) and close(r["eta_e_op_pj"], 4096 / 2390000.0)
         assert close(r["e_run_macro_pj"], 30.0 * 11950)
-        assert close(r["e_leak_pj"], 93042.96 * 11950 * 10 / 1000)    # µW x cycles x ns, in pJ
+        assert not any("leak" in k for k in r)                         # left out (X92)
         md = sr.markdown(rep)
         assert "| snitch9_cg | 1,185,665 | 486,391 | 54,565 | 398,964 | 245,744 | yes |" in md
-        assert "| snitch9_cg_dot_int64 | 4096 | 11944 | 11944 | 0.0289 | 2390.00 | 0.00171 | 11118.63 |" in md, md
+        assert "| snitch9_cg_dot_int64 | 4096 | 11944 | 11944 | 0.0289 | 2390.00 | 0.00171 |" in md, md
 
 
 if __name__ == "__main__":

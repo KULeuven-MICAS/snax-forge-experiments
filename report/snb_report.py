@@ -6,8 +6,7 @@
 Per config of cluster/snb_points.json with its DC reports (results/snb/<tech>/reports/<config>.zip), the area in
 cluster/groups.json's groups summed into four coarse parts (COARSE). Per run of results/snb/<tech>/runs.csv with
 a PASS RTL run, n_op from its kernel's maths, C_run (the plain RTL run's `cycles run`) and eta_A; where
-power_pt.csv has the run window, E_run (its dynamic energy), eta_E and, as a side number, E_leak from the window's
-power.rpt (X92). Writes results/snb/<tech>/e11.json; --md prints the tables. The measures are in cluster/README.md,
+power_pt.csv has the run window, E_run (its dynamic energy) and eta_E; leakage is left out (X92). Writes results/snb/<tech>/e11.json; --md prints the tables. The measures are in cluster/README.md,
 "snb". Standard library, arc/arc.py and report/cluster_breakdown.py.
 """
 
@@ -16,7 +15,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -35,7 +33,6 @@ COARSE = {"memory": ("tcdm_banks", "tcdm_logic"),
           "rest": ("dma", "axi", "others", "acc_interface")}
 NONE_HERE = ("acc_datapath", "acc_control", "acc_csr", "streamers")     # forge's accelerator: zero in these clusters
 SUM_TOL_UM2 = 1.0
-NUM = r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?"
 
 
 # ---------------------------------------------------------------- area
@@ -71,24 +68,9 @@ def eta_e(n_op: int, e_pj: float) -> float:
     return n_op / e_pj
 
 
-def leakage(power_rpt: str, units_rpt: str) -> dict:
-    """The window's leakage power in µW from PT's power.rpt: in all (Cell Leakage Power) and the macros' part
-    (black_box and memory, as PT measures the macros)."""
-    m = re.search(rf"User Specified Power Unit\s*:\s*({NUM})\s*Watt", units_rpt)
-    tot = re.search(rf"^\s*Cell Leakage Power\s*=\s*({NUM})", power_rpt, re.M)
-    if not m or not tot:
-        raise ValueError("no power unit in units.rpt or no Cell Leakage Power in power.rpt")
-    to_uw = float(m.group(1)) * 1e6
-    macro = 0.0
-    for g in ("black_box", "memory"):
-        r = re.search(rf"^{g}\s+{NUM}\s+{NUM}\s+({NUM})", power_rpt, re.M)
-        macro += float(r.group(1)) if r else 0.0
-    return {"p_leak_uw": float(tot.group(1)) * to_uw, "p_leak_macro_uw": macro * to_uw}
-
-
-def run_row(r: dict, k: dict, area_um2: float | None, win: dict | None, leak: dict | None) -> dict:
-    """One run's E11 numbers from its runs.csv row, its kernel, its config's area, its run window's power_pt.csv
-    row and its leakage."""
+def run_row(r: dict, k: dict, area_um2: float | None, win: dict | None) -> dict:
+    """One run's E11 numbers from its runs.csv row, its kernel, its config's area and its run window's power_pt.csv
+    row."""
     sizes = {kv.split("=")[0]: int(kv.split("=")[1]) for kv in r["sizes"].split()}
     n = int(r["n_op"])
     c_run = int(r["rtl_run"])
@@ -102,9 +84,6 @@ def run_row(r: dict, k: dict, area_um2: float | None, win: dict | None, leak: di
         out.update({"window_cycles": cyc, "p_dyn_uw": float(win["p_dyn_uw"]), "e_run_pj": e_run,
                     "e_run_macro_pj": float(win["e_macro_pj"]) * cyc, "eta_e_op_pj": eta_e(n, e_run),
                     "ann_pct": float(win["ann_pct"])})
-        if leak is not None:
-            out.update({**leak, "e_leak_pj": leak["p_leak_uw"] * cyc * T_CLK_NS / 1000.0,
-                        "e_leak_macro_pj": leak["p_leak_macro_uw"] * cyc * T_CLK_NS / 1000.0})
     return out
 
 
@@ -138,12 +117,7 @@ def report(tech: str) -> dict:
         if r["rtl_status"] != "PASS":
             continue
         area = out["configs"].get(r["config"], {}).get("total_um2")
-        win, leak = wins.get(r["run"]), None
-        rz = res / "power_reports" / f"{r['run']}.zip"
-        if win is not None and rz.is_file():
-            n = f"{win['mark']}_{win['kind']}"
-            leak = leakage(arc.read_text(rz, f"{n}/power.rpt"), arc.read_text(rz, f"{n}/units.rpt"))
-        out["runs"][r["run"]] = run_row(r, pts["kernels"][r["kernel"]], area, win, leak)
+        out["runs"][r["run"]] = run_row(r, pts["kernels"][r["kernel"]], area, wins.get(r["run"]))
     return out
 
 
@@ -168,14 +142,12 @@ def markdown(rep: dict) -> str:
         out.append(f"| {name} | {_n(c['total_um2'])} | {_n(p['memory'])} | {_n(p['interconnect'])} | "
                    f"{_n(p['cores'])} | {_n(p['rest'])} | {'yes' if c['sum_check']['ok'] else 'NO'} |")
     out += ["", "### Runs", "", f"$t_\\text{{clk}}$ = {rep['t_clk_ns']:g} ns; C_run is the plain RTL run's run section.",
-            "", "| run | n_op | C_run | GLS C_run | η_A (GOPS/mm²) | E_run (nJ) | η_E (op/pJ) | E_leak (nJ) |",
-            "|---|---|---|---|---|---|---|---|"]
+            "", "| run | n_op | C_run | GLS C_run | η_A (GOPS/mm²) | E_run (nJ) | η_E (op/pJ) |",
+            "|---|---|---|---|---|---|---|"]
     for name, r in rep["runs"].items():
         e = r.get("e_run_pj")
-        lk = r.get("e_leak_pj")
         out.append(f"| {name} | {r['n_op']} | {r['c_run']} | {r['c_run_gls'] or ''} | {_g(r['eta_a_gops_mm2'])} | "
-                   f"{'' if e is None else f'{e / 1000:.2f}'} | {_g(r.get('eta_e_op_pj'))} | "
-                   f"{'' if lk is None else f'{lk / 1000:.2f}'} |")
+                   f"{'' if e is None else f'{e / 1000:.2f}'} | {_g(r.get('eta_e_op_pj'))} |")
     return "\n".join(out) + "\n"
 
 
