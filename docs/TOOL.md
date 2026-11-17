@@ -10,7 +10,7 @@ Every command of snax-forge-experiments, grouped by job. Each entry says what th
 | Measure the energy | `pwr` | 4 |
 | Make the memories | `ram-build`, `ram` | 5 |
 | Make the tables HWCOST reads | `strm-table`, `xbar-kinds`, `char-export`, `char-table` | 6 |
-| Take a design through the whole cluster | `cluster`, `cluster/batch.sh`, `cluster-hwcost`, `cluster-breakdown`, `cluster-energy`, `cluster-sweep` | 7 |
+| Take a design through the whole cluster | `cluster`, `cluster/batch.sh`, `cluster-hwcost`, `cluster-breakdown`, `cluster-energy`, `cluster-sweep`, `ge-check` | 7 |
 | Compare forge with the HLS tools | `compare`, `compare-hls` | 8 |
 | Keep the repository clean | `arc`, `test`, `lint` | 9 |
 
@@ -88,7 +88,7 @@ Dynamic energy of a mapped netlist from simulated activity (X7): a zero-delay Qu
 | `pwr summary [PATTERN ...] [--source S] [--tech T]` | print `power_pt.csv` |
 | `pwr modules --source S --tech T` | fill `power_pt_modules.csv`'s size column on old rows (a one-off) |
 
-- `--size all` runs every size in the point's `sizes.txt`; `n2048` is the reference task (X24); `--source char`, `streamer` and `xbar` take no size.
+- `--size all` runs every size in the point's `sizes.txt`; `n2048` is the reference task (X24); `--source char`, `streamer`, `xbar` and `xbar_mix` take no size.
 - `--clk-gate` measures the `_cg` netlists; `--initreg-seed N` is a check with Questa's random register start that writes nothing to `results/` (PITFALLS Q9).
 - Workers come from the free `msimhdlsim`, `PrimeTime` and `PrimePower` licences; PT threads are cores // workers.
 
@@ -96,6 +96,7 @@ Dynamic energy of a mapped netlist from simulated activity (X7): a zero-delay Qu
 pixi run pwr run 'done/vecadd/*' --tech nangate45                      # rand64, 64 beats, seed 0
 pixi run pwr run 'done/*/forge*' --source forge --tech nangate45 --size n2048
 pixi run pwr run '*' --source xbar --tech nangate45 --clk-gate         # the points with inputs <= banks
+pixi run pwr run '*' --source xbar_mix --tech nangate45 --clk-gate     # by input kind (X70), inputs <= banks
 pixi run pwr setup-check --source forge --tech nangate45
 ```
 
@@ -131,7 +132,7 @@ results/strm/nangate45/streamer.csv: 168 rows, 168 ok
 results/strm/nangate45/xbar.csv: 27 rows, 27 ok
 ```
 
-**`xbar-kinds`** (`report/xbar_kinds.py`) fits the interconnect's read-only and write-only inputs from the xbar_mix rows into `results/strm/<tech>/xbar_kinds.json`: the factor form and the crosspoint form, with their checks against the 36-input points and the cluster (X71).
+**`xbar-kinds`** (`report/xbar_kinds.py`) fits the interconnect's read-only and write-only inputs from the xbar_mix rows into `results/strm/<tech>/xbar_kinds.json`: the area's factor form and crosspoint form, with their checks against the 36-input points and the cluster (X71), and the energy's factor form by bank count from the powered rows (`power_pt.csv`, X93), printed as `energy at <b> banks: g_ro ..., g_wo ...`.
 
 **`char-export`** (`report/char_export.py`) writes the block model, `results/char/<tech>/char.json`, from the clock-gated rows (X37, X83 · X85): a clock gate counts as a sequential cell, the control factor is the mean over the tier-done forge points with a power row. It prints each block whose sequential cells differ from its bits (its clock gates).
 
@@ -153,6 +154,7 @@ A cluster point (`cluster/points.json`) is a snax-forge design built into snax_c
 | `cluster-energy [--md]` | the energy per window in groups, the run window against HWCOST, `energy.json` |
 | `cluster-sweep [--recipe dot_3] [--md]` | the recipe's points over W beside HWCOST: `sweep.csv` and four figures (X78 · X80 · X86) |
 | `cluster-sweep --points A,B,... --out NAME [--md]` | chosen points side by side in `NAME/`, for a look, not committed |
+| `ge-check [--recipe dot_3] [--md]` | snax-forge's dynamic energy (`ge/<point>.json`, its D177) beside the static estimate (`hwcost/`) and the netlist's run window (`energy.json`), per part and W, with Kendall's tau over W: `ge/ge_check.csv` and `ge/ge_energy_five.png` (cluster/README.md, "ge-check") |
 
 ```
 $ pixi run cluster-breakdown

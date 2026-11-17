@@ -8,6 +8,7 @@ on PATH the wrapper is also linted against the stub (every pin connected, widths
 skipped and says so.
 """
 
+import re
 import shutil
 import subprocess
 import sys
@@ -102,6 +103,21 @@ def test_rw_and_limits():
         except ValueError:
             continue
         raise AssertionError(f"{bad} accepted")
+
+
+def test_tb_ports():
+    """sim/sources/strm.py's xbar TB on xbar_mix connects exactly the wrapper's ports, per kind mix (no EDA tool)."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "sim"))
+    from sources import strm  # noqa: PLC0415
+    for ro, wo in ((0, 0), (3, 1), (6, 0), (0, 6)):
+        want = names(xbar_mix.wrapper(stub(6, 4), ro, wo))
+        tb = {"source": "xbar_mix", "point": f"i6_b4_r{ro}_w{wo}", "top": "xbar_mix", "control": {"kind": "strm_xbar"},
+              "inputs": 6, "banks": 4, "bank_bits": 2, "row_bits": 12, "cycles": 8, "ro": ro, "wo": wo}
+        tb["ports"] = sorted(strm.connected(tb))
+        assert set(tb["ports"]) == want, f"ro {ro} wo {wo}: {sorted(set(tb['ports']) ^ want)[:8]}"
+        sv = strm.tb_xbar(tb, [])
+        assert set(re.findall(r"\.(\w+)\(", sv.split("xbar_mix dut (", 1)[1].split(");", 1)[0])) == want
+        assert f"RO = {ro}, WO = {wo};" in sv
 
 
 def test_lint():

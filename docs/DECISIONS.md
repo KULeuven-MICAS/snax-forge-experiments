@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse. It says what was decided, why, and where the detail lives, in a few short bullets. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; the text of a removed entry is in git history.
-- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X93**.
+- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X94**.
 
 Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X25's diagnostic), X26, X27 and X43 (SYN1's and SYN2's analysis code and local runs, deleted), X36 (a draft block table, now X37), X46 (one comparison file, now X64), X35 (the LinkBuffer stream cheaper per flop than a held flop, a limit of the ungated table, gone with it).
 
@@ -271,15 +271,21 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X70 — The interconnect with read-only and write-only inputs (xbar_mix)
 
-- **Decided:** the `xbar_mix` source synthesizes the interconnect with some inputs tied as the cluster ties them (a reader's channel read-only, a writer's write-only) plus the cluster template's ties: inputs {16, 32, 64} x banks {16, 32, 64}, each all read-write, all read-only and all write-only, plus two 36-input points. Area only.
+- **Decided:** the `xbar_mix` source synthesizes the interconnect with some inputs tied as the cluster ties them (a reader's channel read-only, a writer's write-only) plus the cluster template's ties: inputs {16, 32, 64} x banks {16, 32, 64}, each all read-write, all read-only and all write-only, plus two 36-input points; the 18 with $n \le b$ powered by input kind (X93).
 - **Why:** HWCOST priced the cluster's interconnect at +74 % with every input read-write; DC removes what the constants make dead.
 - **Where:** `syn/README.md`, "The xbar_mix source"; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`; clock-gated in `results/runs/2026-11-16_cg5_r1.md`.
 
 ### X71 — The read-only and write-only inputs in the cost: factor form, crosspoint form as an option
 
-- **Decided:** `pixi run xbar-kinds` writes `results/strm/<tech>/xbar_kinds.json` with two forms of the interconnect's area: the factor form (default), `xbar.csv`'s area times $1 - f_{ro}\thinspace n_{ro}/n - f_{wo}\thinspace n_{wo}/n$, and the crosspoint form (an option), a least-squares cost per crosspoint of each kind. Energy stays `xbar.csv`'s per access.
+- **Decided:** `pixi run xbar-kinds` writes `results/strm/<tech>/xbar_kinds.json` with two forms of the interconnect's area: the factor form (default), `xbar.csv`'s area times $1 - f_{ro}\thinspace n_{ro}/n - f_{wo}\thinspace n_{wo}/n$, and the crosspoint form (an option), a least-squares cost per crosspoint of each kind. The energy by kind is X93's.
 - **Why:** the factor form keeps `xbar.csv` as the source and adds two numbers; fitted on the clock-gated grid, on the one-core gated cluster it lands at +10.5 % (crosspoint +7.6 %), within HWCOST's 30 % target.
 - **Where:** `cost_tables.md`, "Read-only and write-only inputs"; `results/xbar_mix/runs/2026-11-11_csyn1_r3d.md`, `results/runs/2026-11-16_cg5_r2.md`.
+
+### X93 — The interconnect's energy by input kind, one factor pair per bank count
+
+- **Decided:** the `xbar_mix` points with $n \le b$ (18) are powered with the xbar stimulus by input kind (`--source xbar_mix`): a read-only input reads, a write-only one writes, at the xbar stimulus's banks, rows and random data. `pixi run xbar-kinds` adds the energy's factor form to `xbar_kinds.json`: $e_k(b) = e_{access}(b, b)\thinspace(1 - g_k(b))$, $g_k(b)$ the saving of an all-kind-k point against the all-read-write one at $n = b$, linear in $b$ between 16, 32 and 64. A read-write input keeps $e_{access}$. Amends X70 (no longer area only), X71 and X54 (the price read at $(b, b)$, now by kind).
+- **Why:** `xbar.csv` priced every request as a read-write one, while a cluster's inputs are mostly streamer channels of one kind; the dot 3 cluster paid 0.67 to 0.81 of it. One constant per kind does not fit (the saving moves with banks per input), and the price is read at $(b, b)$ already. With the factors the cluster's interconnect is 0.94 to 0.99 at W ≤ 8.
+- **Where:** `cost_tables.md`, "The energy by input kind" and Example 7; `results/xbar_mix/runs/2026-11-17_ge1_r4.md`, `results/xbar_mix/runs/2026-11-17_ge1_r5.md`.
 
 ### X83 · X85 — The clock-gated block tables
 
