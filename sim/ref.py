@@ -36,7 +36,7 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
 
 
 # ---------------------------------------------------------------- the blocks alone, cycle by cycle
-# snax-forge's datapaths (hw/chisel/src/main/scala/snax/forge/datapath/ and stream/FifoPacker.scala, at the commit
+# snax-forge's datapaths (hw/chisel/src/main/scala/snax/forge/datapath/, stream/FifoPacker.scala and FifoSlicer.scala, at the commit
 # of the point) at their types (D175), stepped one slot at a time as sim/sources/char.py's schedule() drives them. A
 # value is its port's bits, unsigned; cast(x, t, u) extends x from type t to u by t's signedness (sign-extended from
 # a signed t) or keeps u's low bits. A slot's inputs are applied at its rising edge, the TB samples the outputs at
@@ -53,7 +53,13 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
 #                     count = r - 1 or last; out_valid = in_valid sending, in_ready = not sending or out_ready;
 #                     out_bits: slot u the push when u = count, held[u] when u < count, zero above; on a push
 #                     (in_valid in_ready): count <- 0 when sending, else held[count] <- in, count + 1; clear: count <- 0
-# Every register starts at 0 (RegInit), as after the TB's reset; the packer's held slots are written before read.
+#   FifoSlicer        r = words 64 / (width outLanes) pops to an in-beat, pop u lane l element u outLanes + l at bits
+#                     [w(e+1)-1 : we] of the held beat; last = r = 1 or count = r - 1; out_valid = full, in_ready =
+#                     enable (not full or out_ready last); out_bits pop count's lanes, compared through out_valid (0
+#                     when not full); on a take (in_valid in_ready): data <- in, full, count <- 0, else on a pop
+#                     (full out_ready): full <- 0 when last, else count + 1; clear: full <- 0, count <- 0 (wins)
+# Every register starts at 0 (RegInit), as after the TB's reset; the packer's held slots and the slicer's data are
+# written before read.
 M64 = (1 << 64) - 1
 CHAR_OPS = {"add": lambda a, b: a + b, "mul": lambda a, b: a * b}
 
@@ -77,7 +83,8 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
     inputs' values in tb.json's data_in order (already the ports' bits); a slot without new data holds the last beat
     (0 before any)."""
     w = params.get("lanes", 1)
-    cur, nb = [0] * (2 * w if datapath in ("SimdLanes", "Mac") else max(w, params.get("inLanes", 1))), 0
+    cur, nb = [0] * (2 * w if datapath in ("SimdLanes", "Mac") else max(w, params.get("inLanes", 1),
+                                                                         params.get("words", 1))), 0
     if datapath in ("SimdLanes", "Mac"):
         ta, tb = params["inTypes"][:2]
         top, tout = params["opType"], params["outType"]
@@ -99,6 +106,11 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
         r = params["words"] * 64 // (lw * nl)
         chunk = lw * nl
         count, held = 0, [0] * max(r - 1, 0)
+    elif datapath == "FifoSlicer":
+        lw, nl, nw = _width(params["laneType"]), params["outLanes"], params["words"]
+        r = nw * 64 // (lw * nl)
+        lm = (1 << lw) - 1
+        data, full, count = 0, False, 0
     else:
         raise KeyError(f"sim/ref.py has no char reference for {datapath}")
     out = []
@@ -116,6 +128,11 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
             out.append([acc])
         elif datapath == "LinkBuffer":
             out.append(list(mem[p["rslot"] if depth > 1 else 0]))
+        elif datapath == "FifoSlicer":
+            last = r == 1 or count == r - 1
+            ready = bool(p["enable"]) and (not full or (bool(p["out_ready"]) and last))
+            bits = [(data >> (lw * (count * nl + j))) & lm if full else 0 for j in range(nl)]
+            out.append(bits + [int(full), int(ready)])
         else:
             x = sum(v << (lw * i) for i, v in enumerate(cur[:nl]))
             sending = r == 1 or count == r - 1 or bool(p["last"])
@@ -146,6 +163,16 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
                     count += 1
             if p["clear"]:
                 count = 0
+        elif datapath == "FifoSlicer":
+            if p["in_valid"] and ready:
+                data, full, count = sum(v << (64 * k) for k, v in enumerate(cur[:nw])), True, 0
+            elif full and p["out_ready"]:
+                if last:
+                    full = False
+                else:
+                    count += 1
+            if p["clear"]:
+                full, count = False, 0
     if nb != len(beats):
         raise ValueError(f"char_ref: {len(beats)} beats given, the slots take {nb}")
     return out

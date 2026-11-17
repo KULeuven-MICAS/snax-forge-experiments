@@ -8,7 +8,7 @@ there. Checked: it equals the committed char.json; flop.area_um2 is the mean of 
 points (a clock gate counts as a sequential cell, so it is below a DFFR's area); the control factor is the mean over
 the 48 int64 tier-done forge points (the narrow ones, a types= set, are T7's check) of ctrl's e_dyn
 over its cells x e_hold; E_ctrl is that factor x cells x cycles x e_hold; the type axis's rules (X89): copy from a
-pair's point at W0, a narrow fold's slope, a narrow LinkBuffer's width, the packer's bits, the check points left out.
+pair's point at W0, a narrow fold's slope, a narrow LinkBuffer's width, the packer's and the slicer's bits, the check points left out.
 Standard library only.
 """
 from __future__ import annotations
@@ -134,6 +134,19 @@ class TestCharExport(unittest.TestCase):
             self.assertEqual(ce.n_bits("FifoPacker", params), flops)
             w = ce.width(t)
             self.assertAlmostEqual(ce.load_bits("FifoPacker", params), (r - 1) / r * w + (r - 1).bit_length(), places=9)
+
+    def test_slicer_bits(self):
+        """64 + ceil(log2 d_in) + 1 flops (word, counter, full), 64 / d_in + ceil(log2 d_in) loading a pop (X94), one
+        entry per lane type and lanes, its one point read whatever the lanes asked."""
+        for t, n, d_in, flops in (("int32", 1, 2, 66), ("int16", 1, 4, 67), ("int16", 2, 2, 66), ("int8", 1, 8, 68),
+                                  ("int8", 2, 4, 67), ("int8", 4, 2, 66)):
+            params = {"words": 1, "laneType": t, "outLanes": n}
+            self.assertEqual(ce.slicer_r(params), d_in)
+            self.assertEqual(ce.n_bits("FifoSlicer", params), flops)
+            self.assertAlmostEqual(ce.load_bits("FifoSlicer", params), 64 / d_in + (d_in - 1).bit_length(), places=9)
+            (x,) = [x for x in self.j["blocks"]["FifoSlicer"] if x["params"] == params]
+            self.assertEqual((x["lanes_rule"], len(x["points"]), x["points"][0]["flops"]), ("none", 1, flops))
+            self.assertEqual(ce.comb_at(self.j, "FifoSlicer", {**params, "lanes": 8}), x["points"][0]["e_comb_pj"])
 
 
 if __name__ == "__main__":

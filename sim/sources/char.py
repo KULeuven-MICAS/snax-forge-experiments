@@ -24,14 +24,15 @@ RTL = ROOT / "rtl" / "char"
 SETTLE = 4          # slots with every input low after reset
 CYCLES = 128        # each window's cycles (beats for serial's firing windows)
 KINDS = {"SimdLanes": "lanes", "Mac": "fold", "TreeAccumulate": "fold", "SerialAccumulate": "serial",
-         "LinkBuffer": "link", "FifoPacker": "pack"}
+         "LinkBuffer": "link", "FifoPacker": "pack", "FifoSlicer": "slice"}
 INS = {"SimdLanes": ["a", "b"], "Mac": ["a", "b"], "TreeAccumulate": ["in"], "SerialAccumulate": ["in"],
-       "LinkBuffer": ["in"], "FifoPacker": ["in_bits"]}
-OUTS = {"FifoPacker": ["out_bits", "out_valid", "in_ready"]}    # the others: out
+       "LinkBuffer": ["in"], "FifoPacker": ["in_bits"], "FifoSlicer": ["in_bits"]}
+OUTS = {"FifoPacker": ["out_bits", "out_valid", "in_ready"],
+        "FifoSlicer": ["out_bits", "out_valid", "in_ready"]}    # the others: out
 PINS = {"lanes": [], "fold": ["fire", "first"], "serial": ["read", "lane", "first"], "link": ["load", "wslot", "rslot"],
-        "pack": ["in_valid", "out_ready", "clear", "last"]}
+        "pack": ["in_valid", "out_ready", "clear", "last"], "slice": ["in_valid", "out_ready", "enable", "clear"]}
 WINDOWS = {"lanes": ["busy", "idle"], "fold": ["busy", "idle"], "serial": ["busy", "idle"], "link": ["stream"],
-           "pack": ["busy", "idle"]}
+           "pack": ["busy", "idle"], "slice": ["busy", "idle"]}
 SEQ_FILES = {k: [f"char_{k}_seq.sv"] for k in PINS}
 CORE = "char_seq_core.svh"
 
@@ -70,7 +71,14 @@ def port_bits(datapath: str, params: dict) -> dict:
         return {"in": width(params["inType"]), "out": width(params["outType"])}
     if datapath == "LinkBuffer":
         return {"in": width(params["dtype"]), "out": width(params["dtype"])}
+    if datapath == "FifoSlicer":
+        return {"in_bits": 64, "out_bits": width(params["laneType"]), "out_valid": 1, "in_ready": 1}
     return {"in_bits": width(params["laneType"]), "out_bits": 64, "out_valid": 1, "in_ready": 1}
+
+
+def slicer_r(params: dict) -> int:
+    """A FifoSlicer's pops per in-beat (d_in at one word in)."""
+    return params["words"] * 64 // (width(params["laneType"]) * params["outLanes"])
 
 
 def _base(p: str, bases: list[str]) -> tuple[int, int] | None:
@@ -94,10 +102,11 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
       control  {kind: "char_<kind>"}
       data_in  [{port, bits}]  every data input, one per lane, its width from the netlist (its type's), in the
                              catalogue's port order then lane order (SimdLanes and Mac: a_0 .. a_{W-1}, b_0 ..;
-                             FifoPacker in_bits_0 ..; the others in_0 ..): rand64 draws one stream per port in this
-                             order and keeps the port's low bits
-      outs     [{port, bits}]  every output compared (out, or out_0 .. out_{W-1}; FifoPacker out_bits_0 ..,
-                             out_valid, in_ready), its width from the netlist
+                             FifoPacker and FifoSlicer in_bits_0 ..; the others in_0 ..): rand64 draws one stream per
+                             port in this order and keeps the port's low bits
+      outs     [{port, bits}]  every output compared (out, or out_0 .. out_{W-1}; FifoPacker and FifoSlicer
+                             out_bits_0 .., out_valid, in_ready), its width from the netlist; a FifoSlicer's out_bits
+                             compared through out_valid (0 when it holds no word: its data register has no reset)
       pins     {name: {port, bits}}  the kind's pins present in the netlist: a pin of no bits is absent (LinkBuffer's
                              wslot and rslot at depth 1, SerialAccumulate's lane at lanes 1)
       windows  [{name, cycles, fires}]  in the order the sequencer runs them (schedule())
@@ -105,7 +114,8 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
 
     The ports must be exactly clock, reset, data_in, outs and the present pins (SimdLanes keeps an unused clock and
     reset), each data port as wide as its type (port_bits). The kinds, by datapath: lanes (SimdLanes), fold (Mac in its
-    accumulating form, TreeAccumulate), serial (SerialAccumulate), link (LinkBuffer), pack (FifoPacker).
+    accumulating form, TreeAccumulate), serial (SerialAccumulate), link (LinkBuffer), pack (FifoPacker), slice
+    (FifoSlicer).
 
     """
     d = point_dir(point, bundle)
@@ -141,6 +151,7 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
             raise ValueError(f"{point}: pin io_{n} should have no bits and be absent")
     tb = {"tb_version": TB_VERSION, "source": "char", "point": point, "datapath": dp, "params": params, "kind": kind,
           "top": top, "W": params.get("lanes", 1), "depth": params.get("depth", ""),
+          **({"r": slicer_r(params)} if kind == "slice" else {}),
           "snax_forge_commit": pj["snax_forge_commit"],
           "clock": {"port": CLK}, "reset": {"port": RST, "active": "high", "sync": False},
           "control": {"kind": f"char_{kind}"},
@@ -173,7 +184,11 @@ def schedule(tb: dict) -> list[dict]:
     window's slots. The windows: lanes, fold and serial have busy (a fire every cycle; serial a read every
     cycle, 128 beats of W) and idle (the enable at 0, every other input held), each after one lead-in slot; pack has
     the start (clear, no push, outside every window), then busy (a push every cycle, out_ready high, clear and last
-    low) and idle (no push, every other input held), each after one lead-in slot of its own kind; link has
+    low) and idle (no push, every other input held), each after one lead-in slot of its own kind; slice has the
+    start (clear, enable low, no word offered, outside every window), then busy (enable high, the input valid, the
+    output ready: a pop every cycle, a take every r = d_in cycles, a new word offered in the slot after each take,
+    the lead-in's the first) and idle (enable low, the output not ready, the input valid, the word the lead-in
+    offers held: no pop, no take), each after one lead-in slot of its own kind; a fire is a pop; link has
     stream only, a FIFO at full rate: a lead-in of D loads round the ring (the fill), then 128 cycles with a load of
     new data every cycle into slot t mod D and rslot the oldest slot, the same slot (read before the edge that
     overwrites it), so out at cycle t is the beat loaded at t - D. A slot's inputs are applied at its rising edge (after the flops have taken the slot
@@ -225,6 +240,15 @@ def schedule(tb: dict) -> list[dict]:
         slot(None, 0, 0, in_valid=0, out_ready=1, clear=0, last=0)
         for i in range(CYCLES):
             slot("idle", 0, 0, in_valid=0, out_ready=1, clear=0, last=0)
+    elif kind == "slice":
+        r = tb["r"]
+        slot(None, 0, 0, in_valid=0, out_ready=1, enable=0, clear=1)    # the start: the held word dropped
+        slot(None, 1, 0, in_valid=1, out_ready=1, enable=1, clear=0)    # lead-in: word 0 offered and taken
+        for i in range(CYCLES):                                         # pop i % r of a word, the take at r - 1
+            slot("busy", i % r == 0, 1, in_valid=1, out_ready=1, enable=1, clear=0)
+        slot(None, 1, 0, in_valid=1, out_ready=0, enable=0, clear=0)    # lead-in: the next word offered, held
+        for i in range(CYCLES):
+            slot("idle", 0, 0, in_valid=1, out_ready=0, enable=0, clear=0)
     elif kind == "link":
         for t in range(depth):                            # the lead-in: the fill, D loads round the ring
             slot(None, 1, 1, load=1, wslot=t, rslot=t)

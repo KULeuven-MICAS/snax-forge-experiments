@@ -7,7 +7,7 @@ Reads results/char/<tech>/char_synth.csv and char_power.csv and char/points.json
 limits, char.json, the forge points' power_pt.csv, power_pt_modules.csv and synth_dc_modules.csv, the duty50 rows
 at R1_COMMIT and a run note's diagnostic table. Every number is computed from those files, on the clock-gated rows
 (the duty50 rows, from before clock gating, are ungated). Checks, each a failure: every point present, every row
-ok, one snax-forge commit, the windows each block has, char.json current.
+ok, one snax-forge commit per block, the windows each block has, char.json current.
 """
 from __future__ import annotations
 
@@ -30,7 +30,8 @@ TECHS = ["nangate45"]
 N = 2048                      # the forge points' task, the dot 4 to 6 Mac comparison
 CLOCK, SEED, CYCLES = "10", "0", 128
 BLOCKS = [("SimdLanes", "lanes"), ("Mac", "mac"), ("TreeAccumulate", "tree"),
-          ("SerialAccumulate", "serial"), ("LinkBuffer", "link"), ("FifoPacker", "pack")]
+          ("SerialAccumulate", "serial"), ("LinkBuffer", "link"), ("FifoPacker", "pack"), ("FifoSlicer", "slice")]
+STREAM_BLOCKS = ("FifoPacker", "FifoSlicer")
 REGISTERED = ("Mac", "TreeAccumulate", "SerialAccumulate")
 FOLDS = ("TreeAccumulate", "SerialAccumulate")
 TYPE_KEYS = ("inTypes", "opType", "outType", "inType", "dtype", "laneType")
@@ -50,7 +51,7 @@ def width(dtype: str) -> int:
 
 
 def types(params: dict) -> list[str]:
-    """Every type a block's params name (inputs, op, output, a buffer's or a packer's lane)."""
+    """Every type a block's params name (inputs, op, output, a buffer's or a stream block's lane)."""
     out = []
     for k in TYPE_KEYS:
         v = params.get(k)
@@ -64,7 +65,7 @@ def is64(params: dict) -> bool:
 
 
 def pair(params: dict) -> tuple[int, int]:
-    """(w_in, w_out): the widest input and the output (LinkBuffer: its dtype twice; FifoPacker: its laneType)."""
+    """(w_in, w_out): the widest input and the output (LinkBuffer: its dtype twice; a stream block: its laneType)."""
     if "dtype" in params or "laneType" in params:
         w = width(params.get("dtype") or params["laneType"])
         return w, w
@@ -75,7 +76,7 @@ def pair(params: dict) -> tuple[int, int]:
 def check_only(datapath: str, params: dict) -> bool:
     """A narrow point measured to check a rule, not a char.json point: a narrow LinkBuffer (its comb scales with
     its dtype's width), or a narrow point of a block at other lanes than the pair's measured W0."""
-    if is64(params) or datapath == "FifoPacker":
+    if is64(params) or datapath in STREAM_BLOCKS:
         return False
     return datapath == "LinkBuffer" or params.get("lanes") != W0[datapath]
 
@@ -135,9 +136,21 @@ def load(tech: str, points: list[dict], gate: str = "1") -> dict:
         if bad:
             fail(f"{tech}: {name}: status {bad[0]['status']}")
         out[name] = {"datapath": p["datapath"], "params": p["params"], "synth": synth[name], "windows": power[name]}
-    commits = {r["snax_forge_commit"] for v in out.values() for r in [v["synth"], *v["windows"].values()]}
-    if len(commits) != 1:
-        fail(f"{tech}: snax-forge commits {commits}, one expected")
+    for dp in {v["datapath"] for v in out.values()}:
+        commits = {r["snax_forge_commit"] for v in out.values() if v["datapath"] == dp
+                   for r in [v["synth"], *v["windows"].values()]}
+        if len(commits) != 1:
+            fail(f"{tech}: {dp}: snax-forge commits {commits}, one per block expected")
+    return out
+
+
+def block_commits(d: dict) -> dict:
+    """{snax-forge commit: [datapaths]} in the points' order."""
+    out: dict = {}
+    for v in d.values():
+        c = out.setdefault(v["synth"]["snax_forge_commit"], [])
+        if v["datapath"] not in c:
+            c.append(v["datapath"])
     return out
 
 
@@ -158,7 +171,8 @@ def ehold(d: dict) -> dict:
 def params_cell(v: dict) -> list[str]:
     p = v["params"]
     w_in, w_out = pair(p)
-    return [str(p.get("lanes", "-")), str(p.get("depth", "-")), str(p.get("op", "-")), f"i{w_in}", f"i{w_out}"]
+    lanes = p.get("lanes", p.get("inLanes", p.get("outLanes", "-")))
+    return [str(lanes), str(p.get("depth", "-")), str(p.get("op", "-")), f"i{w_in}", f"i{w_out}"]
 
 
 def block_rows(D: dict, prefix: str) -> tuple[list[str], list[list]]:
@@ -170,7 +184,8 @@ def block_rows(D: dict, prefix: str) -> tuple[list[str], list[list]]:
         head += [f"{tag} {w} {g}" for w in windows for g in ("e_comb", "e_flop", "e_dyn")]
     pts = [p for p in D[TECHS[0]] if p.startswith(prefix + "/")]
     pts.sort(key=lambda p: (not is64(D[TECHS[0]][p]["params"]), D[TECHS[0]][p]["params"].get("op", ""),
-                            pair(D[TECHS[0]][p]["params"]), int(D[TECHS[0]][p]["params"].get("lanes", 0)),
+                            pair(D[TECHS[0]][p]["params"]),
+                            int(D[TECHS[0]][p]["params"].get("lanes", D[TECHS[0]][p]["params"].get("outLanes", 0))),
                             int(D[TECHS[0]][p]["params"].get("depth", 0))))
     rows = []
     for p in pts:
@@ -226,6 +241,36 @@ def scaling(D: dict, prefix: str) -> list[str]:
                             for r, t_ in ((2, "i32"), (4, "i16"), (8, "i8")))
             lines.append(f"- {t}: busy e_dyn a push: {per} pJ; idle is its clock gates' (and at d_out 2 its "
                          "ungated 1-bit counter's).")
+        return lines
+    if prefix == "slice":
+        import char_export as ce
+        lines = []
+        for t in TECHS:
+            d = D[t]
+            by_r: dict = {}
+            for p, v in d.items():
+                if v["datapath"] == "FifoSlicer":
+                    by_r.setdefault(ce.slicer_r(v["params"]), []).append(p)
+            same = all(len({(d[p]["synth"]["area_um2"], e(d, p, "busy"), e(d, p, "idle")) for p in ps}) == 1
+                       for ps in by_r.values())
+            per = ", ".join(f"d_in {r} {e(d, ps[0], 'busy'):.4f}" for r, ps in sorted(by_r.items()))
+            idle = ", ".join(f"{e(d, ps[0], 'idle'):.4f}" for _, ps in sorted(by_r.items()))
+            lines.append(f"- {t}: busy e_dyn a pop: {per} pJ; idle {idle} pJ a cycle, its clock gates' and its "
+                         "ungated full flag's (and at d_in 2 its 1-bit counter's).")
+            lines.append(f"- {t}: the points at one d_in are {'the same netlist and energy' if same else 'NOT equal'} "
+                         "whatever the type and lanes: a pop is 64 / d_in bits of the held word, cut in lanes only "
+                         "by the wiring.")
+            j = json.loads(ce.path(t).read_text())
+            ratio = []
+            for r, ps in sorted(by_r.items()):
+                v = d[ps[0]]
+                m = ce.e_fire(j, "FifoSlicer", v["params"]) + ce.e_hold_pj(j, ce.n_bits("FifoSlicer", v["params"]))
+                per_bit = 1000 * e(d, ps[0], "busy", "e_flop_pj") / ce.load_bits("FifoSlicer", v["params"])
+                ratio.append(f"d_in {r} {m:.4f} pJ, {m / e(d, ps[0], 'busy'):.3f} (busy e_flop {per_bit:.1f} fJ a "
+                             "loading bit)")
+            lines.append(f"- {t}: the model a pop (char.json's e_fire plus n_bits e_hold) against busy e_dyn: "
+                         f"{'; '.join(ratio)}, against e_load {j['flop']['e_load_fj']:.1f} fJ (the accumulators', "
+                         "X37): the model prices the slicer high, most where the word loads most often (d_in 2).")
         return lines
     lines = []
     for t in TECHS:
@@ -561,15 +606,18 @@ def model_area(D: dict, J: dict, designs: list[tuple[str, str, int]]) -> list[st
 def main() -> int:
     points = json.loads(POINTS.read_text())
     D = {t: load(t, points) for t in TECHS}
-    commits = {"snax_forge": next(iter(D[TECHS[0]].values()))["synth"]["snax_forge_commit"],
+    commits = {"snax_forge": block_commits(D[TECHS[0]]),
                "sfe": git("log", "-1", "--format=%H", "--", *(f"results/char/{t}/char_power.csv" for t in TECHS))}
-    if any(next(iter(D[t].values()))["synth"]["snax_forge_commit"] != commits["snax_forge"] for t in TECHS):
+    if any(block_commits(D[t]) != commits["snax_forge"] for t in TECHS):
         fail("the technologies name different snax-forge commits")
+    by_commit = list(commits["snax_forge"].items())
+    sf = f"`{by_commit[0][0]}` (every row)" if len(by_commit) == 1 else "; ".join(
+        f"`{c}` ({'every other block' if i == 0 else ', '.join(dps)})" for i, (c, dps) in enumerate(by_commit))
 
     L = ["# The blocks alone, int8 to int64", "",
          "Generated by `report/char_table.py` (`pixi run char-table`) from `results/char/<tech>/char_synth.csv` and "
          "`char_power.csv`; the known limits also read the files they cite. Do not edit by hand.", "",
-         f"- **Commits:** snax-forge `{commits['snax_forge']}` (every row); snax-forge-experiments `{commits['sfe']}` "
+         f"- **Commits:** snax-forge {sf}; snax-forge-experiments `{commits['sfe']}` "
          "(the commit that wrote the power CSVs).",
          f"- **Settings:** clock {CLOCK} ns; synthesis as SYN1 and SYN2 (X1 to X4, X22; the block as top, X30), clock-gated "
          "(X79 · X87 · X88; a clock gate is a sequential cell, X83); power "
@@ -577,9 +625,10 @@ def main() -> int:
          "inputs at the rising edge, a lead-in slot before each window, the VCD cut per window (X31, X32).",
          "- **Units:** area µm²; energy pJ per cycle of the window (e_comb, e_flop = clock + register + sequential, "
          "e_dyn = the two); e_bit and e_hold fJ per sequential cell per cycle.",
-         "- **Windows:** busy (a fire every cycle; FifoPacker a push every cycle, its output always ready) and idle "
-         "(the enable at 0, every other input held) for SimdLanes, Mac, TreeAccumulate, SerialAccumulate and "
-         "FifoPacker; stream for LinkBuffer (a load every cycle at full occupancy), a link that is not loading costing "
+         "- **Windows:** busy (a fire every cycle; FifoPacker a push every cycle, its output always ready; FifoSlicer "
+         "a pop every cycle, its input always valid, its output always ready, a take every d_in cycles) and idle "
+         "(the enable at 0, every other input held; FifoSlicer's output not ready) for SimdLanes, Mac, TreeAccumulate, "
+         "SerialAccumulate, FifoPacker and FifoSlicer; stream for LinkBuffer (a load every cycle at full occupancy), a link that is not loading costing "
          "its flops x e_hold (X33).",
          "- **Types:** the int64 set (CHAR1's 27 points) gives the flop constants and the lanes rules; every compute "
          "block has its 10 (in, out) pairs, out at least in, the op at out, at one lane count W0 (SimdLanes 1, the "
@@ -615,7 +664,8 @@ def main() -> int:
           "e_fire = e_comb + n_bits (e_load - e_hold), pJ per fire, and the hold term n_bits e_hold, pJ per cycle, "
           "from char.json at each measured point. n_bits is the block's register bits from its params (lanes x depth "
           "x the output's width; SimdLanes none; FifoPacker its held slots and counter, of which (r - 1) / r of a slot "
-          "and the counter load per push, r = d_out); `seq_cells` adds the block's clock gates, one per register "
+          "and the counter load per push, r = d_out; FifoSlicer its word, counter and full flag, of which 64 / r of the "
+          "word and the counter load per pop, r = d_in, X94); `seq_cells` adds the block's clock gates, one per register "
           "enable (`pixi run char-export` prints each). A lanes value "
           "char.json does not hold takes the entry's `lanes_rule`: `copy`, W / W0 x the point at W0 (SimdLanes, "
           "Mac, LinkBuffer, whose W = 8 and 32 points are the copy's checks above); `interpolate`, linear in lanes "
