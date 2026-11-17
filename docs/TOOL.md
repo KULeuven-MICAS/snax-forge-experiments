@@ -132,7 +132,7 @@ results/strm/nangate45/streamer.csv: 168 rows, 168 ok
 results/strm/nangate45/xbar.csv: 27 rows, 27 ok
 ```
 
-**`xbar-kinds`** (`report/xbar_kinds.py`) fits the interconnect's read-only and write-only inputs from the xbar_mix rows into `results/strm/<tech>/xbar_kinds.json`: the factor form and the crosspoint form, with their checks against the 36-input points and the cluster (X71).
+**`xbar-kinds`** (`report/xbar_kinds.py`) fits the interconnect's read-only and write-only inputs from the xbar_mix rows into `results/strm/<tech>/xbar_kinds.json`: the area's factor form and crosspoint form, with their checks against the 36-input points and the cluster (X71), and the energy's factor form by bank count from the powered rows (`power_pt.csv`, X93), printed as `energy at <b> banks: g_ro ..., g_wo ...`.
 
 **`char-export`** (`report/char_export.py`) writes the block model, `results/char/<tech>/char.json`, from the clock-gated rows (X37, X83 · X85): a clock gate counts as a sequential cell, the control factor is the mean over the tier-done forge points with a power row. It prints each block whose sequential cells differ from its bits (its clock gates).
 
