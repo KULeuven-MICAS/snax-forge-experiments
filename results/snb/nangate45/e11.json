@@ -213,6 +213,42 @@
    "area_um2": 832364.0,
    "eta_a_gops_mm2": 0.00727377
   },
+  "snitch1_cg_mvt_int32": {
+   "config": "snitch1_cg",
+   "kernel": "mvt",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 118330,
+   "c_run_gls": null,
+   "dma_in": 341,
+   "dma_out": 67,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.0166346
+  },
+  "snitch1_cg_mvt_int64": {
+   "config": "snitch1_cg",
+   "kernel": "mvt",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 272670,
+   "c_run_gls": null,
+   "dma_in": 618,
+   "dma_out": 69,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00721887
+  },
   "snitch1_cg_relu_int64": {
    "config": "snitch1_cg",
    "kernel": "relu",
@@ -369,6 +405,42 @@
    "area_um2": 1008440.0,
    "eta_a_gops_mm2": 0.0230402
   },
+  "snitch5_cg_mvt_int32": {
+   "config": "snitch5_cg",
+   "kernel": "mvt",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 29765,
+   "c_run_gls": null,
+   "dma_in": 340,
+   "dma_out": 69,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0545837
+  },
+  "snitch5_cg_mvt_int64": {
+   "config": "snitch5_cg",
+   "kernel": "mvt",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 68592,
+   "c_run_gls": null,
+   "dma_in": 617,
+   "dma_out": 71,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0236862
+  },
   "snitch5_cg_relu_int64": {
    "config": "snitch5_cg",
    "kernel": "relu",
@@ -524,6 +596,42 @@
    "dma_out": 63,
    "area_um2": 1185670.0,
    "eta_a_gops_mm2": 0.033823
+  },
+  "snitch9_cg_mvt_int32": {
+   "config": "snitch9_cg",
+   "kernel": "mvt",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 15086,
+   "c_run_gls": null,
+   "dma_in": 340,
+   "dma_out": 69,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0915975
+  },
+  "snitch9_cg_mvt_int64": {
+   "config": "snitch9_cg",
+   "kernel": "mvt",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 37268,
+   "c_run_gls": null,
+   "dma_in": 617,
+   "dma_out": 73,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0370785
   },
   "snitch9_cg_relu_int64": {
    "config": "snitch9_cg",
