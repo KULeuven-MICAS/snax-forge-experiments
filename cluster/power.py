@@ -13,6 +13,7 @@ snax_cluster (--again reruns it). The steps and checks are in cluster/README.md,
 from __future__ import annotations
 
 import datetime as dt
+from dataclasses import dataclass
 import hashlib
 import json
 import os
@@ -70,15 +71,17 @@ def components(scope: str) -> list[str]:
     return out
 
 
-def vsim_path(scope: str) -> str:
-    """The scope under the wrapper as vsim names it: '/' between components, escaped ones kept as they are."""
-    return WRAP + "".join("/" + c for c in components(scope))
+def vsim_path(scope: str, wrap: str = WRAP) -> str:
+    """The scope under the wrapper (its vsim path wrap) as vsim names it: '/' between components, escaped ones kept
+    as they are."""
+    return wrap + "".join("/" + c for c in components(scope))
 
 
-def vcd_add_lines(scopes: list[str]) -> list[str]:
-    """One non-recursive `vcd add` per design scope: the wrapper's own nets, then each scope; every path in braces
-    (Tcl does not substitute in them: an escaped identifier keeps its backslash, brackets and trailing space)."""
-    return [f"vcd add {{{WRAP}/*}}"] + [f"vcd add {{{vsim_path(s)}/*}}" for s in scopes]
+def vcd_add_lines(scopes: list[str], wrap: str = WRAP) -> list[str]:
+    """One non-recursive `vcd add` per design scope: the wrapper's own nets (wrap, its vsim path), then each scope;
+    every path in braces (Tcl does not substitute in them: an escaped identifier keeps its backslash, brackets and
+    trailing space)."""
+    return [f"vcd add {{{wrap}/*}}"] + [f"vcd add {{{vsim_path(s, wrap)}/*}}" for s in scopes]
 
 
 def vsim_command(script: str, do_file: Path, elf: Path) -> str:
@@ -172,13 +175,13 @@ def program_output(text: str) -> list[str]:
     return [ln for ln in text.splitlines() if ln.strip() and not ln.startswith("#") and not ln.startswith(FESVR)]
 
 
-def do_file(pdir: Path, check_mark: int) -> str:
+def do_file(pdir: Path, check_mark: int, wrap: str = WRAP) -> str:
     q = lambda p: "{" + str(p) + "}"   # noqa: E731
     L = ["# part 1 (cluster/power.py): the VCD of the cluster's design scopes, obs_o's changes",
          "onbreak {resume}", "onfinish stop",
          f"vcd file {q(pdir / 'dut.vcd')}",
          f"source {q(pdir / 'vcd_add.do')}",
-         f"set obs_sig {q(WRAP + '/obs_o')}",
+         f"set obs_sig {q(wrap + '/obs_o')}",
          f"set check_mark {check_mark}",
          "set vcd_on 1",
          f"set obs_f [open {q(pdir / 'obs_log.txt')} w]",
@@ -302,8 +305,9 @@ def build(work: Path, steps, pre: dict) -> tuple[Path, Path, str]:
     return netlist, cfg, opts
 
 
-def saif_jobs(vcd: Path, wins: list[dict], pdir: Path, res: dict) -> None:
-    """Steps 6 and 7: one cut pass, vcd2saif per window (at most j jobs, no more cuts on disk than jobs), the checks."""
+def saif_jobs(vcd: Path, wins: list[dict], pdir: Path, res: dict, instance: str = TB_TOP) -> None:
+    """Steps 6 and 7: one cut pass, vcd2saif per window (at most j jobs, no more cuts on disk than jobs), the checks;
+    instance is the wrapper's in the testbench (vcd2saif -instance)."""
     j = max(1, min(os.cpu_count() or 1, len(wins)))
     vcd2saif = pwr.tool("vcd2saif")
     names = {f"{w['mark']}_{w['kind']}": w for w in wins}
@@ -318,7 +322,7 @@ def saif_jobs(vcd: Path, wins: list[dict], pdir: Path, res: dict) -> None:
         w, t = names[n], time.monotonic()
         try:
             return pwr.run_tool([vcd2saif, "-input", str(cuts[n]), "-output", str(pdir / n / "w.saif"),
-                                 "-instance", TB_TOP, "-time", str(w["cut_t0"]), str(w["cut_t1"])],
+                                 "-instance", instance, "-time", str(w["cut_t0"]), str(w["cut_t1"])],
                                 pdir / n / "vcd2saif.log", pdir / n, stdin_null=True)
         finally:
             cuts[n].unlink(missing_ok=True)        # each cut at once
@@ -566,6 +570,23 @@ STRIP_LEVELS = len(TB_TOP.split("/"))                # the SAIF's instance level
 RESULTS = ROOT / "results" / "cluster" / TECH
 POWER_CSV = RESULTS / "power_pt.csv"
 POWER_REPORTS = RESULTS / "power_reports"
+
+
+@dataclass(frozen=True)
+class Site:
+    """Where a cluster's part 2 reads and writes: forge's cluster (forge_site) or the Snitch-only ones (cluster/snb.py)."""
+    name: str           # the command, for the messages
+    run_zips: Path      # the run zips (sim/runs/<source>/<tech>/)
+    tmp: Path           # the work folders
+    netlist: str        # the netlist's member in the DC run zip
+    strip: str          # the wrapper's instance in the testbench (read_saif -strip_path)
+    power_csv: Path     # results/<source>/<tech>/power_pt.csv
+    power_reports: Path  # results/<source>/<tech>/power_reports/
+
+
+def forge_site() -> Site:
+    """forge's cluster, from the module's names as they are at the call (a test may point POWER_REPORTS elsewhere)."""
+    return Site("cluster pwr", cl.RUN_ZIPS, cl.TMP, cl.NETLIST, STRIP, POWER_CSV, POWER_REPORTS)
 REPORT_FILES = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt", "units.rpt")
 HIER_TOL = 1e-5                                      # relative: report_power's 6 significant digits
 CSV_COLUMNS = ["point", "tech", "clock_ns", "mark", "kind", "label", "cycles", "t0_ps", "t1_ps",
@@ -762,13 +783,14 @@ def pt_threads(cores: int, lic: dict) -> tuple[int, str]:
     return cores, f"--cores {cores}: {free:.1f} cores free (nproc {os.cpu_count()}, load {os.getloadavg()[0]:.1f})"
 
 
-def part2(p: dict, pre: dict, args, p1: dict) -> dict:
+def part2(p: dict, pre: dict, args, p1: dict, site: Site | None = None) -> dict:
     """Part 2: one PT session on the netlist, a window after another (pt_power.tcl's cluster mode), the checks per
-    window, power_pt.csv, the report zip and pt/ of the run zip."""
+    window, power_pt.csv, the report zip and pt/ of the run zip; site is where (forge's cluster by default)."""
+    site = site or forge_site()
     point, images = p["point"], pre["images"]
     wins = p1["windows"]
-    run_zip = cl.RUN_ZIPS / f"{point}.zip"
-    work = cl.TMP / point
+    run_zip = site.run_zips / f"{point}.zip"
+    work = site.tmp / point
     shutil.rmtree(work, ignore_errors=True)
     pt = work / "pt"
     (pt / "run" / "out").mkdir(parents=True)
@@ -790,9 +812,9 @@ def part2(p: dict, pre: dict, args, p1: dict) -> dict:
         print(f"  PT threads {threads} ({why}); free PrimeTime {lic['PrimeTime']['free']}, PrimePower "
               f"{lic['PrimePower']['free']}", flush=True)
         t = time.monotonic()
-        for m in ("tech.json", "reports/lib_info.txt", cl.NETLIST, "cluster.sdc"):
+        for m in ("tech.json", "reports/lib_info.txt", site.netlist, "cluster.sdc"):
             (pt / "run" / m).write_bytes(arc.read(pre["synz"], m))
-        if sha((pt / "run" / cl.NETLIST).read_bytes()) != pre["netlist_sha"]:
+        if sha((pt / "run" / site.netlist).read_bytes()) != pre["netlist_sha"]:
             raise cl.Stop("the netlist unpacked is not part 1's")
         (pt / "macros").mkdir()
         dbs = []
@@ -808,7 +830,7 @@ def part2(p: dict, pre: dict, args, p1: dict) -> dict:
         (pt / "windows.txt").write_text(windows_file(wins, saifs))
         res["seconds"]["unpack"] = round(time.monotonic() - t, 1)
         env = {**os.environ, "PWR_RUN": str(pt / "run"), "PWR_MODE": "cluster", "PWR_WINDOWS": str(pt / "windows.txt"),
-               "PWR_STRIP": STRIP, "PWR_EXTRA_SDC": str(pt / "run" / "cluster.sdc"),
+               "PWR_STRIP": site.strip, "PWR_EXTRA_SDC": str(pt / "run" / "cluster.sdc"),
                "PWR_RAM_DBS": " ".join(str(d) for d in dbs), "PWR_THREADS": str(threads), "PWR_OUT": str(pt / "reports")}
         argv = ["/usr/bin/time", "-v", "-o", str(pt / "time.txt"), pwr.tool("pt_shell", "PT_SHELL"), "-no_init",
                 "-f", str(pwr.PT_SCRIPT), "-output_log_file", str(pt / "pt_shell.log")]
@@ -863,13 +885,13 @@ def part2(p: dict, pre: dict, args, p1: dict) -> dict:
     except cl.StepFailed as e:
         res["failed"] = f"step {e.step} ({e.why})"
         res["failed_log"], res["failed_tail"] = str(e.log), cl.tail(pt / "pt_shell.log") or cl.tail(e.log)
-        print(f"cluster pwr {point}: FAIL at {e.step} ({e.why})", flush=True)
+        print(f"{site.name} {point}: FAIL at {e.step} ({e.why})", flush=True)
     except cl.Stop as e:
         res["failed"] = str(e)
-        print(f"cluster pwr {point}: FAIL: {e}", flush=True)
+        print(f"{site.name} {point}: FAIL: {e}", flush=True)
     except (Exception, SystemExit) as e:  # noqa: BLE001 - recorded; the zips and the clean still done
         res["failed"] = f"driver: {e!r}"
-        print(f"cluster pwr {point}: FAIL in the driver: {e!r}", flush=True)
+        print(f"{site.name} {point}: FAIL in the driver: {e!r}", flush=True)
     finally:
         res["seconds"].update(steps.times)
         res["seconds"]["total_before_pack"] = round(time.monotonic() - t_all, 1)
@@ -877,20 +899,20 @@ def part2(p: dict, pre: dict, args, p1: dict) -> dict:
         t = time.monotonic()
         try:
             if rows:
-                merge_csv(POWER_CSV, rows)
-            pack2(pt, point, res, wins, run_zip)
+                merge_csv(site.power_csv, rows)
+            pack2(pt, point, res, wins, run_zip, site)
         except Exception as e:  # noqa: BLE001
             print(f"  could not write the results or zips: {e!r}", flush=True)
         res["pack_s"] = round(time.monotonic() - t, 1)
         shutil.rmtree(work, ignore_errors=True)
-        if cl.TMP.is_dir() and not any(cl.TMP.iterdir()):
-            cl.TMP.rmdir()
+        if site.tmp.is_dir() and not any(site.tmp.iterdir()):
+            site.tmp.rmdir()
         print(f"  cleaned: {work} deleted", flush=True)
     return res
 
 
-def pack2(pt: Path, point: str, res: dict, wins: list[dict], run_zip: Path) -> None:
-    """The report zip results/cluster/nangate45/power_reports/<point>.zip (per window the four reports; at the top
+def pack2(pt: Path, point: str, res: dict, wins: list[dict], run_zip: Path, site: Site | None = None) -> None:
+    """The report zip power_reports/<point>.zip of the site's results (per window the four reports; at the top
     wire_load.rpt, licenses.rpt, windows.json, pt_check.json) and pt/ of the run zip (the not-annotated lists,
     pt_shell.log and the session's other files, logs/, pt_check.json). The report zip's pt_check.json has no
     report_zip (it is written into that zip); the run zip's pt/pt_check.json, written after it, has its size."""
@@ -907,7 +929,7 @@ def pack2(pt: Path, point: str, res: dict, wins: list[dict], run_zip: Path) -> N
             members[f] = (rep / f).read_bytes()
     members["windows.json"] = arc.read(run_zip, "pwr/windows.json")
     members["pt_check.json"] = check_json
-    z = POWER_REPORTS / f"{point}.zip"
+    z = (site or forge_site()).power_reports / f"{point}.zip"
     arc.write(z, members)
     res["report_zip"] = {"zip": str(z.relative_to(ROOT)), "bytes": z.stat().st_size, "members": len(members)}
     new = {"pt/pt_check.json": (json.dumps(res, indent=2, default=str) + "\n").encode()}

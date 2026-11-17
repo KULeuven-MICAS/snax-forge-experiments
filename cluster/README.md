@@ -26,10 +26,11 @@ Each step takes snax_cluster from `SNAX_CLUSTER` (default `../snax_cluster`), cl
 | `cluster.sdc`, `cluster_check.tcl` | X68's extra constraints; the post-synthesis gates |
 | `tree.py` | `area_hierarchy.rpt` as an indented tree (`tree.txt`) |
 | `groups.json`, `hwcost.py` | the area and energy groups and snax-forge's HWCOST for a point (X72) |
+| `snb.py`, `snb_points.json` | the Snitch-only clusters through the same steps (`pixi run snb <step>`, section snb below) |
 | `eqv_tb.sv` | the Verilator bench of `tc_sram_impl.sv` against tech_cells_generic's (result in its header) |
 | `test_*.py` | `pixi run python cluster/test_<name>.py` |
 
-Results in `results/cluster/nangate45/`: `synth_dc.csv`, `reports/`, `power_pt.csv`, `power_reports/`, `hwcost/<point>.json`, `breakdown.json`, `energy.json`, and the sweep over W: `sweep.csv`, `sweep_energy.png`, `sweep_area.png`, `sweep_energy_five.png`, `sweep_area_five.png` (X78 · X80 · X86); run notes in `results/cluster/runs/`.
+Results in `results/cluster/nangate45/`: `synth_dc.csv`, `reports/`, `power_pt.csv`, `power_reports/`, `hwcost/<point>.json`, `breakdown.json`, `energy.json`, and the sweep over W: `sweep.csv`, `sweep_energy.png`, `sweep_area.png`, `sweep_energy_five.png`, `sweep_area_five.png` (X78 · X80 · X86); run notes in `results/cluster/runs/`. The Snitch-only clusters' results are in `results/snb/nangate45/` (below).
 
 ## The steps in detail
 
@@ -127,3 +128,46 @@ Reads what cluster-breakdown and cluster-energy wrote (`breakdown.json`, `energy
 - **alone:** the accelerator's shell in the run window and alone (`points.json`'s `alone`): cycles, pJ per cycle, nJ, µm².
 
 A part's share is $s_p = E_p / \sum_q E_q$ over the five parts, on each side. No normalization, no check on the trend: the data is laid out, its reading is the user's. `sweep.csv` is long form (point, W, source, window, group, metric, value; source `gls` the netlist, `hwcost` snax-forge's estimate, `alone` the shell alone). The figures: `sweep_energy.png` and `sweep_area.png`, per W the netlist's bar beside HWCOST's, absolute on the left and in % of the five parts on the right; `sweep_energy_five.png` and `sweep_area_five.png`, the absolute panel alone with the five parts only, each bar's total above it. The bars stack memory, control, streamers, crossbar and datapath from the bottom, the netlist's not-priced part on top. `--md` prints the tables as Markdown.
+
+## snb: the Snitch-only clusters
+
+snax_cluster's own clusters with no accelerator (`cfg/snax_snitch_cluster_{1,5,9}.hjson`: 1, 5 or 9 rv32ima cores in one hive, the logarithmic TCDM interconnect, forge's 128 KiB L1), running snitch-forge's plain C kernels, as E11's baseline (X91, X92). `snb.py` drives them through the same four steps as a forge point, with cluster.py's and power.py's helpers; what differs is where the program comes from and what is checked.
+
+`snb_points.json` has the configs and the kernels. A config is one netlist (`snitch1_cg`, `snitch5_cg`, `snitch9_cg`, clock-gated as forge's points), with its cfg path, cores, workers (compute cores; the one core of `_1` computes too), macros and the sha256 of the netlist the runs use. A run is `<config>_<kernel>_<type>` (e.g. `snitch1_cg_dot_int64`): the kernel's snitch-forge program at its sizes in the file and seed 42. Every make call names the config by its relative path (`CFG_OVERRIDE=cfg/snax_snitch_cluster_<n>.hjson`), as snax_cluster's apps Makefile builds snitch-forge only then.
+
+| Step | What it does | Gates | Kept |
+|---|---|---|---|
+| `snb rtl RUN` | in the image: `make clean-sw`, `make sw` (the config's runtime), the kernel's plain and `QUIET=1` builds with the run's `TYPE`, `SEED` and sizes; data.h's first line checked; then rtl-gen, clustergen's memory list, X66's `tc_sram_impl.sv`, and the plain ELF on the RTL with the macros | `[SUCCESS]` and no `[FAILURE]`; `snitch-forge errors: 0`; the header line the run's (kernel, type, sizes, workers); the three sections' cycles and a compute line per worker; the macros compiled, nothing of tech_cells_generic's `tc_sram` | `rtl/snb/<run>.zip` (both ELFs, data.h, the marks' legend, `sw.log`, `provenance.json`); `rtl/` in `sim/runs/snb/nangate45/<run>.zip`; a row of `results/snb/nangate45/runs.csv` |
+| `snb syn CONFIG` | as `cluster syn` through syn.py's `snb` source (top `snax_snitch_cluster_wrapper`). A kept run is adopted, with no DC, when its netlist is the config's `netlist_sha256`, its row is ok and snax_cluster changed no RTL since its commit (`--again` runs DC anyway) | as `cluster syn` | `syn/runs/snb/nangate45/<config>.zip`; `results/snb/nangate45/synth_dc.csv` and `reports/<config>.zip` |
+| `snb gls RUN` | the config's netlist built as `cluster gls` does (`SIM_TYPE=gate_level_sim`), the swap checked with this wrapper, then the plain ELF on it | the program's gates as `rtl`; the swap (wrapper and cells from `work-vsim/gls`, `+initreg+0`, `+acc=n`, no `[tc_sram_impl]` print). Recorded, not gated: each section's cycles beside the RTL run's | `gls/` and `build/` in the run zip; the `gls_*` columns of `runs.csv` |
+| `snb pwr RUN` | part 1 as `cluster pwr`'s (the quiet ELF, power.py's do-file with this wrapper's `obs_o`, the windows from snitch-forge's marks, the cut, a SAIF per window); part 2 is power.py's own, with this cluster's `Site` | the run passes with no program output; X9's SAIF checks; at least 95 % of the driven nets annotated. Recorded, not gated: each window's cycles beside the plain RTL run's section | `pwr/` and `pt/` in the run zip; `results/snb/nangate45/power_pt.csv` and `power_reports/<run>.zip` |
+
+Left out against a forge point (X91): the plain RTL run beside the macro run, D123 and the expected file (there is no SNAX-GVSoC model of these programs; the program checks its own result against data.h's golden), the `[tc_sram_impl]` count, RAMCOUNT, and the 10 % timing gates at gate level and in the windows. Every run, RTL or netlist, uses its own do-file (`onfinish stop`, `run -all`, `quit -f`) in place of VSIM_FLAGS' `log -r /*`, so no waveform log is written. A new ELF (another sha256 in `rtl`) empties the run's `gls_*` columns of `runs.csv`.
+
+### E11's measures: `pixi run snb-report`
+
+`report/snb_report.py` reads the committed results only and writes `results/snb/nangate45/e11.json` (`--md` prints the tables).
+
+- **Area,** $A$: DC's total of the config, and its groups (`groups.json`, the logarithmic interconnect's rule included) in four coarse parts that add up to it; forge's four accelerator groups must be empty here.
+
+| Part | Groups |
+|---|---|
+| memory | `tcdm_banks`, `tcdm_logic` |
+| interconnect | `tcdm_interconnect` |
+| cores | `cores` (with the shared mul/div), `icache_macros`, `icache_logic`, `peripherals` |
+| rest | `dma`, `axi`, `others`, `acc_interface` (the cores' SNAX CSR translators, 1,595 µm² per core) |
+
+- **Operations,** $n_\text{op}$: from the kernel's maths at its sizes (`snb_points.json`'s `n_op`), never from instructions, so the extra instructions int64 takes on RV32 are cost and not work; a multiply-accumulate counts two.
+- **Cycles,** $C_\text{run}$: the plain RTL run's `snitch-forge cycles run`, core 0's `mcycle` between the barrier after DMA in and the one before DMA out; the same barriers bound the quiet build's run window, whose cycles are listed beside it.
+- **Area efficiency,** with $t_\text{clk} = 10$ ns:
+
+$$\eta_A = \frac{n_\text{op}}{C_\text{run}\thinspace t_\text{clk}\thinspace A} \quad [\text{GOPS/mm}^2]$$
+
+- **Energy per task,** $E_\text{run}$: the run window's dynamic energy as power_pt.csv has it (internal plus switching, the macros as PT measures them), $E_\text{run} = P_{\text{dyn},\text{run}}\thinspace C_w\thinspace t_\text{clk}$ with $C_w$ the window's cycles, and $\eta_E = n_\text{op} / E_\text{run}$ in op/pJ.
+- **Leakage,** a side number (X92): $E_\text{leak} = P_\text{leak}\thinspace C_w\thinspace t_\text{clk}$, $P_\text{leak}$ the window's `Cell Leakage Power` in power.rpt, with the macros' part beside it; never added into $E_\text{run}$.
+
+Worked example, dot at int64 on `snitch9_cg` (R7's numbers): $n_\text{op} = 2 \cdot 2048 = 4096$, $C_\text{run} = 11944$, $A = 1.185665$ mm², so
+
+$$\eta_A = \frac{4096}{11944 \cdot 10^{-8}\ \text{s} \cdot 1.185665\ \text{mm}^2} \approx 2.89 \cdot 10^{7}\ \text{op/s/mm}^2 = 0.0289\ \text{GOPS/mm}^2$$
+
+against 1.89 GOPS/mm² for forge's `dot3_w16_cg` (4096 op in 185 cycles on 1.173 mm²).

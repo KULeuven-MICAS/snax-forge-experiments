@@ -1,0 +1,136 @@
+{
+ "tech": "nangate45",
+ "t_clk_ns": 10.0,
+ "configs": {
+  "snitch1_cg": {
+   "cores": 1,
+   "workers": 1,
+   "total_um2": 832364.4242,
+   "parts_um2": {
+    "memory": 485222.0384,
+    "interconnect": 10452.204099999994,
+    "cores": 105358.75439999995,
+    "rest": 231331.42729999902
+   },
+   "groups_um2": {
+    "tcdm_banks": 432726.40640000015,
+    "icache_macros": 43064.479999999996,
+    "acc_datapath": 0.0,
+    "acc_control": 0.0,
+    "acc_csr": 0.0,
+    "streamers": 0.0,
+    "acc_interface": 1595.4679999999998,
+    "tcdm_interconnect": 10452.204099999994,
+    "tcdm_logic": 52495.631999999874,
+    "dma": 73717.37969999964,
+    "cores": 26512.22009999994,
+    "icache_logic": 19404.69989999998,
+    "axi": 155664.7997999998,
+    "peripherals": 16377.354400000027,
+    "others": 353.7797999995845
+   },
+   "sum_check": {
+    "parts_um2": 832364.424199999,
+    "ok": true
+   },
+   "accelerator_groups": {
+    "um2": {},
+    "ok": true
+   },
+   "synth_dc": {
+    "area_um2": 832364.424249,
+    "macro_um2": 475790.88623,
+    "status": "ok",
+    "slack_ns": 1.61378,
+    "ok": true
+   }
+  },
+  "snitch5_cg": {
+   "cores": 5,
+   "workers": 4,
+   "total_um2": 1008442.8587,
+   "parts_um2": {
+    "memory": 486118.9904,
+    "interconnect": 31133.43869999994,
+    "cores": 252503.037999999,
+    "rest": 238687.39159999945
+   },
+   "groups_um2": {
+    "tcdm_banks": 432726.40640000015,
+    "icache_macros": 43064.479999999996,
+    "acc_datapath": 0.0,
+    "acc_control": 0.0,
+    "acc_csr": 0.0,
+    "streamers": 0.0,
+    "acc_interface": 7976.541999999994,
+    "tcdm_interconnect": 31133.43869999994,
+    "tcdm_logic": 53392.58399999985,
+    "dma": 73717.64569999964,
+    "cores": 106879.86449999957,
+    "icache_logic": 84661.41509999985,
+    "axi": 156435.66779999988,
+    "peripherals": 17897.2783999996,
+    "others": 557.5360999999418
+   },
+   "sum_check": {
+    "parts_um2": 1008442.8586999984,
+    "ok": true
+   },
+   "accelerator_groups": {
+    "um2": {},
+    "ok": true
+   },
+   "synth_dc": {
+    "area_um2": 1008442.858742,
+    "macro_um2": 475790.88623,
+    "status": "ok",
+    "slack_ns": 1.6696,
+    "ok": true
+   }
+  },
+  "snitch9_cg": {
+   "cores": 9,
+   "workers": 8,
+   "total_um2": 1185665.0929,
+   "parts_um2": {
+    "memory": 486391.3744000001,
+    "interconnect": 54565.37899999998,
+    "cores": 398964.23370000237,
+    "rest": 245744.10579999906
+   },
+   "groups_um2": {
+    "tcdm_banks": 432726.40640000015,
+    "icache_macros": 43064.479999999996,
+    "acc_datapath": 0.0,
+    "acc_control": 0.0,
+    "acc_csr": 0.0,
+    "streamers": 0.0,
+    "acc_interface": 14357.882000000007,
+    "tcdm_interconnect": 54565.37899999998,
+    "tcdm_logic": 53664.967999999906,
+    "dma": 73718.70969999966,
+    "cores": 187293.79290000245,
+    "icache_logic": 149695.75440000062,
+    "axi": 157057.0437999999,
+    "peripherals": 18910.20639999931,
+    "others": 610.470299999494
+   },
+   "sum_check": {
+    "parts_um2": 1185665.0929000014,
+    "ok": true
+   },
+   "accelerator_groups": {
+    "um2": {},
+    "ok": true
+   },
+   "synth_dc": {
+    "area_um2": 1185665.092903,
+    "macro_um2": 475790.88623,
+    "status": "ok",
+    "slack_ns": 1.31501,
+    "ok": true
+   }
+  }
+ },
+ "runs": {}
+}
