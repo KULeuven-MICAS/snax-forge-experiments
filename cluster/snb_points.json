@@ -1,0 +1,29 @@
+{
+  "about": "The Snitch-only clusters and their programs, read by cluster/snb.py and report/snb_report.py. A config is one of snax_cluster's cfg/snax_snitch_cluster_<n>.hjson, synthesized clock-gated as forge's cluster points (one netlist per config, netlist_sha256 the one the runs use). A run is <config>_<kernel>_<type>: the kernel's snitch-forge program at its sizes below and seed 42 on that config. n_op is the kernel's operations from its maths (a multiply-accumulate counts two), in the grammar of +, -, *, // over the sizes.",
+  "images": {"snax_cluster": "c5db84ad7bce"},
+  "seed": 42,
+  "types": ["int64", "i32", "i16", "i8", "int32"],
+  "configs": [
+    {"config": "snitch1_cg", "cfg": "cfg/snax_snitch_cluster_1.hjson", "cores": 1, "workers": 1, "syn": {"clk_gate": true},
+     "srams": {"sram_d128_w256_m8": 2, "sram_d128_w39": 2, "sram_d512_w64_m8": 32},
+     "netlist_sha256": "27135498b71971d58830e312e23f26ad754d93908cb286cf1a787377d9b97f87"},
+    {"config": "snitch5_cg", "cfg": "cfg/snax_snitch_cluster_5.hjson", "cores": 5, "workers": 4, "syn": {"clk_gate": true},
+     "srams": {"sram_d128_w256_m8": 2, "sram_d128_w39": 2, "sram_d512_w64_m8": 32},
+     "netlist_sha256": "c5f73fc7276e5a78c2b1ce03849404d33be60701ca21971975333532b8ce9a5f"},
+    {"config": "snitch9_cg", "cfg": "cfg/snax_snitch_cluster_9.hjson", "cores": 9, "workers": 8, "syn": {"clk_gate": true},
+     "srams": {"sram_d128_w256_m8": 2, "sram_d128_w39": 2, "sram_d512_w64_m8": 32},
+     "netlist_sha256": "191add787ac6b3dde34d1c0b71561df6b10f26a1c5b1b842a40ea44c662d0b19"}
+  ],
+  "kernels": {
+    "vecadd": {"sizes": {"N": 2048}, "n_op": "N"},
+    "vecmul": {"sizes": {"N": 2048}, "n_op": "N"},
+    "relu":   {"sizes": {"N": 2048}, "n_op": "N"},
+    "axpy":   {"sizes": {"N": 2048}, "n_op": "2*N"},
+    "vsum":   {"sizes": {"N": 2048}, "n_op": "N-1"},
+    "dot":    {"sizes": {"N": 2048}, "n_op": "2*N"},
+    "rowsum": {"sizes": {"M": 16, "N": 128}, "n_op": "M*(N-1)"},
+    "matvec": {"sizes": {"M": 16, "N": 512}, "n_op": "2*M*N"},
+    "matadd": {"sizes": {"M": 32, "N": 64}, "n_op": "M*N"},
+    "mvt":    {"sizes": {"M": 64, "N": 64}, "n_op": "4*M*N"}
+  }
+}

@@ -161,6 +161,23 @@ $ pixi run cluster-energy
 results/cluster/nangate45/energy.json: dot3_w8_cg, dot3_w2_cg, dot3_w4_cg, dot3_w16_cg, dot3_w32_cg
 ```
 
+snax_cluster's Snitch-only clusters go through the same steps with `snb` (`cluster/snb_points.json`; the steps, gates and E11's measures in [`cluster/README.md`](../cluster/README.md#snb-the-snitch-only-clusters)). A config is one netlist, a run is `<config>_<kernel>_<type>`; X68's budget holds.
+
+| Command | What it does |
+|---|---|
+| `snb rtl RUN [--allow-branch]` | the run's plain and quiet ELF in the image, then the plain one on the RTL with the macros; a row of `results/snb/nangate45/runs.csv` |
+| `snb syn CONFIG [--cores 16] [--again] [--allow-branch]` | DC on the whole cluster; a kept netlist equal to the config's `netlist_sha256` is adopted with no DC |
+| `snb gls RUN [--allow-branch]` | the config's netlist in the same testbench, the plain ELF on it (X91) |
+| `snb pwr RUN [--cores 16] [--again] [--allow-branch]` | the quiet ELF on the netlist, one SAIF per section, one PT session |
+| `snb-report [--md]` | E11's numbers: area in four parts, $n_\text{op}$, $C_\text{run}$, $\eta_A$, and $E_\text{run}$, $\eta_E$, $E_\text{leak}$ where power exists (X92), into `results/snb/nangate45/e11.json` |
+
+```
+$ pixi run snb syn snitch1_cg
+snb syn snitch1_cg: kept syn/runs/snb/nangate45/snitch1_cg.zip (netlist 27135498b719 of snax_cluster c5621396983e, no RTL change since, row ok); --again runs DC
+$ pixi run snb-report
+results/snb/nangate45/e11.json: 3 configs, 0 runs, 0 with energy
+```
+
 `cluster-hwcost` runs in snax-forge's environment (`SNAX_FORGE`, default `../snax-forge`; `SNAX_FORGE_PYTHON` for a plain venv) and records snax-forge's commit and whether its tree was clean; price from a clean checkout.
 
 ## 8. Compare forge with the HLS tools

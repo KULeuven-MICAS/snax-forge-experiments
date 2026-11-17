@@ -65,7 +65,12 @@ SOURCES = {
     # driven by cluster/cluster.py, not by `syn run`; the point's bundle zip names it
     "cluster": {"rtl": Path(os.environ.get("SYN_RTL_CLUSTER", ROOT / "rtl" / "cluster")),
                 "format": "sverilog", "clk": "clk_i", "rst": "rst_ni", "top": "snax_forge_cluster_wrapper"},
+    # the Snitch-only clusters, driven by cluster/snb.py: a cluster run with snax_cluster's own cluster file
+    "snb": {"rtl": Path(os.environ.get("SYN_RTL_SNB", ROOT / "rtl" / "snb")),
+            "format": "sverilog", "clk": "clk_i", "rst": "rst_ni", "top": "snax_snitch_cluster_wrapper"},
 }
+# The sources synthesized as a whole snax_cluster cluster (cluster.sdc, cluster_check.tcl, their reports)
+CLUSTERS = ("cluster", "snb")
 # The sources whose points are bundle zips in rtl/<source>/ (unpacked into tmp/ for DC); STRM: strm/gen.py's
 BUNDLED = ("forge", "char", "streamer", "xbar", "xbar_mix")
 STRM = ("streamer", "xbar", "xbar_mix")
@@ -117,18 +122,18 @@ KEEP_RUN = ("out/*_mapped.v", "tech.json", "logs/dc_shell.log", "logs/dc_stdout.
 # from; its report zip keeps the hierarchical area and power reports whatever their size (report/cluster_breakdown.py reads them)
 CLUSTER_REPORTS = ("cluster_check.rpt", "cluster_ports.rpt")
 CLUSTER_RUN_FILES = ("syn_flist.tcl", "cluster.sdc", "tc_sram_impl.sv", "tree.txt")
-UNLIMITED_REPORTS = {"cluster": ("area_hierarchy.rpt", "power_hierarchy.rpt")}
+UNLIMITED_REPORTS = {c: ("area_hierarchy.rpt", "power_hierarchy.rpt") for c in CLUSTERS}
 TOP_MEMBERS = ("tech.json", "tree.txt")   # report zip members at the run zip's top, not in reports/
 
 
 def kept_reports() -> tuple:
-    """KEPT_REPORTS, and for the cluster source its reports and tree.txt too."""
-    return KEPT_REPORTS + ((*CLUSTER_REPORTS, "tree.txt") if SOURCE == "cluster" else ())
+    """KEPT_REPORTS, and for a cluster source its reports and tree.txt too."""
+    return KEPT_REPORTS + ((*CLUSTER_REPORTS, "tree.txt") if SOURCE in CLUSTERS else ())
 
 
 def keep_run() -> tuple:
-    """KEEP_RUN, and for the cluster source its reports and the files it ran from too."""
-    if SOURCE != "cluster":
+    """KEEP_RUN, and for a cluster source its reports and the files it ran from too."""
+    if SOURCE not in CLUSTERS:
         return KEEP_RUN
     return KEEP_RUN + CLUSTER_RUN_FILES + tuple(f"reports/{r}" for r in CLUSTER_REPORTS)
 
@@ -235,7 +240,7 @@ def techs_with_summary(only: str | None) -> list[str]:
 def all_points() -> list[str]:
     """The points of the source: a forge or char point is a bundle zip, rtl/<set>/<point>.zip, holding a
     bundle.json (forge) or an emitted.json (char); an HLS tool's is an rtl/ folder with a filelist.f."""
-    if SOURCE == "cluster":
+    if SOURCE in CLUSTERS:
         return sorted(f.stem for f in RTL.glob("*.zip") if "provenance.json" in arc.names(f))
     if SOURCE in BUNDLED:
         marker = {"forge": "bundle.json", "char": "emitted.json"}.get(SOURCE, "config.json")
@@ -248,7 +253,7 @@ def all_points() -> list[str]:
 
 def columns() -> list[str]:
     return COLUMNS + {"forge": FORGE_COLUMNS, "char": CHAR_COLUMNS, "bambu": BAMBU_COLUMNS, "hls": HLS_COLUMNS,
-                      "cluster": CLUSTER_COLUMNS, **STRM_COLUMNS}.get(SOURCE, [])
+                      **{c: CLUSTER_COLUMNS for c in CLUSTERS}, **STRM_COLUMNS}.get(SOURCE, [])
 
 
 def bundle_zip(point: str) -> Path:
@@ -421,8 +426,8 @@ def select(patterns: list[str]) -> list[str]:
 
 
 def top_of(point: str) -> str:
-    if SOURCE == "cluster":
-        return SOURCES["cluster"]["top"]
+    if SOURCE in CLUSTERS:
+        return SOURCES[SOURCE]["top"]
     if SOURCE == "forge":
         return forge_json(point, "bundle.json").get("top", "")
     if SOURCE == "char":
@@ -441,7 +446,7 @@ def point_files(point: str) -> list[str]:
 
 
 def rams_of(point: str) -> list[str]:
-    if SOURCE in BUNDLED or SOURCE == "cluster":
+    if SOURCE in BUNDLED or SOURCE in CLUSTERS:
         return []
     return re.findall(r"^#\s*ram:\s*(\S+)", (RTL / point / "filelist.f").read_text(), re.M)
 
@@ -594,7 +599,7 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
     if SOURCE == "hls" and tj is not None:
         row.update(ram_area(json.loads(tj), get, tech, point, clock))
     cluster_gate = ""
-    if SOURCE == "cluster":
+    if SOURCE in CLUSTERS:
         extra, cluster_gate = cluster_extra(json.loads(tj) if tj is not None else {}, get, log_text, tech)
         row.update(extra)
     split_error = ""
@@ -632,7 +637,7 @@ def read_run(tech: dict, point: str, clock: str) -> dict:
             # an SRAM macro is a black box to DC (its default-activity power is in that group, not in the four);
             # the cluster's memories are macros (PITFALLS DC12); a clock-gated run's integrated gates may be
             # black boxes to DC too (Nangate's statetable), so a gated row takes the group out as well
-            if row.get("ram_kind") == "macro" or SOURCE == "cluster" or row.get("clk_gate") == "1":
+            if row.get("ram_kind") == "macro" or SOURCE in CLUSTERS or row.get("clk_gate") == "1":
                 bb = power_groups(power, ["black_box"]).get("black_box", (0.0, 0.0, 0.0))
                 e_dyn -= (bb[0] + bb[1]) * clock_ns / 1000.0
             energy_ok = abs(e_total - e_dyn) <= 1e-3 * max(abs(e_dyn), 1e-9) + 1e-6
@@ -917,7 +922,7 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
     modules = []
     for r in rows:
         if r["run"]:
-            if SOURCE != "cluster":          # no modules CSV for the cluster (report/cluster_breakdown.py reads the reports)
+            if SOURCE not in CLUSTERS:       # no modules CSV for a cluster (report/cluster_breakdown.py reads the reports)
                 modules += read_modules(tech, r["point"], r["clock_ns"])
             skipped = copy_reports(name, r["point"], r["clock_ns"])
             if skipped:
@@ -926,7 +931,7 @@ def write_summary(tech: dict, rows: list[dict]) -> None:
             stale = report_zip(name, r["point"], r["clock_ns"])
             if stale.exists():
                 stale.unlink()
-    if SOURCE != "cluster":
+    if SOURCE not in CLUSTERS:
         _merge(out / modules_csv, MODULE_COLUMNS, key, modules, done)
 
 
@@ -1113,8 +1118,8 @@ def run_one(point: str, args, dc: str, tech: dict, res: dict) -> dict | None:
 
 
 def cmd_run(args) -> int:
-    if SOURCE == "cluster":
-        sys.exit("the cluster source runs through cluster/cluster.py: pixi run cluster syn <point>")
+    if SOURCE in CLUSTERS:
+        sys.exit(f"the {SOURCE} source runs through cluster/{SOURCE}.py: pixi run {SOURCE} syn <point>")
     points = select(args.patterns)
     if not points:
         sys.exit("no rtl point matches (syn.py list shows them)")

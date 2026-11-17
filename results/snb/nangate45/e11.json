@@ -1,0 +1,803 @@
+{
+ "tech": "nangate45",
+ "t_clk_ns": 10.0,
+ "configs": {
+  "snitch1_cg": {
+   "cores": 1,
+   "workers": 1,
+   "total_um2": 832364.0,
+   "parts_um2": {
+    "memory": 485222.0,
+    "interconnect": 10452.2,
+    "cores": 105359.0,
+    "rest": 231331.0
+   },
+   "groups_um2": {
+    "tcdm_banks": 432726.0,
+    "icache_macros": 43064.5,
+    "acc_datapath": 0.0,
+    "acc_control": 0.0,
+    "acc_csr": 0.0,
+    "streamers": 0.0,
+    "acc_interface": 1595.47,
+    "tcdm_interconnect": 10452.2,
+    "tcdm_logic": 52495.6,
+    "dma": 73717.4,
+    "cores": 26512.2,
+    "icache_logic": 19404.7,
+    "axi": 155665.0,
+    "peripherals": 16377.4,
+    "others": 353.78
+   },
+   "sum_check": {
+    "parts_um2": 832364.0,
+    "ok": true
+   },
+   "accelerator_groups": {
+    "um2": {},
+    "ok": true
+   },
+   "synth_dc": {
+    "area_um2": 832364.0,
+    "macro_um2": 475791.0,
+    "status": "ok",
+    "slack_ns": 1.61378,
+    "ok": true
+   }
+  },
+  "snitch5_cg": {
+   "cores": 5,
+   "workers": 4,
+   "total_um2": 1008440.0,
+   "parts_um2": {
+    "memory": 486119.0,
+    "interconnect": 31133.4,
+    "cores": 252503.0,
+    "rest": 238687.0
+   },
+   "groups_um2": {
+    "tcdm_banks": 432726.0,
+    "icache_macros": 43064.5,
+    "acc_datapath": 0.0,
+    "acc_control": 0.0,
+    "acc_csr": 0.0,
+    "streamers": 0.0,
+    "acc_interface": 7976.54,
+    "tcdm_interconnect": 31133.4,
+    "tcdm_logic": 53392.6,
+    "dma": 73717.6,
+    "cores": 106880.0,
+    "icache_logic": 84661.4,
+    "axi": 156436.0,
+    "peripherals": 17897.3,
+    "others": 557.536
+   },
+   "sum_check": {
+    "parts_um2": 1008440.0,
+    "ok": true
+   },
+   "accelerator_groups": {
+    "um2": {},
+    "ok": true
+   },
+   "synth_dc": {
+    "area_um2": 1008440.0,
+    "macro_um2": 475791.0,
+    "status": "ok",
+    "slack_ns": 1.6696,
+    "ok": true
+   }
+  },
+  "snitch9_cg": {
+   "cores": 9,
+   "workers": 8,
+   "total_um2": 1185670.0,
+   "parts_um2": {
+    "memory": 486391.0,
+    "interconnect": 54565.4,
+    "cores": 398964.0,
+    "rest": 245744.0
+   },
+   "groups_um2": {
+    "tcdm_banks": 432726.0,
+    "icache_macros": 43064.5,
+    "acc_datapath": 0.0,
+    "acc_control": 0.0,
+    "acc_csr": 0.0,
+    "streamers": 0.0,
+    "acc_interface": 14357.9,
+    "tcdm_interconnect": 54565.4,
+    "tcdm_logic": 53665.0,
+    "dma": 73718.7,
+    "cores": 187294.0,
+    "icache_logic": 149696.0,
+    "axi": 157057.0,
+    "peripherals": 18910.2,
+    "others": 610.47
+   },
+   "sum_check": {
+    "parts_um2": 1185670.0,
+    "ok": true
+   },
+   "accelerator_groups": {
+    "um2": {},
+    "ok": true
+   },
+   "synth_dc": {
+    "area_um2": 1185670.0,
+    "macro_um2": 475791.0,
+    "status": "ok",
+    "slack_ns": 1.31501,
+    "ok": true
+   }
+  }
+ },
+ "runs": {
+  "snitch1_cg_axpy_int64": {
+   "config": "snitch1_cg",
+   "kernel": "axpy",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 1,
+   "n_op": 4096,
+   "n_op_rule": "2*N",
+   "c_run": 63555,
+   "c_run_gls": null,
+   "dma_in": 577,
+   "dma_out": 295,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00774278
+  },
+  "snitch1_cg_dot_int64": {
+   "config": "snitch1_cg",
+   "kernel": "dot",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 1,
+   "n_op": 4096,
+   "n_op_rule": "2*N",
+   "c_run": 69698,
+   "c_run_gls": 69698,
+   "dma_in": 575,
+   "dma_out": 57,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00706035,
+   "window_cycles": 69695,
+   "p_dyn_uw": 2825.78,
+   "e_run_pj": 1969430.0,
+   "e_run_macro_pj": 29501.8,
+   "eta_e_op_pj": 0.00207979,
+   "ann_pct": 100.0,
+   "p_leak_uw": 86139.3,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 60034800.0,
+   "e_leak_macro_pj": 55599200.0
+  },
+  "snitch1_cg_matadd_int64": {
+   "config": "snitch1_cg",
+   "kernel": "matadd",
+   "type": "int64",
+   "sizes": {
+    "M": 32,
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 2048,
+   "n_op_rule": "M*N",
+   "c_run": 55344,
+   "c_run_gls": null,
+   "dma_in": 577,
+   "dma_out": 293,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00444576
+  },
+  "snitch1_cg_matvec_int64": {
+   "config": "snitch1_cg",
+   "kernel": "matvec",
+   "type": "int64",
+   "sizes": {
+    "M": 16,
+    "N": 512
+   },
+   "workers": 1,
+   "n_op": 16384,
+   "n_op_rule": "2*M*N",
+   "c_run": 270612,
+   "c_run_gls": 270612,
+   "dma_in": 1153,
+   "dma_out": 54,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00727377,
+   "window_cycles": 270567,
+   "p_dyn_uw": 2836.82,
+   "e_run_pj": 7675490.0,
+   "e_run_macro_pj": 117427.0,
+   "eta_e_op_pj": 0.00213459,
+   "ann_pct": 100.0,
+   "p_leak_uw": 86135.4,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 233054000.0,
+   "e_leak_macro_pj": 215845000.0
+  },
+  "snitch1_cg_mvt_int32": {
+   "config": "snitch1_cg",
+   "kernel": "mvt",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 118330,
+   "c_run_gls": null,
+   "dma_in": 341,
+   "dma_out": 67,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.0166346
+  },
+  "snitch1_cg_mvt_int64": {
+   "config": "snitch1_cg",
+   "kernel": "mvt",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 272670,
+   "c_run_gls": 272670,
+   "dma_in": 618,
+   "dma_out": 69,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00721887,
+   "window_cycles": 272462,
+   "p_dyn_uw": 2796.56,
+   "e_run_pj": 7619560.0,
+   "e_run_macro_pj": 118997.0,
+   "eta_e_op_pj": 0.00215026,
+   "ann_pct": 100.0,
+   "p_leak_uw": 86172.4,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 234787000.0,
+   "e_leak_macro_pj": 217357000.0
+  },
+  "snitch1_cg_relu_int64": {
+   "config": "snitch1_cg",
+   "kernel": "relu",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 1,
+   "n_op": 2048,
+   "n_op_rule": "N",
+   "c_run": 38956,
+   "c_run_gls": null,
+   "dma_in": 325,
+   "dma_out": 303,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.006316
+  },
+  "snitch1_cg_rowsum_int64": {
+   "config": "snitch1_cg",
+   "kernel": "rowsum",
+   "type": "int64",
+   "sizes": {
+    "M": 16,
+    "N": 128
+   },
+   "workers": 1,
+   "n_op": 2032,
+   "n_op_rule": "M*(N-1)",
+   "c_run": 28930,
+   "c_run_gls": null,
+   "dma_in": 317,
+   "dma_out": 52,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00843843
+  },
+  "snitch1_cg_vecadd_int64": {
+   "config": "snitch1_cg",
+   "kernel": "vecadd",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 1,
+   "n_op": 2048,
+   "n_op_rule": "N",
+   "c_run": 55344,
+   "c_run_gls": null,
+   "dma_in": 577,
+   "dma_out": 293,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00444576
+  },
+  "snitch1_cg_vecmul_int64": {
+   "config": "snitch1_cg",
+   "kernel": "vecmul",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 1,
+   "n_op": 2048,
+   "n_op_rule": "N",
+   "c_run": 73784,
+   "c_run_gls": null,
+   "dma_in": 577,
+   "dma_out": 307,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00333468
+  },
+  "snitch1_cg_vsum_int64": {
+   "config": "snitch1_cg",
+   "kernel": "vsum",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 1,
+   "n_op": 2047,
+   "n_op_rule": "N-1",
+   "c_run": 30787,
+   "c_run_gls": null,
+   "dma_in": 324,
+   "dma_out": 50,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00798798
+  },
+  "snitch5_cg_axpy_int64": {
+   "config": "snitch5_cg",
+   "kernel": "axpy",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 4,
+   "n_op": 4096,
+   "n_op_rule": "2*N",
+   "c_run": 15948,
+   "c_run_gls": null,
+   "dma_in": 573,
+   "dma_out": 297,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0254684
+  },
+  "snitch5_cg_dot_int64": {
+   "config": "snitch5_cg",
+   "kernel": "dot",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 4,
+   "n_op": 4096,
+   "n_op_rule": "2*N",
+   "c_run": 19050,
+   "c_run_gls": 19050,
+   "dma_in": 577,
+   "dma_out": 27,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0213213,
+   "window_cycles": 19038,
+   "p_dyn_uw": 5479.43,
+   "e_run_pj": 1043170.0,
+   "e_run_macro_pj": 30104.3,
+   "eta_e_op_pj": 0.00392648,
+   "ann_pct": 100.0,
+   "p_leak_uw": 89408.4,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 17021600.0,
+   "e_leak_macro_pj": 15187600.0
+  },
+  "snitch5_cg_matadd_int64": {
+   "config": "snitch5_cg",
+   "kernel": "matadd",
+   "type": "int64",
+   "sizes": {
+    "M": 32,
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 2048,
+   "n_op_rule": "M*N",
+   "c_run": 13860,
+   "c_run_gls": null,
+   "dma_in": 574,
+   "dma_out": 292,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0146526
+  },
+  "snitch5_cg_matvec_int64": {
+   "config": "snitch5_cg",
+   "kernel": "matvec",
+   "type": "int64",
+   "sizes": {
+    "M": 16,
+    "N": 512
+   },
+   "workers": 4,
+   "n_op": 16384,
+   "n_op_rule": "2*M*N",
+   "c_run": 70515,
+   "c_run_gls": 70515,
+   "dma_in": 1141,
+   "dma_out": 59,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0230402,
+   "window_cycles": 67701,
+   "p_dyn_uw": 5727.23,
+   "e_run_pj": 3877390.0,
+   "e_run_macro_pj": 118114.0,
+   "eta_e_op_pj": 0.00422552,
+   "ann_pct": 100.0,
+   "p_leak_uw": 89407.7,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 60529900.0,
+   "e_leak_macro_pj": 54008500.0
+  },
+  "snitch5_cg_mvt_int32": {
+   "config": "snitch5_cg",
+   "kernel": "mvt",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 29765,
+   "c_run_gls": null,
+   "dma_in": 340,
+   "dma_out": 69,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0545837
+  },
+  "snitch5_cg_mvt_int64": {
+   "config": "snitch5_cg",
+   "kernel": "mvt",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 68592,
+   "c_run_gls": 68592,
+   "dma_in": 617,
+   "dma_out": 71,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0236862,
+   "window_cycles": 68431,
+   "p_dyn_uw": 5609.73,
+   "e_run_pj": 3838790.0,
+   "e_run_macro_pj": 120265.0,
+   "eta_e_op_pj": 0.00426801,
+   "ann_pct": 100.0,
+   "p_leak_uw": 89445.8,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 61208600.0,
+   "e_leak_macro_pj": 54590900.0
+  },
+  "snitch5_cg_relu_int64": {
+   "config": "snitch5_cg",
+   "kernel": "relu",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 4,
+   "n_op": 2048,
+   "n_op_rule": "N",
+   "c_run": 9755,
+   "c_run_gls": null,
+   "dma_in": 336,
+   "dma_out": 305,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0208186
+  },
+  "snitch5_cg_rowsum_int64": {
+   "config": "snitch5_cg",
+   "kernel": "rowsum",
+   "type": "int64",
+   "sizes": {
+    "M": 16,
+    "N": 128
+   },
+   "workers": 4,
+   "n_op": 2032,
+   "n_op_rule": "M*(N-1)",
+   "c_run": 7300,
+   "c_run_gls": null,
+   "dma_in": 314,
+   "dma_out": 54,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0276026
+  },
+  "snitch5_cg_vecadd_int64": {
+   "config": "snitch5_cg",
+   "kernel": "vecadd",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 4,
+   "n_op": 2048,
+   "n_op_rule": "N",
+   "c_run": 13860,
+   "c_run_gls": null,
+   "dma_in": 574,
+   "dma_out": 292,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0146526
+  },
+  "snitch5_cg_vecmul_int64": {
+   "config": "snitch5_cg",
+   "kernel": "vecmul",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 4,
+   "n_op": 2048,
+   "n_op_rule": "N",
+   "c_run": 19492,
+   "c_run_gls": null,
+   "dma_in": 574,
+   "dma_out": 295,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0104189
+  },
+  "snitch5_cg_vsum_int64": {
+   "config": "snitch5_cg",
+   "kernel": "vsum",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 4,
+   "n_op": 2047,
+   "n_op_rule": "N-1",
+   "c_run": 7784,
+   "c_run_gls": null,
+   "dma_in": 322,
+   "dma_out": 27,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0260774
+  },
+  "snitch9_cg_axpy_int64": {
+   "config": "snitch9_cg",
+   "kernel": "axpy",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 8,
+   "n_op": 4096,
+   "n_op_rule": "2*N",
+   "c_run": 8600,
+   "c_run_gls": null,
+   "dma_in": 573,
+   "dma_out": 297,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0401698
+  },
+  "snitch9_cg_dot_int64": {
+   "config": "snitch9_cg",
+   "kernel": "dot",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 8,
+   "n_op": 4096,
+   "n_op_rule": "2*N",
+   "c_run": 11944,
+   "c_run_gls": 11944,
+   "dma_in": 577,
+   "dma_out": 27,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0289233,
+   "window_cycles": 11928,
+   "p_dyn_uw": 7849.58,
+   "e_run_pj": 936298.0,
+   "e_run_macro_pj": 30845.4,
+   "eta_e_op_pj": 0.00437468,
+   "ann_pct": 100.0,
+   "p_leak_uw": 92753.4,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 11063600.0,
+   "e_leak_macro_pj": 9515570.0
+  },
+  "snitch9_cg_matadd_int64": {
+   "config": "snitch9_cg",
+   "kernel": "matadd",
+   "type": "int64",
+   "sizes": {
+    "M": 32,
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 2048,
+   "n_op_rule": "M*N",
+   "c_run": 6949,
+   "c_run_gls": null,
+   "dma_in": 574,
+   "dma_out": 292,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0248568
+  },
+  "snitch9_cg_matvec_int64": {
+   "config": "snitch9_cg",
+   "kernel": "matvec",
+   "type": "int64",
+   "sizes": {
+    "M": 16,
+    "N": 512
+   },
+   "workers": 8,
+   "n_op": 16384,
+   "n_op_rule": "2*M*N",
+   "c_run": 40855,
+   "c_run_gls": 40855,
+   "dma_in": 1141,
+   "dma_out": 63,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.033823,
+   "window_cycles": 41292,
+   "p_dyn_uw": 8389.39,
+   "e_run_pj": 3464150.0,
+   "e_run_macro_pj": 118886.0,
+   "eta_e_op_pj": 0.00472959,
+   "ann_pct": 100.0,
+   "p_leak_uw": 92757.9,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 38301600.0,
+   "e_leak_macro_pj": 32940700.0
+  },
+  "snitch9_cg_mvt_int32": {
+   "config": "snitch9_cg",
+   "kernel": "mvt",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 15086,
+   "c_run_gls": null,
+   "dma_in": 340,
+   "dma_out": 69,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0915975
+  },
+  "snitch9_cg_mvt_int64": {
+   "config": "snitch9_cg",
+   "kernel": "mvt",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 37268,
+   "c_run_gls": 37268,
+   "dma_in": 617,
+   "dma_out": 73,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0370785,
+   "window_cycles": 36807,
+   "p_dyn_uw": 8796.19,
+   "e_run_pj": 3237610.0,
+   "e_run_macro_pj": 121834.0,
+   "eta_e_op_pj": 0.00506052,
+   "ann_pct": 100.0,
+   "p_leak_uw": 92800.5,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 34157100.0,
+   "e_leak_macro_pj": 29362800.0
+  },
+  "snitch9_cg_relu_int64": {
+   "config": "snitch9_cg",
+   "kernel": "relu",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 8,
+   "n_op": 2048,
+   "n_op_rule": "N",
+   "c_run": 4895,
+   "c_run_gls": null,
+   "dma_in": 336,
+   "dma_out": 305,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.035287
+  },
+  "snitch9_cg_rowsum_int64": {
+   "config": "snitch9_cg",
+   "kernel": "rowsum",
+   "type": "int64",
+   "sizes": {
+    "M": 16,
+    "N": 128
+   },
+   "workers": 8,
+   "n_op": 2032,
+   "n_op_rule": "M*(N-1)",
+   "c_run": 3705,
+   "c_run_gls": null,
+   "dma_in": 314,
+   "dma_out": 64,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0462566
+  },
+  "snitch9_cg_vecadd_int64": {
+   "config": "snitch9_cg",
+   "kernel": "vecadd",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 8,
+   "n_op": 2048,
+   "n_op_rule": "N",
+   "c_run": 6949,
+   "c_run_gls": null,
+   "dma_in": 574,
+   "dma_out": 292,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0248568
+  },
+  "snitch9_cg_vecmul_int64": {
+   "config": "snitch9_cg",
+   "kernel": "vecmul",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 8,
+   "n_op": 2048,
+   "n_op_rule": "N",
+   "c_run": 9626,
+   "c_run_gls": null,
+   "dma_in": 574,
+   "dma_out": 302,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0179441
+  },
+  "snitch9_cg_vsum_int64": {
+   "config": "snitch9_cg",
+   "kernel": "vsum",
+   "type": "int64",
+   "sizes": {
+    "N": 2048
+   },
+   "workers": 8,
+   "n_op": 2047,
+   "n_op_rule": "N-1",
+   "c_run": 4000,
+   "c_run_gls": null,
+   "dma_in": 322,
+   "dma_out": 27,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0431614
+  }
+ }
+}

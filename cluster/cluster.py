@@ -64,7 +64,8 @@ TREE_DEPTH = 4
 RUN_LOG = "logs/snax-forge-vsim.txt"          # snax_forge.mk's SNAX_FORGE_LOG for SIM=vsim, under TB_DIR
 SUCCESS = check.SUCCESS
 GENERIC_SRAM = "tech_cells_generic/src/rtl/tc_sram"
-NETLIST = "out/snax_forge_cluster_wrapper_mapped.v"     # step 2's netlist in its run zip
+WRAPPER = "snax_forge_cluster_wrapper"                  # the cluster's top (syn.py's cluster source)
+NETLIST = f"out/{WRAPPER}_mapped.v"                    # step 2's netlist in its run zip
 GLS_TIMEOUT = {"gls_vsim_preparation": 1800, "gls_snax-forge-sim": 4 * 3600, "gls_snax-forge-run": 8 * 3600}
 RTL_PATHS = ("hw", "util", "target/snitch_cluster/cfg", "Bender.yml")
 NOT_RTL = re.compile(r"(^|/)(Makefile[^/]*|[^/]*\.mk|[^/]*\.md|README[^/]*)$")
@@ -708,11 +709,12 @@ def elapsed(text: str, needle: str | None = None) -> int | None:
     return None
 
 
-def swap_check(vopt: str, vlog: str, run: str, netlist: Path, cell_names: set[str]) -> dict:
-    """The netlist took the RTL's place: vopt loaded snax_forge_cluster_wrapper and cells from the gls library with
+def swap_check(vopt: str, vlog: str, run: str, netlist: Path, cell_names: set[str],
+               top: str = WRAPPER) -> dict:
+    """The netlist took the RTL's place: vopt loaded the wrapper (top) and cells from the gls library with
     +initreg+0 and +acc=n, vlog compiled the netlist, the run printed no [tc_sram_impl] (the RTL tc_sram_impl gone)."""
     loaded = re.findall(r"^-- Loading module (?:(\S+)\.)?(\w+)\s*$", vopt, re.M)
-    wrapper = sorted({lib or "(work)" for lib, m in loaded if m == "snax_forge_cluster_wrapper"})
+    wrapper = sorted({lib or "(work)" for lib, m in loaded if m == top})
     from_gls = {m for lib, m in loaded if lib and lib.endswith("gls")}
     cmd = next((ln.strip() for ln in vopt.splitlines() if ln.lstrip().startswith("vopt ")), "")
     c = {"wrapper_from": wrapper, "cells_loaded": len(from_gls & cell_names),

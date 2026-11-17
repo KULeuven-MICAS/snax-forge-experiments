@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse. It says what was decided, why, and where the detail lives, in a few short bullets. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; the text of a removed entry is in git history.
-- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X91**.
+- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X93**.
 
 Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X25's diagnostic), X26, X27 and X43 (SYN1's and SYN2's analysis code and local runs, deleted), X36 (a draft block table, now X37), X46 (one comparison file, now X64), X35 (the LinkBuffer stream cheaper per flop than a held flop, a limit of the ungated table, gone with it).
 
@@ -406,6 +406,20 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 - **Decided:** `pixi run cluster-sweep [--recipe dot_3]` reads `breakdown.json` and `energy.json` for the recipe's points, one per W, and writes `results/cluster/<tech>/sweep.csv` (long form: point, W, source `gls`, `hwcost` or `alone`, window, group, metric, value) and four figures: `sweep_energy.png` and `sweep_area.png` (per W the netlist's run window and area in HWCOST's five parts plus what HWCOST does not price, beside HWCOST's five parts, absolute and in % of each side's five parts) and `sweep_energy_five.png` and `sweep_area_five.png` (the absolute panel, the five parts only). The bars stack memory, control, streamers, crossbar, datapath from the bottom, the not-priced part on top. `--points A,B,... --out NAME` lays out chosen points into `NAME/`, not committed. Raw data only: no normalization, no check on the trend.
 - **Why:** the W sweep is read by hand (Ryan, 12 Nov); one file holds every number, and what changes least sits at the bottom so the change shows on top (Ryan, 15 Nov).
 - **Where:** `cluster/README.md`; `results/cluster/runs/2026-11-13_pwr2_r2.md`, `2026-11-15_cg3_r4.md`.
+
+### X91 — The Snitch-only clusters through the cluster flow, and their checks
+
+- **Decided:** snax_cluster's `cfg/snax_snitch_cluster_{1,5,9}.hjson` (one hive, rv32ima, the logarithmic TCDM interconnect, forge's L1) go through the cluster flow with `cluster/snb.py` and `cluster/snb_points.json`: `snb syn` per config (one netlist each, clock-gated, adopted while its sha256 is the file's and snax_cluster changed no RTL), `snb rtl`, `gls` and `pwr` per run (`<config>_<kernel>_<type>`, snitch-forge's program at fixed sizes and seed 42). It reuses mem.py, syn.py (source `snb`), cluster.py's steps and swap check and power.py's do-file, cut and part 2 (its `Site`), with this cluster's wrapper and testbench instance.
+- **Decided:** a run is gated on `[SUCCESS]`, `snitch-forge errors: 0` (the program checks itself against data.h's golden), its header line (kernel, type, sizes, workers), the sections' cycles and one compute line per worker; the RTL run on the macros' compile, the netlist run on the swap. Left out against X67 · X81 · X84: the plain RTL run, D123, the `[tc_sram_impl]` count, RAMCOUNT and the 10 % timing gates; the netlist's and the windows' cycles are recorded beside the RTL's. No waveform log in any run.
+- **Decided:** `groups.json`'s `tcdm_interconnect` also takes the logarithmic interconnect (`gen_no_snax_tcdm_interconnect.i_tcdm_interconnect`); E11's area has four coarse parts (memory, interconnect, cores, rest), the cores' SNAX CSR translators in rest. $C_\text{run}$ (for $\eta_A$) is the plain RTL run's run section, which every run has; energy uses the quiet run's window and its own cycles $C_w$, never $C_\text{run}$, as the two builds differ by up to 4 %; $n_\text{op}$ comes from the kernel's maths.
+- **Why:** these programs have no SNAX-GVSoC model and no expected file, and R7's 26 netlist runs equalled the RTL to the cycle; the flow's own helpers keep the baseline measured the way forge's points are.
+- **Where:** `cluster/README.md`, "snb"; `results/snb/runs/2026-11-16_snb1_r7.md`, `2026-11-17_snb1_r6.md`.
+
+### X92 — E11's energy is dynamic only, leakage a side number
+
+- **Decided:** E11's $E_\text{run}$ and $\eta_E$ use the run window's dynamic energy (internal plus switching, power_pt.csv's `e_win_pj`, the macros as PT measures them, X75). Leakage, $E_\text{leak} = P_\text{leak}\thinspace C_w\thinspace t_\text{clk}$ from the window's power.rpt, is reported beside it with the macros' part, never added in.
+- **Why:** the Snitch runs take 50 to 200 times forge's cycles, so leakage over the window would swamp the comparison with a number set by the macros' CACTI leakage and the clock period, not by the work; forge's cluster rows are dynamic only too.
+- **Where:** `cluster/README.md`, "snb"; `report/snb_report.py`.
 
 ## Reports and comparison
 

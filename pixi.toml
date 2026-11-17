@@ -16,6 +16,9 @@ forge-rtl = "python forge/bundles.py"
 char-rtl = "python char/blocks.py"
 strm-rtl = "python strm/gen.py"
 cluster = "python cluster/cluster.py"
+# The Snitch-only clusters of snax_cluster through the same flow, and E11's numbers (cluster/README.md, "snb")
+snb = "python cluster/snb.py"
+snb-report = "python report/snb_report.py"
 # CACTI 7 at a fixed commit into ram/cacti/ (git-ignored), built with the host g++; then the SRAM table and macros
 ram-build = "test -d ram/cacti/.git || git clone https://github.com/HewlettPackard/cacti ram/cacti && git -C ram/cacti checkout -q 1ffd8df && make -C ram/cacti"
 ram = "python ram/ram.py"
@@ -35,5 +38,5 @@ compare = "python report/compare.py"
 compare-hls = "python report/compare_hls.py"
 # The zips (check, ls, cat), the tests (no EDA tool) and the lint (ruff's F rules, fetched by pixi exec)
 arc = "python arc/arc.py"
-test = "python arc/test_arc.py && python cluster/test_check.py && python cluster/test_mem.py && python cluster/test_power.py && python cluster/test_tree.py && python report/test_char_export.py && python report/test_cluster_breakdown.py && python report/test_cluster_energy.py && python report/test_cluster_sweep.py && python report/test_strm_table.py && python report/test_xbar_kinds.py && python strm/test_xbar_mix.py && python sim/test_forge_stream.py && python syn/test_clk_gate.py"
+test = "python arc/test_arc.py && python cluster/test_check.py && python cluster/test_mem.py && python cluster/test_power.py && python cluster/test_snb.py && python cluster/test_tree.py && python report/test_char_export.py && python report/test_cluster_breakdown.py && python report/test_cluster_energy.py && python report/test_cluster_sweep.py && python report/test_snb_report.py && python report/test_strm_table.py && python report/test_xbar_kinds.py && python strm/test_xbar_mix.py && python sim/test_forge_stream.py && python syn/test_clk_gate.py"
 lint = "pixi exec ruff check --isolated --select F ."
