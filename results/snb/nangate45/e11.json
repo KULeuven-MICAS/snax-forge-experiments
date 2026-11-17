@@ -133,6 +133,52 @@
   }
  },
  "runs": {
+  "snitch1_cg_atax_int32": {
+   "config": "snitch1_cg",
+   "kernel": "atax",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 118154,
+   "c_run_gls": null,
+   "dma_in": 318,
+   "dma_out": 49,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.0166593
+  },
+  "snitch1_cg_atax_int64": {
+   "config": "snitch1_cg",
+   "kernel": "atax",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 272018,
+   "c_run_gls": 272018,
+   "dma_in": 579,
+   "dma_out": 49,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00723617,
+   "window_cycles": 271958,
+   "p_dyn_uw": 2764.57,
+   "e_run_pj": 7518480.0,
+   "e_run_macro_pj": 118049.0,
+   "eta_e_op_pj": 0.00217916,
+   "ann_pct": 100.0,
+   "p_leak_uw": 86170.4,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 234347000.0,
+   "e_leak_macro_pj": 216955000.0
+  },
   "snitch1_cg_axpy_int64": {
    "config": "snitch1_cg",
    "kernel": "axpy",
@@ -149,6 +195,42 @@
    "dma_out": 295,
    "area_um2": 832364.0,
    "eta_a_gops_mm2": 0.00774278
+  },
+  "snitch1_cg_bicg_int32": {
+   "config": "snitch1_cg",
+   "kernel": "bicg",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 118141,
+   "c_run_gls": null,
+   "dma_in": 332,
+   "dma_out": 71,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.0166612
+  },
+  "snitch1_cg_bicg_int64": {
+   "config": "snitch1_cg",
+   "kernel": "bicg",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 272161,
+   "c_run_gls": null,
+   "dma_in": 593,
+   "dma_out": 71,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00723237
   },
   "snitch1_cg_dot_int64": {
    "config": "snitch1_cg",
@@ -176,6 +258,40 @@
    "p_leak_macro_uw": 79775.1,
    "e_leak_pj": 60034800.0,
    "e_leak_macro_pj": 55599200.0
+  },
+  "snitch1_cg_gesummv_int32": {
+   "config": "snitch1_cg",
+   "kernel": "gesummv",
+   "type": "int32",
+   "sizes": {
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 16576,
+   "n_op_rule": "4*N*N+3*N",
+   "c_run": 99656,
+   "c_run_gls": null,
+   "dma_in": 590,
+   "dma_out": 43,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.0199831
+  },
+  "snitch1_cg_gesummv_int64": {
+   "config": "snitch1_cg",
+   "kernel": "gesummv",
+   "type": "int64",
+   "sizes": {
+    "N": 64
+   },
+   "workers": 1,
+   "n_op": 16576,
+   "n_op_rule": "4*N*N+3*N",
+   "c_run": 220841,
+   "c_run_gls": null,
+   "dma_in": 1105,
+   "dma_out": 59,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00901751
   },
   "snitch1_cg_matadd_int64": {
    "config": "snitch1_cg",
@@ -355,6 +471,52 @@
    "area_um2": 832364.0,
    "eta_a_gops_mm2": 0.00798798
   },
+  "snitch5_cg_atax_int32": {
+   "config": "snitch5_cg",
+   "kernel": "atax",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 29699,
+   "c_run_gls": null,
+   "dma_in": 307,
+   "dma_out": 43,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.054705
+  },
+  "snitch5_cg_atax_int64": {
+   "config": "snitch5_cg",
+   "kernel": "atax",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 68631,
+   "c_run_gls": 68631,
+   "dma_in": 566,
+   "dma_out": 44,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0236727,
+   "window_cycles": 68825,
+   "p_dyn_uw": 5464.03,
+   "e_run_pj": 3760620.0,
+   "e_run_macro_pj": 119211.0,
+   "eta_e_op_pj": 0.00435673,
+   "ann_pct": 100.0,
+   "p_leak_uw": 89438.4,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 61556000.0,
+   "e_leak_macro_pj": 54905200.0
+  },
   "snitch5_cg_axpy_int64": {
    "config": "snitch5_cg",
    "kernel": "axpy",
@@ -371,6 +533,42 @@
    "dma_out": 297,
    "area_um2": 1008440.0,
    "eta_a_gops_mm2": 0.0254684
+  },
+  "snitch5_cg_bicg_int32": {
+   "config": "snitch5_cg",
+   "kernel": "bicg",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 29707,
+   "c_run_gls": null,
+   "dma_in": 331,
+   "dma_out": 72,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0546902
+  },
+  "snitch5_cg_bicg_int64": {
+   "config": "snitch5_cg",
+   "kernel": "bicg",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 68470,
+   "c_run_gls": null,
+   "dma_in": 592,
+   "dma_out": 73,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0237284
   },
   "snitch5_cg_dot_int64": {
    "config": "snitch5_cg",
@@ -398,6 +596,40 @@
    "p_leak_macro_uw": 79775.1,
    "e_leak_pj": 17021600.0,
    "e_leak_macro_pj": 15187600.0
+  },
+  "snitch5_cg_gesummv_int32": {
+   "config": "snitch5_cg",
+   "kernel": "gesummv",
+   "type": "int32",
+   "sizes": {
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 16576,
+   "n_op_rule": "4*N*N+3*N",
+   "c_run": 25092,
+   "c_run_gls": null,
+   "dma_in": 576,
+   "dma_out": 43,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0655078
+  },
+  "snitch5_cg_gesummv_int64": {
+   "config": "snitch5_cg",
+   "kernel": "gesummv",
+   "type": "int64",
+   "sizes": {
+    "N": 64
+   },
+   "workers": 4,
+   "n_op": 16576,
+   "n_op_rule": "4*N*N+3*N",
+   "c_run": 56537,
+   "c_run_gls": null,
+   "dma_in": 1091,
+   "dma_out": 64,
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0290734
   },
   "snitch5_cg_matadd_int64": {
    "config": "snitch5_cg",
@@ -577,6 +809,52 @@
    "area_um2": 1008440.0,
    "eta_a_gops_mm2": 0.0260774
   },
+  "snitch9_cg_atax_int32": {
+   "config": "snitch9_cg",
+   "kernel": "atax",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 15059,
+   "c_run_gls": null,
+   "dma_in": 311,
+   "dma_out": 43,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0917618
+  },
+  "snitch9_cg_atax_int64": {
+   "config": "snitch9_cg",
+   "kernel": "atax",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 36942,
+   "c_run_gls": 36942,
+   "dma_in": 570,
+   "dma_out": 44,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0374057,
+   "window_cycles": 37062,
+   "p_dyn_uw": 8536.81,
+   "e_run_pj": 3163910.0,
+   "e_run_macro_pj": 120694.0,
+   "eta_e_op_pj": 0.0051784,
+   "ann_pct": 100.0,
+   "p_leak_uw": 92786.4,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 34388500.0,
+   "e_leak_macro_pj": 29566200.0
+  },
   "snitch9_cg_axpy_int64": {
    "config": "snitch9_cg",
    "kernel": "axpy",
@@ -593,6 +871,42 @@
    "dma_out": 297,
    "area_um2": 1185670.0,
    "eta_a_gops_mm2": 0.0401698
+  },
+  "snitch9_cg_bicg_int32": {
+   "config": "snitch9_cg",
+   "kernel": "bicg",
+   "type": "int32",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 15034,
+   "c_run_gls": null,
+   "dma_in": 331,
+   "dma_out": 75,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0919144
+  },
+  "snitch9_cg_bicg_int64": {
+   "config": "snitch9_cg",
+   "kernel": "bicg",
+   "type": "int64",
+   "sizes": {
+    "M": 64,
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 16384,
+   "n_op_rule": "4*M*N",
+   "c_run": 37098,
+   "c_run_gls": null,
+   "dma_in": 592,
+   "dma_out": 76,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0372484
   },
   "snitch9_cg_dot_int64": {
    "config": "snitch9_cg",
@@ -620,6 +934,40 @@
    "p_leak_macro_uw": 79775.1,
    "e_leak_pj": 11063600.0,
    "e_leak_macro_pj": 9515570.0
+  },
+  "snitch9_cg_gesummv_int32": {
+   "config": "snitch9_cg",
+   "kernel": "gesummv",
+   "type": "int32",
+   "sizes": {
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 16576,
+   "n_op_rule": "4*N*N+3*N",
+   "c_run": 12738,
+   "c_run_gls": null,
+   "dma_in": 576,
+   "dma_out": 45,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.109753
+  },
+  "snitch9_cg_gesummv_int64": {
+   "config": "snitch9_cg",
+   "kernel": "gesummv",
+   "type": "int64",
+   "sizes": {
+    "N": 64
+   },
+   "workers": 8,
+   "n_op": 16576,
+   "n_op_rule": "4*N*N+3*N",
+   "c_run": 34832,
+   "c_run_gls": null,
+   "dma_in": 1091,
+   "dma_out": 68,
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0401365
   },
   "snitch9_cg_matadd_int64": {
    "config": "snitch9_cg",
