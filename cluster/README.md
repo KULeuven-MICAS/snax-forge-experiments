@@ -158,7 +158,7 @@ Left out against a forge point (X91): the plain RTL run beside the macro run, D1
 | rest | `dma`, `axi`, `others`, `acc_interface` (the cores' SNAX CSR translators, 1,595 µm² per core) |
 
 - **Operations,** $n_\text{op}$: from the kernel's maths at its sizes (`snb_points.json`'s `n_op`), never from instructions, so the extra instructions int64 takes on RV32 are cost and not work; a multiply-accumulate counts two.
-- **Cycles,** $C_\text{run}$: the plain RTL run's `snitch-forge cycles run`, core 0's `mcycle` between the barrier after DMA in and the one before DMA out; the same barriers bound the quiet build's run window, whose cycles are listed beside it.
+- **Cycles,** $C_\text{run}$: the plain RTL run's `snitch-forge cycles run`, core 0's `mcycle` between the barrier after DMA in and the one before DMA out; the same barriers bound the quiet build's run window, whose cycles are listed beside it. The two builds are compiled apart and lay out code and data differently, so their run sections differ by a few cycles on dot and by up to 4 % (matvec on `snitch5_cg`, 70 515 against 67 701); every energy number therefore uses the window's own cycles, $C_w$, and is never combined with $C_\text{run}$.
 - **Area efficiency,** with $t_\text{clk} = 10$ ns:
 
 $$\eta_A = \frac{n_\text{op}}{C_\text{run}\thinspace t_\text{clk}\thinspace A} \quad [\text{GOPS/mm}^2]$$
