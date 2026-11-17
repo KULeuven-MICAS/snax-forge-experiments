@@ -88,7 +88,7 @@ Dynamic energy of a mapped netlist from simulated activity (X7): a zero-delay Qu
 | `pwr summary [PATTERN ...] [--source S] [--tech T]` | print `power_pt.csv` |
 | `pwr modules --source S --tech T` | fill `power_pt_modules.csv`'s size column on old rows (a one-off) |
 
-- `--size all` runs every size in the point's `sizes.txt`; `n2048` is the reference task (X24); `--source char`, `streamer` and `xbar` take no size.
+- `--size all` runs every size in the point's `sizes.txt`; `n2048` is the reference task (X24); `--source char`, `streamer`, `xbar` and `xbar_mix` take no size.
 - `--clk-gate` measures the `_cg` netlists; `--initreg-seed N` is a check with Questa's random register start that writes nothing to `results/` (PITFALLS Q9).
 - Workers come from the free `msimhdlsim`, `PrimeTime` and `PrimePower` licences; PT threads are cores // workers.
 
@@ -96,6 +96,7 @@ Dynamic energy of a mapped netlist from simulated activity (X7): a zero-delay Qu
 pixi run pwr run 'done/vecadd/*' --tech nangate45                      # rand64, 64 beats, seed 0
 pixi run pwr run 'done/*/forge*' --source forge --tech nangate45 --size n2048
 pixi run pwr run '*' --source xbar --tech nangate45 --clk-gate         # the points with inputs <= banks
+pixi run pwr run '*' --source xbar_mix --tech nangate45 --clk-gate     # by input kind (X70), inputs <= banks
 pixi run pwr setup-check --source forge --tech nangate45
 ```
 

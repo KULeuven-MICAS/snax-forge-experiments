@@ -1,16 +1,18 @@
-"""sim/sources/strm.py - a streamer or xbar point -> tb.json and its generated TB.
+"""sim/sources/strm.py - a streamer, xbar or xbar_mix point -> tb.json and its generated TB.
 
 A streamer point is snax_cluster's reader alone, as the Streamer uses it (strm/gen.py, rtl/streamer/<point>.zip); an
-xbar point is the TCDM sparse interconnect (rtl/xbar/<point>.zip). Neither has a done: the TB here is generated
+xbar point is the TCDM sparse interconnect (rtl/xbar/<point>.zip); an xbar_mix point is that interconnect in
+strm/xbar_mix.py's wrapper, with read-only and write-only inputs (rtl/xbar_mix/<point>.zip). None has a done: the TB here is generated
 whole per point (the port names carry the channel and bank index), drives the work, checks every output and prints
 the window. build() writes tb.json (its fields and the stimuli in its docstring); docs/power.md, "Streamer and
 interconnect", has the testbench and the window.
 """
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
-from . import syn as _syn
+from . import ROOT, syn as _syn
 
 TB_VERSION = 1
 BEATS = 1024        # reader: beats per run, split over the loops
@@ -21,6 +23,14 @@ WORD_B = 8          # bytes per 64-bit TCDM word
 
 
 STEP_MAX = (1 << (ADDR_W - 1)) - 1   # the largest stride a loop takes: ProgrammableCounter's step is width - 1 bits
+
+
+def _xbar_mix():
+    """strm/xbar_mix.py: its tie() says which of the interconnect's ports the wrapper ties (not ports of xbar_mix)."""
+    spec = importlib.util.spec_from_file_location("strm_xbar_mix", ROOT / "strm" / "xbar_mix.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def bounds(loops: int, beats: int = BEATS) -> list[int]:
@@ -46,12 +56,13 @@ def build(point: str, netlist: Path, seed: int = 0) -> dict:
       tb_version, source, point, params, top, snax_cluster_commit
       clock    {port: clock}
       reset    {port: reset, active: high, sync: false (reader) | true (xbar)}
-      control  {kind: "strm_reader" | "strm_xbar"}
+      control  {kind: "strm_reader" | "strm_xbar" (xbar and xbar_mix)}
       reader:  bounds [b0 .. b{L-1}] (powers of two, product BEATS = 1024, the larger ones outermost: every stride
                stays under the counter's 16-bit step, PITFALLS SC9),
                strides [8 C, 8 C b0, ...] (unit strides: beat n reads words n C .. n C + C - 1), ptr 0, spatial
                stride 8, beats 1024
       xbar:    cycles 1024, inputs, banks, row_bits (log2 of the bank depth), bank_bits
+      xbar_mix: as xbar, and ro, wo: inputs 0 .. ro-1 read-only, ro .. ro+wo-1 write-only, the rest read-write
       window   the window's expected cycles: reader None (fill + beats, measured), xbar cycles + 1
       seed     the root seed of the TB's $urandom calls: sim/pwr.py runs vsim -sv_seed <seed> (pwr run --seed, default 0)
 
@@ -68,6 +79,11 @@ def build(point: str, netlist: Path, seed: int = 0) -> dict:
               cycle 0 to a quarter cycle before the edge after cycle `cycles` (its read responses): cycles + 1 edges.
               Checks: every input granted every cycle (grants = inputs x cycles), each bank's request (row, write,
               data, strb) its input's, no bank valid without an input, each read response valid with the bank's data.
+      xbar_mix the xbar stimulus on the wrapper's ports (the ports its ties remove are not driven): the read-write
+              inputs exactly as xbar's (the same $urandom calls at ro = wo = 0); a read-only input the same banks and
+              rows, every request a read; a write-only input the same banks and rows, every request a write with new
+              random data. The checks are xbar's by kind: the bank's write bit its input's kind, write data checked on
+              writes, read responses checked only on inputs that read (a write-only input has no response data).
     The window's rising edges are its own cycles and no event sits on a boundary (the char source's rule); the TB dumps
     from time 0 and sim/pwr.py cuts the window.
     """
@@ -92,6 +108,7 @@ def build(point: str, netlist: Path, seed: int = 0) -> dict:
         bank_bits = banks.bit_length() - 1
         tb.update({"reset": {"port": "reset", "active": "high", "sync": True}, "control": {"kind": "strm_xbar"},
                    "inputs": n, "banks": banks, "bank_bits": bank_bits,
+                   **({"ro": p["ro"], "wo": p["wo"]} if source == "xbar_mix" else {}),
                    "row_bits": ADDR_W - bank_bits - (WORD_B.bit_length() - 1), "cycles": CYCLES, "window": CYCLES + 1})
     tb["netlist_inputs"] = netlist_inputs(netlist, tb["top"])
     # at 1 channel the spatial stride multiplies only channel 0's index: firtool drops the port (PITFALLS SC2)
@@ -121,6 +138,9 @@ def connected(tb: dict) -> set[str]:
             out |= {f"io_memReqs_{b}_{f}" for f in ("ready", "valid", "bits_addr", "bits_write", "bits_amo",
                                                     "bits_data", "bits_strb", "bits_priority", "bits_user")}
             out |= {f"io_memRsps_{b}_{f}" for f in ("ready", "valid", "bits_data")}
+        if tb["source"] == "xbar_mix":      # the wrapper's ties: those ports are not on xbar_mix
+            tie = _xbar_mix().tie
+            out = {p for p in out if p in ("clock", "reset") or tie(p, tb["ro"], tb["wo"]) is None}
     return out
 
 
@@ -238,9 +258,17 @@ def tb_reader(tb: dict, scopes: list[str]) -> str:
 def tb_xbar(tb: dict, scopes: list[str]) -> str:
     n, banks, cyc = tb["inputs"], tb["banks"], tb["cycles"]
     bb, maw = tb["bank_bits"], tb["row_bits"]
-    L = [f"// Generated by sim/sources/strm.py from tb.json (xbar {tb['point']}): do not edit.",
+    ro, wo = tb.get("ro", 0), tb.get("wo", 0)
+    have = set(tb["ports"])
+
+    def conns(items: list[tuple[str, str]], end: str) -> str:
+        """The connections of the ports the TB connects (tb["ports"]); xbar_mix's tied ones dropped."""
+        return "        " + ", ".join(f".{p}({x})" for p, x in items if p in have) + end
+
+    kinds = f", {ro} read-only, {wo} write-only" if tb["source"] == "xbar_mix" else ""
+    L = [f"// Generated by sim/sources/strm.py from tb.json ({tb['source']} {tb['point']}{kinds}): do not edit.",
          "`timescale 1ns/1ps", "module tb;",
-         f"    localparam int N = {n}, B = {banks}, CYC = {cyc}, BB = {bb}, MAW = {maw};",
+         f"    localparam int N = {n}, B = {banks}, CYC = {cyc}, BB = {bb}, MAW = {maw}, RO = {ro}, WO = {wo};",
          f"    localparam real T_NS = {T_NS};",
          "    logic clock = 1'b0, reset = 1'b1;", "    always #(T_NS / 2) clock = ~clock;",
          "    logic [N-1:0] q_valid = '0, q_ready, q_write = '0, p_valid;",
@@ -251,19 +279,18 @@ def tb_xbar(tb: dict, scopes: list[str]) -> str:
          "    initial for (int b = 0; b < B; b++) m_rdata[b] = '0;",
          f"    {tb['top']} dut (", "        .clock(clock), .reset(reset),"]
     for i in range(n):
-        L += [f"        .io_tcdmReqs_{i}_ready(q_ready[{i}]), .io_tcdmReqs_{i}_valid(q_valid[{i}]), "
-              f".io_tcdmReqs_{i}_bits_addr(q_addr[{i}]), .io_tcdmReqs_{i}_bits_write(q_write[{i}]), "
-              f".io_tcdmReqs_{i}_bits_amo(4'd0), .io_tcdmReqs_{i}_bits_data(q_data[{i}]), "
-              f".io_tcdmReqs_{i}_bits_strb(8'hff), .io_tcdmReqs_{i}_bits_priority(1'b0), .io_tcdmReqs_{i}_bits_user(3'd0),",
-              f"        .io_tcdmRsps_{i}_ready(1'b1), .io_tcdmRsps_{i}_valid(p_valid[{i}]), "
-              f".io_tcdmRsps_{i}_bits_data(p_data[{i}]),"]
+        q, p = f"io_tcdmReqs_{i}_", f"io_tcdmRsps_{i}_"
+        L += [conns([(q + "ready", f"q_ready[{i}]"), (q + "valid", f"q_valid[{i}]"), (q + "bits_addr", f"q_addr[{i}]"),
+                     (q + "bits_write", f"q_write[{i}]"), (q + "bits_amo", "4'd0"), (q + "bits_data", f"q_data[{i}]"),
+                     (q + "bits_strb", "8'hff"), (q + "bits_priority", "1'b0"), (q + "bits_user", "3'd0")], ","),
+              conns([(p + "ready", "1'b1"), (p + "valid", f"p_valid[{i}]"), (p + "bits_data", f"p_data[{i}]")], ",")]
     for b in range(banks):
-        sep = "," if b < banks - 1 else ");"
-        L += [f"        .io_memReqs_{b}_ready(1'b1), .io_memReqs_{b}_valid(m_valid[{b}]), "
-              f".io_memReqs_{b}_bits_addr(m_addr[{b}]), .io_memReqs_{b}_bits_write(m_write[{b}]), "
-              f".io_memReqs_{b}_bits_amo(), .io_memReqs_{b}_bits_data(m_wdata[{b}]), "
-              f".io_memReqs_{b}_bits_strb(m_strb[{b}]), .io_memReqs_{b}_bits_priority(), .io_memReqs_{b}_bits_user(),",
-              f"        .io_memRsps_{b}_ready(), .io_memRsps_{b}_valid(1'b1), .io_memRsps_{b}_bits_data(m_rdata[{b}]){sep}"]
+        q, p = f"io_memReqs_{b}_", f"io_memRsps_{b}_"
+        L += [conns([(q + "ready", "1'b1"), (q + "valid", f"m_valid[{b}]"), (q + "bits_addr", f"m_addr[{b}]"),
+                     (q + "bits_write", f"m_write[{b}]"), (q + "bits_amo", ""), (q + "bits_data", f"m_wdata[{b}]"),
+                     (q + "bits_strb", f"m_strb[{b}]"), (q + "bits_priority", ""), (q + "bits_user", "")], ","),
+              conns([(p + "ready", ""), (p + "valid", "1'b1"), (p + "bits_data", f"m_rdata[{b}]")],
+                    "," if b < banks - 1 else ");")]
     L += [""] + _dump(scopes)
     L += ["",
           "    int t = -1, grants = 0, grant_bad = 0, bank_bad = 0, rsp_bad = 0, xz = 0;",
@@ -303,14 +330,15 @@ def tb_xbar(tb: dict, scopes: list[str]) -> str:
           "            for (int i = 0; i < N; i++) begin was_read[i] = !q_write[i]; was_bank[i] = (i + t) % B; end",
           "        end else for (int i = 0; i < N; i++) was_read[i] = 0;",
           "    end",
-          "    // at the rising edge that starts cycle c: cycle c's requests (cycle CYC: none)",
+          "    // at the rising edge that starts cycle c: cycle c's requests (cycle CYC: none); inputs 0 .. RO-1 read,",
+          "    // RO .. RO+WO-1 write, the rest write on odd cycles (q_write and q_data model the tied ports as well)",
           "    task automatic apply(input int c);",
           "        for (int i = 0; i < N; i++) begin",
           "            row[i] = MAW'($urandom);",
           "            q_valid[i] <= c < CYC;",
-          "            q_write[i] <= c % 2;",
+          "            q_write[i] <= (i < RO) ? 1'b0 : (i < RO + WO) ? 1'b1 : 1'(c % 2);",
           "            q_addr[i] <= {row[i], BB'((i + c) % B), 3'b000};",
-          "            q_data[i] <= (c % 2) ? {$urandom, $urandom} : q_data[i];",
+          "            q_data[i] <= (i >= RO && (i < RO + WO || c % 2)) ? {$urandom, $urandom} : q_data[i];",
           "        end",
           "    endtask",
           "    initial begin",
