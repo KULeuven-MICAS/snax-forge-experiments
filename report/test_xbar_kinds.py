@@ -55,6 +55,45 @@ def test_factor_needs_a_full_pair():
     raise AssertionError("factor accepted a grid with no all read-only point")
 
 
+def egrid(g_ro: dict, g_wo: dict) -> list[dict]:
+    """Made-up powered points: e_rw = b / 10 pJ, the kinds at 1 - g of it, on every pair with n <= b."""
+    rs = []
+    for n in (16, 32, 64):
+        for b in (16, 32, 64):
+            if n > b:
+                continue
+            e = b / 10
+            for ro, wo, f in ((0, 0, 1.0), (n, 0, 1 - g_ro[b]), (0, n, 1 - g_wo[b])):
+                rs.append({"point": f"i{n}_b{b}_r{ro}_w{wo}", "n": n, "b": b, "ro": ro, "wo": wo, "e": e * f})
+    return rs
+
+
+def test_energy_factor_by_bank_count():
+    g_ro, g_wo = {16: 0.4, 32: 0.3, 64: 0.2}, {16: 0.5, 32: 0.45, 64: 0.25}
+    ef = xk.energy_factor(egrid(g_ro, g_wo))
+    assert sorted(ef["by_banks"]) == [16, 32, 64] and len(ef["pairs"]) == 6
+    for b in (16, 32, 64):
+        p = ef["by_banks"][b]
+        assert p["inputs"] == b and abs(p["g_ro"] - g_ro[b]) < 1e-12 and abs(p["g_wo"] - g_wo[b]) < 1e-12
+
+
+def test_energy_factor_between_and_beyond_bank_counts():
+    ef = xk.energy_factor(egrid({16: 0.4, 32: 0.3, 64: 0.2}, {16: 0.5, 32: 0.45, 64: 0.25}))
+    ro, wo = xk.g_at(ef, 48)
+    assert abs(ro - 0.25) < 1e-12 and abs(wo - 0.35) < 1e-12
+    assert xk.g_at(ef, 8) == xk.g_at(ef, 16) and xk.g_at(ef, 128) == xk.g_at(ef, 64)
+
+
+def test_energy_factor_needs_a_full_diagonal_point():
+    rs = [r for r in egrid({16: 0.4, 32: 0.3, 64: 0.2}, {16: 0.5, 32: 0.45, 64: 0.25})
+          if not (r["n"] == r["b"] and r["wo"])]
+    try:
+        xk.energy_factor(rs)
+    except ValueError:
+        return
+    raise AssertionError("energy_factor accepted a grid with no all write-only point at inputs = banks")
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

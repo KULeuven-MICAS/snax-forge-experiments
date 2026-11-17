@@ -21,6 +21,8 @@ snax-forge's first-order cost model (HWCOST) prices a design from four files mad
 | $A$ | area | µm² |
 | $\alpha, \beta$ | the interconnect's energy per access and energy per cycle, fitted per bank count | pJ |
 | $f_{ro}, f_{wo}$ | the share of area a read-only or write-only input saves against a read-write one | — |
+| $g_{ro}(b), g_{wo}(b)$ | the share of energy per access a read-only or write-only input saves against a read-write one, at $b$ banks | — |
+| $e_{ro}, e_{wo}$ | the interconnect's energy per request of a read-only or write-only input | pJ |
 | $c_{rw}, c_{ro}, c_{wo}$ | area per crosspoint (one input × one bank) of each input kind | µm² |
 | $k_n, k_b, k_0$ | the crosspoint form's per-input, per-bank and constant terms (`d`, `e`, `g` in `xbar_kinds.json`) | µm² |
 
@@ -31,7 +33,7 @@ snax-forge's first-order cost model (HWCOST) prices a design from four files mad
 | `ram_table.csv` | one SRAM bank, one read-write port | $d$ 32–4096 (step 32) × $w$ 8–256 (step 8): 4,095 rows | $A$ | $e_{\mathrm{rd}}$, $e_{\mathrm{wr}}$ |
 | `streamer.csv` | one reader (a writer is priced the same) | $D$ {2, 4, 8, 16} × $L$ 1–7 × $C$ {1, 2, 4, 6, 8, 16}: 168 points | $A$ | $e_{\mathrm{beat}}$ |
 | `xbar.csv` | the sparse interconnect, 64-bit ports, every input read-write | $n$ {4, 8, …, 64} × $b$ {16, 32, 64}: 27 points | $A$ | $e_{\mathrm{access}}$ where $n \le b$ (17 points) |
-| `xbar_kinds.json` | read-only and write-only inputs | $n$ {16, 32, 64} × $b$ {16, 32, 64}, each all read-write, all read-only, all write-only: 27 points | $f_{ro}, f_{wo}$; $c_{rw}, c_{ro}, c_{wo}, k_n, k_b, k_0$ | none (`xbar.csv`'s) |
+| `xbar_kinds.json` | read-only and write-only inputs | $n$ {16, 32, 64} × $b$ {16, 32, 64}, each all read-write, all read-only, all write-only: 27 points, 18 of them powered ($n \le b$) | $f_{ro}, f_{wo}$; $c_{rw}, c_{ro}, c_{wo}, k_n, k_b, k_0$ | $g_{ro}(b), g_{wo}(b)$ at $b$ {16, 32, 64} |
 
 ## How the logic is measured
 
@@ -161,7 +163,44 @@ with $c_{rw}$ = 159.62, $c_{ro}$ = 95.48, $c_{wo}$ = 93.93, $k_n$ = 22.68, $k_b$
 
 *How they are found:* ordinary least squares (unweighted, in µm²) over the 27 grid points, the two 36-input points held out as checks; worst residual 2.8 %. The two forms agree: $1 - c_{ro}/c_{rw}$ = 0.402 ≈ $f_{ro}$ and $1 - c_{wo}/c_{rw}$ = 0.412 ≈ $f_{wo}$.
 
-Energy keeps `xbar.csv`'s $e_{\mathrm{access}}$ for every input kind.
+The energy is priced by input kind too, below.
+
+### The energy by input kind
+
+`xbar.csv`'s stimulus makes every input alternate reads and writes with random 64-bit write data, so $e_{\mathrm{access}}$ is a read-write input's. A reader's channel has no write side and a writer's no response data, so a request of each costs less. The `xbar_mix` points with $n \le b$ were powered with the xbar stimulus by kind (X93): a read-only input reads at the same banks and rows, a write-only one writes random data. The price is read at $(b, b)$, one per bank count (X54), so the factor is too:
+
+$$e_k(b) = e_{\mathrm{access}}(b, b)\thinspace\big(1 - g_k(b)\big), \qquad g_k(b) = 1 - \frac{e^{mix}_k(b, b)}{e^{mix}_{rw}(b, b)}, \qquad k \in \lbrace ro, wo \rbrace$$
+
+- $e^{mix}_k(b, b)$ is the `xbar_mix` point with $b$ inputs on $b$ banks, all of kind $k$; $e^{mix}_{rw}$ the same point all read-write. Their ratio cancels the cluster template's ties, which put the all-read-write `xbar_mix` points 0.9 to 4.8 % above `xbar.csv`.
+- A read-write input (a core, the AXI port) keeps $e_{\mathrm{access}}$. Between measured bank counts $g_k$ is linear in $b$; outside them it takes the nearest one's.
+
+| $b$ | $e^{mix}_{rw}$ | $e^{mix}_{ro}$ | $e^{mix}_{wo}$ | $g_{ro}$ | $g_{wo}$ | $e_{ro}$ | $e_{wo}$ |
+|---|---|---|---|---|---|---|---|
+| 16 | 2.6797 | 1.6810 | 1.4365 | 0.3727 | 0.4639 | 1.6461 | 1.4067 |
+| 32 | 2.8406 | 1.8981 | 1.5010 | 0.3318 | 0.4716 | 1.8393 | 1.4545 |
+| 64 | 4.8972 | 3.6562 | 3.4804 | 0.2534 | 0.2893 | 3.6240 | 3.4497 |
+
+Energies in pJ per access; $e_{ro}$ and $e_{wo}$ on `xbar.csv`'s $e_{\mathrm{access}}(b, b)$ (2.6241, 2.7526, 4.8540).
+
+*Why one pair per bank count, not one constant as for the area:* the saving moves with banks per input. At $n < b$ a read-only input saves more (0.413 at 16 inputs on 32 banks, 0.531 on 64) and a write-only one less (0.285 and −0.039: its fresh write data reaches every bank's mux, seen in the toggles, not proven). The six pairs' means (0.398, 0.264) would miss the 32-bank point by 13 and 35 %. All six pairs are in `xbar_kinds.json`'s `energy.pairs`; only $n = b$ prices.
+
+### Example 7: the cluster's interconnect, by kind
+
+dot 3 at W = 8, N = 2048 on 32 banks: 4096 words read by the readers' 16 read-only channels, 1 written by the writer's write-only channel. $e_{ro}$ = 2.752585 × (1 − 0.331792) = 1.839299 pJ, $e_{wo}$ = 2.752585 × (1 − 0.471583) = 1.454513 pJ:
+
+$$E = 4096 \times 1.839299 + 1 \times 1.454513 = 7535.2 \text{ pJ} = 7.535 \text{ nJ}$$
+
+against 4097 × 2.752585 pJ = 11.277 nJ at the read-write price. The gated cluster's `tcdm_interconnect` in its `run` window, dot 3 at N = 2048:
+
+| W | cluster (nJ) | by kind, from the words (nJ) | ratio | read-write price | by kind, from SNAX-GVSoC's requests (nJ) | ratio |
+|---|---|---|---|---|---|---|
+| 2 | 7.75 | 7.535 | 0.97 | 1.45 | 7.539 | 0.97 |
+| 4 | 7.60 | 7.535 | 0.99 | 1.48 | 7.543 | 0.99 |
+| 8 | 8.04 | 7.535 | 0.94 | 1.40 | 7.550 | 0.94 |
+| 16 | 8.95 | 7.535 | 0.84 | 1.26 | 7.565 | 0.85 |
+| 32 | 18.14 | 7.535 | 0.42 | 0.62 | 15.010 | 0.83 |
+
+SNAX-GVSoC's requests count refusals at a grant's price (snax-forge D177); at W = 32 they are 8161 against 4097 words. The cluster's price per request still rises with W (1.85 to 2.22 pJ) while the full-rate points do not show it, so W = 16 and 32 sit 15 % low.
 
 ### Example 5: the cluster's interconnect
 

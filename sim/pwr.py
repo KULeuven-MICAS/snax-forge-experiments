@@ -8,7 +8,7 @@
   pixi run pwr summary     [PATTERN ...] [--source S] [--tech T]
   pixi run pwr modules     --source S --tech T
 
-The sources are hls (the default), forge, char, bambu, xls, streamer and xbar. Per point one worker unpacks the DC
+The sources are hls (the default), forge, char, bambu, xls, streamer, xbar and xbar_mix. Per point one worker unpacks the DC
 run, writes tb.json (sim/sources/), compiles the testbench and the netlist, simulates each run at zero delay, cuts
 the window into a SAIF, checks it and runs PrimePower, then packs the point into sim/runs/.../<point>.zip and
 writes its rows into results/<source>/<tech>/. Workers and PT threads come from the free licences. The stages, each
@@ -56,8 +56,9 @@ TB_FILES = {"hls": ["ap_ctrl_hs_seq.sv", "axis_src.sv", "axis_sink.sv"],
             "bambu": ["bambu_seq.sv", "axis_src.sv", "axis_sink.sv"],
             "xls": ["xls_seq.sv", "axis_src.sv", "axis_sink.sv"]}
 # The sources: each a tb.json adapter sim/sources/<name>.py, imported when used
-SOURCES = ("hls", "forge", "char", "bambu", "xls", "streamer", "xbar")
-STRM = ("streamer", "xbar")             # generated TBs, one busy window, results per point
+SOURCES = ("hls", "forge", "char", "bambu", "xls", "streamer", "xbar", "xbar_mix")
+STRM = ("streamer", "xbar", "xbar_mix")     # generated TBs, one busy window, results per point
+XBARS = ("xbar", "xbar_mix")                # the interconnect alone and in strm/xbar_mix.py's wrapper
 HLS_TOOLS = ("hls", "bambu", "xls")     # an HLS tool's points: rtl/ folders with filelist.f and sizes.txt
 PT_SCRIPT = SIM / "scripts" / "pt_power.tcl"
 RUN_DO = SIM / "scripts" / "run.do"
@@ -1623,6 +1624,7 @@ STRM_COLUMNS = {
     "xbar": ["point", "inputs", "banks", "tech", "clock_ns", "clk_gate", "seed", "cycles", "grants", "e_clk_pj", "e_reg_pj",
              "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "e_window_pj", "e_access_pj", "p_dyn_uw",
              "annotated", "status", "snax_cluster_commit"]}
+STRM_COLUMNS["xbar_mix"] = STRM_COLUMNS["xbar"][:3] + ["ro", "wo"] + STRM_COLUMNS["xbar"][3:]
 STRM_KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
 READER_RE = re.compile(r"TB: beats (\d+) expected (\d+) fill (-?\d+) stalls (\d+) data_mismatches (\d+) "
                        r"addr_mismatches (\d+) xz (\d+)")
@@ -1632,7 +1634,7 @@ XBAR_RE = re.compile(r"TB: grants (\d+) expected (\d+) grant_cycles_bad (\d+) ba
 
 def strm_points(points: list[str]) -> tuple[list[str], list[str]]:
     """(points to run, xbar points left out because inputs > banks: no conflict-free stimulus)."""
-    if SOURCE != "xbar":
+    if SOURCE not in XBARS:
         return points, []
     keep, out = [], []
     for p in points:
