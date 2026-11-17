@@ -5,32 +5,32 @@
   "snitch1_cg": {
    "cores": 1,
    "workers": 1,
-   "total_um2": 832364.4242,
+   "total_um2": 832364.0,
    "parts_um2": {
-    "memory": 485222.0384,
-    "interconnect": 10452.204099999994,
-    "cores": 105358.75439999993,
-    "rest": 231331.42729999902
+    "memory": 485222.0,
+    "interconnect": 10452.2,
+    "cores": 105359.0,
+    "rest": 231331.0
    },
    "groups_um2": {
-    "tcdm_banks": 432726.40640000015,
-    "icache_macros": 43064.479999999996,
+    "tcdm_banks": 432726.0,
+    "icache_macros": 43064.5,
     "acc_datapath": 0.0,
     "acc_control": 0.0,
     "acc_csr": 0.0,
     "streamers": 0.0,
-    "acc_interface": 1595.4679999999998,
-    "tcdm_interconnect": 10452.204099999994,
-    "tcdm_logic": 52495.631999999874,
-    "dma": 73717.37969999964,
-    "cores": 26512.22009999994,
-    "icache_logic": 19404.69989999998,
-    "axi": 155664.7997999998,
-    "peripherals": 16377.354400000027,
-    "others": 353.7797999995845
+    "acc_interface": 1595.47,
+    "tcdm_interconnect": 10452.2,
+    "tcdm_logic": 52495.6,
+    "dma": 73717.4,
+    "cores": 26512.2,
+    "icache_logic": 19404.7,
+    "axi": 155665.0,
+    "peripherals": 16377.4,
+    "others": 353.78
    },
    "sum_check": {
-    "parts_um2": 832364.424199999,
+    "parts_um2": 832364.0,
     "ok": true
    },
    "accelerator_groups": {
@@ -38,8 +38,8 @@
     "ok": true
    },
    "synth_dc": {
-    "area_um2": 832364.424249,
-    "macro_um2": 475790.88623,
+    "area_um2": 832364.0,
+    "macro_um2": 475791.0,
     "status": "ok",
     "slack_ns": 1.61378,
     "ok": true
@@ -48,32 +48,32 @@
   "snitch5_cg": {
    "cores": 5,
    "workers": 4,
-   "total_um2": 1008442.8587,
+   "total_um2": 1008440.0,
    "parts_um2": {
-    "memory": 486118.9904,
-    "interconnect": 31133.43869999994,
-    "cores": 252503.037999999,
-    "rest": 238687.39159999945
+    "memory": 486119.0,
+    "interconnect": 31133.4,
+    "cores": 252503.0,
+    "rest": 238687.0
    },
    "groups_um2": {
-    "tcdm_banks": 432726.40640000015,
-    "icache_macros": 43064.479999999996,
+    "tcdm_banks": 432726.0,
+    "icache_macros": 43064.5,
     "acc_datapath": 0.0,
     "acc_control": 0.0,
     "acc_csr": 0.0,
     "streamers": 0.0,
-    "acc_interface": 7976.541999999994,
-    "tcdm_interconnect": 31133.43869999994,
-    "tcdm_logic": 53392.58399999985,
-    "dma": 73717.64569999964,
-    "cores": 106879.86449999957,
-    "icache_logic": 84661.41509999985,
-    "axi": 156435.66779999988,
-    "peripherals": 17897.2783999996,
-    "others": 557.5360999999418
+    "acc_interface": 7976.54,
+    "tcdm_interconnect": 31133.4,
+    "tcdm_logic": 53392.6,
+    "dma": 73717.6,
+    "cores": 106880.0,
+    "icache_logic": 84661.4,
+    "axi": 156436.0,
+    "peripherals": 17897.3,
+    "others": 557.536
    },
    "sum_check": {
-    "parts_um2": 1008442.8586999984,
+    "parts_um2": 1008440.0,
     "ok": true
    },
    "accelerator_groups": {
@@ -81,8 +81,8 @@
     "ok": true
    },
    "synth_dc": {
-    "area_um2": 1008442.858742,
-    "macro_um2": 475790.88623,
+    "area_um2": 1008440.0,
+    "macro_um2": 475791.0,
     "status": "ok",
     "slack_ns": 1.6696,
     "ok": true
@@ -91,32 +91,32 @@
   "snitch9_cg": {
    "cores": 9,
    "workers": 8,
-   "total_um2": 1185665.0929,
+   "total_um2": 1185670.0,
    "parts_um2": {
-    "memory": 486391.3744000001,
-    "interconnect": 54565.37899999998,
-    "cores": 398964.23370000237,
-    "rest": 245744.10579999906
+    "memory": 486391.0,
+    "interconnect": 54565.4,
+    "cores": 398964.0,
+    "rest": 245744.0
    },
    "groups_um2": {
-    "tcdm_banks": 432726.40640000015,
-    "icache_macros": 43064.479999999996,
+    "tcdm_banks": 432726.0,
+    "icache_macros": 43064.5,
     "acc_datapath": 0.0,
     "acc_control": 0.0,
     "acc_csr": 0.0,
     "streamers": 0.0,
-    "acc_interface": 14357.882000000007,
-    "tcdm_interconnect": 54565.37899999998,
-    "tcdm_logic": 53664.967999999906,
-    "dma": 73718.70969999966,
-    "cores": 187293.79290000245,
-    "icache_logic": 149695.75440000062,
-    "axi": 157057.0437999999,
-    "peripherals": 18910.20639999931,
-    "others": 610.470299999494
+    "acc_interface": 14357.9,
+    "tcdm_interconnect": 54565.4,
+    "tcdm_logic": 53665.0,
+    "dma": 73718.7,
+    "cores": 187294.0,
+    "icache_logic": 149696.0,
+    "axi": 157057.0,
+    "peripherals": 18910.2,
+    "others": 610.47
    },
    "sum_check": {
-    "parts_um2": 1185665.0929000014,
+    "parts_um2": 1185670.0,
     "ok": true
    },
    "accelerator_groups": {
@@ -124,8 +124,8 @@
     "ok": true
    },
    "synth_dc": {
-    "area_um2": 1185665.092903,
-    "macro_um2": 475790.88623,
+    "area_um2": 1185670.0,
+    "macro_um2": 475791.0,
     "status": "ok",
     "slack_ns": 1.31501,
     "ok": true
@@ -147,8 +147,8 @@
    "c_run_gls": null,
    "dma_in": 577,
    "dma_out": 295,
-   "area_um2": 832364.4242,
-   "eta_a_gops_mm2": 0.007742776352695551
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00774278
   },
   "snitch1_cg_dot_int64": {
    "config": "snitch1_cg",
@@ -164,18 +164,18 @@
    "c_run_gls": 69698,
    "dma_in": 575,
    "dma_out": 57,
-   "area_um2": 832364.4242,
-   "eta_a_gops_mm2": 0.007060348232310335,
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00706035,
    "window_cycles": 69695,
-   "p_dyn_uw": 2825.781,
-   "e_run_pj": 1969428.0,
-   "e_run_macro_pj": 29501.795927000003,
-   "eta_e_op_pj": 0.002079791695862961,
+   "p_dyn_uw": 2825.78,
+   "e_run_pj": 1969430.0,
+   "e_run_macro_pj": 29501.8,
+   "eta_e_op_pj": 0.00207979,
    "ann_pct": 100.0,
-   "p_leak_uw": 86139.33,
-   "p_leak_macro_uw": 79775.07,
-   "e_leak_pj": 60034806.0435,
-   "e_leak_macro_pj": 55599235.03650001
+   "p_leak_uw": 86139.3,
+   "p_leak_macro_uw": 79775.1,
+   "e_leak_pj": 60034800.0,
+   "e_leak_macro_pj": 55599200.0
   },
   "snitch1_cg_matadd_int64": {
    "config": "snitch1_cg",
@@ -192,8 +192,8 @@
    "c_run_gls": null,
    "dma_in": 577,
    "dma_out": 293,
-   "area_um2": 832364.4242,
-   "eta_a_gops_mm2": 0.004445758809406311
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00444576
   },
   "snitch1_cg_matvec_int64": {
    "config": "snitch1_cg",
@@ -210,8 +210,8 @@
    "c_run_gls": null,
    "dma_in": 1153,
    "dma_out": 54,
-   "area_um2": 832364.4242,
-   "eta_a_gops_mm2": 0.007273766885364519
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00727377
   },
   "snitch1_cg_relu_int64": {
    "config": "snitch1_cg",
@@ -227,8 +227,8 @@
    "c_run_gls": null,
    "dma_in": 325,
    "dma_out": 303,
-   "area_um2": 832364.4242,
-   "eta_a_gops_mm2": 0.00631599947499186
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.006316
   },
   "snitch1_cg_rowsum_int64": {
    "config": "snitch1_cg",
@@ -245,8 +245,8 @@
    "c_run_gls": null,
    "dma_in": 317,
    "dma_out": 52,
-   "area_um2": 832364.4242,
-   "eta_a_gops_mm2": 0.008438432097565356
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00843843
   },
   "snitch1_cg_vecadd_int64": {
    "config": "snitch1_cg",
@@ -262,8 +262,8 @@
    "c_run_gls": null,
    "dma_in": 577,
    "dma_out": 293,
-   "area_um2": 832364.4242,
-   "eta_a_gops_mm2": 0.004445758809406311
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00444576
   },
   "snitch1_cg_vecmul_int64": {
    "config": "snitch1_cg",
@@ -279,8 +279,8 @@
    "c_run_gls": null,
    "dma_in": 577,
    "dma_out": 307,
-   "area_um2": 832364.4242,
-   "eta_a_gops_mm2": 0.0033346806292391695
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00333468
   },
   "snitch1_cg_vsum_int64": {
    "config": "snitch1_cg",
@@ -296,8 +296,8 @@
    "c_run_gls": null,
    "dma_in": 324,
    "dma_out": 50,
-   "area_um2": 832364.4242,
-   "eta_a_gops_mm2": 0.007987979857162335
+   "area_um2": 832364.0,
+   "eta_a_gops_mm2": 0.00798798
   },
   "snitch5_cg_axpy_int64": {
    "config": "snitch5_cg",
@@ -313,8 +313,8 @@
    "c_run_gls": null,
    "dma_in": 573,
    "dma_out": 297,
-   "area_um2": 1008442.8587,
-   "eta_a_gops_mm2": 0.025468444800902646
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0254684
   },
   "snitch5_cg_dot_int64": {
    "config": "snitch5_cg",
@@ -330,8 +330,8 @@
    "c_run_gls": null,
    "dma_in": 577,
    "dma_out": 27,
-   "area_um2": 1008442.8587,
-   "eta_a_gops_mm2": 0.021321299615999757
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0213213
   },
   "snitch5_cg_matadd_int64": {
    "config": "snitch5_cg",
@@ -348,8 +348,8 @@
    "c_run_gls": null,
    "dma_in": 574,
    "dma_out": 292,
-   "area_um2": 1008442.8587,
-   "eta_a_gops_mm2": 0.01465262473610373
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0146526
   },
   "snitch5_cg_matvec_int64": {
    "config": "snitch5_cg",
@@ -366,8 +366,8 @@
    "c_run_gls": null,
    "dma_in": 1141,
    "dma_out": 59,
-   "area_um2": 1008442.8587,
-   "eta_a_gops_mm2": 0.02304024719193337
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0230402
   },
   "snitch5_cg_relu_int64": {
    "config": "snitch5_cg",
@@ -383,8 +383,8 @@
    "c_run_gls": null,
    "dma_in": 336,
    "dma_out": 305,
-   "area_um2": 1008442.8587,
-   "eta_a_gops_mm2": 0.020818593423105866
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0208186
   },
   "snitch5_cg_rowsum_int64": {
    "config": "snitch5_cg",
@@ -401,8 +401,8 @@
    "c_run_gls": null,
    "dma_in": 314,
    "dma_out": 54,
-   "area_um2": 1008442.8587,
-   "eta_a_gops_mm2": 0.02760257182468376
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0276026
   },
   "snitch5_cg_vecadd_int64": {
    "config": "snitch5_cg",
@@ -418,8 +418,8 @@
    "c_run_gls": null,
    "dma_in": 574,
    "dma_out": 292,
-   "area_um2": 1008442.8587,
-   "eta_a_gops_mm2": 0.01465262473610373
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0146526
   },
   "snitch5_cg_vecmul_int64": {
    "config": "snitch5_cg",
@@ -435,8 +435,8 @@
    "c_run_gls": null,
    "dma_in": 574,
    "dma_out": 295,
-   "area_um2": 1008442.8587,
-   "eta_a_gops_mm2": 0.0104189092367329
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0104189
   },
   "snitch5_cg_vsum_int64": {
    "config": "snitch5_cg",
@@ -452,8 +452,8 @@
    "c_run_gls": null,
    "dma_in": 322,
    "dma_out": 27,
-   "area_um2": 1008442.8587,
-   "eta_a_gops_mm2": 0.026077365886402852
+   "area_um2": 1008440.0,
+   "eta_a_gops_mm2": 0.0260774
   },
   "snitch9_cg_axpy_int64": {
    "config": "snitch9_cg",
@@ -469,8 +469,8 @@
    "c_run_gls": null,
    "dma_in": 573,
    "dma_out": 297,
-   "area_um2": 1185665.0929,
-   "eta_a_gops_mm2": 0.04016978087821733
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0401698
   },
   "snitch9_cg_dot_int64": {
    "config": "snitch9_cg",
@@ -486,8 +486,8 @@
    "c_run_gls": null,
    "dma_in": 577,
    "dma_out": 27,
-   "area_um2": 1185665.0929,
-   "eta_a_gops_mm2": 0.028923318448816893
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0289233
   },
   "snitch9_cg_matadd_int64": {
    "config": "snitch9_cg",
@@ -504,8 +504,8 @@
    "c_run_gls": null,
    "dma_in": 574,
    "dma_out": 292,
-   "area_um2": 1185665.0929,
-   "eta_a_gops_mm2": 0.02485682224439984
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0248568
   },
   "snitch9_cg_matvec_int64": {
    "config": "snitch9_cg",
@@ -522,8 +522,8 @@
    "c_run_gls": null,
    "dma_in": 1141,
    "dma_out": 63,
-   "area_um2": 1185665.0929,
-   "eta_a_gops_mm2": 0.03382304398998105
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.033823
   },
   "snitch9_cg_relu_int64": {
    "config": "snitch9_cg",
@@ -539,8 +539,8 @@
    "c_run_gls": null,
    "dma_in": 336,
    "dma_out": 305,
-   "area_um2": 1185665.0929,
-   "eta_a_gops_mm2": 0.0352870393822951
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.035287
   },
   "snitch9_cg_rowsum_int64": {
    "config": "snitch9_cg",
@@ -557,8 +557,8 @@
    "c_run_gls": null,
    "dma_in": 314,
    "dma_out": 64,
-   "area_um2": 1185665.0929,
-   "eta_a_gops_mm2": 0.0462565733333217
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0462566
   },
   "snitch9_cg_vecadd_int64": {
    "config": "snitch9_cg",
@@ -574,8 +574,8 @@
    "c_run_gls": null,
    "dma_in": 574,
    "dma_out": 292,
-   "area_um2": 1185665.0929,
-   "eta_a_gops_mm2": 0.02485682224439984
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0248568
   },
   "snitch9_cg_vecmul_int64": {
    "config": "snitch9_cg",
@@ -591,8 +591,8 @@
    "c_run_gls": null,
    "dma_in": 574,
    "dma_out": 302,
-   "area_um2": 1185665.0929,
-   "eta_a_gops_mm2": 0.017944115705000468
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0179441
   },
   "snitch9_cg_vsum_int64": {
    "config": "snitch9_cg",
@@ -608,8 +608,8 @@
    "c_run_gls": null,
    "dma_in": 322,
    "dma_out": 27,
-   "area_um2": 1185665.0929,
-   "eta_a_gops_mm2": 0.04316142923195272
+   "area_um2": 1185670.0,
+   "eta_a_gops_mm2": 0.0431614
   }
  }
 }

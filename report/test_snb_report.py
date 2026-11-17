@@ -50,6 +50,13 @@ def test_eta_a():
     assert close(sr.eta_e(4096, 2048.0), 2.0)
 
 
+def test_rounded():
+    # the last digits of a sum differ between Python builds; e11.json keeps six significant digits
+    assert sr.rounded({"a": [105358.75439999995, 1.23456789e-5], "b": 3, "c": "x"}) == \
+        {"a": [105359.0, 1.23457e-5], "b": 3, "c": "x"}
+    assert sr.rounded(105358.75439999993) == sr.rounded(105358.75439999995)
+
+
 def test_coarse():
     areas = {g["name"]: 1.0 for g in CFG["groups"]}
     p = sr.coarse(areas)

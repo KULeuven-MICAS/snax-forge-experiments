@@ -179,6 +179,17 @@ def markdown(rep: dict) -> str:
     return "\n".join(out) + "\n"
 
 
+def rounded(x, digits: int = 6):
+    """Floats to `digits` significant digits, so a rerun on another Python gives the same file."""
+    if isinstance(x, float):
+        return float(f"{x:.{digits}g}")
+    if isinstance(x, dict):
+        return {k: rounded(v, digits) for k, v in x.items()}
+    if isinstance(x, list):
+        return [rounded(v, digits) for v in x]
+    return x
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tech", default="nangate45")
@@ -189,7 +200,7 @@ def main() -> int:
         print(f"no config with reports in {results(a.tech).relative_to(ROOT)}/reports/", file=sys.stderr)
         return 1
     path = results(a.tech) / "e11.json"
-    path.write_text(json.dumps(rep, indent=1) + "\n")
+    path.write_text(json.dumps(rounded(rep), indent=1) + "\n")
     bad = [k for k, c in rep["configs"].items()
            if not (c["sum_check"]["ok"] and c["accelerator_groups"]["ok"] and c.get("synth_dc", {"ok": True})["ok"])]
     print(f"{path.relative_to(ROOT)}: {len(rep['configs'])} configs, {len(rep['runs'])} runs, "
