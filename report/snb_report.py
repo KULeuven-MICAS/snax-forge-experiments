@@ -135,8 +135,8 @@ def report(tech: str) -> dict:
         out["configs"][c["config"]] = {"cores": c["cores"], "workers": c["workers"], **a}
     wins = {r["point"]: r for r in read_csv(res / "power_pt.csv") if r["kind"] == "run" and r["status"] == "ok"}
     for r in read_csv(res / "runs.csv"):
-        if r["rtl_status"] != "PASS":
-            continue
+        if r["rtl_status"] != "PASS" or not pts["kernels"][r["kernel"]].get("e11", True):
+            continue  # a kernel with e11 false is not E11's (dma_transpose, X95)
         area = out["configs"].get(r["config"], {}).get("total_um2")
         win, leak = wins.get(r["run"]), None
         rz = res / "power_reports" / f"{r['run']}.zip"

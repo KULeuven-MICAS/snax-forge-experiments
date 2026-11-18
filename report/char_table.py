@@ -690,7 +690,7 @@ def main() -> int:
           "it is under 3 % of the kernel. dot 4's sum alone keeps the feedback adder its tied `first` removes inside "
           "dot 4 (the free `first`, below): it costs area, which this check does not compare.", "",
           "### Against the narrow forge points", "",
-          "The forge points of `forge/points.json` with a `types=` set (int8 or int16 in, int32 out and ACC), the same "
+          "The forge points of `forge/points.json` with a `types=` set (int8 or int16 in, int32 out and OP_TYPE), the same "
           "check: each unit priced at its width pair from char.json (a lanes count no char point has takes the "
           "pair's rule), n = 2048, energy per task in nJ (X89).", "",
           *n_designs, "",

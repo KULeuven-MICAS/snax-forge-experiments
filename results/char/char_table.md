@@ -356,7 +356,7 @@ The model leaves out the csr, the memory and the streamers. A sum that fires onc
 
 ### Against the narrow forge points
 
-The forge points of `forge/points.json` with a `types=` set (int8 or int16 in, int32 out and ACC), the same check: each unit priced at its width pair from char.json (a lanes count no char point has takes the pair's rule), n = 2048, energy per task in nJ (X89).
+The forge points of `forge/points.json` with a `types=` set (int8 or int16 in, int32 out and OP_TYPE), the same check: each unit priced at its width pair from char.json (a lanes count no char point has takes the pair's rule), n = 2048, energy per task in nJ (X89).
 
 | tech | design | W | units, n_fire | C_acc | ctrl bits | datapath model | datapath forge | ratio | ctrl model | ctrl forge | ratio | kernel model | kernel forge | ratio | ratio, rules only |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|

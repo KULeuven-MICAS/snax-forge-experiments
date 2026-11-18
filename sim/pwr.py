@@ -473,7 +473,7 @@ def stimulus_forge(tb: dict, size: str, seed: int) -> dict:
     in-place output (axpy's y) its <container>_out. Each stream's data in the order its streamer visits the
     container (tb.json's order, rowsum_2's A down the columns); every input bit must toggle (64 beats or more).
     A narrow stream (int8, int16, int32: tb.json's dtype) draws its container full-range at that dtype, its
-    output wrapped to it (the kernel's int32 out and ACC), and moves num_slc elements a word, little-endian, a
+    output wrapped to it (the kernel's int32 out and OP_TYPE), and moves num_slc elements a word, little-endian, a
     packed output's slices past its last result 0 (order -1); the data are those 64-bit words."""
     z = tb["sizes"][size]
     ins_s = [s for s in tb["streams"] if s["dir"] == "in"]

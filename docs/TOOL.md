@@ -172,6 +172,7 @@ snax_cluster's Snitch-only clusters go through the same steps with `snb` (`clust
 | `snb gls RUN [--allow-branch]` | the config's netlist in the same testbench, the plain ELF on it (X91) |
 | `snb pwr RUN [--cores 16] [--again] [--allow-branch]` | the quiet ELF on the netlist, one SAIF per section, one PT session |
 | `snb-report [--md]` | E11's numbers: area in four parts, $n_\text{op}$, $C_\text{run}$, $\eta_A$, and $E_\text{run}$, $\eta_E$, $E_\text{leak}$ where power exists (X92), into `results/snb/nangate45/e11.json` |
+| `dma-copy [--md]` | the `dma_transpose` runs' run window in groups against snax-forge's D184 price of the copy (X95), into `results/snb/nangate45/dma_copy.json` |
 
 ```
 $ pixi run snb syn snitch1_cg

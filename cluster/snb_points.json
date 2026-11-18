@@ -1,8 +1,8 @@
 {
-  "about": "The Snitch-only clusters and their programs, read by cluster/snb.py and report/snb_report.py. A config is one of snax_cluster's cfg/snax_snitch_cluster_<n>.hjson, synthesized clock-gated as forge's cluster points (one netlist per config, netlist_sha256 the one the runs use). A run is <config>_<kernel>_<type>: the kernel's snitch-forge program at its sizes below and seed 42 on that config. n_op is the kernel's operations from its maths (a multiply-accumulate counts two), in the grammar of +, -, *, // over the sizes.",
+  "about": "The Snitch-only clusters and their programs, read by cluster/snb.py and report/snb_report.py. A config is one of snax_cluster's cfg/snax_snitch_cluster_<n>.hjson, synthesized clock-gated as forge's cluster points (one netlist per config, netlist_sha256 the one the runs use). A run is <config>_<kernel>_<type>: the kernel's snitch-forge program at its sizes below and seed 42 on that config. n_op is the kernel's operations from its maths (a multiply-accumulate counts two), in the grammar of +, -, *, // over the sizes. A kernel with e11 false is not E11's: dma_transpose, the DMA's transposed copy alone (int8 or int64, its n_op the elements moved), measured against snax-forge's price of a copy (X95).",
   "images": {"snax_cluster": "c5db84ad7bce"},
   "seed": 42,
-  "types": ["int64", "i32", "i16", "i8", "int32"],
+  "types": ["int64", "i32", "i16", "i8", "int32", "int8"],
   "configs": [
     {"config": "snitch1_cg", "cfg": "cfg/snax_snitch_cluster_1.hjson", "cores": 1, "workers": 1, "syn": {"clk_gate": true},
      "srams": {"sram_d128_w256_m8": 2, "sram_d128_w39": 2, "sram_d512_w64_m8": 32},
@@ -27,6 +27,7 @@
     "mvt":    {"sizes": {"M": 64, "N": 64}, "n_op": "4*M*N"},
     "atax":   {"sizes": {"M": 64, "N": 64}, "n_op": "4*M*N"},
     "bicg":   {"sizes": {"M": 64, "N": 64}, "n_op": "4*M*N"},
-    "gesummv": {"sizes": {"N": 64}, "n_op": "4*N*N+3*N"}
+    "gesummv": {"sizes": {"N": 64}, "n_op": "4*N*N+3*N"},
+    "dma_transpose": {"sizes": {"M": 64, "N": 64}, "n_op": "M*N", "e11": false}
   }
 }
