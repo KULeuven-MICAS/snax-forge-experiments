@@ -151,7 +151,7 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X90 — A narrow forge point: rand64 at the element's dtype, in packed words
 
-- **Decided:** a forge point at a narrow type preset (`types=i8` or `i16` in its sets) draws each input container full-range at its element dtype (int8, int16) with X19's generator and seed, wraps the reference's outputs to the output dtype (int32, as snax-forge's ACC), and moves num_slc = 64 / bits elements a 64-bit word, little-endian (snax-forge D142); a packed output (D174, `d_out` > 1) is checked as a whole word, the slices past the last result 0. The reference check runs snax-forge's kernel body at the design point's dtypes and type parameters (`forge/query.py point`).
+- **Decided:** a forge point at a narrow type preset (`types=i8` or `i16` in its sets) draws each input container full-range at its element dtype (int8, int16) with X19's generator and seed, wraps the reference's outputs to the output dtype (int32, as snax-forge's OP_TYPE), and moves num_slc = 64 / bits elements a 64-bit word, little-endian (snax-forge D142); a packed output (D174, `d_out` > 1) is checked as a whole word, the slices past the last result 0. The reference check runs snax-forge's kernel body at the design point's dtypes and type parameters (`forge/query.py point`).
 - **Why:** full range at the element's width toggles every bit of every word, as rand64 does at int64; int64 values in an int8 port would be cut by the streamer, and the kernel's wrap at int32 is what the hardware computes.
 - **Where:** `power.md`, "Forge"; `results/runs/2026-11-16_char2_r7.md`.
 
