@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse. It says what was decided, why, and where the detail lives, in a few short bullets. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; the text of a removed entry is in git history.
-- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X95**.
+- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X96**.
 
 Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X25's diagnostic), X26, X27 and X43 (SYN1's and SYN2's analysis code and local runs, deleted), X36 (a draft block table, now X37), X46 (one comparison file, now X64), X35 (the LinkBuffer stream cheaper per flop than a held flop, a limit of the ungated table, gone with it).
 
@@ -432,6 +432,12 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 - **Decided:** E11's $E_\text{run}$ and $\eta_E$ use the run window's dynamic energy (internal plus switching, power_pt.csv's `e_win_pj`, the macros as PT measures them, X75). Leakage, $E_\text{leak} = P_\text{leak}\thinspace C_w\thinspace t_\text{clk}$ from the window's power.rpt, is reported beside it with the macros' part, never added in.
 - **Why:** the Snitch runs take 50 to 200 times forge's cycles, so leakage over the window would swamp the comparison with a number set by the macros' CACTI leakage and the clock period, not by the work; forge's cluster rows are dynamic only too.
 - **Where:** `cluster/README.md`, "snb"; `report/snb_report.py`.
+
+### X95 — A copy's energy on the baseline netlist, against snax-forge's price
+
+- **Decided:** snax-forge's transposed copy (D182: one 2-D DMA transfer per column, one burst of an element each) runs alone as the snitch-forge kernel `dma_transpose` on `snitch1_cg` (forge's L1, banks and DMA, no accelerator): `snb rtl`, `gls`, `pwr` at 64 × 64, `int8` (pitch 64) and `int64` (pitch 512). Its run window is the copy from its first start to the DMA's wait; its dynamic energy, summed into `groups.json`'s groups as `cluster-energy` sums a forge window, is set against snax-forge's D184 price of the same copy (4096 bank reads and writes and as many crossbar accesses), group by group: `tcdm_banks` against the banks' part, `dma` and `tcdm_interconnect` against the crossbar's, and `tcdm_logic`, `cores` and the rest as what D184 leaves out. `snb_points.json`'s `e11: false` keeps the kernel out of E11.
+- **Why:** D184 costs a copy by its L1 accesses only, a lower bound; the copy touches no accelerator, so the existing netlist measures it with no synthesis, and int8 against int64 shows whether a one-byte burst costs the banks what a word does.
+- **Where:** `cluster/README.md`, "snb"; `cluster/snb_points.json`; snax_cluster's `sw/apps/snitch-forge/dma_transpose`.
 
 ## Reports and comparison
 

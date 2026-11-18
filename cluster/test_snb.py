@@ -43,7 +43,8 @@ def test_n_op_table():
     # the kernels' maths at their default sizes; a multiply-accumulate counts two
     want = {"vecadd": 2048, "vecmul": 2048, "relu": 2048, "axpy": 4096, "vsum": 2047, "dot": 4096,
             "rowsum": 16 * 127, "matvec": 2 * 16 * 512, "matadd": 32 * 64, "mvt": 4 * 64 * 64,
-            "atax": 4 * 64 * 64, "bicg": 4 * 64 * 64, "gesummv": 4 * 64 * 64 + 3 * 64}
+            "atax": 4 * 64 * 64, "bicg": 4 * 64 * 64, "gesummv": 4 * 64 * 64 + 3 * 64,
+            "dma_transpose": 64 * 64}  # the elements the copy moves (X95), not E11's
     got = {k: snb.n_op(v["n_op"], v["sizes"]) for k, v in PTS["kernels"].items()}
     assert got == want, got
 
