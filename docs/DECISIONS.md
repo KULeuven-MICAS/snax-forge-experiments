@@ -437,7 +437,7 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 - **Decided:** snax-forge's transposed copy (D182: one 2-D DMA transfer per column, one burst of an element each) runs alone as the snitch-forge kernel `dma_transpose` on `snitch1_cg` (forge's L1, banks and DMA, no accelerator): `snb rtl`, `gls`, `pwr` at 64 × 64, `int8` (pitch 64) and `int64` (pitch 512). Its run window is the copy from its first start to the DMA's wait; its dynamic energy, summed into `groups.json`'s groups as `cluster-energy` sums a forge window, is set against snax-forge's D184 price of the same copy (4096 bank reads and writes and as many crossbar accesses), group by group: `tcdm_banks` against the banks' part, `dma` and `tcdm_interconnect` against the crossbar's, and `tcdm_logic`, `cores` and the rest as what D184 leaves out. `snb_points.json`'s `e11: false` keeps the kernel out of E11.
 - **Why:** D184 costs a copy by its L1 accesses only, a lower bound; the copy touches no accelerator, so the existing netlist measures it with no synthesis, and int8 against int64 shows whether a one-byte burst costs the banks what a word does.
-- **Where:** `cluster/README.md`, "snb"; `cluster/snb_points.json`; snax_cluster's `sw/apps/snitch-forge/dma_transpose`.
+- **Where:** `cluster/README.md`, "snb"; `cluster/snb_points.json`, `report/dma_copy.py`; snax_cluster's `sw/apps/snitch-forge/dma_transpose`.
 
 ## Reports and comparison
 
