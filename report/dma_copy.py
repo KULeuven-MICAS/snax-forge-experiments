@@ -6,9 +6,10 @@
 Per run of results/snb/<tech>/runs.csv whose kernel is dma_transpose, with its PrimePower reports: the run window
 (the copy alone) summed into cluster/groups.json's groups as report/cluster_energy.py sums a window, its total
 checked against power_pt.csv within 0.01 %. Beside it snax-forge's price of the same copy (D184): N_b = M N bursts,
-each one bank read and one bank write (results/ram/<tech>/ram_table.csv's bank of the config's L1 macros) and two
-crossbar accesses at a full crossbar's e_access on the banks (results/strm/<tech>/xbar.csv) less the read-only and
-the write-only saving (xbar_kinds.json's energy at that bank count). Writes results/snb/<tech>/dma_copy.json; --md
+each a read and a write on every bank of its superbank (DMA_BITS over the bank's width; results/ram/<tech>/
+ram_table.csv's bank of the config's L1 macros) and two crossbar accesses at a full crossbar's e_access on the banks
+(results/strm/<tech>/xbar.csv) less the read-only and the write-only saving (xbar_kinds.json's energy at that bank
+count). Writes results/snb/<tech>/dma_copy.json; --md
 prints the tables. Standard library and arc/arc.py.
 """
 
@@ -32,6 +33,8 @@ KERNEL = "dma_transpose"
 BANK = re.compile(r"sram_d(\d+)_w(\d+)")
 # groups.json's groups D184 prices: the banks, and the paths a copy takes to them as the crossbar part
 PRICED = {"tcdm_banks": "banks", "dma": "crossbar", "tcdm_interconnect": "crossbar"}
+# The DMA's port into L1 (snax_cluster's dma_data_width): a burst reaches every bank of its superbank (D184, X96)
+DMA_BITS = 512
 
 
 def read_csv(path: Path) -> list[dict]:
@@ -51,7 +54,8 @@ def l1_bank(config: dict) -> tuple[int, int, int]:
 
 
 def d184_price(bursts: int, banks: int, depth: int, width: int, tech: str) -> dict:
-    """D184's price of a copy of `bursts` bursts (nJ): its banks' reads and writes, its crossbar accesses."""
+    """D184's price of a copy of `bursts` bursts (nJ): a read and a write on each bank of a burst's superbank, and its
+    crossbar accesses."""
     ram = [r for r in read_csv(ROOT / "results" / "ram" / tech / "ram_table.csv")
            if int(r["depth"]) == depth and int(r["width"]) == width]
     xbar = [r for r in read_csv(ROOT / "results" / "strm" / tech / "xbar.csv")
@@ -62,8 +66,9 @@ def d184_price(bursts: int, banks: int, depth: int, width: int, tech: str) -> di
     e_rd, e_wr = float(ram[0]["e_rd_pj"]), float(ram[0]["e_wr_pj"])
     e_acc = float(xbar[0]["e_access_pj"])
     e_ro, e_wo = e_acc * (1 - kinds[str(banks)]["g_ro"]), e_acc * (1 - kinds[str(banks)]["g_wo"])
-    out = {"bursts": bursts, "e_rd_pj": e_rd, "e_wr_pj": e_wr, "e_ro_pj": e_ro, "e_wo_pj": e_wo,
-           "banks_nj": bursts * (e_rd + e_wr) / 1e3, "crossbar_nj": bursts * (e_ro + e_wo) / 1e3}
+    sb = DMA_BITS // width
+    out = {"bursts": bursts, "superbank_banks": sb, "e_rd_pj": e_rd, "e_wr_pj": e_wr, "e_ro_pj": e_ro, "e_wo_pj": e_wo,
+           "banks_nj": bursts * sb * (e_rd + e_wr) / 1e3, "crossbar_nj": bursts * (e_ro + e_wo) / 1e3}
     out["nj"] = out["banks_nj"] + out["crossbar_nj"]
     return out
 
