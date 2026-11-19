@@ -68,6 +68,7 @@ IDs are never reused; retired: LIB1, LIB3, LIB4 and PT5 (the 15 nm library, remo
 - **PT8. `report_switching_activity -nosplit` stops the script.** The option does not exist there (CMD-010); leave it out.
 - **PT9. PT's nets are not the SAIF's entries.** The SAIF holds a port net once per level it crosses, PT once; take the annotation's denominator from PT.
 - **PT10. Time-based PrimePower gives about half the clock-pin energy of held flops on the cluster's netlist.** Averaged mode agrees with the `.lib`'s count; use it for the cluster's windows (X20 · X60 · X74).
+- **PT11. The same macro energy in every bank is not a clock floor.** Averaged mode charges a bank's `when` energy from its own `req_i` and `we_i` probabilities (PT7); when every bank has the same counts, as on the DMA's copy (2 048 cycles of `req_i`, 1 024 of `we_i` each), all 32 match to seven digits. Count the banks' `req_i` and `we_i` high time in the window's SAIF before reading equal rows as activity-free (X96).
 
 ## Licences
 

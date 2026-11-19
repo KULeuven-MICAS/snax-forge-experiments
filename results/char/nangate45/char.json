@@ -9,7 +9,7 @@
  "source": {
   "snax_forge": "04165576384c4f3031e3b2d27d0ee9c058498b51",
   "snax_forge_FifoSlicer": "c5c7d3bad1eb1ccf2e4e4a3d841fea749677d3f3",
-  "snax_forge_experiments": "b70af1908889ec9ac3b70a0a9cd0ca858e2e7481",
+  "snax_forge_experiments": "8a07892182af5c0d605c605f17991cd7ecb44d7b",
   "stimulus": "rand64 seed 0",
   "clk_gate": "1"
  },
