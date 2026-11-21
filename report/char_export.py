@@ -168,6 +168,15 @@ def catalogue_at(commit: str) -> dict:
     return json.loads(done.stdout)
 
 
+def as_measured(datapath: str, params: dict, cat: dict) -> dict:
+    """params without a bool the catalogue gained after the measuring commit, given false (Mac's seed): the block
+    as measured, as snax-forge's char lookup drops a false seed no entry has."""
+    spec = cat.get(datapath)
+    if spec is None:
+        return params
+    return {k: v for k, v in params.items() if k in spec["params"] or v is not False}
+
+
 def check_params(datapath: str, params: dict, cat: dict, where: str) -> None:
     spec = {"params": STREAM[datapath]} if datapath in STREAM else cat.get(datapath)
     if spec is None:
@@ -199,7 +208,8 @@ def blocks(d: dict, points: list[dict], cat: dict) -> dict:
     SLOPE_WS times w_in / 64 (X89). The points char_table.check_only names are left out."""
     out: dict = {}
     for p in points:
-        name, dp, params = p["point"], p["datapath"], p["params"]
+        name, dp = p["point"], p["datapath"]
+        params = as_measured(dp, p["params"], cat)
         check_params(dp, params, cat, name)
         if ct.check_only(dp, params):
             continue
@@ -262,10 +272,17 @@ def build(tech: str, d: dict, points: list[dict]) -> tuple[dict, dict]:
 
 
 # ---------------------------------------------------------------- the model, read from char.json
+def table_key(j: dict, datapath: str, params: dict) -> dict:
+    """params as char.json keys an entry: the shape aside, and a false bool no entry of the block has dropped (Mac's
+    seed, which the table was measured before), as in as_measured."""
+    have = {k for x in j["blocks"].get(datapath, []) for k in x["params"]}
+    return {k: v for k, v in params.items() if k not in SHAPE and (k in have or v is not False)}
+
+
 def entry_of(j: dict, datapath: str, params: dict) -> tuple[dict, float]:
     """(the entry for params, the factor its values take): a LinkBuffer at a dtype with no entry reads the int64
     entry scaled by its width over 64 (X89)."""
-    key = {k: v for k, v in params.items() if k not in SHAPE}
+    key = table_key(j, datapath, params)
     for x in j["blocks"].get(datapath, []):
         if x["params"] == key:
             return x, 1.0
