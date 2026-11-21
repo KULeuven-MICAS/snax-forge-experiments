@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """report/cluster_sweep.py - the cluster points of one recipe side by side over W, the netlist beside HWCOST.
 
-    pixi run cluster-sweep [--tech nangate45] [--recipe dot_3] [--md]
+    pixi run cluster-sweep [--tech nangate45] [--recipe dot_v3] [--md]
     pixi run cluster-sweep --points A,B,... --out NAME [--md]
 
 Reads breakdown.json and energy.json and lays out the run window (`5_run`) of the recipe's points, one per W, or
@@ -244,7 +244,7 @@ def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (F
     fig.legend([seen[k] for k in keys], [names.get(k, k) for k in keys], loc="lower center",
                ncol=len(keys), fontsize=8.5, frameon=False)
     src = "run window 5_run" if kind == "energy" else "DC area per group"
-    head = "dot_3 in the one-core cluster, clock-gated synthesis, N = 2048, nangate45, 10 ns"
+    head = "dot_v3 (dot 3) in the one-core cluster, clock-gated synthesis, N = 2048, nangate45, 10 ns"
     hw = "HWCOST"
     fig.suptitle(f"{head}\nGLS: netlist, {src}; HW: {hw}" if alone else
                  f"{head}: {what}\nGLS: netlist, {src}; HW: {hw}", fontsize=10.5)
@@ -256,7 +256,7 @@ def figure(pts: list[dict], kind: str, path: Path, panels: tuple[bool, ...] = (F
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tech", default="nangate45")
-    ap.add_argument("--recipe", default="dot_3")
+    ap.add_argument("--recipe", default="dot_v3")
     ap.add_argument("--points", default=None, help="comma-separated points, in this order; needs --out")
     ap.add_argument("--out", default=None, help="with --points: write into results/cluster/<tech>/OUT/")
     ap.add_argument("--md", action="store_true", help="print the tables as Markdown")

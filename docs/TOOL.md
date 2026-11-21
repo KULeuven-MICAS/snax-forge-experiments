@@ -152,9 +152,9 @@ A cluster point (`cluster/points.json`) is a snax-forge design built into snax_c
 | `cluster-hwcost POINT` | snax-forge's HWCOST for the point, priced by snax-forge itself, into `results/cluster/<tech>/hwcost/<point>.json` |
 | `cluster-breakdown [--md]` | the area in groups against HWCOST and the accelerator alone, `breakdown.json` (X72) |
 | `cluster-energy [--md]` | the energy per window in groups, the run window against HWCOST, `energy.json` |
-| `cluster-sweep [--recipe dot_3] [--md]` | the recipe's points over W beside HWCOST: `sweep.csv` and four figures (X78 · X80 · X86) |
+| `cluster-sweep [--recipe dot_v3] [--md]` | the recipe's points over W beside HWCOST: `sweep.csv` and four figures (X78 · X80 · X86) |
 | `cluster-sweep --points A,B,... --out NAME [--md]` | chosen points side by side in `NAME/`, for a look, not committed |
-| `ge-check [--recipe dot_3] [--md]` | snax-forge's dynamic energy (`ge/<point>.json`, its D177) beside the static estimate (`hwcost/`) and the netlist's run window (`energy.json`), per part and W, with Kendall's tau over W: `ge/ge_check.csv` and `ge/ge_energy_five.png` (cluster/README.md, "ge-check") |
+| `ge-check [--recipe dot_v3] [--md]` | snax-forge's dynamic energy (`ge/<point>.json`, its D177) beside the static estimate (`hwcost/`) and the netlist's run window (`energy.json`), per part and W, with Kendall's tau over W: `ge/ge_check.csv` and `ge/ge_energy_five.png` (cluster/README.md, "ge-check") |
 
 ```
 $ pixi run cluster-breakdown

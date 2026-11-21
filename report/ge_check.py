@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """report/ge_check.py - snax-forge's dynamic energy (GE1) beside the static estimate and the netlist, over W.
 
-    pixi run ge-check [--tech nangate45] [--recipe dot_3] [--md]
+    pixi run ge-check [--tech nangate45] [--recipe dot_v3] [--md]
 
 Per point of the recipe in cluster/points.json, in order of W, the run window's energy in HWCOST's five parts
 from three sources: the gated netlist (energy.json's `run`, the groups cluster/groups.json's `hwcost` maps to
@@ -159,7 +159,7 @@ def figure(pts: list[dict], path: Path) -> None:
     handles, labels = ax.get_legend_handles_labels()
     seen = dict(zip(labels, handles))
     fig.legend([seen[k] for k in STACK], STACK, loc="lower center", ncol=len(STACK), fontsize=8.5, frameon=False)
-    fig.suptitle("dot_3 in the one-core cluster, clock-gated, N = 2048, nangate45: run-window energy, five parts\n"
+    fig.suptitle("dot_v3 (dot 3) in the one-core cluster, clock-gated, N = 2048, nangate45: run-window energy, five parts\n"
                  "GLS: netlist; static: HWCOST on the graph; GE1: HWCOST's prices on SNAX-GVSoC's counts",
                  fontsize=10.5)
     fig.tight_layout(rect=(0, 0.08, 1, 0.95))
@@ -170,7 +170,7 @@ def figure(pts: list[dict], path: Path) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tech", default="nangate45")
-    ap.add_argument("--recipe", default="dot_3")
+    ap.add_argument("--recipe", default="dot_v3")
     ap.add_argument("--md", action="store_true", help="print the tables as Markdown")
     a = ap.parse_args()
     pts = load(a.tech, a.recipe)
