@@ -100,7 +100,7 @@ class TestCharExport(unittest.TestCase):
         written = {(dp, json.dumps(x["params"], sort_keys=True), q.get("lanes"), q.get("depth"))
                    for dp, es in self.j["blocks"].items() for x in es for q in x["points"]}
         for p in self.points:
-            key = {k: v for k, v in p["params"].items() if k not in ce.SHAPE}
+            key = ce.table_key(self.j, p["datapath"], p["params"])
             there = (p["datapath"], json.dumps(key, sort_keys=True), p["params"].get("lanes"), p["params"].get("depth"))
             self.assertEqual(there in written, not ct.check_only(p["datapath"], p["params"]), p["point"])
 
