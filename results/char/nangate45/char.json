@@ -21,6 +21,12 @@
  "ctrl": {
   "counter_factor": 83.2
  },
+ "bank": {
+  "comb_um2_lane_row": 59.7737,
+  "e_pj_lane_log2_rows": 0.34284,
+  "e_pj_lane": 0.3161,
+  "mux_bits_max": 2048
+ },
  "blocks": {
   "SimdLanes": [
    {"params": {"inTypes": ["int64", "int64"], "opType": "int64", "outType": "int64", "op": "add", "streams": 2, "k": null, "k1": null, "k2": null, "kCsr": false, "k1Csr": false, "k2Csr": false}, "lanes_rule": "copy",

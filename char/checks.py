@@ -210,6 +210,30 @@ def lsq(xs: list[list[float]], ys: list[float]) -> list[float]:
     return [(b[0] * a[1][1] - b[1] * a[0][1]) / det, (a[0][0] * b[1] - a[1][0] * b[0]) / det]
 
 
+def bank_model(tech: str) -> dict | None:
+    """The bank's two forms (X97) as char.json's `bank` (snax-forge D193), from the gated rows: the area beyond the
+    extra flops per lane and row, the energy a fire over the rows-1 base per lane as a log2 R + b, and the largest
+    read mux (W 32 R bits) they were fitted to (DC builds a larger one otherwise, PITFALLS DC20). None without them."""
+    gated = lambda r: r.get("clk_gate", "") == "1"  # noqa: E731
+    synth = {r["point"]: r for r in rows(ROOT / "results" / "char" / tech / "char_synth.csv") if gated(r)}
+    busy = {r["point"]: r for r in rows(ROOT / "results" / "char" / tech / "char_power.csv")
+            if gated(r) and r["window"] == "busy"}
+    a_flop = json.loads((ROOT / "results" / "char" / tech / "char.json").read_text())["flop"]["area_um2"]
+    pts = [(w, r, f"mac/bank_r{r}_w{w}_i8_i32") for w in BANK_BASE for r in BANK_RS]
+    pts = [(w, r, q) for w, r, q in pts if q not in BANK_MUX2]
+    if any(q not in synth or q not in busy for _, _, q in pts) or any(b not in busy for b in BANK_BASE.values()):
+        return None
+    area, energy = [], []
+    for w, r, q in pts:
+        b = BANK_BASE[w]
+        area.append(float(synth[q]["area_um2"]) - float(synth[b]["area_um2"]) - w * 32 * (r - 1) * a_flop)
+        energy.append(float(busy[q]["e_dyn_pj"]) - float(busy[b]["e_dyn_pj"]))
+    (k,) = lsq([BANK_FORMS["W R"](w, r) for w, r, _ in pts], area)
+    e = lsq([BANK_FORMS["W (a log2 R + b)"](w, r) for w, r, _ in pts], energy)
+    return {"comb_um2_lane_row": round(k, 4), "e_pj_lane_log2_rows": round(e[0], 5), "e_pj_lane": round(e[1], 5),
+            "mux_bits_max": max(w * 32 * r for w, r, _ in pts)}
+
+
 def bank_tables(tech: str) -> str:
     """The Mac bank's study (X97) on the gated rows: the points, the extra over the base, the forms of the rest."""
     gated = lambda r: r.get("clk_gate", "") == "1"  # noqa: E731
