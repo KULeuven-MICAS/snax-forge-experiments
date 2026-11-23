@@ -402,7 +402,7 @@ def port_guard(point: str) -> str:
 
 def char_extra(point: str) -> dict:
     """A char row's CHAR_COLUMNS from point.json: the datapath, the params that apply (FifoPacker's inLanes and
-    FifoSlicer's outLanes as lanes), a Mac's form, and the type pair: in_type the widest input (SimdLanes' and Mac's
+    FifoSlicer's outLanes as lanes), a Mac's form (acc_r<R> for a bank of R >= 2 rows, D191), and the type pair: in_type the widest input (SimdLanes' and Mac's
     inTypes, a fold's inType), out_type the output's (outType); LinkBuffer's dtype and a stream block's laneType for
     both."""
     pj = forge_json(point, "point.json")
@@ -410,6 +410,8 @@ def char_extra(point: str) -> dict:
     form = ""
     if pj.get("datapath") == "Mac":
         form = "acc" if params.get("accumulate") else "reg" if params.get("regOut") else "plain"
+        if params.get("rows", 1) > 1:
+            form += f"_r{params['rows']}"
     bits = lambda t: int(t.removeprefix("u").removeprefix("int"))  # noqa: E731
     one = params.get("dtype") or params.get("laneType")
     ins = params.get("inTypes") or [params.get("inType") or one or ""]

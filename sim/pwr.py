@@ -1236,6 +1236,10 @@ def tb_top_char(tb: dict, netlist: Path) -> str:
     wires = []
     if kind == "fold":
         wires = [("fire", 1), ("first", 1)]
+    elif kind == "bank":
+        rw = pins["row"]["bits"]
+        params.update({"R": tb["rows"], "RW": rw})
+        wires = [("fire", 1), ("first", 1), ("row", rw), ("drain", rw)]
     elif kind == "serial":
         lw = max(1, pins.get("lane", {}).get("bits", 0))
         params.update({"W": tb["W"], "LW": lw})

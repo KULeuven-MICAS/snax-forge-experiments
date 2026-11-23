@@ -47,7 +47,7 @@ class TestCharExport(unittest.TestCase):
         cls.out = out.getvalue()
         cls.j = json.loads(ce.path(TECH).read_text())
         cls.committed = (cls.old / TECH / "char.json").read_text()
-        cls.points = json.loads(ct.POINTS.read_text())
+        cls.points = ct.table_points()
         cls.d = ct.load(TECH, cls.points)
 
     @classmethod

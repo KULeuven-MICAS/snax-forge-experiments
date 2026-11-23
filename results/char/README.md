@@ -49,10 +49,10 @@ Known limits (numbers in `char_table.md`): an isolated fire of an accumulator co
 | `<tech>/reports/<point>.zip`, `power_reports/<point>.zip` | DC's kept reports; PT's reports per window and the point's `tb.json` (X51). |
 | `runs/` | The run notes, one per round. |
 
-The points are `char/points.json`: 27 blocks at int64, named `<block>/<case>_w<W>` (`lanes/add_w8`, `mac/acc_w32`, `tree/add_w4`, `serial/sum_w16`, `link/d4_w1`; X29), and 54 narrow points named with their pair, `<block>/<case>_w<W>_i<in>_i<out>` (`lanes/mul_w1_i8_i32`, `mac/acc_w8_i16_i64`), `link/d4_w1_i<w>` and `pack/d<d_out>_i<w>` (X89), and 6 slicer points, `slice/d<d_in>_i<w>_n<outLanes>` (X94), made at a later snax-forge commit than the others (`char.json`'s `source.snax_forge_FifoSlicer`).
+The points are `char/points.json`: 27 blocks at int64, named `<block>/<case>_w<W>` (`lanes/add_w8`, `mac/acc_w32`, `tree/add_w4`, `serial/sum_w16`, `link/d4_w1`; X29), and 54 narrow points named with their pair, `<block>/<case>_w<W>_i<in>_i<out>` (`lanes/mul_w1_i8_i32`, `mac/acc_w8_i16_i64`), `link/d4_w1_i<w>` and `pack/d<d_out>_i<w>` (X89), and 6 slicer points, `slice/d<d_in>_i<w>_n<outLanes>` (X94), made at a later snax-forge commit than the others (`char.json`'s `source.snax_forge_FifoSlicer`). The Mac bank's study (X97) has 9 points that name `rows`, int8 in and int32 out: `mac/acc_w4_i8_i32` (rows 1) and `mac/bank_r<R>_w<W>_i8_i32` at R = 2, 4, 8, 16 and W = 4, 8, their `form` `acc_r<R>`; `char.json` and `char_table.md` leave them out (`char_table.bank_study`).
 
 ## How to rebuild
 
-The commands, in order, are in [`docs/TOOL.md`](../../docs/TOOL.md): `char-rtl` (section 2), `syn run '*' --source char` (3), `pwr run '*' --source char` (4), `char-export`, then `char-table` (6); `pixi run python char/checks.py [--power]` prints the synthesis and power checks for a run note.
+The commands, in order, are in [`docs/TOOL.md`](../../docs/TOOL.md): `char-rtl` (section 2), `syn run '*' --source char` (3), `pwr run '*' --source char` (4), `char-export`, then `char-table` (6); `pixi run python char/checks.py [--power | --bank]` prints the synthesis and power checks for a run note (`--bank`: the Mac bank's study, X97).
 
 `char-rtl` refuses a dirty snax-forge checkout (`--allow-dirty` runs anyway) and records its commit in each bundle's `point.json`; a point is rebuilt from the commit its rows name.

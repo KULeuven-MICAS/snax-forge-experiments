@@ -25,6 +25,7 @@ IDs are never reused; retired: LIB1, LIB3, LIB4 and PT5 (the 15 nm library, remo
 - **DC17. `syn.py run --dry-run -j N` interleaves its points' lines.** Compare dry runs at `-j 1`, where the order is fixed.
 - **DC18. An output port nothing loads stays in the netlist with no driver.** Such a port reads Z for the whole run although the logic behind it works; take an internal status from the RTL run, never from a netlist port.
 - **DC19. The run summary on the server keeps rows that results/ no longer has.** `syn/runs/<source>/<tech>/summary.csv` is never pruned, so copying it over `synth_dc.csv` brought removed ungated rows and stale dates back; `syn.py` merges a batch's rows into the committed CSV instead (X79 · X87 · X88).
+- **DC20. A large inferred mux maps to MUX2 trees, a smaller one to AOI logic.** Presto infers the Mac bank's two read muxes as MUX_OPs at every R; compile_ultra maps them to AOI22 and-or logic up to 16 × 128 and 8 × 256 bits, but at 16 × 256 to 7,680 MUX2 cells (14,300 µm²), doubling the comb and tripling its energy (X97). Check `reference.rpt`'s MUX2 count before fitting a block's cost over a size that crosses it.
 
 ## Libraries
 

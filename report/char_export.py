@@ -371,7 +371,7 @@ def dumps(j: dict) -> str:
 
 
 def main() -> int:
-    points = json.loads(ct.POINTS.read_text())
+    points = ct.table_points()
     for t in ct.TECHS:
         d = ct.load(t, points)
         j, s = build(t, d, points)

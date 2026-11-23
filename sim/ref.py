@@ -44,7 +44,8 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
 # inputs), and the next rising edge takes it.
 #   SimdLanes         out_l = cast(cast(a_l, A, op) op cast(b_l, B, op) at op, op, out) (combinational)
 #   Mac (accumulate)  p_l = cast(cast(a_l, A, op) cast(b_l, B, op) at op, op, out);
-#                     on fire: s_l <- first ? p_l : s_l + p_l at out; out_l = s_l
+#                     on fire: s_l <- first ? p_l : s_l + p_l at out; out_l = s_l; with rows R > 1 (D191) R rows
+#                     of sums: on fire s[row]_l <- first ? p_l : s[row]_l + p_l; out_l = s[drain]_l
 #   TreeAccumulate    on fire: acc <- first ? beat : acc + beat, beat = sum_l cast(in_l, in, out) at out; out = acc
 #   SerialAccumulate  on read: acc <- (first and lane = 0 ? 0 : acc) + cast(in_lane, in, out) at out; out = acc
 #   LinkBuffer        on load: slot[wslot] <- in; out = slot[rslot] (combinational read; slot 0 at depth 1); in
@@ -93,7 +94,7 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
         if datapath == "SimdLanes":
             op = CHAR_OPS[params["op"]]
         else:
-            s = [0] * w
+            bank = [[0] * w for _ in range(params.get("rows", 1))]
     elif datapath in ("TreeAccumulate", "SerialAccumulate"):
         tin, tout = params["inType"], params["outType"]
         mo = (1 << _width(tout)) - 1
@@ -123,7 +124,7 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
         if datapath == "SimdLanes":
             out.append([_cast(op(_cast(cur[i], ta, top), _cast(cur[w + i], tb, top)), top, tout) for i in range(w)])
         elif datapath == "Mac":
-            out.append(list(s))
+            out.append(list(bank[p.get("drain", 0)]))
         elif datapath in ("TreeAccumulate", "SerialAccumulate"):
             out.append([acc])
         elif datapath == "LinkBuffer":
@@ -145,7 +146,8 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
                        + [int(bool(p["in_valid"]) and sending), int(ready)])
         # the next rising edge takes the slot
         if datapath == "Mac" and p["fire"]:
-            s = [prod(i) if p["first"] else (s[i] + prod(i)) & mo for i in range(w)]
+            s = bank[p.get("row", 0)]
+            bank[p.get("row", 0)] = [prod(i) if p["first"] else (s[i] + prod(i)) & mo for i in range(w)]
         elif datapath == "TreeAccumulate" and p["fire"]:
             b = sum(_cast(x, tin, tout) for x in cur[:w]) & mo
             acc = b if p["first"] else (acc + b) & mo
