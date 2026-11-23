@@ -29,9 +29,9 @@ INS = {"SimdLanes": ["a", "b"], "Mac": ["a", "b"], "TreeAccumulate": ["in"], "Se
        "LinkBuffer": ["in"], "FifoPacker": ["in_bits"], "FifoSlicer": ["in_bits"]}
 OUTS = {"FifoPacker": ["out_bits", "out_valid", "in_ready"],
         "FifoSlicer": ["out_bits", "out_valid", "in_ready"]}    # the others: out
-PINS = {"lanes": [], "fold": ["fire", "first"], "serial": ["read", "lane", "first"], "link": ["load", "wslot", "rslot"],
+PINS = {"lanes": [], "fold": ["fire", "first"], "bank": ["fire", "first", "row", "drain"], "serial": ["read", "lane", "first"], "link": ["load", "wslot", "rslot"],
         "pack": ["in_valid", "out_ready", "clear", "last"], "slice": ["in_valid", "out_ready", "enable", "clear"]}
-WINDOWS = {"lanes": ["busy", "idle"], "fold": ["busy", "idle"], "serial": ["busy", "idle"], "link": ["stream"],
+WINDOWS = {"lanes": ["busy", "idle"], "fold": ["busy", "idle"], "bank": ["busy", "idle"], "serial": ["busy", "idle"], "link": ["stream"],
            "pack": ["busy", "idle"], "slice": ["busy", "idle"]}
 SEQ_FILES = {k: [f"char_{k}_seq.sv"] for k in PINS}
 CORE = "char_seq_core.svh"
@@ -45,9 +45,22 @@ def point_dir(point: str, bundle: Path) -> Path:
     return bundle
 
 
+def rows(params: dict) -> int:
+    """A Mac's rows of sums (its bank, snax-forge D191); 1 for every other block and a Mac without the param."""
+    return params.get("rows", 1)
+
+
+def kind_of(datapath: str, params: dict) -> str:
+    """The testbench kind: KINDS', and bank for a Mac of 2 rows or more (pins row and drain)."""
+    return "bank" if datapath == "Mac" and rows(params) > 1 else KINDS[datapath]
+
+
 def pin_bits(datapath: str, params: dict) -> dict:
     """The kind's pins and their widths from the Chisel source; 0 bits = absent from the netlist."""
     w = params.get("lanes", 1)
+    if kind_of(datapath, params) == "bank":
+        rw = math.ceil(math.log2(rows(params)))
+        return {"fire": 1, "first": 1, "row": rw, "drain": rw}
     if datapath == "SerialAccumulate":
         return {"read": 1, "lane": math.ceil(math.log2(w)) if w > 1 else 0, "first": 1}
     if datapath == "LinkBuffer":
@@ -114,7 +127,7 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
 
     The ports must be exactly clock, reset, data_in, outs and the present pins (SimdLanes keeps an unused clock and
     reset), each data port as wide as its type (port_bits). The kinds, by datapath: lanes (SimdLanes), fold (Mac in its
-    accumulating form, TreeAccumulate), serial (SerialAccumulate), link (LinkBuffer), pack (FifoPacker), slice
+    accumulating form, TreeAccumulate), bank (an accumulating Mac of 2 rows or more, tb.json's rows), serial (SerialAccumulate), link (LinkBuffer), pack (FifoPacker), slice
     (FifoSlicer).
 
     """
@@ -126,7 +139,7 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
         raise ValueError(f"{point}: datapath {dp} has no testbench kind")
     if dp == "Mac" and not params.get("accumulate"):
         raise ValueError(f"{point}: only the accumulating Mac is built (fold kind)")
-    kind = KINDS[dp]
+    kind = kind_of(dp, params)
     ports = hls.ports_of(netlist, top)
     bits = pin_bits(dp, params)
     pins = {n: {"port": f"io_{n}", "bits": b} for n, b in bits.items() if b}
@@ -152,6 +165,7 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
     tb = {"tb_version": TB_VERSION, "source": "char", "point": point, "datapath": dp, "params": params, "kind": kind,
           "top": top, "W": params.get("lanes", 1), "depth": params.get("depth", ""),
           **({"r": slicer_r(params)} if kind == "slice" else {}),
+          **({"rows": rows(params)} if kind == "bank" else {}),
           "snax_forge_commit": pj["snax_forge_commit"],
           "clock": {"port": CLK}, "reset": {"port": RST, "active": "high", "sync": False},
           "control": {"kind": f"char_{kind}"},
@@ -181,8 +195,10 @@ def default_size(tb: dict) -> str:
 def schedule(tb: dict) -> list[dict]:
     """schedule(tb) is the sequence of slots the kind's sequencer drives after reset, slot by slot: 4 settle slots with
     every pin and data input low, then per window a lead-in of the window's own kind (outside every window) and the
-    window's slots. The windows: lanes, fold and serial have busy (a fire every cycle; serial a read every
-    cycle, 128 beats of W) and idle (the enable at 0, every other input held), each after one lead-in slot; pack has
+    window's slots. The windows: lanes, fold, bank and serial have busy (a fire every cycle; serial a read every
+    cycle, 128 beats of W) and idle (the enable at 0, every other input held), each after one lead-in slot (bank's
+    busy: R lead-in slots, the restart of each row in turn, then row t mod R and drain the row before it, (t - 1) mod
+    R, as the control unit drives them, first 0; idle: row and drain held at busy's last); pack has
     the start (clear, no push, outside every window), then busy (a push every cycle, out_ready high, clear and last
     low) and idle (no push, every other input held), each after one lead-in slot of its own kind; slice has the
     start (clear, enable low, no word offered, outside every window), then busy (enable high, the input valid, the
@@ -224,6 +240,16 @@ def schedule(tb: dict) -> list[dict]:
         slot(None, 0, 0, fire=0, first=0)
         for i in range(CYCLES):
             slot("idle", 0, 0, fire=0, first=0)           # every input held, first included (busy's 0)
+    elif kind == "bank":
+        r = tb["rows"]
+        for i in range(r):                                # the restart, each row in turn
+            slot(None, 1, 1, fire=1, first=1, row=i, drain=(i - 1) % r)
+        for i in range(CYCLES):
+            slot("busy", 1, 1, fire=1, first=0, row=i % r, drain=(i - 1) % r)
+        last = {"row": (CYCLES - 1) % r, "drain": (CYCLES - 2) % r}
+        slot(None, 0, 0, fire=0, first=0, **last)
+        for i in range(CYCLES):
+            slot("idle", 0, 0, fire=0, first=0, **last)     # every input held
     elif kind == "serial":
         slot(None, 0, 1, read=1, lane=w - 1, first=0)     # a read of the held beat's last lane
         for b in range(CYCLES):

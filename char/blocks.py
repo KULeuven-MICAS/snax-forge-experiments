@@ -8,7 +8,8 @@ A point is one catalogue datapath of snax-forge (hw/chisel/blocks.json) at full 
 snax-forge's gen-block in the snax-forge checkout (SNAX_FORGE, default ../snax-forge), with forge/bundles.py's
 cleaned environment; each block is the top module with the asynchronous active-high reset it has inside an
 accelerator, packed with emitted.json and point.json (point, datapath, params, commit, dirty, date) into
-rtl/char/<point>.zip. A dirty checkout is refused unless --allow-dirty. Standard library and arc/arc.py only.
+rtl/char/<point>.zip. A point may leave out an int the catalogue fills from unit.params (a Mac's rows), which Emit
+builds and lists at its min (as_emitted). A dirty checkout is refused unless --allow-dirty. Standard library and arc/arc.py only.
 """
 
 from __future__ import annotations
@@ -51,6 +52,17 @@ def select(points: list[dict], patterns: list[str]) -> list[dict]:
 def entries(pts: list[dict]) -> list[dict]:
     """gen-block's list: datapath, params and the point's folder."""
     return [{"datapath": p["datapath"], "params": p["params"], "out": str(OUT / p["point"])} for p in pts]
+
+
+def as_emitted(datapath: str, params: dict, cat: dict) -> dict:
+    """params as emitted.json lists them: each int the catalogue fills from unit.params and params leaves out, at
+    its min (snax-forge's gen-block and Emit --block); a stream block's as given."""
+    spec = cat.get(datapath)
+    if spec is None:
+        return params
+    mins = {n: spec["params"][n]["min"] for n, rule in spec["fill"].items()
+            if rule.startswith("unit.params.") and spec["params"][n]["type"] == "int"}
+    return {**mins, **params}
 
 
 def git(*args: str) -> str:
@@ -105,13 +117,14 @@ def main() -> int:
     LOG.write_text(f"$ {' '.join(cmd)}\n" + done.stdout + done.stderr + f"[exit {done.returncode}]\n")
     after, dirty_after = provenance()
     dirty = dirty or dirty_after
+    cat = json.loads((FORGE / "hw" / "chisel" / "blocks.json").read_text())
     made, failed = [], []
     for p in pts:
         dest = OUT / p["point"]
         f = dest / "emitted.json"
         emitted = json.loads(f.read_text()) if f.is_file() else {}
         if done.returncode or after != commit or (emitted.get("block"), emitted.get("params")) != (
-                p["datapath"], p["params"]):
+                p["datapath"], as_emitted(p["datapath"], p["params"], cat)):
             failed.append(p["point"])
             continue
         (dest / "point.json").write_text(json.dumps({

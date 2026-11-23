@@ -73,6 +73,17 @@ def pair(params: dict) -> tuple[int, int]:
     return max(width(t) for t in ins), width(params["outType"])
 
 
+def bank_study(point: dict) -> bool:
+    """A point of the Mac bank's study (X97): a Mac that names its rows, measured beside the table at a later
+    snax-forge commit; neither char.json nor char_table.md reads it."""
+    return point["datapath"] == "Mac" and "rows" in point["params"]
+
+
+def table_points() -> list[dict]:
+    """char/points.json without the bank study's points (bank_study)."""
+    return [p for p in json.loads(POINTS.read_text()) if not bank_study(p)]
+
+
 def check_only(datapath: str, params: dict) -> bool:
     """A narrow point measured to check a rule, not a char.json point: a narrow LinkBuffer (its comb scales with
     its dtype's width), or a narrow point of a block at other lanes than the pair's measured W0."""
@@ -604,7 +615,7 @@ def model_area(D: dict, J: dict, designs: list[tuple[str, str, int]]) -> list[st
 
 
 def main() -> int:
-    points = json.loads(POINTS.read_text())
+    points = table_points()
     D = {t: load(t, points) for t in TECHS}
     commits = {"snax_forge": block_commits(D[TECHS[0]]),
                "sfe": git("log", "-1", "--format=%H", "--", *(f"results/char/{t}/char_power.csv" for t in TECHS))}

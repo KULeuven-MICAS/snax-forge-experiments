@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse. It says what was decided, why, and where the detail lives, in a few short bullets. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; the text of a removed entry is in git history.
-- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X97**.
+- A new decision gets the next free number, under the area it belongs to, and names the run note that found it. Next free number: **X98**.
 
 Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X25's diagnostic), X26, X27 and X43 (SYN1's and SYN2's analysis code and local runs, deleted), X36 (a draft block table, now X37), X46 (one comparison file, now X64), X35 (the LinkBuffer stream cheaper per flop than a held flop, a limit of the ungated table, gone with it).
 
@@ -210,7 +210,7 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 
 ### X29 — The block grid
 
-- **Decided:** 27 points at int64: SimdLanes add and mul at W = 1, 8, 32; the accumulating Mac at W = 1, 8, 32; TreeAccumulate at W = 1–32; SerialAccumulate at W = 2–32; LinkBuffer at D = 1–16 (W = 1) and D = 1 at W = 8, 32. Beside them the type axis's points (X89) and the input slicer's (X94).
+- **Decided:** 27 points at int64: SimdLanes add and mul at W = 1, 8, 32; the accumulating Mac at W = 1, 8, 32; TreeAccumulate at W = 1–32; SerialAccumulate at W = 2–32; LinkBuffer at D = 1–16 (W = 1) and D = 1 at W = 8, 32. Beside them the type axis's points (X89), the input slicer's (X94) and the Mac bank's study (X97).
 - **Why:** the blocks and forms forge's accelerators use, enough points for a first-order model.
 - **Where:** `char/points.json`.
 
@@ -261,6 +261,13 @@ Numbers retired, never reused: X10 (PT's setup check with pass tolerances, now X
 - **Decided:** `FifoSlicer` (snax-forge D180, one 64-bit word in, `outLanes` lanes of `laneType` out a pop, d_in = 64 / (width · outLanes) pops a word) at `words` 1: int32 with 1 lane, int16 with 1 and 2, int8 with 1, 2 and 4 (d_in 8, 4 and 2), clock-gated as the packer. Windows (`pwr.py --source char`, kind `slice`): after the start (`clear`), `busy` (the input always valid, the output always ready, `enable` high: a pop every cycle, a take every d_in cycles) and `idle` (`enable` low, the output not ready, the inputs held), every output checked against `sim/ref.py`'s slicer, `out_bits` through `out_valid` (its data register has no reset). `char.json` has one entry per lane type and lanes, `lanes_rule` `none`, its point's `flops` = 64 + ⌈log₂ d_in⌉ + 1 (the word, the pop counter, the full flag; DC's sequential cells add one or two clock gates) and `load_bits` per pop = 64 / d_in + ⌈log₂ d_in⌉ (the word on the last pop's take, the counter every pop); a fire is a pop.
 - **Why:** HWCOST named the slicer in `char.missing` and its dynamic energy left it out. The points at one d_in are one netlist (a pop is 64 / d_in bits of the word, the lanes only wiring), so d_in sets the cost; the model's pop lands at 1.11 to 1.30 of the busy window, high because the word's bits load below e_load.
 - **Where:** `results/char/char_table.md`, "FifoSlicer"; `power.md`, "Char"; `results/char/runs/2026-11-17_tiera1_r5d.md`.
+
+### X97 — The Mac's bank of rows, measured beside the table
+
+- **Decided:** snax-forge's accumulating `Mac` with `rows` R (D191: R rows of W sums, a firing adds into row `row`, `out` shows row `drain`) is measured at int8 in, int32 out, unseeded, at R = 2, 4, 8, 16 and W = 4, 8 (`mac/bank_r<R>_w<W>_i8_i32`), against its rows-1 base at the same W (`mac/acc_w4_i8_i32`, new; `mac/acc_w8_i8_i32`, CHAR2's, the same SV), clock-gated (X83 · X85). The TB kind `bank` drives `row` the beat mod R and `drain` the row before it, as the control unit does (`power.md`, "Char"). The 9 points name `rows` and stay out of `char.json` and `char_table.md` (`char_table.bank_study`); `char/checks.py --bank` prints their tables.
+- **Found:** DC's sequential cells are W · 32 · R plus R clock gates (one per row), and idle costs R × 4.90 fJ a cycle. The bank has two R:1 read muxes of W · 32 bits (`drain`'s for `out`, `row`'s for the add). Over the base, the area beyond the extra flops' W · 32 · (R − 1) × 5.296 µm² is 59.8 µm² × W · R (within 5.8 %), and the energy a fire grows by W · (0.343 log₂ R + 0.316) pJ (within 14 %), on the 7 points DC maps to AOI logic. At R = 16, W = 8 (16 × 256 bits a mux) DC maps both muxes to MUX2 trees: 1.9× that area and 2.8× that energy (PITFALLS DC20).
+- **Why:** snax-forge's estimate prices a bank as the base's comb plus W · 32 · R flops, all loading on a fire: its area is 0.76 to 0.87 of DC's (0.63 at the MUX2 point), its energy 1.05 to 3.37 times the measured, as only one row loads a fire. With the two forms the area lands at 0.99 to 1.01 and the base plus the energy form at 0.90 to 1.06. How the estimate takes them is snax-forge's choice; `char.json` and char-export's model are unchanged. `char-export` writes them as `char.json`'s `bank` (`char/checks.py`'s `bank_model`, fitted without the MUX2 point), which snax-forge's estimate adds to a banked `Mac`'s rows-1 entry (its D193).
+- **Where:** `results/char/runs/2026-11-23_tiera2_b6x.md`; `char/checks.py --bank`.
 
 ### X52 · X82 — The streamer reader and the sparse interconnect, characterized
 

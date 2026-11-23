@@ -7,7 +7,7 @@ Reads results/char/<tech>/char_synth.csv and char_power.csv, char/points.json an
 snax-forge commit (git show in the sibling checkout) for the params, and for the control factor the tier-done forge
 points' power_pt_modules.csv and synth_dc_modules.csv. Writes the flop constants (area, e_load, e_hold, from the int64
 points), the control factor and per block and type pair its comb area and energy per fire with a lanes rule (copy,
-interpolate, slope; X89; the stream blocks none, one point per entry, X94). The narrow points that check a rule
+interpolate, slope; X89; the stream blocks none, one point per entry, X94), and a Mac bank's two forms (X97, `bank`). The narrow points that check a rule
 (char_table.check_only) are not written. The fields and the model are in results/char/README.md; a clock gate counts
 as a sequential cell (X83 · X85). A block whose rows name another snax-forge commit than the first row's (FifoSlicer's)
 has it as source.snax_forge_<block>.
@@ -22,6 +22,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import char_table as ct  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "char"))
+import checks  # noqa: E402  the bank's forms (X97)
 
 BLOCKS_JSON = ct.ROOT.parent / "snax-forge" / "hw" / "chisel" / "blocks.json"
 RULES = {"SimdLanes": "copy", "Mac": "copy", "LinkBuffer": "copy", "TreeAccumulate": "interpolate",
@@ -266,8 +269,11 @@ def build(tech: str, d: dict, points: list[dict]) -> tuple[dict, dict]:
          "source": {"snax_forge": commit, **others, "snax_forge_experiments": sfe_commit(tech),
                     "stimulus": f"rand64 seed {ct.SEED}", "clk_gate": "1"},
          "flop": {"area_um2": area_um2, "e_load_fj": round(load["mean"], 4), "e_hold_fj": hold_fj},
-         "ctrl": {"counter_factor": cf["value"]},
-         "blocks": blocks(d, points, catalogue_at(commit))}
+         "ctrl": {"counter_factor": cf["value"]}}
+    bank = checks.bank_model(tech)
+    if bank is not None:  # a Mac's bank of rows over its rows-1 entry (X97, snax-forge D193)
+        j["bank"] = bank
+    j["blocks"] = blocks(d, points, catalogue_at(commit))
     return j, {"area": area, "load": load, "hold": hold, "ctrl": cf}
 
 
@@ -371,7 +377,7 @@ def dumps(j: dict) -> str:
 
 
 def main() -> int:
-    points = json.loads(ct.POINTS.read_text())
+    points = ct.table_points()
     for t in ct.TECHS:
         d = ct.load(t, points)
         j, s = build(t, d, points)

@@ -3,6 +3,7 @@
 
   pixi run python char/checks.py [--tech T ...]            synthesis
   pixi run python char/checks.py --power [--tech T ...]    power (results/char/<tech>/char_power.csv)
+  pixi run python char/checks.py --bank [--tech T ...]     the Mac bank's study (X97)
 
 Read from the committed CSVs (char_synth.csv, char_synth_modules.csv, char_power.csv, and the forge points'
 synth_dc_modules.csv and power_pt_modules.csv) and the local bundle zips; none is a gate. Synthesis: each block's
@@ -10,7 +11,9 @@ RTL against the same file in the forge bundles, each point alone against the sam
 the lane copies, the flop area and each point's flops against its register bits (the packer's
 (d_out - 1) w + ceil(log2 d_out)), a clock gate counted as a sequential cell. Power: the registered blocks' idle e_bit and its mean e_hold, LinkBuffer's
 depth sweep against 64 e_hold, the lane copies, the folds against W, and busy alone against inside the forge
-points. Standard library and arc/arc.py only.
+points. The bank's study: per point its area, sequential cells against lanes * 32 * rows and energy per fire, then
+its extra over the rows-1 base at the same W split into the registers the flops formula counts and the rest, and
+one-constant forms of the rest in R and W fitted over the 8 bank points. Standard library and arc/arc.py only.
 """
 
 from __future__ import annotations
@@ -126,8 +129,9 @@ def n_bits(datapath: str, params: dict) -> int:
     w = params.get("lanes", 1)
     if datapath == "SimdLanes":
         return 0
-    if datapath == "Mac":
-        return w * width(params["outType"]) if params["accumulate"] or params["regOut"] else 0
+    if datapath == "Mac":                          # a bank (D191): its R rows of sums
+        reg = params["accumulate"] or params["regOut"]
+        return w * width(params["outType"]) * params.get("rows", 1) if reg else 0
     if datapath in ("TreeAccumulate", "SerialAccumulate"):
         return width(params["outType"])
     if datapath == "LinkBuffer":
@@ -185,6 +189,116 @@ def fit(xs: list[float], ys: list[float]) -> tuple[float, float, float]:
     m = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)
     c = my - m * mx
     return m, c, max(abs(y - (m * x + c)) / y * 100 for x, y in zip(xs, ys))
+
+
+BANK_BASE = {4: "mac/acc_w4_i8_i32", 8: "mac/acc_w8_i8_i32"}     # the rows-1 base at each W (X97)
+BANK_RS = (2, 4, 8, 16)
+BANK_MUX2 = {"mac/bank_r16_w8_i8_i32"}  # DC mapped its two read muxes to MUX2 trees, the others to AOI logic (X97)
+LOG2 = lambda r: (r - 1).bit_length()  # noqa: E731  log2 R at a power of 2
+BANK_FORMS = {"W R": lambda w, r: [w * r], "W (a R + b)": lambda w, r: [w * r, w],
+              "W (R - 1)": lambda w, r: [w * (r - 1)], "W log2 R": lambda w, r: [w * LOG2(r)],
+              "W (a log2 R + b)": lambda w, r: [w * LOG2(r), w]}
+
+
+def lsq(xs: list[list[float]], ys: list[float]) -> list[float]:
+    """Least squares y = k . x without an intercept, one or two terms (the normal equations)."""
+    if len(xs[0]) == 1:
+        return [sum(x[0] * y for x, y in zip(xs, ys)) / sum(x[0] ** 2 for x in xs)]
+    a = [[sum(x[i] * x[j] for x in xs) for j in (0, 1)] for i in (0, 1)]
+    b = [sum(x[i] * y for x, y in zip(xs, ys)) for i in (0, 1)]
+    det = a[0][0] * a[1][1] - a[0][1] * a[1][0]
+    return [(b[0] * a[1][1] - b[1] * a[0][1]) / det, (a[0][0] * b[1] - a[1][0] * b[0]) / det]
+
+
+def bank_model(tech: str) -> dict | None:
+    """The bank's two forms (X97) as char.json's `bank` (snax-forge D193), from the gated rows: the area beyond the
+    extra flops per lane and row, the energy a fire over the rows-1 base per lane as a log2 R + b, and the largest
+    read mux (W 32 R bits) they were fitted to (DC builds a larger one otherwise, PITFALLS DC20). None without them."""
+    gated = lambda r: r.get("clk_gate", "") == "1"  # noqa: E731
+    synth = {r["point"]: r for r in rows(ROOT / "results" / "char" / tech / "char_synth.csv") if gated(r)}
+    busy = {r["point"]: r for r in rows(ROOT / "results" / "char" / tech / "char_power.csv")
+            if gated(r) and r["window"] == "busy"}
+    a_flop = json.loads((ROOT / "results" / "char" / tech / "char.json").read_text())["flop"]["area_um2"]
+    pts = [(w, r, f"mac/bank_r{r}_w{w}_i8_i32") for w in BANK_BASE for r in BANK_RS]
+    pts = [(w, r, q) for w, r, q in pts if q not in BANK_MUX2]
+    if any(q not in synth or q not in busy for _, _, q in pts) or any(b not in busy for b in BANK_BASE.values()):
+        return None
+    area, energy = [], []
+    for w, r, q in pts:
+        b = BANK_BASE[w]
+        area.append(float(synth[q]["area_um2"]) - float(synth[b]["area_um2"]) - w * 32 * (r - 1) * a_flop)
+        energy.append(float(busy[q]["e_dyn_pj"]) - float(busy[b]["e_dyn_pj"]))
+    (k,) = lsq([BANK_FORMS["W R"](w, r) for w, r, _ in pts], area)
+    e = lsq([BANK_FORMS["W (a log2 R + b)"](w, r) for w, r, _ in pts], energy)
+    return {"comb_um2_lane_row": round(k, 4), "e_pj_lane_log2_rows": round(e[0], 5), "e_pj_lane": round(e[1], 5),
+            "mux_bits_max": max(w * 32 * r for w, r, _ in pts)}
+
+
+def bank_tables(tech: str) -> str:
+    """The Mac bank's study (X97) on the gated rows: the points, the extra over the base, the forms of the rest."""
+    gated = lambda r: r.get("clk_gate", "") == "1"  # noqa: E731
+    synth = {r["point"]: r for r in rows(ROOT / "results" / "char" / tech / "char_synth.csv") if gated(r)}
+    power: dict = {}
+    for r in rows(ROOT / "results" / "char" / tech / "char_power.csv"):
+        if gated(r):
+            power.setdefault(r["point"], {})[r["window"]] = r
+    flop = json.loads((ROOT / "results" / "char" / tech / "char.json").read_text())["flop"]
+    a_flop, e_load = flop["area_um2"], flop["e_load_fj"] / 1000
+    pts = [(w, 1, BANK_BASE[w]) for w in BANK_BASE] + [(w, r, f"mac/bank_r{r}_w{w}_i8_i32")
+                                                       for w in BANK_BASE for r in BANK_RS]
+    missing = [p for _, _, p in pts if p not in synth or sorted(power.get(p, {})) != ["busy", "idle"]]
+    if missing:
+        return f"{tech}: no gated synthesis or power rows for {missing}"
+    v = {}
+    for w, r, p in pts:
+        s, b, i = synth[p], power[p]["busy"], power[p]["idle"]
+        v[w, r] = {"point": p, "area": float(s["area_um2"]), "comb": float(s["comb_area_um2"]),
+                   "seq": float(s["seq_area_um2"]), "cells": int(s["seq_cells"]), "flops": w * 32 * r,
+                   "e": float(b["e_dyn_pj"]), "e_flop": float(b["e_flop_pj"]), "e_comb": float(b["e_comb_pj"]),
+                   "idle": float(i["e_dyn_pj"]), "status": [s["status"], b["status"], i["status"]]}
+    out = [f"## {tech}: the Mac bank's points (X97; int8 in, int32 out; energy per fire = busy e_dyn)\n"]
+    body = []
+    for (w, r), x in sorted(v.items()):
+        est_a = x["comb"] if r == 1 else v[w, 1]["comb"]
+        est_e = v[w, 1]["e_comb"] + x["flops"] * e_load
+        body.append([f"`{x['point']}`", w, r, f2(x["area"]), f2(x["comb"]), f2(x["seq"]), x["cells"], x["flops"],
+                     x["cells"] - x["flops"], f"{x['e']:.4f}", f"{x['e_flop']:.4f}", f"{x['e_comb']:.4f}",
+                     f"{x['idle']:.4f}", f2(est_a + x["flops"] * a_flop), f"{est_e:.4f}"])
+    out.append(table(["point", "W", "R", "area", "comb", "seq", "seq cells", "flops W 32 R", "cells - flops",
+                      "e/fire", "e_flop", "e_comb", "idle/cycle", "estimate area", "estimate e/fire"], body))
+    out.append(f"\n## {tech}: the bank's extra over the rows-1 base at the same W (registers: W 32 (R - 1) x "
+               f"{a_flop} um2, x e_load {flop['e_load_fj']} fJ)\n")
+    body, rest = [], {"area rest": [], "comb area": [], "e/fire": [], "e_comb": [], "e_flop": []}
+    for w in BANK_BASE:
+        b0 = v[w, 1]
+        for r in BANK_RS:
+            x = v[w, r]
+            df = x["flops"] - b0["flops"]
+            da, de = x["area"] - b0["area"], x["e"] - b0["e"]
+            ra, re_ = da - df * a_flop, de - df * e_load
+            for k, y in (("area rest", ra), ("comb area", x["comb"] - b0["comb"]), ("e_comb", x["e_comb"] - b0["e_comb"]),
+                         ("e_flop", x["e_flop"] - b0["e_flop"]), ("e/fire", de)):
+                rest[k].append((w, r, y))
+            body.append([w, r, df, f2(da), f2(df * a_flop), f2(ra), f2(x["seq"] - b0["seq"]), f2(x["comb"] - b0["comb"]),
+                         f"{de:.4f}", f"{df * e_load:.4f}", f"{re_:.4f}", f"{x['e_flop'] - b0['e_flop']:.4f}",
+                         f"{x['e_comb'] - b0['e_comb']:.4f}"])
+    out.append(table(["W", "R", "extra flops", "d area", "registers (formula)", "rest", "d seq", "d comb",
+                      "d e/fire", "registers (formula)", "rest", "d e_flop", "d e_comb"], body))
+    out.append(f"\n## {tech}: forms of the extra in R and W, fitted over the bank points DC mapped to AOI logic "
+               f"(all but {', '.join(sorted(BANK_MUX2))}); the largest and rms residual in % of the value, and the "
+               f"MUX2 point against the form\n")
+    body = []
+    for k, ys in rest.items():
+        fitted = [(w, r, y) for w, r, y in ys if v[w, r]["point"] not in BANK_MUX2]
+        for name, f in BANK_FORMS.items():
+            c = lsq([f(w, r) for w, r, _ in fitted], [y for _, _, y in fitted])
+            at = lambda w, r: sum(ci * xi for ci, xi in zip(c, f(w, r)))  # noqa: E731
+            res = [(y - at(w, r)) / y * 100 for w, r, y in fitted if y]
+            mux = [f"{y / at(w, r):.2f}" for w, r, y in ys if v[w, r]["point"] in BANK_MUX2]
+            body.append([k, name, ", ".join(f"{ci:.5g}" for ci in c), f"{max(map(abs, res)):.1f}",
+                         f"{(sum(x * x for x in res) / len(res)) ** 0.5:.1f}", ", ".join(mux)])
+    out.append(table(["extra", "form", "k (a, b)", "worst %", "rms %", "MUX2 point / form"], body))
+    return "\n".join(out)
 
 
 def power_tables(tech: str) -> tuple[str, dict]:
@@ -283,7 +397,12 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tech", action="append", choices=TECHS, help="only this technology (repeatable)")
     ap.add_argument("--power", action="store_true", help="R1's power checks from char_power.csv")
+    ap.add_argument("--bank", action="store_true", help="the Mac bank's study (X97)")
     args = ap.parse_args()
+    if args.bank:
+        for tech in args.tech or TECHS:
+            print(bank_tables(tech) + "\n")
+        return 0
     if args.power:
         for tech in args.tech or TECHS:
             if (ROOT / "results" / "char" / tech / "char_power.csv").is_file():
