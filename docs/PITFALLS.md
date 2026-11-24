@@ -1,117 +1,115 @@
 # Pitfalls
 
-Tool behaviour that gives wrong numbers, or no numbers, without an error. One line per pitfall, grouped by tool: what goes wrong, why, and the fix or check, with the decision it led to. The run notes that found them are in git history.
-
-IDs are never reused; retired: LIB1, LIB3, LIB4 and PT5 (the 15 nm library, removed by X88).
+Tool behaviour that gives wrong numbers, or none, without an error: one line each, by tool, with the fix and its decision. IDs are never reused; retired: LIB1, LIB3, LIB4, PT5 (the 15 nm library, X88).
 
 ## DC
 
-- **DC1. `auto_wire_load_selection false` does not remove nangate45's wire-load model.** The library's `default_wire_load 5K_hvratio_1_1` stays; `dc_syn.tcl` removes that attribute before elaboration and `syn.py` fails a run whose `area.rpt` names a model (X3; a critical path 22 % longer with it).
-- **DC2. A library in other units takes every constraint 1000x off.** SDC values are read in the library's units; constraints are written in ns and fF, scaled by `T_SCALE` and `C_SCALE`, and `dc_syn.tcl` stops on a name or unit mismatch (X4).
-- **DC3. Results depend slightly on names and order.** The same Verilog with other names moves the area by up to 0.02 %; treat that as noise and compare an equal-Verilog pair when in doubt.
-- **DC4. Power at default activity follows logic structure, not work.** DC's toggle rate 0.1 on every input runs through logic that never works in a real run (vecmul dace 100 pJ against opt 13.5 pJ per cycle at equal area); energy comes from simulated activity (X7).
-- **DC5. Undriven bits in declared vector wires.** DC keeps a vector's declaration after removing the logic behind most bits, which sit at Z; `saif_check` parses the optional TZ, counts all-Z entries apart and fails a parse that misses entries.
-- **DC6. Some module headers in DC's netlists are indented.** The first module after the header block starts with spaces, so a parser misses it (a multiplier's scope went undumped); match `^\s*module`, and X9's 99 % annotation catches a large miss.
-- **DC7. DC Y-2026.03-SP2 crashes on a 1-bit-select mux inside an adder, under a branch on the same bit.** firtool's partial fold of SerialAccumulate at 2 lanes killed `compile_ultra` (Error id=834758); fixed in snax-forge by writing the update as `Mux(first && lane === 0, 0, acc) + x`.
-- **DC8. Bambu's declaration initializers are dropped (VER-708).** DC ignores Verilog power-on values, so those flops start at X; the power flow starts every flop at 0 with `vopt +initreg+0` (Q1).
-- **DC9. A Bambu point has fewer flops than its register instances.** DC removes unloaded registers (OPT-1207, 96 bits on `done/dot/bambu_w8`); compare `seq_cells` with the RTL's bits minus the unique OPT-1207 lines.
-- **DC10. Vitis's flops: the elaborator trims bits and compile removes constants, with no OPT-1207.** Sum the `Inferred memory devices` widths and subtract the unique OPT-1206 and OPT-1207 lines; for Bambu use the instance parameters (DC9).
-- **DC11. A rerun of one point widens the whole synth CSV.** Old rows predate the path-class columns (X40) and get them empty on the next write; compare such CSVs cell by cell on the committed columns.
-- **DC12. An SRAM macro is DC's and PT's black box: its power is outside the four groups.** `syn.py` leaves the black box out of the sum check for a macro row and `pwr.py` replaces its internal energy with the counted accesses (X50, X62); a black box that is not a macro still fails.
-- **DC13. On a loaded host DC runs on fewer cores than asked, for the whole run.** `set_host_options` checks the load once (UIO-231); `SYN_IGNORE_LOAD=1` sets `disable_multicore_resource_checks` before it, as the cluster runs do (X68); check OPT-1500's core count.
-- **DC14. A stopped DC leaves its multicore child running, which holds the run's logs open.** Stop every `common_shell_exec` of the run and wait before cleaning up; on NFS an open file leaves an `.nfs` stub.
-- **DC15. DC's tied-constant pseudo-cells look like unresolved black boxes.** `**logic_0**` and `**logic_1**` have no library cell; `cluster_check.tcl` lists them as constants, out of the reference and black-box gates.
-- **DC16. The cluster's interconnect has two levels in `area_hierarchy.rpt`.** `sparse_interconnect_wrapper` holds 193 µm² of its own beside `sparse_interconnect_i`; compare a lone SparseInterconnect with the inner level and say which level a number is.
-- **DC17. `syn.py run --dry-run -j N` interleaves its points' lines.** Compare dry runs at `-j 1`, where the order is fixed.
-- **DC18. An output port nothing loads stays in the netlist with no driver.** Such a port reads Z for the whole run although the logic behind it works; take an internal status from the RTL run, never from a netlist port.
-- **DC19. The run summary on the server keeps rows that results/ no longer has.** `syn/runs/<source>/<tech>/summary.csv` is never pruned, so copying it over `synth_dc.csv` brought removed ungated rows and stale dates back; `syn.py` merges a batch's rows into the committed CSV instead (X79 · X87 · X88).
-- **DC20. A large inferred mux maps to MUX2 trees, a smaller one to AOI logic.** Presto infers the Mac bank's two read muxes as MUX_OPs at every R; compile_ultra maps them to AOI22 and-or logic up to 16 × 128 and 8 × 256 bits, but at 16 × 256 to 7,680 MUX2 cells (14,300 µm²), doubling the comb and tripling its energy (X97). Check `reference.rpt`'s MUX2 count before fitting a block's cost over a size that crosses it.
+- **DC1.** `auto_wire_load_selection false` keeps nangate45's `default_wire_load 5K_hvratio_1_1` (critical path 22 % longer): `dc_syn.tcl` removes it, `syn.py` fails an `area.rpt` naming a model (X3).
+- **DC2.** SDC is read in the library's units, 1000x off in others: ns and fF scaled by `T_SCALE`, `C_SCALE`; stop on a unit mismatch (X4).
+- **DC3.** Other names or order move area up to 0.02 %: noise; compare equal-Verilog pairs.
+- **DC4.** Default toggle rate 0.1 follows structure, not work (vecmul dace 100 pJ against opt 13.5 pJ a cycle): simulate (X7).
+- **DC5.** Vector wires keep undriven bits at Z: `saif_check` parses TZ, counts all-Z apart.
+- **DC6.** Some module headers are indented: match `^\s*module`; X9's 99 % catches a miss.
+- **DC7.** Y-2026.03-SP2 crashes (Error id=834758) on a 1-bit-select mux in an adder under a branch on that bit: snax-forge writes `Mux(first && lane === 0, 0, acc) + x`.
+- **DC8.** Bambu's declaration initializers are dropped (VER-708): `vopt +initreg+0` (Q1).
+- **DC9.** DC removes unloaded Bambu registers (OPT-1207, 96 bits on `done/dot/bambu_w8`): compare `seq_cells` with RTL bits minus unique OPT-1207 lines.
+- **DC10.** Vitis flops are trimmed with no OPT-1207: sum `Inferred memory devices` minus unique OPT-1206, OPT-1207 lines (Bambu: DC9).
+- **DC11.** A one-point rerun adds empty path-class columns (X40) to old rows: compare CSVs cell by cell.
+- **DC12.** An SRAM macro's power is outside the four groups: out of the sum check, counted (X50, X62); a non-macro black box fails.
+- **DC13.** On a loaded host DC keeps fewer cores (UIO-231): `SYN_IGNORE_LOAD=1` (X68); check OPT-1500.
+- **DC14.** A stopped DC leaves its multicore child holding logs (NFS `.nfs` stubs): stop every `common_shell_exec`, wait.
+- **DC15.** `**logic_0**`, `**logic_1**` look like black boxes: `cluster_check.tcl` lists them as constants.
+- **DC16.** `sparse_interconnect_wrapper` holds 193 µm² beside `sparse_interconnect_i`: say which level.
+- **DC17.** `syn.py run --dry-run -j N` interleaves lines: compare at `-j 1`.
+- **DC18.** An unloaded output port has no driver and reads Z: take status from the RTL run.
+- **DC19.** `syn/runs/<source>/<tech>/summary.csv` is never pruned: `syn.py` merges a batch into `synth_dc.csv` (X79 · X87 · X88).
+- **DC20.** A large inferred mux maps to MUX2 trees (16 × 256: 7,680 MUX2, 14,300 µm², comb x2, energy x3), smaller ones (up to 16 × 128, 8 × 256) to AOI22: check `reference.rpt`'s MUX2 count before fitting (X97).
 
 ## Libraries
 
-- **LIB2. Neither cell model file uses `` `celldefine ``.** vsim cannot tell a cell from a module, so `-nocellnet` has no effect; use `power add <dut>/*` without `-r` on flat netlists (Q3).
-- **LIB5. nangate45's `.lib` puts a group and its first attribute on one line.** A line-based Liberty reader loses its nesting; split the text into statements at `{`, `}` and `;` outside quotes (`ram/pins.py`, `statements`).
-- **LIB6. lc_shell on a generated memory macro: the warnings and what each change does.** Copying nangate45's `default_*` values and a `char_config` group clears the LBDB lines; the two functionality warnings of a black-box cell stay and are expected (X49).
-- **LIB7. lc_shell Y-2026.03 writes no Liberty back from a `.db`.** `write_lib -format lib` fails (UIL-23) and writes nothing; compare `.db` files with `report_lib`, and check each output exists before a diff.
+- **LIB2.** Neither cell model file uses `` `celldefine ``, so `-nocellnet` does nothing: `power add <dut>/*` without `-r` on flat netlists (Q3).
+- **LIB5.** nangate45's `.lib` puts a group and its first attribute on one line: split at `{`, `}`, `;` outside quotes (`ram/pins.py`, `statements`).
+- **LIB6.** lc_shell on a generated macro: nangate45's `default_*` and a `char_config` group clear the LBDB lines; two black-box functionality warnings stay (X49).
+- **LIB7.** lc_shell Y-2026.03 `write_lib -format lib` writes nothing (UIL-23): compare with `report_lib`, check outputs exist.
 
 ## Questa
 
-- **Q1. Gate-level X from Vitis registers without reset.** Vitis starts unreset registers in `initial` blocks the netlist does not have; `vopt +initreg+0` starts every flop at 0, and the testbench's X check and timeout catch the rest.
-- **Q2. `+acc=n` is needed or `power add` finds no nets.** vopt hides the netlist's nets otherwise; `+acc=n` costs nothing measurable.
-- **Q3. `power add` with or without `-r`.** Without `-r` only the top level's nets are added, with it cell-internal nets too (LIB2); `-r` only on netlists with sub-designs.
-- **Q4. `power report -bsaif` is wrong at zero delay (Questa 2022.4).** It gives 13 to 34 % less energy than the VCD of the same run with no warning; use the VCD and vcd2saif (X8, X9).
-- **Q5. VCD size.** A VCD grows with nets x cycles; dump only the window and delete it after vcd2saif (X18).
-- **Q6. `$dumpon` at a window boundary loses the boundary's clock edge.** Dump from the rising edge before the window to the one after it and let vcd2saif cut the window; X9's clock check catches a lost edge.
-- **Q7. A falling edge at time 0, and TVALID high in reset.** `logic clk = 0` fires `@(negedge clk)` at time 0, and a netlist may drive TVALID in reset; count beats only once reset is released (`axis_sink.sv`).
-- **Q8. nangate45's flops start with Q and QN both 0 under `+initreg+0`.** Outputs before the first clock edge are not to be trusted; every testbench holds reset for 5 cycles.
-- **Q9. A random register start: `vopt +initreg=ru` and `vsim +initreg+<seed>`.** The spec selects the variable kinds, the seed is vsim's; `pwr.py run --initreg-seed N` is a check, never the default, and writes nothing to `results/`.
-- **Q10. An `initial` block next to `always_ff` drives the same variable (vopt-7061).** Use declaration initializers and an internal register for the read data; check with `vsim -c`, not vlog alone.
-- **Q11. `process::self().srandom()` in an `initial` block does not seed the `always` blocks' `$urandom`.** Each process has its own generator; seed with `vsim -sv_seed <seed>` (`pwr.py --seed`) and check two seeds give different SAIFs.
-- **Q12. The SRAM macro models are SystemVerilog in `.v` files.** vlog reads `.v` as Verilog-2001 without `-sv`; `cluster/mem.py` writes `-sv` as the first line of `sram_models.f`.
-- **Q13. vsim's prints and the program's output share the log through separate buffers.** Lines interleave at buffer boundaries; `cluster/check.py` finds each print by its start and end and each `forge` line by a search inside the line.
-- **Q14. A netlist's memories take one access at time 0 under `+initreg+0`.** The I-cache's macros write once, a gated netlist's TCDM banks read once, during reset and before every window; `ram_compare` allows one more access per instance and lists it (X67 · X81 · X84).
-- **Q15. A DC netlist's instance paths hold escaped identifiers that end in a space.** `%m` prints spaces inside the path; parse a path as everything up to the last whitespace before the next field, and put such paths in braces in vsim.
-- **Q16. Under `vopt +acc=n` a testbench's variables are not visible to vsim's commands.** Refer to the DUT's ports in a gate-level run; `cluster gls` keeps `+acc=n`.
+- **Q1.** Vitis's unreset registers start in `initial` blocks the netlist lacks: `vopt +initreg+0`, X check, timeout.
+- **Q2.** Without `+acc=n` `power add` finds no nets; it costs nothing measurable.
+- **Q3.** `power add -r` adds cell-internal nets (LIB2): `-r` only with sub-designs.
+- **Q4.** `power report -bsaif` (2022.4) is 13 to 34 % low at zero delay: VCD and vcd2saif (X8, X9).
+- **Q5.** A VCD grows with nets x cycles: dump the window, delete after vcd2saif (X18).
+- **Q6.** `$dumpon` at a boundary loses its clock edge: dump from the edge before to the one after; X9 catches it.
+- **Q7.** `logic clk = 0` fires `@(negedge clk)` at time 0, and TVALID can be high in reset: count beats after reset (`axis_sink.sv`).
+- **Q8.** nangate45's flops start with Q and QN both 0 under `+initreg+0`: hold reset 5 cycles.
+- **Q9.** Random start: `vopt +initreg=ru`, `vsim +initreg+<seed>`; `--initreg-seed N` is a check, writes no `results/`.
+- **Q10.** An `initial` block beside `always_ff` on one variable (vopt-7061): declaration initializers; check with `vsim -c`.
+- **Q11.** `process::self().srandom()` does not seed other processes' `$urandom`: `vsim -sv_seed <seed>`; check two seeds differ.
+- **Q12.** The macro models are SystemVerilog in `.v`, read as Verilog-2001 without `-sv`: `sram_models.f` starts with `-sv`.
+- **Q13.** vsim's and the program's prints interleave: `cluster/check.py` finds prints by start and end.
+- **Q14.** Netlist memories take one access at time 0 (I-cache writes, gated TCDM reads): `ram_compare` allows one per instance (X67 · X81 · X84).
+- **Q15.** Escaped identifiers end in a space inside `%m` paths: parse to the last whitespace, brace them in vsim.
+- **Q16.** Under `+acc=n` TB variables are invisible to vsim commands: use DUT ports.
 
 ## vcd2saif
 
-- **VS1. `vcd2saif -time t0 t1` on a shared VCD adds a phantom toggle before the window.** A zero-width pulse before t0 counts as a toggle in the window (idle 0.028 instead of 0 pJ per cycle); cut the VCD per window first (`vcd_windows`, X32).
-- **VS2. A change to or from X is no toggle in vcd2saif's count.** The macro models start X, so the cluster's first DMA window has many X nets; a window misses at most one toggle per net leaving X, the size of VS1.
+- **VS1.** `-time t0 t1` on a shared VCD counts a zero-width pulse before t0 (idle 0.028 instead of 0 pJ a cycle): cut per window (X32).
+- **VS2.** A change to or from X is no toggle: at most one missed toggle per net leaving X, VS1's size.
 
 ## PrimeTime
 
-- **PT1. PT applies the library's default wire-load model, hidden.** `report_design` does not show it; `set_load 0` and `set_resistance 0` on every net, and `pwr.py` fails a run whose `wire_load.rpt` counts are not 0.
-- **PT2. Default-activity propagation differs from DC's around enable logic.** The two resolve the hold mux's feedback differently (register +35 %); with the same activity on every net they agree, which is the setup check (X25).
-- **PT3. A flop's clock-edge energy moves between register and clock.** It is booked under register when the output toggles, under clock when it does not; always use e_clk + e_reg (X11).
-- **PT4. `read_vcd -time` takes ns; `vcd2saif -time` takes the VCD's unit.** Take the unit from the VCD's header; X9's window-length check catches a wrong one.
-- **PT6. PT counts floating port nets of a constant output as not annotated.** DC leaves bit-blasted constant ports without a driver; `pwr.py` takes nets the SAIF has at Z for the whole window out of the coverage denominator and records them.
-- **PT7. Averaged mode charges `when` internal power with independent pin probabilities.** A macro's read and write energy come out 12.5 % low on the probe; count accesses for a point (X50), take PT's as measured on a cluster (X75).
-- **PT8. `report_switching_activity -nosplit` stops the script.** The option does not exist there (CMD-010); leave it out.
-- **PT9. PT's nets are not the SAIF's entries.** The SAIF holds a port net once per level it crosses, PT once; take the annotation's denominator from PT.
-- **PT10. Time-based PrimePower gives about half the clock-pin energy of held flops on the cluster's netlist.** Averaged mode agrees with the `.lib`'s count; use it for the cluster's windows (X20 · X60 · X74).
-- **PT11. The same macro energy in every bank is not a clock floor.** Averaged mode charges a bank's `when` energy from its own `req_i` and `we_i` probabilities (PT7); when every bank has the same counts, as on the DMA's copy (2 048 cycles of `req_i`, 1 024 of `we_i` each), all 32 match to seven digits. Count the banks' `req_i` and `we_i` high time in the window's SAIF before reading equal rows as activity-free (X96).
+- **PT1.** PT applies a hidden default wire load: `set_load 0`, `set_resistance 0`; `pwr.py` fails nonzero `wire_load.rpt` counts.
+- **PT2.** Default-activity propagation differs from DC's around enable logic (register +35 %): equal forced activity agrees (X25).
+- **PT3.** A clock edge is booked under register or clock by output toggle: use e_clk + e_reg (X11).
+- **PT4.** `read_vcd -time` is ns, `vcd2saif -time` the VCD's unit: read the header; X9 catches it.
+- **PT6.** Floating constant-port nets count as not annotated: nets at Z all window leave the denominator.
+- **PT7.** Averaged mode charges `when` power with independent pin probabilities, macros 12.5 % low: count (X50) or take as measured (X75).
+- **PT8.** `report_switching_activity -nosplit` stops the script (CMD-010): leave it out.
+- **PT9.** The SAIF holds a port net per level, PT once: denominator from PT.
+- **PT10.** Time-based mode gives about half the clock-pin energy of held flops: averaged (X20 · X60 · X74).
+- **PT11.** Equal macro energy in every bank (2 048 cycles of `req_i`, 1 024 of `we_i`; 32 equal to seven digits) is not a floor: count `req_i`, `we_i` in the SAIF (X96).
 
 ## Licences
 
-- **L1. Transient error -92 from DC.** The server reread its file during checkout; retry once (X17). The first try may print only `DCSH-1`, with no "licens" in it.
-- **L2. Feature names.** Questa takes one `msimhdlsim`; a PT power run one `PrimeTime` and one `PrimePower`; synthesis `Design-Compiler`. Count those (X16 · X59).
-- **L3. `lmutil` not on PATH.** A non-interactive shell may not read `~/.bashrc`; set `LMUTIL` to the binary.
-- **L4. `compile_ultra` needs a DC-Expert licence as well as Design-Compiler.** Without one DC reports an empty design (area 0); size the jobs from both counts, and `syn.py` fails a row with a licence error or an area of 0.
+- **L1.** DC's error -92 is transient (maybe only `DCSH-1`): retry once (X17).
+- **L2.** Questa takes one `msimhdlsim`; PT power one `PrimeTime` and one `PrimePower`; synthesis `Design-Compiler` (X16 · X59).
+- **L3.** `lmutil` off a non-interactive PATH: set `LMUTIL`.
+- **L4.** `compile_ultra` also needs DC-Expert, else area 0: size from both; `syn.py` fails area 0.
 
 ## CACTI
 
-- **C1. CACTI reads `tech_params/` relative to its working directory.** Run elsewhere it segfaults with no message; `ram/ram.py` links `tech_params` into each point's folder.
-- **C2. `cache.cfg`'s `-Optimize "ED^2"` overrides the design objective.** Set it to `NONE` (X47); two objectives with identical numbers are this.
-- **C3. `cache.cfg` turns ECC on.** About 12 % more area and energy than a bank without ECC needs; `ram.py` turns it off (X47).
-- **C4. A size CACTI rejects exits with rc 0.** Do not trust the return code; `ram.py` marks a point failed unless `cacti.out` holds every field.
-- **C5. CACTI's numbers jump between neighbouring sizes.** The organization changes per size, up to 30 % steps; look up the exact size (X48).
-- **C6. CACTI's cycle time is shorter than its access time.** The cycle time leaves out the H-tree delays; the `.lib` uses the access time for clk-to-`rdata_o`, the cycle time only for `min_period`.
+- **C1.** CACTI reads `tech_params/` from its cwd, else segfaults silently: `ram.py` links it per point.
+- **C2.** `-Optimize "ED^2"` overrides the objective: set `NONE` (X47).
+- **C3.** `cache.cfg` turns ECC on (about 12 % more): off (X47).
+- **C4.** A rejected size exits rc 0: fail unless `cacti.out` has every field.
+- **C5.** Numbers jump up to 30 % between sizes: exact lookup (X48).
+- **C6.** Cycle time omits H-tree delays: access time for clk-to-`rdata_o`, cycle time only for `min_period`.
 
 ## Environment
 
-- **E1. `pixi run python -c "..."` loses the inner quotes.** pixi's task shell parses the quoting again; put the code in a script file (X15).
-- **E2. A forge power run needs snax-forge at a commit that still loads the bundle's design point.** `forge/query.py` loads the design point with the checkout's own code; check out the bundle's `snax_forge_commit` for the run, or rebuild the bundles.
-- **E3. `git diff --word-diff` on a CSV marks whole rows.** A row has no spaces; compare CSVs by key, cell by cell.
-- **E4. snax-forge's relu, matadd and axpy recipes bundle int32 datapaths.** Their kernels are int32; `forge/points.json` gives them `dtypes` int64 (X57), and `sim/sources/forge.py` refuses a port that is not int64.
-- **E5. snax-forge's module names carry the design's name.** `snax_forge_<design>_shell_wrapper` and the renamed lanes block make every file differ; compare with `forge/sv_diff.py`, which masks them.
-- **E6. hls-exercises' CSVs have CRLF line ends, and `Path.read_text` hides them.** Edit them as bytes or with `newline=""`, and check `git diff --stat` before committing.
-- **E7. A snax-forge submodule off main's pin marks every bundle dirty.** A squash merge moves the pin, not the submodule's checkout; run `git -C ../snax-forge submodule update <sub>` before bundling.
-- **E8. A forge power run checks `sim/ref.py` against the kernels of whatever branch `../snax-forge` is on.** `forge/query.py ref` runs the checkout's kernel body, so a branch that changes one (PACK1a's `OP_TYPE = int32` in axpy and matadd) fails every run of that kernel; run forge power with snax-forge on main and record its branch and HEAD (CG5 R1). Since CHAR2 R7 the axpy and matadd points carry `OP_TYPE` int64 in their dtypes and `forge/query.py ref` rebinds it, so main's int32 `OP_TYPE` no longer fails them once rebundled; a bundle made before R7 still has no `OP_TYPE` in its `point.json`.
-- **E9. `syn.py` and `pwr.py` write their CSVs with CRLF line ends (`csv`'s default), while forge's committed CSVs are LF since the CG5 merge (`d513d090`).** A run then rewrites every line of `results/forge/<tech>/*.csv`; `sed -i 's/\r$//'` them and check `git diff --stat` before committing (CHAR2 R7). The other sources' CSVs are still CRLF.
+- **E1.** `pixi run python -c "..."` loses inner quotes: use a script (X15).
+- **E2.** `forge/query.py` loads a bundle's design point with the checkout's code: check out its `snax_forge_commit` or rebundle.
+- **E3.** `git diff --word-diff` marks whole CSV rows: compare by key.
+- **E4.** relu, matadd, axpy bundle int32: `dtypes` int64 (X57); `forge.py` refuses non-int64 ports.
+- **E5.** Module names carry the design's name: compare with `forge/sv_diff.py`.
+- **E6.** hls-exercises' CSVs are CRLF, hidden by `Path.read_text`: bytes or `newline=""`; check `git diff --stat`.
+- **E7.** A submodule off main's pin dirties every bundle: `git -C ../snax-forge submodule update <sub>` first.
+- **E8.** `forge/query.py ref` runs the checkout's kernel body, so a branch changing one (PACK1a's `OP_TYPE = int32`) fails it: forge power on main, record branch and HEAD (CG5 R1); since CHAR2 R7 axpy and matadd carry `OP_TYPE` int64, older bundles do not.
+- **E9.** `syn.py`, `pwr.py` write CRLF while forge's CSVs are LF since the CG5 merge: `sed -i 's/\r$//'` and check `git diff --stat` (CHAR2 R7); other sources stay CRLF.
 
 ## snax_cluster's generators
 
-- **SC1. A reader of a streamer set is named with a double underscore.** `StreamerGen --tag-name strm` gives `strm__C0_Reader`; `strm/gen.py` builds the name the same way.
-- **SC2. The bundled reader is the reader as the Streamer uses it.** firtool trims the ports the parent never reads; that is the cost the model wants (X52 · X82), and `sim/sources/strm.py` connects what the netlist has.
-- **SC3. `StreamerGen` always writes a CSR header.** It needs `--header-dir`; `strm/gen.py` points it into `tmp/strm/`.
-- **SC4. `git archive` leaves out submodules.** chisel-float comes out empty; `strm/gen.py` archives the submodule's checkout at its gitlink's commit.
-- **SC5. `sbt -batch` stops at the first failing command.** Later points of the call are reported as not run, and the next call makes them.
-- **SC6. The image has no Scala caches of its own.** Every run downloaded sbt and firtool and got rate-limited; `strm/gen.py` mounts the home folder's caches under `/root`.
-- **SC7. Counting `reg` declarations overstates a firtool design's registers.** Skip the simulation-only `_RANDOM*` temporaries (`strm/gen.py`'s `flop_bits`).
-- **SC8. A temporal stride of 0 is the reader's repeat mode.** The testbench uses unit strides, never 0, and checks every request address.
-- **SC9. A reader's loop stride is 16 bits, not the 17 its port has.** A stride of 65,536 B becomes 0; `sim/sources/strm.py` puts the larger bounds outermost and refuses a stride over 65,535 B.
-- **SC10. snax_cluster's synthesis list had no iDMA.** Fixed in snax_cluster (`-t rtl` in `SYN_BENDER`); `cluster_check.tcl` and `syn.py`'s LINK-5 count fail a row with an unresolved reference.
+- **SC1.** `StreamerGen --tag-name strm` names `strm__C0_Reader`: `strm/gen.py` matches it.
+- **SC2.** firtool trims ports the parent never reads, the cost wanted (X52 · X82): `strm.py` connects what the netlist has.
+- **SC3.** `StreamerGen` needs `--header-dir`: into `tmp/strm/`.
+- **SC4.** `git archive` leaves chisel-float empty: archive the submodule at its gitlink.
+- **SC5.** `sbt -batch` stops at the first failure: the next call makes the rest.
+- **SC6.** The image's Scala caches are empty (rate limits): mount the home caches under `/root`.
+- **SC7.** `reg` counts include `_RANDOM*`: skip them (`flop_bits`).
+- **SC8.** A temporal stride of 0 is repeat mode: unit strides, addresses checked.
+- **SC9.** The loop stride is 16 bits, not 17 (65,536 B becomes 0): larger bounds outermost, refuse over 65,535 B.
+- **SC10.** The synthesis list lacked iDMA: `-t rtl` in `SYN_BENDER`; LINK-5 fails unresolved references.
 
 ## Zips
 
-- **Z1. A rerun's report zip changes in git with the same numbers.** Reports carry dates, CPU times and the run's cores; compare a rerun's zip member by member with those lines aside, and commit it only with a change that is meant.
+- **Z1.** Report zips change with dates, CPU times and cores: compare member by member, commit only meant changes.
