@@ -90,6 +90,8 @@ lanes/mul_w1_i8_i64,nangate45,10,1,SimdLanes_i8xi8_i64_i64_n1_mul,SimdLanes_i8xi
 lanes/mul_w1_i8_i64,nangate45,10,1,alus_0,ElementwiseAlu_w64_mul,305.6340,305.6340,0.0000,0.0000,44.694,7.04
 lanes/mul_w1_i8_i8,nangate45,10,1,SimdLanes_i8xi8_i8_i8_n1_mul,SimdLanes_i8xi8_i8_i8_n1_mul,131.1380,0.0000,0.0000,0.0000,11.73,2.69
 lanes/mul_w1_i8_i8,nangate45,10,1,alus_0,ElementwiseAlu_w8_mul,131.1380,131.1380,0.0000,0.0000,11.73,2.69
+lanes/mul_w1_i8xi32_i32,nangate45,10,1,SimdLanes_i8xi32_i32_i32_n1_mul,SimdLanes_i8xi32_i32_i32_n1_mul,833.1120,0.0000,0.0000,0.0000,90.962,17.3
+lanes/mul_w1_i8xi32_i32,nangate45,10,1,alus_0,ElementwiseAlu_w32_mul,833.1120,833.1120,0.0000,0.0000,90.962,17.3
 lanes/mul_w32,nangate45,10,1,SimdLanes_i64xi64_i64_i64_n32_mul,SimdLanes_i64xi64_i64_i64_n32_mul,221201.3451,0.0000,0.0000,0.0000,29900,4620
 lanes/mul_w32,nangate45,10,1,alus_0,ElementwiseAlu_w64_mul_31,6912.5420,6912.5420,0.0000,0.0000,936.948,144
 lanes/mul_w32,nangate45,10,1,alus_1,ElementwiseAlu_w64_mul_30,6912.5420,6912.5420,0.0000,0.0000,934.898,144
@@ -217,6 +219,8 @@ mac/acc_w8_i8_i64,nangate45,10,1,Mac_i8xi8_i64_i64_n8_acc,Mac_i8xi8_i64_i64_n8_a
 mac/acc_w8_i8_i64,nangate45,10,1,clk_gate_s_6_reg,SNPS_CLOCK_GATE_HIGH_Mac_i8xi8_i64_i64_n8_acc,3.4580,0.0000,3.4580,0.0000,,
 mac/acc_w8_i8_i8,nangate45,10,1,Mac_i8xi8_i8_i8_n8_acc,Mac_i8xi8_i8_i8_n8_acc,1734.8520,1390.9140,340.4800,0.0000,129.212,31.4
 mac/acc_w8_i8_i8,nangate45,10,1,clk_gate_s_6_reg,SNPS_CLOCK_GATE_HIGH_Mac_i8xi8_i8_i8_n8_acc,3.4580,0.0000,3.4580,0.0000,,
+mac/acc_w8_i8xi32_i32,nangate45,10,1,Mac_i8xi32_i32_i32_n8_acc,Mac_i8xi32_i32_i32_n8_acc,9055.4381,7690.0600,1361.9200,0.0000,899.01,192
+mac/acc_w8_i8xi32_i32,nangate45,10,1,clk_gate_s_6_reg,SNPS_CLOCK_GATE_HIGH_Mac_i8xi32_i32_i32_n8_acc,3.4580,0.0000,3.4580,0.0000,,
 mac/bank_r16_w4_i8_i32,nangate45,10,1,Mac_i8xi8_i32_i32_n4_acc_r16,Mac_i8xi8_i32_i32_n4_acc_r16,16514.6105,5563.9221,10895.3604,0.0000,527.581,272
 mac/bank_r16_w4_i8_i32,nangate45,10,1,clk_gate_s_0_3_reg,SNPS_CLOCK_GATE_HIGH_Mac_i8xi8_i32_i32_n4_acc_r16_15,3.4580,0.0000,3.4580,0.0000,,
 mac/bank_r16_w4_i8_i32,nangate45,10,1,clk_gate_s_10_3_reg,SNPS_CLOCK_GATE_HIGH_Mac_i8xi8_i32_i32_n4_acc_r16_5,3.4580,0.0000,3.4580,0.0000,,

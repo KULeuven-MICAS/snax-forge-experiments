@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X98**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X99**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -208,7 +208,7 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 ### X29 — The block grid
 
-- **Decided:** 27 int64 points: SimdLanes add, mul and the accumulating Mac at W = 1, 8, 32; TreeAccumulate W = 1–32; SerialAccumulate W = 2–32; LinkBuffer D = 1–16 (W = 1), D = 1 at W = 8, 32; beside them X89, X94, X97.
+- **Decided:** 27 int64 points: SimdLanes add, mul and the accumulating Mac at W = 1, 8, 32; TreeAccumulate W = 1–32; SerialAccumulate W = 2–32; LinkBuffer D = 1–16 (W = 1), D = 1 at W = 8, 32; beside them X89, X94, X97, X98.
 - **Why:** the forms forge uses, enough for a first-order model.
 - **Where:** `char/points.json`.
 
@@ -265,6 +265,12 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** the `Mac` with R rows (D191) at int8/int32, R = 2 to 16, W = 4, 8, against its rows-1 base, gated, TB kind `bank`; fitted forms in `char.json`'s `bank` (D193): area 59.8 µm² × W · R beyond the flops, W · (0.343 log₂ R + 0.316) pJ a fire.
 - **Why:** the flop-only estimate gave 0.76 to 0.87 of the area, up to 3.37 times the energy; with the forms 0.99 to 1.01 and 0.90 to 1.06 (MUX2 point aside, PITFALLS DC20).
 - **Where:** `results/char/runs/2026-11-23_tiera2_b6x.md`; `char/checks.py --bank`.
+
+### X98 — Mixed input pairs
+
+- **Decided:** a SimdLanes mul (W = 1) and the accumulating Mac (W = 8) with a at int8 and b at int32, op and out int32, gated, each its own `char.json` entry at its exact `inTypes`, built at their own snax-forge commit (`source.snax_forge_mixed`); `char_table` keys a pair by both input widths (`pair_key`, in column `i8xi32`) and the CSVs' `in_type` is `int8xint32`, the widest input kept for the rules that compare widths (`pair`).
+- **Why:** atax's second half multiplies A at int8 by t = A x at int32, and the cost lookup priced that block at int32 × int32 (snax-forge D176); measured, the Mac's comb is 7,690 µm² and 11.06 pJ a fire against 17,197 µm² and 25.67 pJ, 0.31 and 0.32 of the way from int8 × int8 to int32 × int32.
+- **Where:** `results/char/runs/2026-11-24_tiera3_x1.md`; `results/char/char_table.md`, "Mixed input pairs".
 
 ### X52 · X82 — Reader and interconnect characterized
 

@@ -94,5 +94,7 @@
   {"point": "serial/sum_w8_i16_i64", "datapath": "SerialAccumulate", "params": {"inType": "int16", "outType": "int64", "lanes": 8, "seed": false}},
   {"point": "serial/sum_w8_i32_i32", "datapath": "SerialAccumulate", "params": {"inType": "int32", "outType": "int32", "lanes": 8, "seed": false}},
   {"point": "tree/add_w32_i8_i32", "datapath": "TreeAccumulate", "params": {"inType": "int8", "outType": "int32", "lanes": 32, "op": "add", "seed": false}},
-  {"point": "serial/sum_w32_i8_i32", "datapath": "SerialAccumulate", "params": {"inType": "int8", "outType": "int32", "lanes": 32, "seed": false}}
+  {"point": "serial/sum_w32_i8_i32", "datapath": "SerialAccumulate", "params": {"inType": "int8", "outType": "int32", "lanes": 32, "seed": false}},
+  {"point": "mac/acc_w8_i8xi32_i32", "datapath": "Mac", "params": {"inTypes": ["int8", "int32"], "opType": "int32", "outType": "int32", "lanes": 8, "accumulate": true, "regOut": false, "seed": false}},
+  {"point": "lanes/mul_w1_i8xi32_i32", "datapath": "SimdLanes", "params": {"inTypes": ["int8", "int32"], "opType": "int32", "outType": "int32", "lanes": 1, "op": "mul", "streams": 2, "k": null, "k1": null, "k2": null, "kCsr": false, "k1Csr": false, "k2Csr": false}}
 ]

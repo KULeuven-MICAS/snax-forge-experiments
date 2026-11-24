@@ -65,12 +65,39 @@ def is64(params: dict) -> bool:
 
 
 def pair(params: dict) -> tuple[int, int]:
-    """(w_in, w_out): the widest input and the output (LinkBuffer: its dtype twice; a stream block: its laneType)."""
+    """(w_in, w_out): the widest input and the output (LinkBuffer: its dtype twice; a stream block: its laneType).
+    The widths a rule compares (a slope's w_in, in against out); a mixed pair is told apart by pair_key."""
     if "dtype" in params or "laneType" in params:
         w = width(params.get("dtype") or params["laneType"])
         return w, w
     ins = params.get("inTypes") or [params["inType"]]
     return max(width(t) for t in ins), width(params["outType"])
+
+
+def in_widths(params: dict) -> tuple[int, ...]:
+    """The inputs' widths: (w,) when a and b share one, (w_a, w_b) for a mixed pair (X98, int8 x int32); a one-input
+    block's (w_in,)."""
+    ins = params.get("inTypes")
+    if not ins:
+        return pair(params)[:1]
+    ws = tuple(width(t) for t in ins[:2])
+    return ws[:1] if ws[0] == ws[1] else ws
+
+
+def mixed(params: dict) -> bool:
+    """A SimdLanes or Mac whose a and b differ in width (X98)."""
+    return len(in_widths(params)) > 1
+
+
+def pair_key(params: dict) -> tuple[tuple[int, ...], int]:
+    """(the inputs' widths, w_out): a pair as the tables key it, a mixed pair by its two input widths (X98), so
+    int8 x int32 sorts after int8's pairs and never with int32 x int32."""
+    return in_widths(params), pair(params)[1]
+
+
+def pair_label(params: dict) -> str:
+    """The in column: i8, or i8xi32 for a mixed pair."""
+    return "x".join(f"i{w}" for w in in_widths(params))
 
 
 def bank_study(point: dict) -> bool:
@@ -147,21 +174,29 @@ def load(tech: str, points: list[dict], gate: str = "1") -> dict:
         if bad:
             fail(f"{tech}: {name}: status {bad[0]['status']}")
         out[name] = {"datapath": p["datapath"], "params": p["params"], "synth": synth[name], "windows": power[name]}
-    for dp in {v["datapath"] for v in out.values()}:
-        commits = {r["snax_forge_commit"] for v in out.values() if v["datapath"] == dp
+    for g in {group(v) for v in out.values()}:
+        commits = {r["snax_forge_commit"] for v in out.values() if group(v) == g
                    for r in [v["synth"], *v["windows"].values()]}
         if len(commits) != 1:
-            fail(f"{tech}: {dp}: snax-forge commits {commits}, one per block expected")
+            fail(f"{tech}: {g}: snax-forge commits {commits}, one per block expected")
     return out
 
 
+MIXED = "the mixed pairs"   # X98's points, measured at their own snax-forge commit beside their blocks'
+
+
+def group(v: dict) -> str:
+    """The points one snax-forge commit covers: a block, or the mixed pairs (X98) of every block."""
+    return MIXED if mixed(v["params"]) else v["datapath"]
+
+
 def block_commits(d: dict) -> dict:
-    """{snax-forge commit: [datapaths]} in the points' order."""
+    """{snax-forge commit: [datapaths, or MIXED]} in the points' order."""
     out: dict = {}
     for v in d.values():
         c = out.setdefault(v["synth"]["snax_forge_commit"], [])
-        if v["datapath"] not in c:
-            c.append(v["datapath"])
+        if group(v) not in c:
+            c.append(group(v))
     return out
 
 
@@ -181,9 +216,8 @@ def ehold(d: dict) -> dict:
 # ---------------------------------------------------------------- the block sections
 def params_cell(v: dict) -> list[str]:
     p = v["params"]
-    w_in, w_out = pair(p)
     lanes = p.get("lanes", p.get("inLanes", p.get("outLanes", "-")))
-    return [str(lanes), str(p.get("depth", "-")), str(p.get("op", "-")), f"i{w_in}", f"i{w_out}"]
+    return [str(lanes), str(p.get("depth", "-")), str(p.get("op", "-")), pair_label(p), f"i{pair(p)[1]}"]
 
 
 def block_rows(D: dict, prefix: str) -> tuple[list[str], list[list]]:
@@ -195,7 +229,7 @@ def block_rows(D: dict, prefix: str) -> tuple[list[str], list[list]]:
         head += [f"{tag} {w} {g}" for w in windows for g in ("e_comb", "e_flop", "e_dyn")]
     pts = [p for p in D[TECHS[0]] if p.startswith(prefix + "/")]
     pts.sort(key=lambda p: (not is64(D[TECHS[0]][p]["params"]), D[TECHS[0]][p]["params"].get("op", ""),
-                            pair(D[TECHS[0]][p]["params"]),
+                            pair_key(D[TECHS[0]][p]["params"]),
                             int(D[TECHS[0]][p]["params"].get("lanes", D[TECHS[0]][p]["params"].get("outLanes", 0))),
                             int(D[TECHS[0]][p]["params"].get("depth", 0))))
     rows = []
@@ -412,6 +446,46 @@ def types_section(D: dict, J: dict) -> list[str]:
                 "prices those registers high by up to "
                 f"{j['flop']['e_load_fj'] / min(wider):.1f}x, a pessimistic price as the rand64 data's.", ""]
     return out
+
+# ---------------------------------------------------------------- mixed input pairs (X98)
+def mixed_rows(d: dict) -> list[tuple[str, str, str]]:
+    """(mixed point, the block at a's type on both inputs, at b's) for every mixed point, the others' params the
+    mixed one's with inTypes [a, a] and [b, b]."""
+    out = []
+    for p, v in d.items():
+        if not mixed(v["params"]):
+            continue
+        a, b = v["params"]["inTypes"][:2]
+        twin = lambda t: next((q for q, u in d.items() if u["datapath"] == v["datapath"]  # noqa: E731
+                               and u["params"] == {**v["params"], "inTypes": [t, t]}), None)
+        lo, hi = twin(a), twin(b)
+        if lo is None or hi is None:
+            fail(f"{p}: no point at {a} x {a} or {b} x {b} beside it")
+        out.append((p, lo, hi))
+    return out
+
+
+def mixed_section(D: dict) -> list[str]:
+    head = ["point", "in", "out", "area", "comb", "seq", "seq cells", "e/fire", "e_flop", "e_comb", "idle/cycle",
+            "area between", "e/fire between"]
+    out = []
+    for t in TECHS:
+        d = D[t]
+        rows = []
+        for trio in mixed_rows(d):
+            val = lambda p: (float(d[p]["synth"]["area_um2"]), e(d, p, "busy"))  # noqa: E731
+            (alo, elo), (ahi, ehi) = val(trio[1]), val(trio[2])
+            for p in trio:
+                s, pr = d[p]["synth"], d[p]["params"]
+                a, en = val(p)
+                rows.append([f"`{p}`", pair_label(pr), f"i{pair(pr)[1]}", f(a, 1), f(float(s["comb_area_um2"]), 1),
+                             f(float(s["seq_area_um2"]), 1), s["seq_cells"], f(en), f(e(d, p, "busy", "e_flop_pj")),
+                             f(e(d, p, "busy", "e_comb_pj")), f(e(d, p, "idle")),
+                             f"{(a - alo) / (ahi - alo):.3f}", f"{(en - elo) / (ehi - elo):.3f}"])
+        out += [f"**{t}: a mixed pair beside its block at each input's type on both** (e/fire the busy e_dyn, "
+                "pJ; between: 0 at a x a, 1 at b x b):", "", table(head, rows), ""]
+    return out
+
 
 # ---------------------------------------------------------------- the model (char.json against the forge points)
 MODEL_DESIGNS = [("vecmul", "done/vecmul/forge_w{}"), ("vsum", "done/vsum/forge_w{}"), ("dot 4", "done/dot/forge4_w{}"),
@@ -659,6 +733,10 @@ def main() -> int:
         L += [f"## {dp}", "", table(head, rows), "", "How it scales:", "", *scaling(D, prefix), ""]
     J, S = model_json(D, points)
     L += ["## The type axis", "", *types_section(D, J)]
+    L += ["## Mixed input pairs", "",
+          "A SimdLanes or Mac whose inputs differ in width (X98): a at int8, b at int32, op and out at int32, as "
+          "atax's second half multiplies A by t = A x. Each is its own char.json entry with its exact inTypes; the "
+          "tables above key it by both input widths (in `i8xi32`).", "", *mixed_section(D)]
     designs, units, _ = model_syn2(D, J)
     n_designs, n_units, n_packers = model_syn2(D, J, narrow_designs())
     L += ["## Model", "",

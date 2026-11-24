@@ -8,7 +8,8 @@ there. Checked: it equals the committed char.json; flop.area_um2 is the mean of 
 points (a clock gate counts as a sequential cell, so it is below a DFFR's area); the control factor is the mean over
 the 48 int64 tier-done forge points (the narrow ones, a types= set, are T7's check) of ctrl's e_dyn
 over its cells x e_hold; E_ctrl is that factor x cells x cycles x e_hold; the type axis's rules (X89): copy from a
-pair's point at W0, a narrow fold's slope, a narrow LinkBuffer's width, the packer's and the slicer's bits, the check points left out.
+pair's point at W0, a narrow fold's slope, a narrow LinkBuffer's width, the packer's and the slicer's bits, the check points left out;
+the mixed pairs each their own entry (X98).
 Standard library only.
 """
 from __future__ import annotations
@@ -139,6 +140,26 @@ class TestCharExport(unittest.TestCase):
             self.assertEqual(ce.n_bits("FifoPacker", params), flops)
             w = ce.width(t)
             self.assertAlmostEqual(ce.load_bits("FifoPacker", params), (r - 1) / r * w + (r - 1).bit_length(), places=9)
+
+    def test_mixed_pairs_own_entries(self):
+        """X98: the int8 x int32 SimdLanes and Mac are each one entry at their exact inTypes, beside the int32 x int32
+        one, which pair (the widest input) cannot tell apart and pair_key (both input widths) does; their commit is
+        source.snax_forge_mixed."""
+        for dp, name, wide in (("Mac", "mac/acc_w8_i8xi32_i32", "mac/acc_w8_i32_i32"),
+                               ("SimdLanes", "lanes/mul_w1_i8xi32_i32", "lanes/mul_w1_i32_i32")):
+            p = next(q["params"] for q in self.points if q["point"] == name)
+            w = next(q["params"] for q in self.points if q["point"] == wide)
+            (x, _), (y, _) = ce.entry_of(self.j, dp, p), ce.entry_of(self.j, dp, w)
+            self.assertEqual(x["params"]["inTypes"], ["int8", "int32"])
+            self.assertEqual(y["params"]["inTypes"], ["int32", "int32"])
+            self.assertEqual([e["params"]["inTypes"] for e in self.j["blocks"][dp]].count(["int8", "int32"]), 1)
+            self.assertEqual(ct.pair(p), ct.pair(w))
+            self.assertEqual((ct.pair_key(p), ct.pair_label(p)), (((8, 32), 32), "i8xi32"))
+            self.assertLess(ct.pair_key({**p, "inTypes": ["int8", "int8"], "outType": "int64"}), ct.pair_key(p))
+            self.assertLess(ct.pair_key(p), ct.pair_key({**p, "inTypes": ["int16", "int16"]}))
+            self.assertEqual(x["points"], [{"lanes": p["lanes"], "comb_um2": float(self.d[name]["synth"]["comb_area_um2"]),
+                                            "e_comb_pj": ct.e(self.d, name, "busy", "e_comb_pj")}])
+        self.assertEqual(self.j["source"]["snax_forge_mixed"], self.d["mac/acc_w8_i8xi32_i32"]["synth"]["snax_forge_commit"])
 
     def test_slicer_bits(self):
         """64 + ceil(log2 d_in) + 1 flops (word, counter, full), 64 / d_in + ceil(log2 d_in) loading a pop (X94), one
