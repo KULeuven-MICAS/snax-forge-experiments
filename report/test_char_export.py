@@ -56,7 +56,12 @@ class TestCharExport(unittest.TestCase):
         cls.tmp.cleanup()
 
     def test_equals_the_committed_table(self):
-        self.assertEqual(ce.path(TECH).read_text(), self.committed)
+        # the table's own commit is the last one touching its CSVs, which a squash merge rewrites;
+        # every other field must match
+        got, want = json.loads(ce.path(TECH).read_text()), json.loads(self.committed)
+        self.assertRegex(got["source"].pop("snax_forge_experiments"), r"^[0-9a-f]{40}$")
+        want["source"].pop("snax_forge_experiments")
+        self.assertEqual(got, want)
         self.assertEqual(self.j["source"]["clk_gate"], "1")
 
     def test_flop_area_is_the_mean(self):
