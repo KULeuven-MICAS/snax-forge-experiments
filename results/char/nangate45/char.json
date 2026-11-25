@@ -11,7 +11,7 @@
   "snax_forge_FifoSlicer": "c5c7d3bad1eb1ccf2e4e4a3d841fea749677d3f3",
   "snax_forge_mixed": "90e9fba98c080676b22e7c95137d26a0faa9636d",
   "snax_forge_scalar": "8d9128c4452542956aeb715c24a3b0f9742040bf",
-  "snax_forge_experiments": "f677efc6e88c3429b18bc635c811fd36c8e1c895",
+  "snax_forge_experiments": "992111672e11ac5108b464cf9907572427ce353e",
   "stimulus": "rand64 seed 0",
   "clk_gate": "1"
  },
