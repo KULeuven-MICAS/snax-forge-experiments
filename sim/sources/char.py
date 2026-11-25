@@ -34,6 +34,7 @@ PINS = {"lanes": [], "fold": ["fire", "first"], "bank": ["fire", "first", "row",
 WINDOWS = {"lanes": ["busy", "idle"], "fold": ["busy", "idle"], "bank": ["busy", "idle"], "serial": ["busy", "idle"], "link": ["stream"],
            "pack": ["busy", "idle"], "slice": ["busy", "idle"]}
 SEQ_FILES = {k: [f"char_{k}_seq.sv"] for k in PINS}
+SCALARS = ("k", "k1", "k2")     # SimdLanes' scalar slots; one read from its CSR is an input pin io_<k> of opType's width
 CORE = "char_seq_core.svh"
 
 
@@ -70,16 +71,24 @@ def pin_bits(datapath: str, params: dict) -> dict:
     return {p: 1 for p in PINS[KINDS[datapath]]}
 
 
+def scalar_bits(datapath: str, params: dict) -> dict:
+    """{scalar: bits} of a SimdLanes' scalars read from their CSRs (params <k>Csr), each an input pin io_<k> of
+    opType's width (snax-forge's SimdLanes.scala); {} for a baked or absent scalar and every other block."""
+    if datapath != "SimdLanes":
+        return {}
+    return {n: width(params["opType"]) for n in SCALARS if params.get(f"{n}Csr")}
+
+
 def width(dtype: str) -> int:
     """An int dtype's bits (int8, uint32)."""
     return int(dtype.removeprefix("u").removeprefix("int"))
 
 
 def port_bits(datapath: str, params: dict) -> dict:
-    """{port base: bits} of the data ports from the params, what the netlist must show (D175's types)."""
+    """{port base: bits} of the data ports from the params, what the netlist must show (D175's types); a SimdLanes of
+    one stream has a alone."""
     if datapath in ("SimdLanes", "Mac"):
-        a, b = (width(t) for t in params["inTypes"][:2])
-        return {"a": a, "b": b, "out": width(params["outType"])}
+        return {**dict(zip(("a", "b"), (width(t) for t in params["inTypes"][:2]))), "out": width(params["outType"])}
     if datapath in ("TreeAccumulate", "SerialAccumulate"):
         return {"in": width(params["inType"]), "out": width(params["outType"])}
     if datapath == "LinkBuffer":
@@ -122,11 +131,14 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
                              compared through out_valid (0 when it holds no word: its data register has no reset)
       pins     {name: {port, bits}}  the kind's pins present in the netlist: a pin of no bits is absent (LinkBuffer's
                              wslot and rslot at depth 1, SerialAccumulate's lane at lanes 1)
+      scalars  {name: {port, bits}}  only where a SimdLanes reads a scalar from its CSR (scalar_bits): io_k, io_k1,
+                             io_k2 at opType's width; sim/pwr.py holds one random value on each a window
       windows  [{name, cycles, fires}]  in the order the sequencer runs them (schedule())
       tb_files [sim/tb/ files]  the kind's sequencer and the shared core it includes
 
-    The ports must be exactly clock, reset, data_in, outs and the present pins (SimdLanes keeps an unused clock and
-    reset), each data port as wide as its type (port_bits). The kinds, by datapath: lanes (SimdLanes), fold (Mac in its
+    The ports must be exactly clock, reset, data_in, outs, the present pins and the scalars (SimdLanes keeps an unused
+    clock and reset), each data port as wide as its type (port_bits), W lanes of each input (a SimdLanes of one stream:
+    a alone), each scalar pin as wide as opType. The kinds, by datapath: lanes (SimdLanes), fold (Mac in its
     accumulating form, TreeAccumulate), bank (an accumulating Mac of 2 rows or more, tb.json's rows), serial (SerialAccumulate), link (LinkBuffer), pack (FifoPacker), slice
     (FifoSlicer).
 
@@ -143,10 +155,11 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
     ports = hls.ports_of(netlist, top)
     bits = pin_bits(dp, params)
     pins = {n: {"port": f"io_{n}", "bits": b} for n, b in bits.items() if b}
+    scalars = {n: {"port": f"io_{n}", "bits": b} for n, b in scalar_bits(dp, params).items()}
     out_bases = OUTS.get(dp, ["out"])
     data_in = [p for p, (dr, _) in ports.items() if dr == "in" and _base(p, INS[dp])]
     outs = [p for p, (dr, _) in ports.items() if dr == "out" and _base(p, out_bases)]
-    known = {CLK, RST, *data_in, *outs, *(p["port"] for p in pins.values())}
+    known = {CLK, RST, *data_in, *outs, *(p["port"] for p in [*pins.values(), *scalars.values()])}
     if set(ports) != known:
         raise ValueError(f"{point}: netlist ports not as expected: missing {sorted(known - set(ports))}, "
                          f"not covered {sorted(set(ports) - known)}")
@@ -156,7 +169,11 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
         b = want[bases[_base(p, bases)[0]]]
         if ports[p][1] != b:
             raise ValueError(f"{point}: {p} is {ports[p][1]} bits, its type's {b}")
-    for n, p in pins.items():
+    if dp in ("SimdLanes", "Mac"):
+        lanes = {b: sum(1 for p in data_in if _base(p, INS[dp])[0] == i) for i, b in enumerate(INS[dp])}
+        if lanes != {b: params["lanes"] if b in want else 0 for b in INS[dp]}:
+            raise ValueError(f"{point}: data inputs {lanes} per port, {params['lanes']} lanes of {sorted(set(want) - {'out'})}")
+    for n, p in [*pins.items(), *scalars.items()]:
         if ports[p["port"]] != ("in", p["bits"]):
             raise ValueError(f"{point}: pin {p['port']} is {ports[p['port']]}, expected an input of {p['bits']} bits")
     for n, b in bits.items():
@@ -171,6 +188,7 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
           "control": {"kind": f"char_{kind}"},
           "data_in": [{"port": p, "bits": ports[p][1]} for p in _order(data_in, INS[dp])],
           "outs": [{"port": p, "bits": ports[p][1]} for p in _order(outs, out_bases)], "pins": pins,
+          **({"scalars": scalars} if scalars else {}),
           "tb_files": SEQ_FILES[kind]}
     slots = schedule(tb)
     tb["windows"] = [{"name": w, "cycles": sum(1 for s in slots if s["window"] == w),

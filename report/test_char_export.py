@@ -161,6 +161,32 @@ class TestCharExport(unittest.TestCase):
                                             "e_comb_pj": ct.e(self.d, name, "busy", "e_comb_pj")}])
         self.assertEqual(self.j["source"]["snax_forge_mixed"], self.d["mac/acc_w8_i8xi32_i32"]["synth"]["snax_forge_commit"])
 
+    def test_scalar_forms_own_entries(self):
+        """X99: each SimdLanes scalar form is one entry at its exact params (snax-forge's lookup key: None values
+        dropped, lanes aside), copy over lanes, apart from the plain op at its pair; listed after the plain rows with
+        its scalars in the op column; its commit is source.snax_forge_scalar."""
+        forms = [q for q in self.points if q["datapath"] == "SimdLanes" and ct.scalar(q["params"])]
+        self.assertEqual(len(forms), 7)
+        for q in forms:
+            p, name = q["params"], q["point"]
+            x, scale = ce.entry_of(self.j, "SimdLanes", p)
+            want = {k: v for k, v in p.items() if k != "lanes"}
+            self.assertEqual((x["params"], x["lanes_rule"], scale), (want, "copy", 1.0))
+            self.assertEqual(sum(e["params"] == want for e in self.j["blocks"]["SimdLanes"]), 1)
+            self.assertEqual(x["points"], [{"lanes": 1, "comb_um2": float(self.d[name]["synth"]["comb_area_um2"]),
+                                            "e_comb_pj": ct.e(self.d, name, "busy", "e_comb_pj")}])
+            self.assertAlmostEqual(ce.comb_at(self.j, "SimdLanes", {**p, "lanes": 8}), 8 * x["points"][0]["e_comb_pj"])
+            self.assertIn(f"({ct.scalar_label(p)})", ct.op_label(p))
+            self.assertEqual(ct.group(self.d[name]), ct.SCALAR)
+            self.assertIsNotNone(ct.plain(self.d, name))
+        self.assertEqual(ct.pair_label(forms[0]["params"]), "i64")      # one stream: its a alone
+        self.assertEqual(ct.pair_label(next(q["params"] for q in forms if q["point"] == "lanes/mul_w1_i8_i32_kcsr")), "i8")
+        _, rows = ct.block_rows({TECH: self.d}, "lanes")
+        names = [r[0].strip("`") for r in rows]
+        first = min(names.index(q["point"]) for q in forms)
+        self.assertEqual(set(names[first:]), {q["point"] for q in forms})   # after every plain row
+        self.assertEqual(self.j["source"]["snax_forge_scalar"], self.d[forms[0]["point"]]["synth"]["snax_forge_commit"])
+
     def test_slicer_bits(self):
         """64 + ceil(log2 d_in) + 1 flops (word, counter, full), 64 / d_in + ceil(log2 d_in) loading a pop (X94), one
         entry per lane type and lanes, its one point read whatever the lanes asked."""
