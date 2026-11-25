@@ -10,7 +10,8 @@ points), the control factor and per block and type pair its comb area and energy
 interpolate, slope; X89; the stream blocks none, one point per entry, X94), and a Mac bank's two forms (X97, `bank`). The narrow points that check a rule
 (char_table.check_only) are not written. The fields and the model are in results/char/README.md; a clock gate counts
 as a sequential cell (X83 · X85). A block whose rows name another snax-forge commit than the first row's (FifoSlicer's)
-has it as source.snax_forge_<block>.
+has it as source.snax_forge_<block>; the mixed pairs (X98, a SimdLanes or Mac whose a and b differ in width, each
+its own entry with its exact inTypes) as source.snax_forge_mixed.
 """
 from __future__ import annotations
 
@@ -257,8 +258,8 @@ def sfe_commit(tech: str) -> str:
 def build(tech: str, d: dict, points: list[dict]) -> tuple[dict, dict]:
     """(char.json, the spreads behind its constants) from the gated rows `d`."""
     commit = next(iter(d.values()))["synth"]["snax_forge_commit"]
-    others = {f"snax_forge_{v['datapath']}": v["synth"]["snax_forge_commit"] for v in d.values()
-              if v["synth"]["snax_forge_commit"] != commit}
+    others = {f"snax_forge_{'mixed' if ct.mixed(v['params']) else v['datapath']}": v["synth"]["snax_forge_commit"]
+              for v in d.values() if v["synth"]["snax_forge_commit"] != commit}
     area = flop_area(d)
     area_um2 = round(area["mean"], 6)
     load, hold = e_load(d), e_hold(d)
