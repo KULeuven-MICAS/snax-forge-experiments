@@ -42,7 +42,10 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
 # a signed t) or keeps u's low bits. A slot's inputs are applied at its rising edge, the TB samples the outputs at
 # its falling edge (the registers still hold what the slots before left, the combinational outputs see the slot's
 # inputs), and the next rising edge takes it.
-#   SimdLanes         out_l = cast(cast(a_l, A, op) op cast(b_l, B, op) at op, op, out) (combinational)
+#   SimdLanes         out_l = cast(cast(a_l, A, op) op cast(b_l, B, op) at op, op, out) (combinational); one stream
+#                     (a alone): b_l is the scalar k at op, its pin's bits (kCsr) or the baked k; max and min compare
+#                     by op's signedness; axpby: out_l = cast(k1 a + k2 b at op, op, out), k1 a + b without k2, each
+#                     k from its pin (k1Csr, k2Csr) or baked (k1, k2); a pin's value is the slot's pins[<k>]
 #   Mac (accumulate)  p_l = cast(cast(a_l, A, op) cast(b_l, B, op) at op, op, out);
 #                     on fire: s_l <- first ? p_l : s_l + p_l at out; out_l = s_l; with rows R > 1 (D191) R rows
 #                     of sums: on fire s[row]_l <- first ? p_l : s[row]_l + p_l; out_l = s[drain]_l
@@ -63,6 +66,7 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
 # written before read.
 M64 = (1 << 64) - 1
 CHAR_OPS = {"add": lambda a, b: a + b, "mul": lambda a, b: a * b}
+SCALARS = ("k", "k1", "k2")     # SimdLanes' scalar slots, each baked (params[<k>]) or from its pin (params[<k>Csr])
 
 
 def _width(t: str) -> int:
@@ -78,22 +82,51 @@ def _cast(x: int, frm: str, to: str) -> int:
     return x & ((1 << wt) - 1)
 
 
+def _value(x: int, t: str) -> int:
+    """x, t's bits, as the number it is at t (negative for a signed t with its top bit set)."""
+    w = _width(t)
+    return x - (1 << w) if not t.startswith("u") and x >> (w - 1) else x
+
+
+def _scalar(params: dict, name: str, pins: dict) -> int | None:
+    """SimdLanes' scalar `name` as op's bits: its pin's value (params[<name>Csr]), the baked params[name], or None."""
+    if params.get(f"{name}Csr"):
+        return pins[name] & ((1 << _width(params["opType"])) - 1)
+    v = params.get(name)
+    return None if v is None else v & ((1 << _width(params["opType"])) - 1)
+
+
+def _lanes_out(params: dict, a: int, b: int | None, pins: dict) -> int:
+    """One SimdLanes lane at op's bits: a and b already cast to op (b None at one stream, the scalar k in its
+    place), the result not yet cast to out."""
+    top, op = params["opType"], params["op"]
+    if op == "axpby":
+        k1, k2 = _scalar(params, "k1", pins), _scalar(params, "k2", pins)
+        return k1 * a + (b if k2 is None else k2 * b)
+    if b is None:
+        b = _scalar(params, "k", pins)
+    if op in ("max", "min"):
+        pick = max if op == "max" else min
+        return pick(a, b, key=lambda x: _value(x, top))
+    return CHAR_OPS[op](a, b)
+
+
 def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[int]]) -> list[list[int]]:
     """The expected outputs (one list of the compared outputs' values, unsigned, in tb.json's outs order) at every
     slot's falling edge. `beats` are the new data beats in the order the slots take them, each a list of the data
     inputs' values in tb.json's data_in order (already the ports' bits); a slot without new data holds the last beat
-    (0 before any)."""
+    (0 before any). A SimdLanes' scalar read from its pin is the slot's pins[<k>] (sim/pwr.py's char_stimulus
+    holds one value a window)."""
     w = params.get("lanes", 1)
     cur, nb = [0] * (2 * w if datapath in ("SimdLanes", "Mac") else max(w, params.get("inLanes", 1),
                                                                          params.get("words", 1))), 0
     if datapath in ("SimdLanes", "Mac"):
-        ta, tb = params["inTypes"][:2]
+        ins = params["inTypes"]
+        ta, tb = ins[0], ins[1] if len(ins) > 1 else None   # a SimdLanes of one stream: a alone
         top, tout = params["opType"], params["outType"]
         mo = (1 << _width(tout)) - 1
         prod = lambda i: _cast(_cast(cur[i], ta, top) * _cast(cur[w + i], tb, top), top, tout)  # noqa: E731
-        if datapath == "SimdLanes":
-            op = CHAR_OPS[params["op"]]
-        else:
+        if datapath == "Mac":
             bank = [[0] * w for _ in range(params.get("rows", 1))]
     elif datapath in ("TreeAccumulate", "SerialAccumulate"):
         tin, tout = params["inType"], params["outType"]
@@ -122,7 +155,8 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
         p = sl["pins"]
         # the falling edge: what the registers hold, the combinational outputs of this slot's inputs
         if datapath == "SimdLanes":
-            out.append([_cast(op(_cast(cur[i], ta, top), _cast(cur[w + i], tb, top)), top, tout) for i in range(w)])
+            out.append([_cast(_lanes_out(params, _cast(cur[i], ta, top), None if tb is None else
+                                         _cast(cur[w + i], tb, top), p), top, tout) for i in range(w)])
         elif datapath == "Mac":
             out.append(list(bank[p.get("drain", 0)]))
         elif datapath in ("TreeAccumulate", "SerialAccumulate"):

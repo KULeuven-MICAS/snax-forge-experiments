@@ -402,12 +402,15 @@ def port_guard(point: str) -> str:
 
 def char_extra(point: str) -> dict:
     """A char row's CHAR_COLUMNS from point.json: the datapath, the params that apply (FifoPacker's inLanes and
-    FifoSlicer's outLanes as lanes), a Mac's form (acc_r<R> for a bank of R >= 2 rows, D191), and the type pair: in_type the widest input (SimdLanes' and Mac's
+    FifoSlicer's outLanes as lanes), a Mac's form (acc_r<R> for a bank of R >= 2 rows, D191), a SimdLanes' its scalars (X99), and the type pair: in_type the widest input (SimdLanes' and Mac's
     inTypes, a fold's inType), or a and b's types joined by x where they differ in width (int8xint32, X98), out_type
     the output's (outType); LinkBuffer's dtype and a stream block's laneType for both."""
     pj = forge_json(point, "point.json")
     params = pj.get("params", {})
     form = ""
+    if pj.get("datapath") == "SimdLanes":     # its scalars (X99): kcsr, k=0, k1csr_k2csr, k1=3; none for a plain op
+        form = "_".join(f"{n}csr" if params.get(f"{n}Csr") else f"{n}={params[n]}" for n in ("k", "k1", "k2")
+                        if params.get(f"{n}Csr") or params.get(n) is not None)
     if pj.get("datapath") == "Mac":
         form = "acc" if params.get("accumulate") else "reg" if params.get("regOut") else "plain"
         if params.get("rows", 1) > 1:

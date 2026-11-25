@@ -50,6 +50,7 @@ Tool behaviour that gives wrong numbers, or none, without an error: one line eac
 - **Q14.** Netlist memories take one access at time 0 (I-cache writes, gated TCDM reads): `ram_compare` allows one per instance (X67 · X81 · X84).
 - **Q15.** Escaped identifiers end in a space inside `%m` paths: parse to the last whitespace, brace them in vsim.
 - **Q16.** Under `+acc=n` TB variables are invisible to vsim commands: use DUT ports.
+- **Q17.** `char_seq_core.svh` is `include`d in each char sequencer's body, so its names (`k` the sample count, `bi`, `beats`, `exps`, `sample`) are the sequencer's: a port of the same name fails vlog (vlog-2388) and every point of the kind fails `vlog_tb` in half a second; the lanes sequencer's scalar port is `scal`.
 
 ## vcd2saif
 

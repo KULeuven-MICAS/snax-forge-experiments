@@ -70,6 +70,12 @@ lanes/add_w8_i8_i32,nangate45,10,1,alus_4,ElementwiseAlu_w32_add_3,38.0380,38.03
 lanes/add_w8_i8_i32,nangate45,10,1,alus_5,ElementwiseAlu_w32_add_2,38.0380,38.0380,0.0000,0.0000,12.155,0.846392
 lanes/add_w8_i8_i32,nangate45,10,1,alus_6,ElementwiseAlu_w32_add_1,38.0380,38.0380,0.0000,0.0000,12.255,0.846637
 lanes/add_w8_i8_i32,nangate45,10,1,alus_7,ElementwiseAlu_w32_add_0,38.0380,38.0380,0.0000,0.0000,12.394,0.846381
+lanes/axpby_w1_i32_k1_3,nangate45,10,1,SimdLanes_i32xi32_i32_i32_n1_axpby_k13,SimdLanes_i32xi32_i32_i32_n1_axpby_k13,263.0740,263.0740,0.0000,0.0000,34.737,4.83
+lanes/axpby_w1_i32_k1csr,nangate45,10,1,SimdLanes_i32xi32_i32_i32_n1_axpby_k1r,SimdLanes_i32xi32_i32_i32_n1_axpby_k1r,1924.7760,1924.7760,0.0000,0.0000,243.604,40
+lanes/axpby_w1_i32_k1csr_k2csr,nangate45,10,1,SimdLanes_i32xi32_i32_i32_n1_axpby_k1r_k2r,SimdLanes_i32xi32_i32_i32_n1_axpby_k1r_k2r,3840.5080,3840.5080,0.0000,0.0000,463.719,80.9
+lanes/axpby_w1_i64_k1csr_k2csr,nangate45,10,1,SimdLanes_i64xi64_i64_i64_n1_axpby_k1r_k2r,SimdLanes_i64xi64_i64_i64_n1_axpby_k1r_k2r,14343.2521,14343.2521,0.0000,0.0000,1810.724,300
+lanes/max_w1_i32_k0,nangate45,10,1,SimdLanes_i32_i32_i32_n1_max_k0,SimdLanes_i32_i32_i32_n1_max_k0,33.5160,0.0000,0.0000,0.0000,5.644,0.791401
+lanes/max_w1_i32_k0,nangate45,10,1,alus_0,ElementwiseAlu_w32_s_max,33.5160,33.5160,0.0000,0.0000,5.644,0.791401
 lanes/mul_w1,nangate45,10,1,SimdLanes_i64xi64_i64_i64_n1_mul,SimdLanes_i64xi64_i64_i64_n1_mul,6912.5420,0.0000,0.0000,0.0000,936.842,144
 lanes/mul_w1,nangate45,10,1,alus_0,ElementwiseAlu_w64_mul,6912.5420,6912.5420,0.0000,0.0000,936.842,144
 lanes/mul_w1_i16_i16,nangate45,10,1,SimdLanes_i16xi16_i16_i16_n1_mul,SimdLanes_i16xi16_i16_i16_n1_mul,584.9340,0.0000,0.0000,0.0000,58.172,11
@@ -82,10 +88,14 @@ lanes/mul_w1_i32_i32,nangate45,10,1,SimdLanes_i32xi32_i32_i32_n1_mul,SimdLanes_i
 lanes/mul_w1_i32_i32,nangate45,10,1,alus_0,ElementwiseAlu_w32_mul,1829.8140,1829.8140,0.0000,0.0000,226.759,38.2
 lanes/mul_w1_i32_i64,nangate45,10,1,SimdLanes_i32xi32_i64_i64_n1_mul,SimdLanes_i32xi32_i64_i64_n1_mul,4200.9380,0.0000,0.0000,0.0000,536.515,84.5
 lanes/mul_w1_i32_i64,nangate45,10,1,alus_0,ElementwiseAlu_w64_mul,4200.9380,4200.9380,0.0000,0.0000,536.515,84.5
+lanes/mul_w1_i64_kcsr,nangate45,10,1,SimdLanes_i64_i64_i64_n1_mul_kr,SimdLanes_i64_i64_i64_n1_mul_kr,6912.5420,0.0000,0.0000,0.0000,936.842,144
+lanes/mul_w1_i64_kcsr,nangate45,10,1,alus_0,ElementwiseAlu_w64_mul,6912.5420,6912.5420,0.0000,0.0000,936.842,144
 lanes/mul_w1_i8_i16,nangate45,10,1,SimdLanes_i8xi8_i16_i16_n1_mul,SimdLanes_i8xi8_i16_i16_n1_mul,483.8540,0.0000,0.0000,0.0000,41.353,9.26
 lanes/mul_w1_i8_i16,nangate45,10,1,alus_0,ElementwiseAlu_w16_mul,483.8540,483.8540,0.0000,0.0000,41.353,9.26
 lanes/mul_w1_i8_i32,nangate45,10,1,SimdLanes_i8xi8_i32_i32_n1_mul,SimdLanes_i8xi8_i32_i32_n1_mul,293.9300,0.0000,0.0000,0.0000,34.43,6.57
 lanes/mul_w1_i8_i32,nangate45,10,1,alus_0,ElementwiseAlu_w32_mul,293.9300,293.9300,0.0000,0.0000,34.43,6.57
+lanes/mul_w1_i8_i32_kcsr,nangate45,10,1,SimdLanes_i8_i32_i32_n1_mul_kr,SimdLanes_i8_i32_i32_n1_mul_kr,833.1120,0.0000,0.0000,0.0000,90.962,17.3
+lanes/mul_w1_i8_i32_kcsr,nangate45,10,1,alus_0,ElementwiseAlu_w32_mul,833.1120,833.1120,0.0000,0.0000,90.962,17.3
 lanes/mul_w1_i8_i64,nangate45,10,1,SimdLanes_i8xi8_i64_i64_n1_mul,SimdLanes_i8xi8_i64_i64_n1_mul,305.6340,0.0000,0.0000,0.0000,44.694,7.04
 lanes/mul_w1_i8_i64,nangate45,10,1,alus_0,ElementwiseAlu_w64_mul,305.6340,305.6340,0.0000,0.0000,44.694,7.04
 lanes/mul_w1_i8_i8,nangate45,10,1,SimdLanes_i8xi8_i8_i8_n1_mul,SimdLanes_i8xi8_i8_i8_n1_mul,131.1380,0.0000,0.0000,0.0000,11.73,2.69

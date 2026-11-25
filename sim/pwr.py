@@ -1229,10 +1229,11 @@ def tb_top_char(tb: dict, netlist: Path) -> str:
     the netlist and left open on the sequencer. Each data port has a 64-bit slot of the sequencer's data and out: a
     port of fewer bits takes its slot's low bits, and an output's slot is zero above them. A FifoSlicer's out_bits
     reach their slots through out_valid (0 when it holds no word: its data register has no reset, X until the
-    first take)."""
+    first take). A SimdLanes' scalar pins (tb.json's scalars) take the low bits of their 64-bit slots of the
+    sequencer's scal (NK slots; NK and scal only where there are scalars)."""
     kind, ni, no = tb["kind"], len(tb["data_in"]), len(tb["outs"])
-    pins = tb["pins"]
-    params = {"T_NS": CLOCK_NS, "NI": ni, "NO": no}
+    pins, scalars = tb["pins"], tb.get("scalars", {})
+    params = {"T_NS": CLOCK_NS, "NI": ni, "NO": no, **({"NK": len(scalars)} if scalars else {})}
     wires = []
     if kind == "fold":
         wires = [("fire", 1), ("first", 1)]
@@ -1261,7 +1262,9 @@ def tb_top_char(tb: dict, netlist: Path) -> str:
          f"module {TB_TOP};", f"    wire {tb['clock']['port']}, {tb['reset']['port']};", f"    wire [{64 * ni - 1}:0] data;",
          f"    wire [{64 * no - 1}:0] out;"]
     L += [f"    wire {'' if b == 1 else '[%d:0] ' % (b - 1)}p_{n};" for n, b in wires]
+    L += [f"    wire [{64 * len(scalars) - 1}:0] kv;"] if scalars else []
     conn = [f".clk({tb['clock']['port']})", f".rst({tb['reset']['port']})", ".data(data)", ".out(out)"] + [f".{n}(p_{n})" for n, _ in wires]
+    conn += [".scal(kv)"] if scalars else []
     L += ["", f"    char_{kind}_seq #({', '.join(f'.{k}({v})' for k, v in params.items())}) seq ({', '.join(conn)});", ""]
     ports = [tb["clock"]["port"], tb["reset"]["port"]]
     sel = lambda i, b: f"[{64 * i + b - 1}:{64 * i}]" if b > 1 else f"[{64 * i}]"  # noqa: E731
@@ -1274,6 +1277,8 @@ def tb_top_char(tb: dict, netlist: Path) -> str:
     for n, p in pins.items():
         sel = "" if p["bits"] == 1 else f"[{p['bits'] - 1}:0]"
         ports.append(f"{p['port']}(p_{n}{sel})")
+    for i, p in enumerate(scalars.values()):
+        ports.append(f"{p['port']}(kv{'[%d]' % (64 * i) if p['bits'] == 1 else '[%d:%d]' % (64 * i + p['bits'] - 1, 64 * i)})")
     ports = [p if "(" in p else f"{p}({p})" for p in ports]
     L += [f"    {tb['top']} {DUT} ("] + [f"        .{p}{',' if i < len(ports) - 1 else ''}" for i, p in enumerate(ports)]
     L += ["    );", ""] + dump_block(tb, netlist) + ["endmodule", ""]
@@ -1294,13 +1299,30 @@ def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
     slots take new beats, each value the port's low bits; the expected outputs from sim/ref.py's char_ref. Every
     bit of every data input must take both values in the working window's beats (busy, or link's stream: it
     toggles there). For link's stream the
-    reference is checked against the FIFO it is: the output at stream slot t is the beat loaded D slots before."""
+    reference is checked against the FIFO it is: the output at stream slot t is the beat loaded D slots before.
+
+    A SimdLanes' scalar pins (tb.json's scalars), a CSR the program writes once and holds: drawn after the data
+    streams from the same generator (the data as without them), per window in tb.json's order one full-range int64
+    per pin, its low bits, applied at the window's lead-in slot and held through the window (0 while settling). They
+    hold, so they are not in the toggle check; `ks` gives {window: {pin: value}}."""
     n_new = sum(1 for s in slots if s["new"])
     rng = np.random.default_rng(seed)
     info = np.iinfo(np.int64)
     streams = [rng.integers(info.min, info.max, size=n_new, dtype=np.int64, endpoint=True) for _ in tb["data_in"]]
     masks = [(1 << d["bits"]) - 1 for d in tb["data_in"]]
     beats = [[int(x[b]) & m for x, m in zip(streams, masks)] for b in range(n_new)]
+    scalars = tb.get("scalars", {})
+    ks = {w["name"]: {n: int(rng.integers(info.min, info.max, dtype=np.int64, endpoint=True)) & ((1 << p["bits"]) - 1)
+                      for n, p in scalars.items()} for w in tb["windows"]} if scalars else {}
+    if scalars:     # each slot's pins with the scalars it sees: a window's from its lead-in slot on
+        held, ref_slots = {n: 0 for n in scalars}, []
+        for i, s in enumerate(slots):
+            nxt = slots[i + 1]["window"] if i + 1 < len(slots) else None
+            if s["window"] is None and nxt is not None:
+                held = ks[nxt]
+            ref_slots.append({**s, "pins": {**s["pins"], **held}})
+    else:
+        ref_slots = slots
     busy, b = [], 0
     for s in slots:
         if s["new"]:
@@ -1316,7 +1338,7 @@ def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
             untoggled[d["port"]] = k
     if untoggled:
         raise Fail(f"stimulus: data bits that never toggle in the working window: {untoggled}")
-    exps = char_ref(tb["datapath"], tb["params"], slots, beats)
+    exps = char_ref(tb["datapath"], tb["params"], ref_slots, beats)
     if tb["kind"] == "link":
         loaded = []
         for k, s in enumerate(slots):
@@ -1326,7 +1348,7 @@ def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
                and exps[k] != beats[loaded.index(k) - tb["depth"]]]
         if bad:
             raise Fail(f"reference: stream slots {bad[:5]} do not give the beat loaded D = {tb['depth']} before")
-    return {"beats": beats, "exps": exps, "n_new": n_new, "busy_beats": len(busy)}
+    return {"beats": beats, "exps": exps, "n_new": n_new, "busy_beats": len(busy), "ks": ks}
 
 
 def vcd_windows(vcd: Path, wins: list[tuple[str, int, int]], out: dict, timescale_10ps: bool = False,
@@ -1458,12 +1480,21 @@ def _do_point_char(stack: contextlib.ExitStack, point: str, tech: str, seed: int
         (rdir / "stim" / "exp.hex").write_text("".join(_pack(e) for e in st["exps"]))
         sim.update({"slots": len(slots), "beats": st["n_new"], "busy_beats": st["busy_beats"],
                     "samples": len(st["exps"])})
+        k_args = []
+        if st["ks"]:            # one line a window, in the windows' order (sim/tb/char_lanes_seq.sv)
+            (rdir / "stim" / "k.hex").write_text("".join(_pack(list(v.values())) for v in st["ks"].values()))
+            k_args = [f"+K_HEX={rdir / 'stim' / 'k.hex'}", f"+K_N={len(st['ks'])}"]
+            sim["scalars"] = st["ks"]
+            tb["scalar_values"] = {"seed": seed, "windows": st["ks"]}      # kept: tb.json goes to power_reports
+            (pdir / "tb.json").write_text(json.dumps(tb, indent=1) + "\n")
+            print(f"{point}: scalars per window " + "; ".join(
+                f"{w} " + ", ".join(f"{n} 0x{x:x}" for n, x in v.items()) for w, v in st["ks"].items()), flush=True)
         times["stim"] = time.time() - t
         t = time.time()
         cmd = [tool("vsim"), "-c", "-work", str(pdir / "work"), "tb_opt", "+nospecify", "+notimingchecks",
                "-wlf", str(rdir / "vsim.wlf"), f"+VCD={vcd}", f"+DATA_HEX={rdir / 'stim' / 'data.hex'}",
                f"+DATA_N={st['n_new']}", f"+EXP_HEX={rdir / 'stim' / 'exp.hex'}", f"+EXP_N={len(st['exps'])}",
-               "-do", str(RUN_DO)]
+               *k_args, "-do", str(RUN_DO)]
         run_tool(cmd, rdir / "vsim.log", rdir)
         times["vsim"] = time.time() - t
         log = (rdir / "vsim.log").read_text(errors="replace")

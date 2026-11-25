@@ -37,6 +37,7 @@ FOLDS = ("TreeAccumulate", "SerialAccumulate")
 TYPE_KEYS = ("inTypes", "opType", "outType", "inType", "dtype", "laneType")
 W0 = {"SimdLanes": 1, "Mac": 8, "TreeAccumulate": 8, "SerialAccumulate": 8}   # the lanes each pair is measured at
 PAIRS = [(i, o) for i in (8, 16, 32, 64) for o in (8, 16, 32, 64) if o >= i]
+SCALARS = ("k", "k1", "k2")     # SimdLanes' scalar slots, each baked (k, k1, k2) or from its CSR (kCsr, ...; X99)
 
 
 def fail(msg: str) -> None:
@@ -76,17 +77,34 @@ def pair(params: dict) -> tuple[int, int]:
 
 def in_widths(params: dict) -> tuple[int, ...]:
     """The inputs' widths: (w,) when a and b share one, (w_a, w_b) for a mixed pair (X98, int8 x int32); a one-input
-    block's (w_in,)."""
+    block's (w_in,), a SimdLanes of one stream's (w_a,) (X99)."""
     ins = params.get("inTypes")
     if not ins:
         return pair(params)[:1]
     ws = tuple(width(t) for t in ins[:2])
-    return ws[:1] if ws[0] == ws[1] else ws
+    return ws[:1] if len(set(ws)) == 1 else ws
 
 
 def mixed(params: dict) -> bool:
     """A SimdLanes or Mac whose a and b differ in width (X98)."""
     return len(in_widths(params)) > 1
+
+
+def scalar(params: dict) -> bool:
+    """A SimdLanes scalar form (X99): k, k1 or k2 baked or read from its CSR (one stream with k, or axpby)."""
+    return any(params.get(n) is not None or params.get(f"{n}Csr") for n in SCALARS)
+
+
+def scalar_label(params: dict) -> str:
+    """The scalars as the op column shows them: "k csr", "k = 0", "k1 csr, k2 csr", "k1 = 3"; "" for none."""
+    return ", ".join(f"{n} csr" if params.get(f"{n}Csr") else f"{n} = {params[n]}" for n in SCALARS
+                     if params.get(f"{n}Csr") or params.get(n) is not None)
+
+
+def op_label(params: dict) -> str:
+    """The op column: the op, and a scalar form's scalars in brackets (mul (k csr), axpby (k1 = 3))."""
+    op = str(params.get("op", "-"))
+    return f"{op} ({scalar_label(params)})" if scalar(params) else op
 
 
 def pair_key(params: dict) -> tuple[tuple[int, ...], int]:
@@ -183,11 +201,19 @@ def load(tech: str, points: list[dict], gate: str = "1") -> dict:
 
 
 MIXED = "the mixed pairs"   # X98's points, measured at their own snax-forge commit beside their blocks'
+SCALAR = "the scalar forms"     # X99's SimdLanes points, the same
 
 
 def group(v: dict) -> str:
-    """The points one snax-forge commit covers: a block, or the mixed pairs (X98) of every block."""
-    return MIXED if mixed(v["params"]) else v["datapath"]
+    """The points one snax-forge commit covers: a block, the mixed pairs (X98) of every block, or SimdLanes' scalar
+    forms (X99)."""
+    return MIXED if mixed(v["params"]) else SCALAR if scalar(v["params"]) else v["datapath"]
+
+
+def source_key(v: dict) -> str:
+    """char.json's source.snax_forge_<key> for a point at another commit than the first row's: mixed, scalar or the
+    block."""
+    return {MIXED: "mixed", SCALAR: "scalar"}.get(group(v), v["datapath"])
 
 
 def block_commits(d: dict) -> dict:
@@ -217,7 +243,7 @@ def ehold(d: dict) -> dict:
 def params_cell(v: dict) -> list[str]:
     p = v["params"]
     lanes = p.get("lanes", p.get("inLanes", p.get("outLanes", "-")))
-    return [str(lanes), str(p.get("depth", "-")), str(p.get("op", "-")), pair_label(p), f"i{pair(p)[1]}"]
+    return [str(lanes), str(p.get("depth", "-")), op_label(p), pair_label(p), f"i{pair(p)[1]}"]
 
 
 def block_rows(D: dict, prefix: str) -> tuple[list[str], list[list]]:
@@ -228,7 +254,8 @@ def block_rows(D: dict, prefix: str) -> tuple[list[str], list[list]]:
         head += [f"{tag} area", f"{tag} comb", f"{tag} seq", f"{tag} flops"]
         head += [f"{tag} {w} {g}" for w in windows for g in ("e_comb", "e_flop", "e_dyn")]
     pts = [p for p in D[TECHS[0]] if p.startswith(prefix + "/")]
-    pts.sort(key=lambda p: (not is64(D[TECHS[0]][p]["params"]), D[TECHS[0]][p]["params"].get("op", ""),
+    pts.sort(key=lambda p: (scalar(D[TECHS[0]][p]["params"]), not is64(D[TECHS[0]][p]["params"]),
+                            D[TECHS[0]][p]["params"].get("op", ""),
                             pair_key(D[TECHS[0]][p]["params"]),
                             int(D[TECHS[0]][p]["params"].get("lanes", D[TECHS[0]][p]["params"].get("outLanes", 0))),
                             int(D[TECHS[0]][p]["params"].get("depth", 0))))
@@ -487,6 +514,55 @@ def mixed_section(D: dict) -> list[str]:
     return out
 
 
+# ---------------------------------------------------------------- SimdLanes' scalar forms (X99)
+def plain(d: dict, p: str, op: str | None = None, ins: list[str] | None = None) -> str | None:
+    """The plain SimdLanes beside scalar point p: two streams, no scalar, its pair and W (a one-stream point's a on
+    both inputs, or `ins`); op add for axpby and max, mul for a scale, or `op`."""
+    v = d[p]["params"]
+    a = v["inTypes"][0]
+    want = {**v, "inTypes": ins or (v["inTypes"] if len(v["inTypes"]) == 2 else [a, a]), "streams": 2,
+            "op": op or ("mul" if v["op"] == "mul" else "add"), **{n: None for n in SCALARS},
+            **{f"{n}Csr": False for n in SCALARS}}
+    return next((q for q, u in d.items() if u["datapath"] == "SimdLanes" and u["params"] == want), None)
+
+
+def scalar_section(D: dict) -> list[str]:
+    head = ["point", "op", "in", "out", "area", "comb", "seq", "seq cells", "e/fire", "e_comb", "idle/cycle",
+            "area - plain", "e/fire - plain", "comb - plain, in muls", "e_comb - plain, in muls"]
+    out = []
+    for t in TECHS:
+        d = D[t]
+        rows = []
+        for p in [q for q, v in d.items() if v["datapath"] == "SimdLanes" and scalar(v["params"])]:
+            v = d[p]["params"]
+            base, mul = plain(d, p), plain(d, p, "mul")
+            if base is None or mul is None:
+                fail(f"{t}: {p}: no plain SimdLanes at its pair and W beside it")
+            near = []      # a scale at a narrower a than its k: the mixed mul a x opType too (X98), the multiplier it is
+            if v["op"] == "mul" and len(v["inTypes"]) == 1 and width(v["inTypes"][0]) < width(v["opType"]):
+                near = [q for q in [plain(d, p, "mul", [v["inTypes"][0], v["opType"]])] if q]
+            val = lambda q: (float(d[q]["synth"]["area_um2"]), e(d, q, "busy"),  # noqa: E731
+                             float(d[q]["synth"]["comb_area_um2"]), e(d, q, "busy", "e_comb_pj"))
+            ab, eb, _, _ = val(base)
+            for q in [p, base, *near]:
+                s, pr = d[q]["synth"], d[q]["params"]
+                a, en, cm, ec = val(q)
+                delta = ["-"] * 4
+                if q == p:          # the scalar form less the plain one (the mixed mul is shown, not differenced)
+                    delta = [f(a - ab, 1), f(en - eb)]
+                    if v["op"] == "axpby":
+                        cb, ecb, cmul, emul = val(base)[2], val(base)[3], val(mul)[2], val(mul)[3]
+                        delta += [f"{(cm - cb) / cmul:.3f}", f"{(ec - ecb) / emul:.3f}"]
+                    else:
+                        delta += ["-", "-"]
+                rows.append([f"`{q}`", op_label(pr), pair_label(pr), f"i{pair(pr)[1]}", f(a, 1), f(cm, 1),
+                             f(float(s["seq_area_um2"]), 1), s["seq_cells"], f(en), f(ec), f(e(d, q, "idle")), *delta])
+        out += [f"**{t}: each scalar form, then the plain SimdLanes at its pair and W** (e/fire the busy e_dyn, pJ; "
+                "- plain: the scalar form less the plain one; in muls: axpby's comb and e_comb over the plain add's, "
+                "in units of the plain mul's at the pair; the mixed mul is shown beside a scale, not differenced):", "", table(head, rows), ""]
+    return out
+
+
 # ---------------------------------------------------------------- the model (char.json against the forge points)
 MODEL_DESIGNS = [("vecmul", "done/vecmul/forge_w{}"), ("vsum", "done/vsum/forge_w{}"), ("dot 4", "done/dot/forge4_w{}"),
                  ("dot 5", "done/dot/forge5_w{}")]
@@ -737,6 +813,15 @@ def main() -> int:
           "A SimdLanes or Mac whose inputs differ in width (X98): a at int8, b at int32, op and out at int32, as "
           "atax's second half multiplies A by t = A x. Each is its own char.json entry with its exact inTypes; the "
           "tables above key it by both input widths (in `i8xi32`).", "", *mixed_section(D)]
+    L += ["## Scalar forms", "",
+          "SimdLanes with a scalar (X99): one stream with k, `a * k` (gesummv's literal scale, k from a CSR) or "
+          "`max(a, k)` (relu, k = 0 baked), and axpby, `k1 * a + k2 * b` (gesummv's reordered forms, both from CSRs) "
+          "or `k1 * a + b` (axpy, k1 from a CSR or baked to 3). A scalar from a CSR is an input pin of the op's width "
+          "the program writes once: the testbench holds one random value on it a window. Each is its own char.json "
+          "entry at W = 1, `copy` over lanes; the tables above show its scalars in the op column, after the plain "
+          "SimdLanes rows. Beside each, the plain SimdLanes at its pair and W (two streams, no scalar: add for axpby "
+          "and max, mul for a scale); a scale of a narrower a than its k also beside the mixed mul (X98) of a and "
+          "the op's type, the multiplier it is.", "", *scalar_section(D)]
     designs, units, _ = model_syn2(D, J)
     n_designs, n_units, n_packers = model_syn2(D, J, narrow_designs())
     L += ["## Model", "",

@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X99**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X100**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -208,7 +208,7 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 ### X29 — The block grid
 
-- **Decided:** 27 int64 points: SimdLanes add, mul and the accumulating Mac at W = 1, 8, 32; TreeAccumulate W = 1–32; SerialAccumulate W = 2–32; LinkBuffer D = 1–16 (W = 1), D = 1 at W = 8, 32; beside them X89, X94, X97, X98.
+- **Decided:** 27 int64 points: SimdLanes add, mul and the accumulating Mac at W = 1, 8, 32; TreeAccumulate W = 1–32; SerialAccumulate W = 2–32; LinkBuffer D = 1–16 (W = 1), D = 1 at W = 8, 32; beside them X89, X94, X97, X98, X99.
 - **Why:** the forms forge uses, enough for a first-order model.
 - **Where:** `char/points.json`.
 
@@ -271,6 +271,12 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** a SimdLanes mul (W = 1) and the accumulating Mac (W = 8) with a at int8 and b at int32, op and out int32, gated, each its own `char.json` entry at its exact `inTypes`, built at their own snax-forge commit (`source.snax_forge_mixed`); `char_table` keys a pair by both input widths (`pair_key`, in column `i8xi32`) and the CSVs' `in_type` is `int8xint32`, the widest input kept for the rules that compare widths (`pair`).
 - **Why:** atax's second half multiplies A at int8 by t = A x at int32, and the cost lookup priced that block at int32 × int32 (snax-forge D176); measured, the Mac's comb is 7,690 µm² and 11.06 pJ a fire against 17,197 µm² and 25.67 pJ, 0.31 and 0.32 of the way from int8 × int8 to int32 × int32.
 - **Where:** `results/char/runs/2026-11-24_tiera3_x1.md`; `results/char/char_table.md`, "Mixed input pairs".
+
+### X99 — SimdLanes' scalar forms
+
+- **Decided:** the seven SimdLanes scalar forms snax-forge's estimate looks up, each its own `char.json` entry at W = 1 keyed by its scalars, `copy` over lanes, gated, built at their own snax-forge commit (`source.snax_forge_scalar`): one stream with k (`mul` by k from a CSR at int64 and at int8 → int32, `max` with k = 0 baked at int32) and axpby with k1 and k2 (both from CSRs at int64 and int32, k1 from a CSR alone, k1 baked to 3, at int32). A scalar from a CSR is an input pin of opType's width that the testbench holds at one random full-width value a window (drawn after the data, applied at the window's lead-in), outside the toggle check; `char_table` lists the forms after the plain SimdLanes rows, the scalars in the op column, and sets each beside the plain SimdLanes at its pair and W.
+- **Why:** gesummv's forms scale a matrix by a CSR scalar or end in one axpby, and axpy and relu have scalars too; `char.json` had no SimdLanes with a scalar, so the estimate priced all of them at 0 (`char.missing`). Measured, a scale by a CSR k is the plain multiplier's netlist (the int8 one X98's int8 × int32 mul) at 0.79 to 0.80 of its energy a fire, k held; axpby with both scalars from CSRs is two multipliers and an add in area (2.03 to 2.04 muls beyond the add) at 1.34 to 1.44 muls of energy; k1 baked to 3 is a second adder; relu's max with 0 a quarter of an add.
+- **Where:** `results/char/runs/2026-11-25_tiera4_x1.md`; `results/char/char_table.md`, "Scalar forms"; `power.md`, "Char".
 
 ### X52 · X82 — Reader and interconnect characterized
 
