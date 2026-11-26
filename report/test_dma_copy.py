@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """report/dma_copy.py: D184's price of mvt's 64 x 64 copy on snitch1_cg's banks, from the committed tables, is
-snax-forge's (327.87 nJ in the banks, 8 per burst, 13.49 nJ in the crossbar); the config's L1 bank is its 32 macros.
+322.41 nJ in the banks at itrs-lstp (8 per burst) and 13.49 nJ in the crossbar; the config's L1 bank is its 32 macros.
 
     pixi run python report/test_dma_copy.py
 """
@@ -25,7 +25,7 @@ def test_l1_bank():
 def test_d184_price():
     p = dc.d184_price(64 * 64, 32, 512, 64, "nangate45")
     assert p["superbank_banks"] == 8, p
-    assert abs(p["banks_nj"] - 327.87) < 0.01, p
+    assert abs(p["banks_nj"] - 322.41) < 0.01, p
     assert abs(p["crossbar_nj"] - 13.49) < 0.01, p
     assert abs(p["e_ro_pj"] - 1.839299) < 1e-5 and abs(p["e_wo_pj"] - 1.454513) < 1e-5, p
 

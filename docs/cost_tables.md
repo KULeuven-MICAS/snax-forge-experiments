@@ -46,13 +46,13 @@ Both stimuli are full rate: the case a design reaches when nothing stalls.
 
 ## SRAM banks
 
-**What a row gives.** Area $A$, read energy $e_{\mathrm{rd}}$ and write energy $e_{\mathrm{wr}}$ per access of one bank of $d$ words × $w$ bits, one read-write port. A 512 × 64 TCDM bank: 13,523 µm², 3.54 pJ per read, 6.47 pJ per write.
+**What a row gives.** Area $A$, read energy $e_{\mathrm{rd}}$ and write energy $e_{\mathrm{wr}}$ per access, and leakage power $P_{\mathrm{leak}}$ of one bank of $d$ words × $w$ bits, one read-write port. A 512 × 64 TCDM bank: 13,503 µm², 3.39 pJ per read, 6.45 pJ per write, 0.14 µW of leakage.
 
-**How it is found.** CACTI 7 at 45 nm (commit `1ffd8df`; itrs-hp cells and periphery, no ECC, design objective weighted to dynamic energy and area), one run per row (X47). CACTI works at 1.0 V, so its energies are scaled to the cell library's 1.10 V by the square of the voltage ratio:
+**How it is found.** CACTI 7 at 45 nm (commit `1ffd8df`; itrs-lstp cells and periphery, no ECC, design objective weighted to dynamic energy and area), one run per row (X47 · X100). lstp works at 1.1 V, the cell library's 1.10 V, so every number is CACTI's, unscaled. The leakage is the sum of the two CACTI prints:
 
-$$e = e_{\mathrm{CACTI}} \cdot \left(\frac{1.1}{1.0}\right)^2 = 1.21\thinspace e_{\mathrm{CACTI}}$$
+$$P_{\mathrm{leak}} = P_{\mathrm{sub}} + P_{\mathrm{gate}}$$
 
-Area and timing are CACTI's, unscaled.
+For the 512 × 64 bank, 0.093 + 0.048 = 0.14 µW; the 32 banks of a cluster leak 4.5 µW, 0.045 pJ a cycle at 10 ns. Low standby power is what an L1 at 100 MHz would use: the high-performance cells leaked 2.33 mW a bank.
 
 **How it is read.** As a lookup: take the exact row. Never interpolate: CACTI's numbers jump by up to 30 % between neighbouring sizes where its array organization changes (X48). A run's memory energy is its counted accesses times the rows of its banks $m$ (X50):
 

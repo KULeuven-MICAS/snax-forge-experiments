@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X100**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X101**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -174,11 +174,11 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 ## Memory
 
-### X47 — SRAM from CACTI 7
+### X47 · X100 — SRAM from CACTI 7, lstp cells
 
-- **Decided:** one-port banks, no ECC, from CACTI 7 (`pixi run ram-build`) at 45 nm itrs-hp, weighted to dynamic energy and area; energies scaled 1.0 to 1.10 V by 1.21.
-- **Why:** OpenRAM gives one power for read, write and idle; CACTI gives both energies and area in 0.2 s.
-- **Where:** `ram/README.md`; `results/ram/runs/2026-11-05_ram1_r1.md`.
+- **Decided:** one-port banks, no ECC, from CACTI 7 (`pixi run ram-build`) at 45 nm, itrs-lstp cells and peripherals, weighted to dynamic energy and area; lstp's 1.1 V is Nangate's 1.10 V, so nothing is scaled; a bank's leakage is CACTI's subthreshold plus gate leakage, one value. The itrs-hp table and macros are dropped.
+- **Why:** OpenRAM gives one power for read, write and idle; CACTI gives both energies, area and leakage in 0.2 s. An L1 at 100 MHz would use low-standby-power cells: at itrs-hp a 512 x 64 bank leaked 2.33 mW, so 32 banks 0.75 nJ a cycle, more than any design's dynamic energy; at lstp it leaks 0.14 µW with its area and energies within 0.2–4.3 % and a 1.02 ns read.
+- **Where:** `ram/README.md`; `results/ram/runs/2026-11-05_ram1_r1.md`, `results/ram/runs/2026-11-26_cost2_r1.md`.
 
 ### X48 — SRAM table a lookup
 
