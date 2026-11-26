@@ -5,8 +5,8 @@
 
 Reads results/char/<tech>/char_synth.csv and char_power.csv, char/points.json and blocks.json at the blocks'
 snax-forge commit (git show in the sibling checkout) for the params, and for the control factor the tier-done forge
-points' power_pt_modules.csv and synth_dc_modules.csv. Writes the flop constants (area, e_load, e_hold, from the int64
-points), the control factor and per block and type pair its comb area and energy per fire with a lanes rule (copy,
+points' power_pt_modules.csv and synth_dc_modules.csv. Writes the flop constants (area, leakage, e_load, e_hold, from the
+int64 points), the control factor and per block and type pair its comb area, leakage and energy per fire with a lanes rule (copy,
 interpolate, slope; X89; the stream blocks none, one point per entry, X94), and a Mac bank's two forms (X97, `bank`). The narrow points that check a rule
 (char_table.check_only) are not written. The fields and the model are in results/char/README.md; a clock gate counts
 as a sequential cell (X83 · X85). A block whose rows name another snax-forge commit than the first row's (FifoSlicer's)
@@ -39,7 +39,7 @@ LANE_TYPES = {"type": "dtype", "values": [f"{u}int{w}" for u in ("", "u") for w 
 PACKER = {"inLanes": {"type": "int", "min": 1}, "laneType": LANE_TYPES, "words": {"type": "int", "min": 1}}
 SLICER = {"words": {"type": "int", "min": 1}, "laneType": LANE_TYPES, "outLanes": {"type": "int", "min": 1}}
 STREAM = {"FifoPacker": PACKER, "FifoSlicer": SLICER}
-COMB = ("comb_um2", "e_comb_pj")
+COMB = ("comb_um2", "e_comb_pj", "leak_comb_uw")
 LOAD_KINDS = ("Mac", "TreeAccumulate", "SerialAccumulate")    # busy: every flop loads every cycle
 # the int64 tier-done points, every one with a gated power row (X37); the narrow ones (a types= set) are T7's check
 FORGE_POINTS = 48
@@ -112,6 +112,19 @@ def stats(vals: list[float]) -> dict:
 def flop_area(d: dict) -> dict:
     """The mean of seq_area / seq_cells over the points with sequential cells (flops and clock gates), its spread."""
     a = {p: float(v["synth"]["seq_area_um2"]) / int(v["synth"]["seq_cells"]) for p, v in d.items()
+         if int(v["synth"]["seq_cells"]) and ct.is64(v["params"])}
+    return {**stats(list(a.values())), "points": a}
+
+
+def seq_leak_uw(synth: dict) -> float:
+    """A point's sequential leakage: its flops' and its clock gates' (a clock gate counts as a sequential cell, as in
+    seq_area_um2)."""
+    return sum(float(synth[k]) for k in ("leak_reg_uw", "leak_clk_uw", "leak_seq_uw"))
+
+
+def flop_leak(d: dict) -> dict:
+    """A flop's leakage, as flop_area: the mean of the sequential leakage / seq_cells over the int64 points (X101)."""
+    a = {p: seq_leak_uw(v["synth"]) / int(v["synth"]["seq_cells"]) for p, v in d.items()
          if int(v["synth"]["seq_cells"]) and ct.is64(v["params"])}
     return {**stats(list(a.values())), "points": a}
 
@@ -223,7 +236,8 @@ def blocks(d: dict, points: list[dict], cat: dict) -> dict:
             print(f"{name}: {flops} sequential cells, its bits are {n_bits(dp, params)}")
         key = {k: v for k, v in params.items() if k not in SHAPE}
         win = "stream" if dp == "LinkBuffer" else "busy"
-        comb = {"comb_um2": float(d[name]["synth"]["comb_area_um2"]), "e_comb_pj": ct.e(d, name, win, "e_comb_pj")}
+        comb = {"comb_um2": float(d[name]["synth"]["comb_area_um2"]), "e_comb_pj": ct.e(d, name, win, "e_comb_pj"),
+                "leak_comb_uw": float(d[name]["synth"]["leak_comb_uw"])}
         if dp in STREAM:
             pt = {**comb, "flops": n_bits(dp, params), "load_bits": round(load_bits(dp, params), 6)}
         else:
@@ -261,22 +275,23 @@ def build(tech: str, d: dict, points: list[dict]) -> tuple[dict, dict]:
     commit = next(iter(d.values()))["synth"]["snax_forge_commit"]
     others = {f"snax_forge_{ct.source_key(v)}": v["synth"]["snax_forge_commit"]
               for v in d.values() if v["synth"]["snax_forge_commit"] != commit}
-    area = flop_area(d)
+    area, leak = flop_area(d), flop_leak(d)
     area_um2 = round(area["mean"], 6)
     load, hold = e_load(d), e_hold(d)
     hold_fj = round(hold["mean"], 4)
     cf = counter_factor(tech, area_um2, hold_fj)
     j = {"tech": tech, "clock_ns": float(ct.CLOCK),
-         "units": {"area": "um2", "energy": "pJ", "flop_energy": "fJ per flop per cycle"},
+         "units": {"area": "um2", "energy": "pJ", "flop_energy": "fJ per flop per cycle", "leakage": "uW"},
          "source": {"snax_forge": commit, **others, "snax_forge_experiments": sfe_commit(tech),
                     "stimulus": f"rand64 seed {ct.SEED}", "clk_gate": "1"},
-         "flop": {"area_um2": area_um2, "e_load_fj": round(load["mean"], 4), "e_hold_fj": hold_fj},
+         "flop": {"area_um2": area_um2, "leak_uw": round(leak["mean"], 6), "e_load_fj": round(load["mean"], 4),
+                  "e_hold_fj": hold_fj},
          "ctrl": {"counter_factor": cf["value"]}}
     bank = checks.bank_model(tech)
     if bank is not None:  # a Mac's bank of rows over its rows-1 entry (X97, snax-forge D193)
         j["bank"] = bank
     j["blocks"] = blocks(d, points, catalogue_at(commit))
-    return j, {"area": area, "load": load, "hold": hold, "ctrl": cf}
+    return j, {"area": area, "leak": leak, "load": load, "hold": hold, "ctrl": cf}
 
 
 # ---------------------------------------------------------------- the model, read from char.json
@@ -326,6 +341,11 @@ def comb_at(j: dict, datapath: str, params: dict, col: str = "e_comb_pj", rule_o
     if lo is None or hi is None:
         fail(f"{datapath} {params}: lanes {lanes} outside the points {sorted(at)}")
     return scale * (at[lo] if lo == hi else at[lo] + (at[hi] - at[lo]) * (lanes - lo) / (hi - lo))
+
+
+def leak_at(j: dict, datapath: str, params: dict) -> float:
+    """A block's leakage, uW (X101): its comb leakage at params' lanes (comb_at) plus its flops'."""
+    return comb_at(j, datapath, params, "leak_comb_uw") + n_bits(datapath, params) * j["flop"]["leak_uw"]
 
 
 def e_comb_at(j: dict, datapath: str, params: dict, rule_only: bool = False) -> float:
@@ -387,6 +407,9 @@ def main() -> int:
         a = s["area"]
         print(f"{t}: flop area {j['flop']['area_um2']} um2, the mean of seq_area / seq_cells over {a['n']} points, "
               f"{a['min']:.4f} to {a['max']:.4f} (range {a['range_pct']:.2f} %)")
+        x = s["leak"]
+        print(f"{t}: flop leakage {j['flop']['leak_uw']} uW, the mean over {x['n']} points, {x['min']:.4f} to "
+              f"{x['max']:.4f} (range {x['range_pct']:.2f} %)")
         for k, name in (("load", "e_load"), ("hold", "e_hold")):
             x = s[k]
             print(f"{t}: {name} {x['mean']:.4f} fJ over {x['n']} points, {x['min']:.4f} to {x['max']:.4f} "

@@ -71,6 +71,26 @@ class TestCharExport(unittest.TestCase):
         self.assertAlmostEqual(self.j["flop"]["area_um2"], sum(a) / len(a), places=5)
         self.assertLess(self.j["flop"]["area_um2"], DFFR_UM2)   # a gate is smaller than a DFFR
 
+    def test_flop_leak_is_the_mean(self):
+        a = [ce.seq_leak_uw(v["synth"]) / int(v["synth"]["seq_cells"]) for v in self.d.values()
+             if int(v["synth"]["seq_cells"]) and ct.is64(v["params"])]
+        self.assertAlmostEqual(self.j["flop"]["leak_uw"], sum(a) / len(a), places=6)
+
+    def test_block_leakage_near_dc(self):
+        # comb leakage by the lanes rule plus the flops': within 15 % of DC's on every block point, the median within 1 %
+        cat = ce.catalogue_at(next(iter(self.d.values()))["synth"]["snax_forge_commit"])
+        errs = []
+        for p in self.points:
+            name, dp = p["point"], p["datapath"]
+            if name not in self.d or dp in ce.STREAM or ct.check_only(dp, ce.as_measured(dp, p["params"], cat)):
+                continue
+            est = ce.leak_at(self.j, dp, ce.as_measured(dp, p["params"], cat))
+            errs.append(est / float(self.d[name]["synth"]["leak_power_uw"]) - 1)
+        errs.sort()
+        self.assertGreater(len(errs), 50)
+        self.assertLess(abs(errs[len(errs) // 2]), 0.01)
+        self.assertLess(max(abs(e) for e in errs), 0.15)
+
     def test_counter_factor(self):
         area, hold = self.j["flop"]["area_um2"], self.j["flop"]["e_hold_fj"]
         cf = ce.counter_factor(TECH, area, hold)
@@ -158,7 +178,8 @@ class TestCharExport(unittest.TestCase):
             self.assertLess(ct.pair_key({**p, "inTypes": ["int8", "int8"], "outType": "int64"}), ct.pair_key(p))
             self.assertLess(ct.pair_key(p), ct.pair_key({**p, "inTypes": ["int16", "int16"]}))
             self.assertEqual(x["points"], [{"lanes": p["lanes"], "comb_um2": float(self.d[name]["synth"]["comb_area_um2"]),
-                                            "e_comb_pj": ct.e(self.d, name, "busy", "e_comb_pj")}])
+                                            "e_comb_pj": ct.e(self.d, name, "busy", "e_comb_pj"),
+                                            "leak_comb_uw": float(self.d[name]["synth"]["leak_comb_uw"])}])
         self.assertEqual(self.j["source"]["snax_forge_mixed"], self.d["mac/acc_w8_i8xi32_i32"]["synth"]["snax_forge_commit"])
 
     def test_scalar_forms_own_entries(self):
@@ -174,7 +195,8 @@ class TestCharExport(unittest.TestCase):
             self.assertEqual((x["params"], x["lanes_rule"], scale), (want, "copy", 1.0))
             self.assertEqual(sum(e["params"] == want for e in self.j["blocks"]["SimdLanes"]), 1)
             self.assertEqual(x["points"], [{"lanes": 1, "comb_um2": float(self.d[name]["synth"]["comb_area_um2"]),
-                                            "e_comb_pj": ct.e(self.d, name, "busy", "e_comb_pj")}])
+                                            "e_comb_pj": ct.e(self.d, name, "busy", "e_comb_pj"),
+                                            "leak_comb_uw": float(self.d[name]["synth"]["leak_comb_uw"])}])
             self.assertAlmostEqual(ce.comb_at(self.j, "SimdLanes", {**p, "lanes": 8}), 8 * x["points"][0]["e_comb_pj"])
             self.assertIn(f"({ct.scalar_label(p)})", ct.op_label(p))
             self.assertEqual(ct.group(self.d[name]), ct.SCALAR)

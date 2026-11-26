@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X101**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X104**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -314,6 +314,12 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Why:** gated clusters barely idle-clock; a gate's 4.9 fJ a cycle is shared, so e_hold (0.0655 fJ) spreads 0.0024 to 0.0754 fJ and the hold term is negligible.
 - **Where:** `cost_tables.md`; `results/strm/runs/2026-11-14_cg2_r4.md`, `results/cluster/runs/2026-11-14_cg3_r1.md`.
 
+### X101 — Leakage in the tables
+
+- **Decided:** the tables carry the clock-gated points' leakage beside their area, no new runs: `char.json`'s `flop.leak_uw` (the mean sequential leakage per sequential cell over the int64 points, as `flop.area_um2`) and each point's `leak_comb_uw`, read by the entry's lanes rule; `streamer.csv` and `xbar.csv`'s `leak_uw` (DC's `leak_power_uw`). A block leaks $P_{comb} + n_{bits} P_{flop}$.
+- **Why:** leakage is paid every cycle a design runs and follows what is placed, as area does; over the 87 char points the formula is a median 0.09 % from DC, at most 10 %.
+- **Where:** `cost_tables.md`, "Leakage"; `results/char/README.md`; `results/runs/2026-11-26_cost2_r1c.md`.
+
 ## Sources
 
 ### X14 — tb.json is internal
@@ -455,6 +461,18 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** banks also read against the SAIF's counts: each burst reads and writes 8 banks (a 64-byte superbank), 32 768 reads and writes for 4096 bursts; D184's banks are 327.87 nJ counted, PT's 251.0 nJ (23.4 % under; PITFALLS PT7, PT11).
 - **Why:** the accesses are 8 times D184's, so a byte burst costs what a word does.
 - **Where:** `results/snb/runs/2026-11-19_tiera1_r7g.md`; `results/snb/nangate45/dma_copy.json`.
+
+### X102 — The DMA engine per burst
+
+- **Decided:** a copy's engine (the iDMA, its AXI-to-memory, the wide AXI path) costs `e_burst_pj` per burst on top of D184's L1 accesses: the `dma` and `axi` groups' energy in the copy's run window less their floor with the DMA idle (`dot3_w8_cg`'s run window), per burst, the mean of the int8 and int64 copies: 106.40 pJ (`dma_copy.json`'s `engine`).
+- **Why:** X95's copy cost 3× D184; the engine is about 106 pJ a burst, the rest is paid every cycle whatever runs (X103).
+- **Where:** `report/dma_copy.py`; `cost_tables.md`, "The DMA engine"; `results/runs/2026-11-26_cost2_r1c.md`.
+
+### X103 — The cluster's fixed parts
+
+- **Decided:** `cluster_fixed.json` holds, per group HWCOST leaves out but the banks, its area, its PrimePower leakage in `dot3_w8_cg`'s run window (the I-cache macros from the lstp table) and its idle floor in that window, summed into three parts: core, DMA, rest. The TCDM bank logic has no floor: it moves with L1 traffic.
+- **Why:** snax-forge's area parts and the energy run's cluster line need what every design pays (6.27 mW of leakage and 23.6 pJ a cycle at W = 8); one point stands for all, the floor moving by about 1 pJ a cycle over W = 2–32 (CG3). CSYN2's per-instance reports can replace the point.
+- **Where:** `report/cluster_fixed.py`; `cost_tables.md`, "The cluster's fixed parts"; `results/runs/2026-11-26_cost2_r1c.md`.
 
 ## Reports and comparison
 

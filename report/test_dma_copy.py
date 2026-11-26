@@ -30,6 +30,21 @@ def test_d184_price():
     assert abs(p["e_ro_pj"] - 1.839299) < 1e-5 and abs(p["e_wo_pj"] - 1.454513) < 1e-5, p
 
 
+def test_e_burst():
+    rep = dc.report("nangate45")
+    if not rep["runs"]:
+        return
+    floor = rep["engine"]["idle"]["pj_cycle"]
+    for r in rep["runs"].values():
+        e = r["e_burst"]
+        assert abs(e["pj"] - e["dma_pj"] - e["axi_pj"]) < 1e-9, e
+        want = (r["groups"]["dma"] * 1e3 - r["cycles"] * floor["dma"]) / r["d184"]["bursts"]
+        assert abs(e["dma_pj"] - want) < 1e-9, e
+    mean = sum(r["e_burst"]["pj"] for r in rep["runs"].values()) / len(rep["runs"])
+    assert abs(rep["engine"]["e_burst_pj"] - mean) < 1e-9
+    assert 90 < mean < 120, mean
+
+
 def test_no_reports_yet_is_empty():
     rep = dc.report("nangate45")
     assert all(r["run"].startswith("snitch1_cg_dma_transpose_") for r in rep["runs"].values())
