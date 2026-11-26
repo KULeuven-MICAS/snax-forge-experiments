@@ -114,3 +114,4 @@ Tool behaviour that gives wrong numbers, or none, without an error: one line eac
 ## Zips
 
 - **Z1.** Report zips change with dates, CPU times and cores: compare member by member, commit only meant changes.
+- **Z2.** On NFS a folder a process still holds cannot go (`.nfs` stubs), and `arc.workdir` ignores delete errors: `ram table -j 32` left 35 empty `tmp/cacti_*` folders. Run `pixi run arc check` after a batch and remove what it lists.
