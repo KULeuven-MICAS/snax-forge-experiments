@@ -9,8 +9,10 @@ checked against power_pt.csv within 0.01 %. Beside it snax-forge's price of the 
 each a read and a write on every bank of its superbank (DMA_BITS over the bank's width; results/ram/<tech>/
 ram_table.csv's bank of the config's L1 macros) and two crossbar accesses at a full crossbar's e_access on the banks
 (results/strm/<tech>/xbar.csv) less the read-only and the write-only saving (xbar_kinds.json's energy at that bank
-count). Writes results/snb/<tech>/dma_copy.json; --md
-prints the tables. Standard library and arc/arc.py.
+count). Then the engine's price per burst (X102): the dma and axi groups' energy less their idle floor (the same groups
+in a clock-gated cluster's run window, the DMA idle: IDLE_POINT's IDLE_WINDOW in results/cluster/<tech>/energy.json),
+per burst, and its mean over the runs, e_burst_pj. Writes results/snb/<tech>/dma_copy.json; --md prints the tables.
+Standard library and arc/arc.py.
 """
 
 from __future__ import annotations
@@ -28,6 +30,8 @@ import arc  # noqa: E402
 import cluster_energy as ce  # noqa: E402
 
 GROUPS = ROOT / "cluster" / "groups.json"
+ENGINE = ("dma", "axi")                          # the groups a copy drives beyond D184's banks and crossbar
+IDLE_POINT, IDLE_WINDOW = "dot3_w8_cg", "5_run"  # the engine's idle floor: a run window with the DMA idle
 POINTS = ROOT / "cluster" / "snb_points.json"
 KERNEL = "dma_transpose"
 BANK = re.compile(r"sram_d(\d+)_w(\d+)")
@@ -104,6 +108,20 @@ def run_copy(row: dict, pts: dict, cfg: dict, tech: str) -> dict | None:
                         "ratio": nj / price["nj"] if price["nj"] else None}}
 
 
+def idle_floor(tech: str) -> dict:
+    """pJ per cycle of each ENGINE group in IDLE_POINT's IDLE_WINDOW, the DMA idle."""
+    e = json.loads((ROOT / "results" / "cluster" / tech / "energy.json").read_text())
+    w = next(x for x in e[IDLE_POINT]["windows"] if x["name"] == IDLE_WINDOW)
+    return {g: w["groups"][g] for g in ENGINE}
+
+
+def e_burst(run: dict, floor: dict) -> dict:
+    """The engine's pJ per burst in one run: each ENGINE group's window energy less its floor over the window."""
+    n, c = run["d184"]["bursts"], run["cycles"]
+    per = {g: (run["groups"][g] * 1e3 - c * floor[g]) / n for g in ENGINE}
+    return {**{f"{g}_pj": v for g, v in per.items()}, "pj": sum(per.values())}
+
+
 def report(tech: str) -> dict:
     pts = json.loads(POINTS.read_text())
     cfg = json.loads(GROUPS.read_text())
@@ -114,6 +132,13 @@ def report(tech: str) -> dict:
         r = run_copy(row, pts, cfg, tech)
         if r is not None:
             out["runs"][row["run"]] = r
+    if out["runs"]:
+        floor = idle_floor(tech)
+        for r in out["runs"].values():
+            r["e_burst"] = e_burst(r, floor)
+        out["engine"] = {"groups": list(ENGINE), "idle": {"point": IDLE_POINT, "window": IDLE_WINDOW,
+                                                           "pj_cycle": floor},
+                         "e_burst_pj": sum(r["e_burst"]["pj"] for r in out["runs"].values()) / len(out["runs"])}
     return out
 
 
@@ -136,7 +161,12 @@ def markdown(rep: dict) -> str:
         out += [f"| {part}, measured ({groups}) | " + " | ".join(_e(r["against"][part]["measured_nj"]) for r in runs)
                 + " |", f"| {part}, D184 | " + " | ".join(_e(r["against"][part]["d184_nj"]) for r in runs) + " |"]
     out += ["| not priced (the rest) | " + " | ".join(_e(r["against"]["not_priced_nj"]) for r in runs) + " |",
-            "| measured / D184 | " + " | ".join(_e(r["against"]["ratio"]) for r in runs) + " |"]
+            "| measured / D184 | " + " | ".join(_e(r["against"]["ratio"]) for r in runs) + " |", "",
+            f"The engine per burst ({', '.join(ENGINE)} less their idle floor, pJ):", "",
+            "| | " + " | ".join(r["run"] for r in runs) + " |", "|---|" + "---|" * len(runs)]
+    out += [f"| {g} | " + " | ".join(_e(r["e_burst"][f"{g}_pj"]) for r in runs) + " |" for g in ENGINE]
+    out += ["| e_burst | " + " | ".join(_e(r["e_burst"]["pj"]) for r in runs) + " |", "",
+            f"Mean e_burst: {rep['engine']['e_burst_pj']:.2f} pJ."]
     return "\n".join(out) + "\n"
 
 

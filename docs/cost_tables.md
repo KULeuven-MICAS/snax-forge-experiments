@@ -1,6 +1,6 @@
 # The cost tables
 
-snax-forge's first-order cost model (HWCOST) prices a design from four files made in this repo, all on Nangate 45 nm: the SRAM banks (`results/ram/nangate45/ram_table.csv`), the streamer's data mover (`results/strm/nangate45/streamer.csv`), the TCDM sparse interconnect (`results/strm/nangate45/xbar.csv`) and its read-only and write-only inputs (`results/strm/nangate45/xbar_kinds.json`). This page explains, for each one, what a number means, how it was measured, how a cost is read between grid points and how far that can be trusted. The costs are for comparing design variants with each other, not for sign-off. Only dynamic energy is used. Every table comes from clock-gated synthesis (X83 · X85), `xbar_kinds.json`'s factors included.
+snax-forge's first-order cost model (HWCOST) prices a design from four files made in this repo, all on Nangate 45 nm: the SRAM banks (`results/ram/nangate45/ram_table.csv`), the streamer's data mover (`results/strm/nangate45/streamer.csv`), the TCDM sparse interconnect (`results/strm/nangate45/xbar.csv`) and its read-only and write-only inputs (`results/strm/nangate45/xbar_kinds.json`). This page explains, for each one, what a number means, how it was measured, how a cost is read between grid points and how far that can be trusted, then the leakage every table carries (X101), the DMA engine's price per burst (X102) and the cluster's fixed parts (X103). The costs are for comparing design variants with each other, not for sign-off. Dynamic energy and leakage are kept apart: snax-forge shows leakage only when asked. Every table comes from clock-gated synthesis (X83 · X85), `xbar_kinds.json`'s factors included.
 
 ## Symbols
 
@@ -19,6 +19,8 @@ snax-forge's first-order cost model (HWCOST) prices a design from four files mad
 | $e_{\mathrm{rd}}, e_{\mathrm{wr}}$ | an SRAM bank's energy per read and per write | pJ |
 | $N_{\mathrm{rd}}, N_{\mathrm{wr}}$ | a run's counted reads and writes of one bank | — |
 | $A$ | area | µm² |
+| $P_{\mathrm{leak}}$ | leakage power | µW |
+| $T_{\mathrm{clk}}$ | the clock period, 10 ns (X2) | ns |
 | $\alpha, \beta$ | the interconnect's energy per access and energy per cycle, fitted per bank count | pJ |
 | $f_{ro}, f_{wo}$ | the share of area a read-only or write-only input saves against a read-write one | — |
 | $g_{ro}(b), g_{wo}(b)$ | the share of energy per access a read-only or write-only input saves against a read-write one, at $b$ banks | — |
@@ -30,9 +32,9 @@ snax-forge's first-order cost model (HWCOST) prices a design from four files mad
 
 | File | Prices | Grid | Area | Energy |
 |---|---|---|---|---|
-| `ram_table.csv` | one SRAM bank, one read-write port | $d$ 32–4096 (step 32) × $w$ 8–256 (step 8): 4,095 rows | $A$ | $e_{\mathrm{rd}}$, $e_{\mathrm{wr}}$ |
-| `streamer.csv` | one reader (a writer is priced the same) | $D$ {2, 4, 8, 16} × $L$ 1–7 × $C$ {1, 2, 4, 6, 8, 16}: 168 points | $A$ | $e_{\mathrm{beat}}$ |
-| `xbar.csv` | the sparse interconnect, 64-bit ports, every input read-write | $n$ {4, 8, …, 64} × $b$ {16, 32, 64}: 27 points | $A$ | $e_{\mathrm{access}}$ where $n \le b$ (17 points) |
+| `ram_table.csv` | one SRAM bank, one read-write port | $d$ 32–4096 (step 32) × $w$ 8–256 (step 8): 4,095 rows | $A$, $P_{\mathrm{leak}}$ | $e_{\mathrm{rd}}$, $e_{\mathrm{wr}}$ |
+| `streamer.csv` | one reader (a writer is priced the same) | $D$ {2, 4, 8, 16} × $L$ 1–7 × $C$ {1, 2, 4, 6, 8, 16}: 168 points | $A$, $P_{\mathrm{leak}}$ | $e_{\mathrm{beat}}$ |
+| `xbar.csv` | the sparse interconnect, 64-bit ports, every input read-write | $n$ {4, 8, …, 64} × $b$ {16, 32, 64}: 27 points | $A$, $P_{\mathrm{leak}}$ | $e_{\mathrm{access}}$ where $n \le b$ (17 points) |
 | `xbar_kinds.json` | read-only and write-only inputs | $n$ {16, 32, 64} × $b$ {16, 32, 64}, each all read-write, all read-only, all write-only: 27 points, 18 of them powered ($n \le b$) | $f_{ro}, f_{wo}$; $c_{rw}, c_{ro}, c_{wo}, k_n, k_b, k_0$ | $g_{ro}(b), g_{wo}(b)$ at $b$ {16, 32, 64} |
 
 ## How the logic is measured
@@ -46,13 +48,13 @@ Both stimuli are full rate: the case a design reaches when nothing stalls.
 
 ## SRAM banks
 
-**What a row gives.** Area $A$, read energy $e_{\mathrm{rd}}$ and write energy $e_{\mathrm{wr}}$ per access of one bank of $d$ words × $w$ bits, one read-write port. A 512 × 64 TCDM bank: 13,523 µm², 3.54 pJ per read, 6.47 pJ per write.
+**What a row gives.** Area $A$, read energy $e_{\mathrm{rd}}$ and write energy $e_{\mathrm{wr}}$ per access, and leakage power $P_{\mathrm{leak}}$ of one bank of $d$ words × $w$ bits, one read-write port. A 512 × 64 TCDM bank: 13,503 µm², 3.39 pJ per read, 6.45 pJ per write, 0.14 µW of leakage.
 
-**How it is found.** CACTI 7 at 45 nm (commit `1ffd8df`; itrs-hp cells and periphery, no ECC, design objective weighted to dynamic energy and area), one run per row (X47). CACTI works at 1.0 V, so its energies are scaled to the cell library's 1.10 V by the square of the voltage ratio:
+**How it is found.** CACTI 7 at 45 nm (commit `1ffd8df`; itrs-lstp cells and periphery, no ECC, design objective weighted to dynamic energy and area), one run per row (X47 · X100). lstp works at 1.1 V, the cell library's 1.10 V, so every number is CACTI's, unscaled. The leakage is the sum of the two CACTI prints:
 
-$$e = e_{\mathrm{CACTI}} \cdot \left(\frac{1.1}{1.0}\right)^2 = 1.21\thinspace e_{\mathrm{CACTI}}$$
+$$P_{\mathrm{leak}} = P_{\mathrm{sub}} + P_{\mathrm{gate}}$$
 
-Area and timing are CACTI's, unscaled.
+For the 512 × 64 bank, 0.093 + 0.048 = 0.14 µW; the 32 banks of a cluster leak 4.5 µW, 0.045 pJ a cycle at 10 ns. Low standby power is what an L1 at 100 MHz would use: the high-performance cells leaked 2.33 mW a bank.
 
 **How it is read.** As a lookup: take the exact row. Never interpolate: CACTI's numbers jump by up to 30 % between neighbouring sizes where its array organization changes (X48). A run's memory energy is its counted accesses times the rows of its banks $m$ (X50):
 
@@ -223,6 +225,46 @@ $n$ = 16, $b$ = 16, every input read-only. Factor: 42,048.5 × (1 − 0.3953) = 
 
 **Range.** Both forms were checked for $n$ and $b$ in 16–64. Beyond 64 inputs both extrapolate linearly; the cost per crosspoint drifts up about 3 % from 40 inputs on, so a 128-input interconnect may land a few percent above the line. Not synthesized.
 
+## Leakage
+
+**What a table gives.** Every table carries its points' leakage power beside their area (X101): `leak_uw` in `ram_table.csv` (CACTI's subthreshold plus gate leakage, X47 · X100), `streamer.csv` and `xbar.csv` (DC's `leak_power_uw` of the point), and in `char.json` a flop's `flop.leak_uw` and each block point's `leak_comb_uw`. Leakage is read as the area is: the streamer and the interconnect by the same interpolation, a block's comb leakage by its entry's lanes rule, a bank by exact lookup.
+
+**A block.** As its area, its comb part plus its flops:
+
+$$P_{\mathrm{leak}} = P_{\mathrm{comb}} + n_{\mathrm{bits}}\thinspace P_{\mathrm{flop}}$$
+
+$P_{\mathrm{flop}}$ is the mean over the 21 int64 points with sequential cells of their sequential leakage (registers and clock gates) per sequential cell, as $A_{\mathrm{flop}}$ is found: 0.0836 µW on nangate45, 0.0816 to 0.0845. Over the 87 char points the formula is a median 0.09 % under DC's leakage, at most 10 % (`link/d4_w1_i8`).
+
+**How it becomes energy.** Leakage is paid every cycle a design runs, whatever it does:
+
+$$E_{\mathrm{leak}} = P_{\mathrm{leak}}\cdot N\cdot T_{\mathrm{clk}}$$
+
+Example: a reader at $D$ = 8, $L$ = 2, $C$ = 4 leaks 0.018 µW/µm² of its area; the logic leaks about that much everywhere (char 0.016–0.026, streamers 0.018–0.019), the interconnect a little more (0.024–0.029). The 32 lstp banks of a cluster leak 4.5 µW in all. $T_{\mathrm{clk}}$ is 10 ns everywhere (X2); leakage energy scales linearly with it, so the numbers are for comparison at that clock.
+
+## The DMA engine
+
+**What it gives.** `results/snb/nangate45/dma_copy.json`'s `engine.e_burst_pj`: the energy one burst of a DMA copy inside L1 costs in the engine (the iDMA, its AXI-to-memory and the wide AXI path), on top of the burst's bank and crossbar accesses (snax-forge D184): 106.40 pJ (X102).
+
+**How it is found.** From the gate-level copy of a 64 × 64 matrix (`snitch1_cg_dma_transpose_int8` and `_int64`, X95): the `dma` and `axi` groups' energy in the copy's window, less what they spend per cycle with the DMA idle (their floor in `dot3_w8_cg`'s run window: 4.81 and 6.03 pJ a cycle), per burst:
+
+$$e_{\mathrm{burst}} = \frac{(E_{\mathrm{dma}} - C\thinspace p^{\mathrm{idle}}_{\mathrm{dma}}) + (E_{\mathrm{axi}} - C\thinspace p^{\mathrm{idle}}_{\mathrm{axi}})}{N_{\mathrm{burst}}}$$
+
+with $C$ = 10,967 cycles and $N_{\mathrm{burst}}$ = 4,096: 72.32 + 30.41 = 102.73 pJ at int8, 76.13 + 33.94 = 110.07 pJ at int64, the mean 106.40 pJ. The element's size moves it by 7 %, so one price serves every type.
+
+## The cluster's fixed parts
+
+**What it gives.** `results/cluster/nangate45/cluster_fixed.json` (X103): what the cluster pays whatever its accelerators, per group of `cluster/groups.json` that is not one of HWCOST's five parts or a TCDM bank, in three parts: the core (the Snitch core with its mul/div, the I-cache logic and macros), the DMA, and the rest (AXI, peripherals, TCDM bank logic, the CSR path). Per group: area, leakage and idle floor.
+
+**How it is found.** From `dot3_w8_cg`'s run window: area from DC's hierarchy (`breakdown.json`), leakage from PrimePower's hierarchy in the window (the leakage column summed into the groups; the I-cache macros from the lstp table, not the reports' older macros), idle floor from the window's dynamic energy per group (`energy.json`), the accelerator running and the DMA idle. The TCDM bank logic has no floor: it moves with L1 traffic (2 pJ a cycle idle, 5–16 running) and is left to be priced per access.
+
+| Part | Area (µm²) | Leakage (µW) | Idle floor (pJ a cycle) |
+|---|---:|---:|---:|
+| core | 88,914 | 847 | 4.76 |
+| DMA | 73,719 | 1,407 | 4.81 |
+| rest | 227,921 | 4,017 | 14.03 |
+
+At 10 ns the fixed parts cost $6.27\ \mathrm{mW} \cdot 10\ \mathrm{ns} + 23.6\ \mathrm{pJ} \approx 86$ pJ a cycle. Their area is exactly what HWCOST leaves out of the synthesized cluster but its banks (`breakdown.json`'s `not_costed_um2`).
+
 ## Reading a table
 
 Every interpolated lookup is linear along one axis at a time, between the two grid values around the query; a grid value is taken exactly. On an axis measured in a scale $g$, with grid values $x_0 < x < x_1$ and table values $y_0, y_1$:
@@ -279,6 +321,6 @@ The SRAM table has every size as a row, so it needs no such check; fits of it we
 
 ## Sources
 
-- Decisions: X1–X4, X7–X9, X22 (the flows); X47–X50 (SRAM); X52 · X82, X53 · X54 (streamer and interconnect); X79, X83 · X85 (clock gating); X70, X71 (input kinds).
+- Decisions: X1–X4, X7–X9, X22 (the flows); X47–X50, X100 (SRAM); X101–X103 (leakage, the DMA engine, the fixed parts); X52 · X82, X53 · X54 (streamer and interconnect); X79, X83 · X85 (clock gating); X70, X71 (input kinds).
 - Run notes: `results/ram/runs/2026-11-05_ram1_r1.md`, `2026-11-06_ram1_r2.md`, `2026-11-06_ram1_r3.md`; `results/strm/runs/2026-11-06_strm1_r1.md`, `2026-11-06_strm1_r2.md`, `2026-11-13_cg2_r1.md` to `2026-11-14_cg2_r4.md`; `results/xbar_mix/runs/2026-11-11_csyn1_r3c.md`, `2026-11-11_csyn1_r3d.md`; `results/runs/2026-11-16_cg5_r1.md`, `2026-11-16_cg5_r2.md` (the grid clock-gated).
-- Code: `ram/ram.py`, `strm/gen.py`, `report/strm_table.py`, `strm/xbar_mix.py`, `report/xbar_kinds.py`.
+- Code: `ram/ram.py`, `strm/gen.py`, `report/strm_table.py`, `strm/xbar_mix.py`, `report/xbar_kinds.py`, `report/char_export.py`, `report/dma_copy.py`, `report/cluster_fixed.py`.

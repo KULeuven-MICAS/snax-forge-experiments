@@ -5,8 +5,9 @@ reference interpolation it copies.
   pixi run strm-table [--tech nangate45] [--loo]
 
 Joins the gated rows (clk_gate 1) of results/streamer/<tech>/ and results/xbar/<tech>/ (synth_dc.csv, power_pt.csv)
-into results/strm/<tech>/streamer.csv (depth, loops, channels, area_um2, e_beat_pj, flops, slack_ns, fmax_mhz,
-status) and xbar.csv (inputs, banks, area_um2, e_access_pj, ...; energy empty where inputs > banks). Table.at reads
+into results/strm/<tech>/streamer.csv (depth, loops, channels, area_um2, leak_uw, e_beat_pj, flops, slack_ns, fmax_mhz,
+status) and xbar.csv (inputs, banks, area_um2, leak_uw, e_access_pj, ...; energy empty where inputs > banks; leak_uw is
+DC's leakage, X101). Table.at reads
 them as X53 · X54 say, extrapolating along the two outermost grid values only when asked (X83 · X85); --loo prints
 the leave-one-out check. docs/cost_tables.md has the rule and worked examples. Standard library only.
 """
@@ -23,8 +24,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 READER_AXES = ("depth", "loops", "channels")
 XBAR_AXES = ("inputs", "banks")
-STREAMER_COLUMNS = ["depth", "loops", "channels", "area_um2", "e_beat_pj", "flops", "slack_ns", "fmax_mhz", "status"]
-XBAR_COLUMNS = ["inputs", "banks", "area_um2", "e_access_pj", "flops", "slack_ns", "fmax_mhz", "status"]
+STREAMER_COLUMNS = ["depth", "loops", "channels", "area_um2", "leak_uw", "e_beat_pj", "flops", "slack_ns", "fmax_mhz",
+                    "status"]
+XBAR_COLUMNS = ["inputs", "banks", "area_um2", "leak_uw", "e_access_pj", "flops", "slack_ns", "fmax_mhz", "status"]
 
 
 # ---------------------------------------------------------------- the reference interpolation
@@ -154,7 +156,8 @@ def build(source: str, tech: str, gate: str = "1", root: Path = ROOT) -> list[di
             row = {"inputs": s["inputs"], "banks": s["banks"]}
             e_col = "e_access_pj"
             measured = int(s["inputs"]) <= int(s["banks"])
-        row.update({"area_um2": s["area_um2"], "flops": s["seq_cells"], "slack_ns": s["slack_ns"],
+        row.update({"area_um2": s["area_um2"], "leak_uw": s.get("leak_power_uw", ""), "flops": s["seq_cells"],
+                    "slack_ns": s["slack_ns"],
                     "fmax_mhz": s["fmax_mhz"], e_col: ""})
         status = s["status"] if not s["status"].startswith("ok") else ""
         if measured:

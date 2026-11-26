@@ -1,4 +1,4 @@
-"""ram/ram.py - SRAM bank area and energy from CACTI 7 at 45 nm (itrs-hp), one point per (depth, width).
+"""ram/ram.py - SRAM bank area, energy and leakage from CACTI 7 at 45 nm (itrs-lstp), one point per (depth, width).
 
     pixi run ram point 512 64                # one point: config, run, parse, print
     pixi run ram table -j 32                 # the lookup table -> results/ram/nangate45/ram_table.csv
@@ -7,8 +7,8 @@
 
 Each point runs in a temporary folder under tmp/ with tech_params/ linked in (PITFALLS C1); what is kept of it goes
 into ram/runs/cacti.zip, rewritten once at the end of a command, and a point whose config and CACTI commit are
-unchanged there is not rerun. Dynamic energies are scaled from CACTI's 1.0 V to Nangate 45 nm's 1.10 V by
-(1.1 / 1.0)^2; area and timing are not scaled. Details in ram/README.md.
+unchanged there is not rerun. Cells and peripherals are itrs-lstp, whose 1.1 V is Nangate 45 nm's 1.10 V, so
+nothing is scaled; a bank's leakage is CACTI's subthreshold plus gate leakage. Details in ram/README.md.
 """
 
 import argparse
@@ -36,9 +36,11 @@ CACTI_KEEP = ("key.json", "rc", "cacti.out", "cacti.err")   # per point; the res
 TABLE_OUT = REPO / "results" / "ram" / "nangate45" / "ram_table.csv"
 
 TECH_U = 0.045
-VDD_CACTI = 1.0      # itrs-hp at 45 nm (tech_params/45nm.dat, -Vdd hp column); checked against CACTI's printout
+CELL = "itrs-lstp"   # cells and peripherals: low standby power, the realistic choice for an L1 at 100 MHz
+FLAVOR = 1           # CACTI's index of itrs-lstp in its tech tables (-Vdd[1] in the debug print)
+VDD_CACTI = 1.1      # itrs-lstp at 45 nm (tech_params/45nm.dat, -Vdd lstp column); checked against CACTI's printout
 VDD_TARGET = 1.10    # Nangate 45 nm typical
-E_SCALE = (VDD_TARGET / VDD_CACTI) ** 2
+E_SCALE = (VDD_TARGET / VDD_CACTI) ** 2   # 1.0 at lstp
 OBJECTIVE = "0:50:0:0:50"   # weights: delay, dynamic power, leakage power, cycle time, area
 TIMEOUT_S = 3600
 
@@ -83,8 +85,8 @@ def make_config(d, w, objective=OBJECTIVE, ecc=False):
     set_line(lines, "-single ended read ports", "-single ended read ports 0")
     set_line(lines, "-UCA bank count", "-UCA bank count 1")
     set_line(lines, "-technology (u)", f"-technology (u) {TECH_U}")
-    set_line(lines, "-Data array cell type", '-Data array cell type - "itrs-hp"')
-    set_line(lines, "-Data array peripheral type", '-Data array peripheral type - "itrs-hp"')
+    set_line(lines, "-Data array cell type", f'-Data array cell type - "{CELL}"')
+    set_line(lines, "-Data array peripheral type", f'-Data array peripheral type - "{CELL}"')
     set_line(lines, "-output/input bus width", f"-output/input bus width {wc}")
     set_line(lines, "-operating temperature (K)", "-operating temperature (K) 300")
     set_line(lines, "-cache type", '-cache type "ram"')
@@ -178,7 +180,7 @@ FIELDS = {  # CACTI's printed label -> (key, unit factor to ours)
     "Cycle time (ns):": ("t_cycle_ns", 1.0),
     "Total dynamic read energy per access (nJ):": ("e_rd_raw_pj", 1e3),
     "Total dynamic write energy per access (nJ):": ("e_wr_raw_pj", 1e3),
-    "Total leakage power of a bank (mW):": ("leak_uw", 1e3),
+    "Total leakage power of a bank (mW):": ("leak_sub_uw", 1e3),
     "Total gate leakage power of a bank (mW):": ("leak_gate_uw", 1e3),
     "Data array: Area (mm2):": ("data_area_um2", 1e6),
     "Best Ndwl :": ("ndwl", 1),
@@ -190,7 +192,7 @@ FIELDS = {  # CACTI's printed label -> (key, unit factor to ours)
 }
 ORG = ("ndwl", "ndbl", "nspd", "ndcm", "ndsam_l1", "ndsam_l2")
 COLUMNS = ["depth", "width", "width_cacti", "bits", "status", "area_um2", "data_area_um2", "height_um", "width_um",
-           "e_rd_pj", "e_wr_pj", "e_rd_raw_pj", "e_wr_raw_pj", "e_rd_bit_fj", "e_wr_bit_fj", "leak_uw", "leak_gate_uw",
+           "e_rd_pj", "e_wr_pj", "e_rd_raw_pj", "e_wr_raw_pj", "e_rd_bit_fj", "e_wr_bit_fj", "leak_uw", "leak_sub_uw", "leak_gate_uw",
            "t_access_ns", "t_cycle_ns", "ndwl", "ndbl", "nspd", "ndcm", "ndsam_l1", "ndsam_l2", "area_eff_pct",
            "objective", "ecc", "cacti_commit", "run"]
 ERROR_RE = re.compile(r"error|must|invalid|not supported|cannot|abort|fault|terminate", re.I)
@@ -238,7 +240,7 @@ def row(d, w, objective=OBJECTIVE, ecc=False, tag=""):
          "cacti_commit": json.loads(files["key.json"])["cacti_commit"], "run": name}
     rc = files["rc"].decode().strip()
     vals = parse(files)
-    need = ("t_access_ns", "e_rd_raw_pj", "e_wr_raw_pj", "data_area_um2", "height_um")
+    need = ("t_access_ns", "e_rd_raw_pj", "e_wr_raw_pj", "data_area_um2", "height_um", "leak_sub_uw", "leak_gate_uw")
     if rc != "0" or not all(k in vals for k in need):
         errs = error_lines(files)
         r["status"] = f"failed: rc {rc}: " + (errs[0] if errs else "no results in cacti.out")
@@ -247,6 +249,7 @@ def row(d, w, objective=OBJECTIVE, ecc=False, tag=""):
     r["area_um2"] = vals["height_um"] * vals["width_um"]
     r["e_rd_pj"] = vals["e_rd_raw_pj"] * E_SCALE
     r["e_wr_pj"] = vals["e_wr_raw_pj"] * E_SCALE
+    r["leak_uw"] = vals["leak_sub_uw"] + vals["leak_gate_uw"]   # one leakage: CACTI prints the two apart
     r["e_rd_bit_fj"] = r["e_rd_pj"] * 1e3 / wc
     r["e_wr_bit_fj"] = r["e_wr_pj"] * 1e3 / wc
     r["status"] = "ok" if wc == w else f"ok (width padded to {wc})"
@@ -254,25 +257,29 @@ def row(d, w, objective=OBJECTIVE, ecc=False, tag=""):
 
 
 def vdd_check():
-    """Run 512 x 64 once with CACTI's debug print of the tech tables; every itrs-hp block (flavor 0) must be at
-    VDD_CACTI. The data peripherals and the SRAM cell load flavor 0; flavor 1 (lstp, 1.1 V) is the sleep
-    transistor (power gating off) and flavor 3 (lp-dram, 1.1 V) the DRAM wordline device."""
+    """Run 512 x 64 once with CACTI's debug print of the tech tables; every CELL block (flavor FLAVOR) must be at
+    VDD_CACTI. The data peripherals, the SRAM cell and the sleep transistor (power gating off) load flavor 1; flavor 3
+    (lp-dram, 1.1 V) is the DRAM wordline device, and no itrs-hp block (flavor 0) may be loaded."""
     cfg = make_config(512, 64) + '-print option - "debug detail"\n'
     key = {"cfg": cfg, "cacti_commit": cacti_commit()}
     files = CACHE.get("vdd_check")
     if not (files and "key.json" in files and json.loads(files["key.json"]) == key):
         files = run_cacti("vdd_check", cfg, key, split_err=False)
-    v0 = [float(m) for m in re.findall(r"^-Vdd\[0\]: ([0-9.eE+-]+) \(V\)", files["cacti.out"].decode(), re.M)]
-    if not v0 or any(abs(v - VDD_CACTI) > 1e-9 for v in v0):
-        sys.exit(f"vdd check: CACTI's itrs-hp Vdd lines are {sorted(set(v0))}, not {VDD_CACTI}: stop "
-                 f"({CACTI_ZIP.relative_to(REPO)}, vdd_check/)")
-    return len(v0)
+    out = files["cacti.out"].decode()
+    vdd = lambda f: [float(m) for m in re.findall(rf"^-Vdd\[{f}\]: ([0-9.eE+-]+) \(V\)", out, re.M)]
+    v, hp = vdd(FLAVOR), vdd(0)
+    if not v or any(abs(x - VDD_CACTI) > 1e-9 for x in v) or hp:
+        sys.exit(f"vdd check: CACTI's {CELL} Vdd lines are {sorted(set(v))}, not {VDD_CACTI}"
+                 + (f", and {len(hp)} itrs-hp lines are loaded" if hp else "")
+                 + f": stop ({CACTI_ZIP.relative_to(REPO)}, vdd_check/)")
+    return len(v)
 
 
 def run_table(j, csv_path):
     """Run (or reuse) every point of the lookup table and write it, one row per point CACTI models."""
     n = vdd_check()
-    print(f"vdd check: {n} itrs-hp (-Vdd[0]) lines, all {VDD_CACTI} V; energies scaled by {E_SCALE:.4f}")
+    print(f"vdd check: {n} {CELL} (-Vdd[{FLAVOR}]) lines, all {VDD_CACTI} V, none itrs-hp; energies scaled by "
+          f"{E_SCALE:.4f}")
     jobs = [(d, w) for d in TABLE_DEPTHS for w in TABLE_WIDTHS]
     t0 = time.time()
     with ThreadPoolExecutor(max_workers=j) as ex:
@@ -294,14 +301,14 @@ def run_table(j, csv_path):
         for r in ok:
             wr.writerow(r)
     print(f"wrote {csv_path} ({len(ok)} rows, CACTI {ok[0]['cacti_commit']}, objective {OBJECTIVE}, "
-          f"energies x {E_SCALE:.4f})")
+          f"{CELL}, energies x {E_SCALE:.4f})")
 
 
 # ---------------------------------------------------------------------------------------------------------------
 # Macros: a Liberty model (.lib -> .db) and a behavioural Verilog model per (depth, width[, mask]), from the
 # cached CACTI point and Nangate 45 nm's units and pin values (ram/nangate45_pins.json). Never committed.
 
-GEN_VERSION = 1
+GEN_VERSION = 2
 PINS = REPO / "ram" / "nangate45_pins.json"
 LIB_RUNS = REPO / "ram" / "runs" / "lib"
 LC_SHELL = os.environ.get("LC_SHELL", "/esat/micas-data/software/Synopsys/lc/Y-2026.03-SP2/bin/lc_shell")
@@ -383,16 +390,16 @@ def gen_lib(name, d, w, mask, r, pv):
     o(f" * {name}: {d} words x {w} bits, one read-write port" + (f", byte enables every {mask} bits" if mask else "")
       + ", read data one cycle after the read (rising edge), as tc_sram at NumPorts 1, Latency 1.")
     o(f" * Generated by snax-forge-experiments ram/ram.py (lib, generator version {GEN_VERSION}); never committed.")
-    o(f" * Numbers: CACTI 7 commit {r['cacti_commit']}, 45 nm itrs-hp, objective {r['objective']}, ECC off, point "
+    o(f" * Numbers: CACTI 7 commit {r['cacti_commit']}, 45 nm {CELL}, objective {r['objective']}, ECC off, point "
       f"{r['run']} of ram/runs/cacti.zip ({d} x {r['width_cacti']}" + (", ports keep the real width " + str(w) if w != r["width_cacti"] else "") + ").")
-    o(f" * Energies are CACTI's at 1.0 V scaled to 1.1 V by {E_SCALE:.4f} (as results/ram/nangate45/ram_table.csv):")
+    o(f" * Energies are CACTI's at {VDD_CACTI} V, scaled to {VDD_TARGET} V by {E_SCALE:.4f} (as results/ram/nangate45/ram_table.csv):")
     o(f" *   read {r['e_rd_pj']} pJ, write {r['e_wr_pj']} pJ per access, written below in the library's internal-power "
       f"unit ({pv['ipu']}).")
     o(" * Energy is charged once per access, on clk_i's rising edge, when req_i is high; nothing when req_i is low.")
     if mask:
         o(" * A byte-masked write is charged as a full write: CACTI gives one write energy per access.")
     o(f" * Area {r['area_um2']} um2 (CACTI height x width), access {r['t_access_ns']} ns, cycle {r['t_cycle_ns']} ns, "
-      f"leakage {r['leak_uw']} uW (not used by the cost model).")
+      f"leakage {r['leak_uw']} uW (subthreshold plus gate).")
     o(f" * Units, nom_* and operating conditions are Nangate 45 nm's, pin capacitances and setup/hold DFF_X1's, the "
       f"read data's drive BUF_X4's (ram/nangate45_pins.json, md5 {pv['md5']}).")
     o(" */")

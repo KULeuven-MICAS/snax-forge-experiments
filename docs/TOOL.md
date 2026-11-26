@@ -9,7 +9,7 @@ Every command by job, one example each; flows in the folder READMEs and [`power.
 | Synthesize | `syn` | 3 |
 | Measure the energy | `pwr` | 4 |
 | Make the memories | `ram-build`, `ram` | 5 |
-| Make the tables HWCOST reads | `strm-table`, `xbar-kinds`, `char-export`, `char-table` | 6 |
+| Make the tables HWCOST reads | `strm-table`, `xbar-kinds`, `char-export`, `char-table`, `cluster-fixed` | 6 |
 | Take a design through the whole cluster | `cluster`, `cluster/batch.sh`, `cluster-hwcost`, `cluster-breakdown`, `cluster-energy`, `cluster-sweep`, `ge-check`, `snb`, `snb-report`, `dma-copy` | 7 |
 | Compare forge with the HLS tools | `compare`, `compare-hls` | 8 |
 | Keep the repository clean | `arc`, `test`, `lint` | 9 |
@@ -90,6 +90,7 @@ snax-forge copies them with `pixi run import-costs`; meanings in [`cost_tables.m
 - **`xbar-kinds`** (`report/xbar_kinds.py`): `xbar_kinds.json`, area forms (X71) and energy factors (X93). Example: `pixi run xbar-kinds`.
 - **`char-export`** (`report/char_export.py`): `char.json` from gated rows (X37, X83 · X85). Example: `pixi run char-export`.
 - **`char-table`** (`report/char_table.py`): `results/char/char_table.md`. Example: `pixi run char-table`.
+- **`cluster-fixed`** (`report/cluster_fixed.py`): `results/cluster/<tech>/cluster_fixed.json`, the cluster's fixed parts (X103). Example: `pixi run cluster-fixed --md`.
 
 ## 7. Take a design through the whole cluster
 
@@ -110,7 +111,7 @@ Steps and checks in [`cluster/README.md`](../cluster/README.md); one cluster run
 | `snb rtl RUN`, `snb gls RUN`, `snb pwr RUN [--cores 16] [--again]` (all `[--allow-branch]`) | Snitch-only runs `<config>_<kernel>_<type>` (X91) |
 | `snb syn CONFIG [--cores 16] [--again]` | a config's netlist, adopted with no DC if its sha256 matches |
 | `snb-report [--md]` | E11's numbers into `e11.json` (X92) |
-| `dma-copy [--md]` | `dma_transpose` against D184 into `dma_copy.json` (X95) |
+| `dma-copy [--md]` | `dma_transpose` against D184 into `dma_copy.json` (X95), and the engine's price per burst `e_burst_pj` (X102) |
 
 `snb`'s steps: [`cluster/README.md`](../cluster/README.md#snb-the-snitch-only-clusters).
 
