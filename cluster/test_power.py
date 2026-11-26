@@ -332,6 +332,15 @@ def test_pack2_report_zip_size():
         assert outer["report_zip"]["members"] == 6 and power.arc.has(run_zip, "pwr/windows.json")
 
 
+def test_quiet_do_file_and_own_ref():
+    txt = power.quiet_do_file(Path("/w/quiet"), 7)
+    assert "vcd" not in txt and "set check_mark 7" in txt and "{/w/quiet/obs_log.txt}" in txt, txt
+    assert txt.splitlines()[-1] == "quit -f" and "run -all" in txt and f"{{{power.WRAP}/obs_o}}" in txt, txt
+    res = {"checks": {"quiet": {"windows": [{"mark": 1, "kind": "dma_in", "cycles": 305},
+                                            {"mark": 2, "kind": "run", "cycles": 185}]}}}
+    assert power.own_ref(res) == {1: 305, 2: 185}
+    assert power.own_ref({"checks": {}}) is None and power.own_ref({"checks": {"quiet": {"status": "FAIL"}}}) is None
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

@@ -204,6 +204,33 @@ def do_file(pdir: Path, check_mark: int, wrap: str = WRAP) -> str:
     return "\n".join(L) + "\n"
 
 
+def quiet_do_file(qdir: Path, check_mark: int, wrap: str = WRAP) -> str:
+    """The rtl step's quiet run (X108): obs_o's changes into obs_log.txt, no VCD, up to the program's exit."""
+    q = lambda p: "{" + str(p) + "}"   # noqa: E731
+    L = ["# the quiet build on the RTL (cluster/cluster.py rtl): obs_o's changes, no dump",
+         "onbreak {resume}", "onfinish stop",
+         f"set obs_sig {q(wrap + '/obs_o')}",
+         f"set check_mark {check_mark}",
+         f"set obs_f [open {q(qdir / 'obs_log.txt')} w]",
+         "when -label obs $obs_sig {",
+         "  set v [examine -radix unsigned $obs_sig]",
+         '  puts $obs_f "$now $v"',
+         "  flush $obs_f",
+         "}",
+         "run -all",
+         'echo "quiet: run ended at $now"',
+         "close $obs_f",
+         "quit -f"]
+    return "\n".join(L) + "\n"
+
+
+def own_ref(rtl_res: dict) -> dict[int, int] | None:
+    """The point's own quiet run on the RTL (rtl/check.json's checks.quiet.windows, X108) as {mark: cycles}, or None
+    for a point whose rtl step had no quiet run."""
+    wins = (rtl_res.get("checks", {}).get("quiet") or {}).get("windows")
+    return {w["mark"]: w["cycles"] for w in wins} if wins else None
+
+
 def vcd_header_counts(vcd: Path) -> dict:
     """The VCD header's $scope and $var lines and its $timescale."""
     scopes = vars_ = 0
@@ -243,14 +270,21 @@ def preflight(p: dict, images: dict, args) -> dict:
         if r.get("status") != "PASS":
             sys.exit(f"{name} of {point} is {r.get('status')} ({step1.relative_to(ROOT)}), not PASS")
     cl.synpy.use_source("cluster")
-    synz = cl.synpy.run_zip(TECH, point, cl.synpy.DEFAULT_CLOCK)
+    of = cl.netlist_point(point)
+    synz = cl.synpy.run_zip(TECH, of, cl.synpy.DEFAULT_CLOCK)
     if not arc.has(synz, cl.NETLIST):
-        sys.exit(f"no {cl.NETLIST} in {synz.relative_to(ROOT)}: run pixi run cluster syn {point} first")
+        sys.exit(f"no {cl.NETLIST} in {synz.relative_to(ROOT)}: run pixi run cluster syn {of} first")
     dc = json.loads(arc.read(synz, "tech.json"))["resolved"]["cluster"]
     z = cl.RTL_ZIPS / f"{point}.zip"
     prov = json.loads(arc.read(z, "provenance.json"))
-    shas = {"bundle": prov["elf_sha256"], "step 1": rtl_res["bundle"]["elf_sha256"], "step 2": dc["elf_sha256"],
+    shas = {"bundle": prov["elf_sha256"], "step 1": rtl_res["bundle"]["elf_sha256"],
             "step 3": gls_res["elf_sha256"], "bundle zip's sw/forge.elf": sha(arc.read(z, "sw/forge.elf"))}
+    if of == point:
+        shas["step 2"] = dc["elf_sha256"]
+    else:
+        diff = cl.adoption_diff(point, of)
+        if diff:
+            sys.exit(f"{point} adopts {of}'s netlist but their hardware differs: {diff[:5]}")
     if len(set(shas.values())) != 1:
         sys.exit(f"forge.elf differs between the bundle zip and the steps: {shas}")
     for m in ("sw/forge_quiet.elf", "sw/obs_marks.json"):
@@ -271,7 +305,8 @@ def preflight(p: dict, images: dict, args) -> dict:
     if not cells.is_file():
         sys.exit(f"no cell models at {cells}")
     return {"repos": repos, "images": images, "step1": step1, "synz": synz, "dc": dc, "z": z, "prov": prov,
-            "netlist_sha": netlist_sha, "quiet_sha": quiet, "cells": cells}
+            "netlist_sha": netlist_sha, "quiet_sha": quiet, "cells": cells, "netlist_of": of,
+            "own_ref": own_ref(rtl_res)}
 
 
 def build(work: Path, steps, pre: dict) -> tuple[Path, Path, str]:
@@ -452,11 +487,14 @@ def part1(p: dict, images: dict, args, pre: dict | None = None) -> dict:
             wins = windows(obs, marks)
         except ValueError as e:
             raise cl.StepFailed("windows", pdir / "obs_log.txt", str(e)) from None
-        ok, cmp_rows = against_ref(wins, REF_CYCLES.get(point))
+        ref = pre.get("own_ref")
+        src = "the point's quiet run on the RTL (rtl/check.json, X108)"
+        if ref is None:
+            ref, src = REF_CYCLES.get(point), "the quiet vsim run on the RTL (snax-forge out/core1-r2)"
+        ok, cmp_rows = against_ref(wins, ref)
         res["windows"] = wins
-        res["windows_ref"] = {"source": "the quiet vsim run on the RTL (snax-forge out/core1-r2)",
-                              "tol": REF_TOL, "rows": cmp_rows,
-                              "status": "NONE" if point not in REF_CYCLES else "PASS" if ok else "FAIL"}
+        res["windows_ref"] = {"source": src, "tol": REF_TOL, "rows": cmp_rows,
+                              "status": "NONE" if ref is None else "PASS" if ok else "FAIL"}
         (pdir / "windows.json").write_text(json.dumps(wins, indent=2) + "\n")
         for r in cmp_rows:
             print(f"  window {r['mark']} {r['kind']:<16s} {r['cycles']:5d} cycles, RTL {r['ref']}, diff {r['diff']}",
@@ -821,6 +859,9 @@ def part2(p: dict, pre: dict, args, p1: dict, site: Site | None = None) -> dict:
         for m in sorted(p["srams"]):
             dbs.append(pt / "macros" / f"{m}.db")
             dbs[-1].write_bytes(arc.read(cl.ram_zip(m), f"{m}.db"))
+        ok, res["macro_db"] = check.db_check({d.stem: d.read_bytes() for d in dbs})
+        if not ok:                                         # NB (X107): PT reads the lstp macros only
+            raise cl.Stop(f"a macro's .db is not the lstp one: {res['macro_db']}")
         (pt / "saifs").mkdir()
         saifs = {}
         for w in wins:

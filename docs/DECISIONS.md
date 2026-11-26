@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X104**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X110**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -410,7 +410,7 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 ### X68 — Cluster constraints and budget
 
-- **Decided:** `cluster/cluster.sdc`: reset and static ports false-pathed, I/O delay 30 % (AXI), 10 % (CSR); one cluster run alone at `--cores 16`, `SYN_IGNORE_LOAD=1` (PITFALLS DC13), replacing X16 · X59 here.
+- **Decided:** `cluster/cluster.sdc`: reset and static ports false-pathed, I/O delay 30 % (AXI), 10 % (CSR); one cluster run alone at `--cores 16` (24 where the licences allow, X109), `SYN_IGNORE_LOAD=1` (PITFALLS DC13), replacing X16 · X59 here.
 - **Why:** a cluster sits in a SoC; cluster runs are few.
 - **Where:** `cluster/README.md`.
 
@@ -473,6 +473,42 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** `cluster_fixed.json` holds, per group HWCOST leaves out but the banks, its area, its PrimePower leakage in `dot3_w8_cg`'s run window (the I-cache macros from the lstp table) and its idle floor in that window, summed into three parts: core, DMA, rest. The TCDM bank logic has no floor: it moves with L1 traffic.
 - **Why:** snax-forge's area parts and the energy run's cluster line need what every design pays (6.27 mW of leakage and 23.6 pJ a cycle at W = 8); one point stands for all, the floor moving by about 1 pJ a cycle over W = 2–32 (CG3). CSYN2's per-instance reports can replace the point.
 - **Where:** `report/cluster_fixed.py`; `cost_tables.md`, "The cluster's fixed parts"; `results/runs/2026-11-26_cost2_r1c.md`.
+
+### X104 — A point's sets are its forge command
+
+- **Decided:** `pixi run forge` takes the point's `sets` and nothing else; `W` is the point's label. The dot points carry `W=<W>` as their first set, so their command and bundles are unchanged.
+- **Why:** tier A's recipes name their lanes `W_x1` or take W from a default, and their sets are `paper/`'s rows copied verbatim.
+- **Where:** `cluster/cluster.py` (`bundle_command`); `cluster/README.md`.
+
+### X105 — One netlist per hardware
+
+- **Decided:** a point with `netlist_of` adopts its twin's netlist when the twin's syn run has one and the two bundles' hardware (`bundle/snax_forge.hjson`, `bundle/rtl/`) is byte-equal: no DC, `syn/adopted.json` in its run zip, and `gls` and `pwr` run its own ELF on the twin's netlist. When the hardware differs it is synthesized on its own.
+- **Why:** a schedule or a layout changes the program, not the cluster; DC is most of a point's time.
+- **Where:** `cluster/cluster.py` (`adopt`, `netlist_point`), `cluster/check.py` (`hardware_diff`).
+
+### X106 — Dynamic and leakage per group, apart
+
+- **Decided:** `cluster-energy` records each group's leakage per window (µW, and nJ over the window) beside its dynamic energy, never summed into it; `groups.json` maps the groups to snax-forge's eight parts (core, DMA, datapath, control, streamers, crossbar, memory, rest; `acc_csr`, `acc_interface` and `tcdm_logic` in rest). Amends X13 for the reports only.
+- **Why:** §D compares dynamic alone and dynamic with leakage; the sum is made where it is read.
+- **Where:** `report/cluster_energy.py`, `cluster/groups.json` (CSYN2 R3).
+
+### X107 — The lstp macros only
+
+- **Decided:** before DC and before PT the three macros' `.db` are checked against COST2 R1b's sha256 (`check.LSTP_DB_SHA256`); a mismatch stops the step; the checksums go into `tech.json` and `pt_check.json`.
+- **Why:** every cluster netlist before CSYN2 linked the hp macros; the two kinds differ only in their numbers.
+- **Where:** `cluster/check.py` (`db_check`); `results/ram/runs/2026-11-26_cost2_r1b.md`.
+
+### X108 — The programs checked before DC
+
+- **Decided:** the `rtl` step also runs the quiet ELF on the RTL with the macros (`obs_o` logged, no VCD) and the point's energy run on SNAX-GVSoC (`flow --energy`, kept as `ge/<point>.json`). Its gates are the data line of both default runs and `[SUCCESS]` with no output in all three; D123 and the quiet windows are recorded, never gates: within 10 % OK, within 20 % WARNING, beyond INVESTIGATE, a window of at most 20 cycles SMALL (its gap in cycles). `pwr` checks the netlist's windows against the point's own quiet RTL run. Amends X67 · X81 · X84 for the `rtl` step.
+- **Why:** a wrong program is found before a night of DC; the RTL's timing is the truth, the model's gap is investigated, not gated (Ryan, 26 Nov).
+- **Where:** `cluster/cluster.py` (`gvsoc_energy`, `quiet_rtl`, `quiet_windows`), `cluster/check.py` (`data_ok`, `quiet_compare`).
+
+### X109 — One run at a time, more cores
+
+- **Decided:** `cluster/batch.sh` takes `CORES` (DC's cores and PT's threads; 24 where the licences allow, else 16), `--steps`, and `KEEP_GOING=1` (a failed step skips the rest of its point, the batch goes on); still one DC, Questa or PT run at a time.
+- **Why:** parallel cluster runs would share snax_cluster's generated folders and the Scala caches; more cores per run is safe.
+- **Where:** `cluster/batch.sh`.
 
 ## Reports and comparison
 
