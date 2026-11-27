@@ -10,6 +10,7 @@
  "rows": {
   "mvt_column": {
    "kernel": "mvt",
+   "banks": "PT",
    "netlist_nj": 44.49440230619332,
    "netlist_parts": {
     "datapath": 7.4433092611200005,
@@ -84,6 +85,7 @@
   },
   "mvt_read_once": {
    "kernel": "mvt",
+   "banks": "PT",
    "netlist_nj": 40.5444373939401,
    "netlist_parts": {
     "datapath": 12.213295213959999,
@@ -158,6 +160,7 @@
   },
   "bicg_two_pass": {
    "kernel": "bicg",
+   "banks": "PT",
    "netlist_nj": 40.81795142046873,
    "netlist_parts": {
     "datapath": 7.594252326760001,
@@ -232,6 +235,7 @@
   },
   "bicg_read_once": {
    "kernel": "bicg",
+   "banks": "PT",
    "netlist_nj": 36.56115399419761,
    "netlist_parts": {
     "datapath": 11.956056191770005,
@@ -306,6 +310,7 @@
   },
   "atax_read_once": {
    "kernel": "atax",
+   "banks": "PT",
    "netlist_nj": 38.459554166223,
    "netlist_parts": {
     "datapath": 15.831023164950002,
@@ -380,6 +385,7 @@
   },
   "atax_column_shared_movers": {
    "kernel": "atax",
+   "banks": "PT",
    "netlist_nj": 50.28194683790311,
    "netlist_parts": {
     "datapath": 17.453067369099998,
@@ -454,6 +460,7 @@
   },
   "gesummv_x_read_once": {
    "kernel": "gesummv",
+   "banks": "PT",
    "netlist_nj": 46.0185811614965,
    "netlist_parts": {
     "datapath": 8.69898623842,
@@ -528,6 +535,7 @@
   },
   "gesummv_factor_out": {
    "kernel": "gesummv",
+   "banks": "PT",
    "netlist_nj": 56.68553765588417,
    "netlist_parts": {
     "datapath": 8.67345485196,
@@ -602,6 +610,7 @@
   },
   "gesummv_literal": {
    "kernel": "gesummv",
+   "banks": "PT",
    "netlist_nj": 179.11416352174462,
    "netlist_parts": {
     "datapath": 30.00781688268,
@@ -676,6 +685,7 @@
   },
   "mvt_dma_copy": {
    "kernel": "mvt",
+   "banks": "PT",
    "netlist_nj": 666.839826420072,
    "netlist_parts": {
     "datapath": 8.385657733698,
@@ -750,6 +760,7 @@
   },
   "atax_dma_copy": {
    "kernel": "atax",
+   "banks": "PT",
    "netlist_nj": 706.6995196985499,
    "netlist_parts": {
     "datapath": 11.94053515504,
@@ -824,6 +835,7 @@
   },
   "mvt_contiguous_w8": {
    "kernel": "mvt",
+   "banks": "PT",
    "netlist_nj": 345.9190983532951,
    "netlist_parts": {
     "datapath": 110.60970065970601,
@@ -898,6 +910,7 @@
   },
   "mvt_padded_w8": {
    "kernel": "mvt",
+   "banks": "PT",
    "netlist_nj": 309.88641652820206,
    "netlist_parts": {
     "datapath": 102.04826227770602,
@@ -972,6 +985,7 @@
   },
   "bicg_sequential_contiguous_w8": {
    "kernel": "bicg",
+   "banks": "PT",
    "netlist_nj": 287.88612422036573,
    "netlist_parts": {
     "datapath": 103.64745860854,
@@ -1046,6 +1060,7 @@
   },
   "mvt_column_pipeline": {
    "kernel": "mvt",
+   "banks": "PT",
    "netlist_nj": 39.02940148258802,
    "netlist_parts": {
     "datapath": 7.635398661,
@@ -1120,6 +1135,7 @@
   },
   "bicg_two_pass_pipeline": {
    "kernel": "bicg",
+   "banks": "PT",
    "netlist_nj": 36.43147689250001,
    "netlist_parts": {
     "datapath": 7.776372049999999,
@@ -1194,6 +1210,7 @@
   },
   "bicg_pipeline_contiguous_w8": {
    "kernel": "bicg",
+   "banks": "PT",
    "netlist_nj": 293.3420103302198,
    "netlist_parts": {
     "datapath": 109.4002902,

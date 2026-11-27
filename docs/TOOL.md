@@ -10,7 +10,7 @@ Every command by job, one example each; flows in the folder READMEs and [`power.
 | Measure the energy | `pwr` | 4 |
 | Make the memories | `ram-build`, `ram` | 5 |
 | Make the tables HWCOST reads | `strm-table`, `xbar-kinds`, `char-export`, `char-table`, `cluster-fixed` | 6 |
-| Take a design through the whole cluster | `cluster`, `cluster/batch.sh`, `cluster-hwcost`, `cluster-breakdown`, `cluster-energy`, `cluster-sweep`, `ge-check`, `tier-check`, `model-fit`, `ablation`, `snb`, `snb-report`, `dma-copy` | 7 |
+| Take a design through the whole cluster | `cluster`, `cluster/batch.sh`, `cluster-hwcost`, `cluster-breakdown`, `cluster-energy`, `cluster-sweep`, `ge-check`, `tier-check`, `model-fit`, `ablation`, `bank-counts`, `snb`, `snb-report`, `dma-copy` | 7 |
 | Compare forge with the HLS tools | `compare`, `compare-hls` | 8 |
 | Keep the repository clean | `arc`, `test`, `lint` | 9 |
 
@@ -115,7 +115,8 @@ Steps and checks in [`cluster/README.md`](../cluster/README.md); one cluster run
 | `snb-report [--md]` | E11's numbers into `e11.json` (X92) |
 | `dma-copy [--md]` | `dma_transpose` against D184 into `dma_copy.json` (X95), and the engine's price per burst `e_burst_pj` (X113) |
 | `model-fit [--md]` | the idle floor, $e_{l2}$ and the refusal fractions from the committed `dot3` and `mvt_v4` runs, checked on tier A; `model_fit.json` (X111, X112) |
-| `ablation [--md]` | tier A's energy runs re-priced one term at a time against the netlist; `ablation.json` |
+| `ablation [--md]` | tier A's energy runs re-priced one term at a time against the netlist (its banks counted where `bank_counts.json` has them); `ablation.json` |
+| `bank-counts [--points A,B] [--md]` | the TCDM banks' reads and writes from each window's SAIF in the run zips, at CACTI's prices, beside PT's; `bank_counts.json` (X114; the server) |
 
 `snb`'s steps: [`cluster/README.md`](../cluster/README.md#snb-the-snitch-only-clusters).
 

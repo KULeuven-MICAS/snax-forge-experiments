@@ -9,7 +9,8 @@ streamers, crossbar and DMA (D205), the L2 <-> L1 transfers' bank accesses and e
 group's e_burst (dma_copy.json) with no crossbar access (X113). Per step, the six parts' total over the netlist's
 (energy.json), the pairs PAIRS' changes at both levels, and per kernel the dynamic top-1 and tau-a against the
 netlist (tier_check's rules). An energy run already priced with the terms is step `run`: re-pricing it must add
-nothing. Writes results/cluster/<tech>/ablation.json; --md prints the tables.
+nothing. The netlist's banks are bank_counts.json's counted energy where it has the point (X114), PT's otherwise
+(`banks` says which). Writes results/cluster/<tech>/ablation.json; --md prints the tables.
 """
 
 from __future__ import annotations
@@ -62,6 +63,8 @@ def report(tech: str) -> dict:
     e_burst = json.loads((ROOT / "results" / "snb" / tech / "dma_copy.json").read_text())["engine"]["e_burst_pj"]
     parts = json.loads(tc.GROUPS.read_text())["parts"]
     paper = tc.paper_rows()
+    bcf = res / "bank_counts.json"
+    counted = json.loads(bcf.read_text())["points"] if bcf.is_file() else {}
     rows = {}
     for p in mf.tier_a(en):
         pt, pid = p["point"], p["point"].removesuffix("_cg")
@@ -70,8 +73,14 @@ def report(tech: str) -> dict:
         ge = mf._ge(tech, pt)
         marks = {w["mark"] for w in en[pt]["windows"]}
         nl = mf.program(en, pt, parts)
+        banks = "PT"
+        if pt in counted:
+            nl["nj"]["memory_pt"] = nl["nj"]["memory"]
+            nl["nj"]["memory"] = counted[pt]["total"]["counted_nj"]
+            banks = "counted"
         st = steps(ge, marks, fit, e_burst, mf.shape_of(tech, paper, pt))
-        rows[pid] = {"kernel": tc.kernel_of(pid), "netlist_nj": sum(nl["nj"].values()), "netlist_parts": nl["nj"],
+        rows[pid] = {"kernel": tc.kernel_of(pid), "banks": banks,
+                     "netlist_nj": sum(v for k, v in nl["nj"].items() if k in tc.DYN), "netlist_parts": nl["nj"],
                      "steps": {s: {"nj": sum(v.values()), "parts": v} for s, v in st.items()}}
         for s in rows[pid]["steps"].values():
             s["ratio"] = s["nj"] / rows[pid]["netlist_nj"]

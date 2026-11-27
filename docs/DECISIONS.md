@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X114**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X115**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -430,7 +430,7 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 - **Decided:** a cluster's macros as averaged PT measures them (PT7's bias noted), no counts.
 - **Why:** comparing measured with HWCOST's counts is the point (banks within 1 % on `dot3_w16`).
-- **Where:** `cluster/README.md`.
+- **Where:** `cluster/README.md`. Amended by X114.
 
 ### X78 · X80 · X86 — Cluster sweep over W
 
@@ -533,6 +533,12 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** `e_burst_pj` is the `dma` group alone, less its floor in `dot3_w8_cg`'s configuration window (3.37 pJ a cycle, X112's), per burst, the mean of X102's two copies: 78.08 pJ (76.18 at int8, 79.99 at int64). A copy's beat takes no crossbar access: the copies' crossbar sits at its floor (−0.06 and 1.11 pJ a burst above it, against D184's 3.29). Amends X102.
 - **Why:** the netlist books the AXI in the rest, so X102's 106.40 pJ put the AXI's share in the DMA part and the copies at 1.22 of the netlist's DMA; the DMA reaches the banks through its own superbank port.
 - **Where:** `report/dma_copy.py`, `report/model_fit.py`; `cost_tables.md`, "The DMA engine"; `results/cluster/runs/2026-11-27_cost3_r1.md`.
+
+### X114 — A cluster's banks counted from its SAIFs
+
+- **Decided:** a cluster's TCDM banks cost their reads and writes, counted per window from the SAIF, at the bank's `ram_table.csv` prices: writes = T1(`we_i`) / $t_{clk}$, reads = (T1(`req_i`) − T1(`we_i`)) / $t_{clk}$, exact because a bank writes only with `req_i` high; PT's averaged number kept beside it (`bank_counts.json`). The logic stays averaged PT (X20 · X60 · X74). Amends X75.
+- **Why:** averaged PT takes `req_i` and `we_i` as independent (PITFALLS PT7) and puts the DMA's accesses 34–67 % under their price; the macro's Liberty model is CACTI's energy per access, so counts × prices is what time-based PT gives for it. Ryan, 27 Nov: counted on all 17 tier A points, with one time-based cross-check.
+- **Where:** `report/bank_counts.py`; `results/cluster/runs/2026-11-27_cost3_r1.md`.
 
 ## Reports and comparison
 
