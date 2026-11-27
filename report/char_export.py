@@ -13,7 +13,7 @@ as a sequential cell (X83 · X85). A block whose rows name another snax-forge co
 has it as source.snax_forge_<block>; the mixed pairs (X98, a SimdLanes or Mac whose a and b differ in width, each
 its own entry with its exact inTypes) as source.snax_forge_mixed; SimdLanes' scalar forms (X99, k, k1, k2 baked or
 from a CSR, each its own entry by those params) as source.snax_forge_scalar; SimdLanes' requant, axpbypcz and
-threshold (X111, each its own entry at its own types and slots) as source.snax_forge_e2e1.
+threshold (X116, each its own entry at its own types and slots) as source.snax_forge_e2e1.
 """
 from __future__ import annotations
 
@@ -200,6 +200,13 @@ def as_measured(datapath: str, params: dict, cat: dict) -> dict:
     return {k: v for k, v in params.items() if k in spec["params"] or v is not False}
 
 
+def params_of(d: dict, point: dict, cat: dict) -> tuple[dict, dict]:
+    """(a point's params as measured, the catalogue they are checked against): `cat`, the first row's commit's, or an
+    X116 point's own commit's (the first has no k3, d, lo, hi or HaloLink)."""
+    own = catalogue_at(d[point["point"]]["synth"]["snax_forge_commit"]) if ct.group(d[point["point"]]) == ct.E2E1 else cat
+    return as_measured(point["datapath"], point["params"], own), own
+
+
 def check_params(datapath: str, params: dict, cat: dict, where: str) -> None:
     spec = {"params": STREAM[datapath]} if datapath in STREAM else cat.get(datapath)
     if spec is None:
@@ -226,7 +233,7 @@ def type_free(params: dict) -> dict:
 
 def blocks(d: dict, points: list[dict], cat: dict) -> dict:
     """char.json's blocks: per block one entry per params (lanes and depth aside, so one per type pair), params
-    checked against blocks.json `cat` (the first row's commit), an X111 point's against blocks.json at its own commit
+    checked against blocks.json `cat` (the first row's commit), an X116 point's against blocks.json at its own commit
     (the first has no k3, d, lo, hi or HaloLink); seq_cells against the bits printed where they differ (a clock gate
     is a sequential cell). A narrow fold's entry has one point, at W0, and the slope rule: the
     int64 entry's cost per lane between SLOPE_WS times w_in / 64 (X89). The points char_table.check_only names are
@@ -234,16 +241,15 @@ def blocks(d: dict, points: list[dict], cat: dict) -> dict:
     out: dict = {}
     for p in points:
         name, dp = p["point"], p["datapath"]
-        own = catalogue_at(d[name]["synth"]["snax_forge_commit"]) if ct.group(d[name]) == ct.E2E1 else cat
-        params = as_measured(dp, p["params"], own)
+        params, own = params_of(d, p, cat)
         check_params(dp, params, own, name)
-        if ct.check_only(dp, params):
+        if ct.check_only(dp, params) or dp in ct.WIRES:     # the halo link: no entry, its flops alone (X116)
             continue
         flops = int(d[name]["synth"]["seq_cells"])
         if flops != n_bits(dp, params):
             print(f"{name}: {flops} sequential cells, its bits are {n_bits(dp, params)}")
         key = {k: v for k, v in params.items() if k not in SHAPE}
-        win = "stream" if dp == "LinkBuffer" else "busy"
+        win = ct.window_of(dp)
         comb = {"comb_um2": float(d[name]["synth"]["comb_area_um2"]), "e_comb_pj": ct.e(d, name, win, "e_comb_pj"),
                 "leak_comb_uw": float(d[name]["synth"]["leak_comb_uw"])}
         if dp in STREAM:

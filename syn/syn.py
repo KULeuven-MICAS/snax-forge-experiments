@@ -409,10 +409,10 @@ def char_extra(point: str) -> dict:
     params = pj.get("params", {})
     form = ""
     if pj.get("datapath") == "SimdLanes":     # its scalars (X99): kcsr, k=0, k1csr_k2csr, k1=3; none for a plain op
-        form = "_".join(f"{n}csr" if params.get(f"{n}Csr") else f"{n}={params[n]}"   # and X111's k3, d, lo, hi
+        form = "_".join(f"{n}csr" if params.get(f"{n}Csr") else f"{n}={params[n]}"   # and X116's k3, d, lo, hi
                         for n in ("k", "k1", "k2", "k3", "d", "lo", "hi")
                         if params.get(f"{n}Csr") or params.get(n) is not None)
-    if pj.get("datapath") == "HaloLink":      # its taps (X111)
+    if pj.get("datapath") == "HaloLink":      # its taps (X116)
         form = f"t{params['taps']}"
     if pj.get("datapath") == "Mac":
         form = "acc" if params.get("accumulate") else "reg" if params.get("regOut") else "plain"

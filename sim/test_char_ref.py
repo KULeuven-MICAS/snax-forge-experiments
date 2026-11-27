@@ -97,13 +97,13 @@ def test_stimulus_scalars_per_window() -> None:
 
 
 def e2e1(ins: list[str], t: str, out: str, op: str, **slots) -> dict:
-    """An X111 form's params: every slot written out, as char/points.json has them."""
+    """An X116 form's params: every slot written out, as char/points.json has them."""
     return {**lanes(ins, t, op), "outType": out, "k3": None, "d": None, "lo": None, "hi": None, "k3Csr": False,
             **slots}
 
 
 def test_e2e1_forms_by_hand() -> None:
-    """The run note's spot checks (X111): requant's floor and clamp, gray's and blur's sums and slices, threshold's
+    """The run note's spot checks (X116): requant's floor and clamp, gray's and blur's sums and slices, threshold's
     wrap at int16."""
     rq = e2e1(["int32"], "int32", "int8", "requant", d=1024, lo=0, hi=127)
     got = [one(rq, [bits(a, 32)], {}) for a in (127 * 1024, 128 * 1024, -1, 1023, M31 - 1, -M31, 5120)]
@@ -134,6 +134,26 @@ def test_three_streams_ports() -> None:
     beat = [1, 2, 10, 20, 100, 200]
     slot = {"window": "busy", "new": True, "fire": True, "pins": {}}
     assert char_ref("SimdLanes", {**gray, "lanes": w, "k1": 1, "k2": 1, "k3": 1, "d": 1}, [slot], [beat]) == [[111, 222]]
+
+
+def test_threshold_k_in_range_same_at_every_w() -> None:
+    """A threshold's k (X117): inside a's range, the same at W = 1 and W = 8, and the output toggles in busy."""
+    got = {}
+    for w in (1, 8):
+        p = e2e1(["uint8"], "int16", "uint8", "threshold", kCsr=True, hi=255, lanes=w)
+        tb = {"kind": "lanes", "W": w, "depth": "", "datapath": "SimdLanes", "params": p,
+              "data_in": [{"port": f"io_a_{i}", "bits": 8} for i in range(w)],
+              "outs": [{"port": f"io_out_{i}", "bits": 8} for i in range(w)],
+              "scalars": {"k": {"port": "io_k", "bits": 16}}, "windows": [{"name": "busy"}, {"name": "idle"}]}
+        slots = cs.schedule(tb)
+        st = pwr.char_stimulus(tb, slots, 0)
+        got[w] = st["ks"]
+        assert all(1 <= v["k"] <= 255 for v in st["ks"].values())
+        busy = [x for s, x in zip(slots, st["exps"]) if s["window"] == "busy"]
+        assert {v for x in busy for v in x} == {0, 255}
+    assert got[1] == got[8] and got[1]["busy"] != got[1]["idle"]
+    other = _tb(lanes(["int32"], "int32", "mul", kCsr=True), 1, {"k": 32})   # X99's scalars as before
+    assert pwr.char_stimulus(other, cs.schedule(other), 0)["ks"]["busy"]["k"] > 255
 
 
 def halo(t: int, w: int) -> dict:
