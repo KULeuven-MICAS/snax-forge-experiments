@@ -1023,5 +1023,1433 @@
     }
    ]
   }
+ },
+ "mvt_column_cg": {
+  "total_um2": 961370.2965,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 44.94551312570118
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.483153032386205
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 10128.4821,
+    "share_pct": 1.0535463948568125
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 2075.5980000000004,
+    "share_pct": 0.21589995109652324
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 1648.9340000000007,
+    "share_pct": 0.1715191332625077
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 74517.7712999997,
+    "share_pct": 7.751203835950812
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 3139.864100000001,
+    "share_pct": 0.32660298653194353
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 48387.79489999992,
+    "share_pct": 5.033210936115075
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54240.591999999844,
+    "share_pct": 5.642008308085878
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73718.70969999966,
+    "share_pct": 7.668086893092359
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.32609999994,
+    "share_pct": 2.750586969065976
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19408.15789999998,
+    "share_pct": 2.018801493103961
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155606.01379999984,
+    "share_pct": 16.185856206136677
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.354400000027,
+    "share_pct": 1.7035427929928795
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 485.183799999936,
+    "share_pct": 0.05046794162107088
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "mvt_read_once_cg": {
+  "total_um2": 966658.9089,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 44.69961522329481
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.4586256023900805
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 23103.164499999988,
+    "share_pct": 2.3900017149058304
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 2261.5320000000006,
+    "share_pct": 0.23395346374798207
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 1377.6140000000007,
+    "share_pct": 0.14251293680908017
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 69639.59739999977,
+    "share_pct": 7.204154098082586
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 3048.8921000000055,
+    "share_pct": 0.31540516224791865
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 45756.25689999986,
+    "share_pct": 4.733443873399744
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54240.591999999844,
+    "share_pct": 5.611140755090375
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73718.70969999966,
+    "share_pct": 7.6261346190754224
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.59209999994,
+    "share_pct": 2.7355659640163212
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19408.423899999983,
+    "share_pct": 2.007784102676466
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155604.41779999985,
+    "share_pct": 16.097137921903432
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.620400000029,
+    "share_pct": 1.6942501899286047
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 485.9816999998683,
+    "share_pct": 0.05027437243121117
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "bicg_two_pass_cg": {
+  "total_um2": 924502.6966,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 46.73786397693455
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.661933573423393
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 9822.582100000001,
+    "share_pct": 1.0624719793813526
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 2076.662,
+    "share_pct": 0.22462476395550188
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 1650.2640000000004,
+    "share_pct": 0.17850288658638838
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 51575.53769999982,
+    "share_pct": 5.578733073432532
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 2740.0661000000023,
+    "share_pct": 0.2963827050020529
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 35172.38259999995,
+    "share_pct": 3.8044651172302433
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54240.591999999844,
+    "share_pct": 5.867002032495731
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73718.44369999965,
+    "share_pct": 7.973848423710445
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.592099999936,
+    "share_pct": 2.860304485562918
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19408.955899999983,
+    "share_pct": 2.099394190128313
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155605.48179999986,
+    "share_pct": 16.831263161509728
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.620400000029,
+    "share_pct": 1.7715059631768766
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 478.0017999998189,
+    "share_pct": 0.051703667469845525
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "bicg_read_once_cg": {
+  "total_um2": 928666.6609,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 46.52830030328054
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.641030351862824
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 23024.162499999988,
+    "share_pct": 2.479270923507316
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 2261.5320000000006,
+    "share_pct": 0.24352462462777322
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 1377.6140000000007,
+    "share_pct": 0.14834321700155703
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 45857.06969999986,
+    "share_pct": 4.937947234539283
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 2703.0921000000058,
+    "share_pct": 0.2910723743846209
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 31977.72259999999,
+    "share_pct": 3.443401593528659
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54240.591999999844,
+    "share_pct": 5.840695513655414
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73718.97569999966,
+    "share_pct": 7.93815249365755
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.592099999936,
+    "share_pct": 2.8474794254348077
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19404.69989999998,
+    "share_pct": 2.0895226152723385
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155609.73779999986,
+    "share_pct": 16.75625327705784
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.354400000027,
+    "share_pct": 1.7635342248776562
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 478.00169999980324,
+    "share_pct": 0.05147182731170265
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "atax_read_once_cg": {
+  "total_um2": 917540.1471,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 47.092523871100695
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.697309620317105
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 31488.01669999997,
+    "share_pct": 3.43178626020036
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 3040.380000000001,
+    "share_pct": 0.33136206732855245
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 1180.7739999999997,
+    "share_pct": 0.1286890828408962
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 32527.80969999989,
+    "share_pct": 3.5451102388062354
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 2196.6280999999935,
+    "share_pct": 0.2394040311960965
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 25635.484499999988,
+    "share_pct": 2.7939360017132913
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54240.591999999844,
+    "share_pct": 5.911522473587014
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73718.70969999966,
+    "share_pct": 8.034385190991024
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.326099999933,
+    "share_pct": 2.881980279944955
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19406.827899999986,
+    "share_pct": 2.1150930519321345
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155611.33379999985,
+    "share_pct": 16.959621253830566
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.354400000027,
+    "share_pct": 1.7849196519370514
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 480.39579999981913,
+    "share_pct": 0.05235692427390452
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "atax_column_shared_movers_cg": {
+  "total_um2": 899431.1325,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 48.04067784478207
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.791884563768979
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 14042.406099999998,
+    "share_pct": 1.561254174176587
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 2077.1940000000004,
+    "share_pct": 0.23094530808894373
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 1658.2440000000004,
+    "share_pct": 0.18436586638833077
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 31608.24769999992,
+    "share_pct": 3.514248791026802
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 2938.2361000000055,
+    "share_pct": 0.3266771622451045
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 25635.750499999987,
+    "share_pct": 2.8502182739377204
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54240.591999999844,
+    "share_pct": 6.030544200670066
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73719.24169999963,
+    "share_pct": 8.196207473394262
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.326099999933,
+    "share_pct": 2.940005648514722
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19406.827899999986,
+    "share_pct": 2.1576780254490453
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155611.33379999985,
+    "share_pct": 17.301083782531826
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.620400000029,
+    "share_pct": 1.8208865368577876
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 479.59779999975115,
+    "share_pct": 0.053322348167634856
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "gesummv_x_read_once_cg": {
+  "total_um2": 1010068.5127,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 42.77856475745182
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.267007738394973
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 39355.764299999995,
+    "share_pct": 3.896346020607915
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 3157.1540000000005,
+    "share_pct": 0.31256830208088127
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 2287.866100000001,
+    "share_pct": 0.2265060311487523
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 84498.0910999996,
+    "share_pct": 8.365580159916968
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 2615.3118999999942,
+    "share_pct": 0.25892420832019014
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 56687.793199999986,
+    "share_pct": 5.612272087214029
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54240.591999999844,
+    "share_pct": 5.369991373655444
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73714.98569999967,
+    "share_pct": 7.298018379263519
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.32609999994,
+    "share_pct": 2.6179735104616473
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19407.891899999977,
+    "share_pct": 1.9214431155883687
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155605.21579999983,
+    "share_pct": 15.405411993692756
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.620400000029,
+    "share_pct": 1.6214365851501737
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 484.3857999997007,
+    "share_pct": 0.04795573705241992
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "gesummv_factor_out_cg": {
+  "total_um2": 1020814.6468,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 42.32823403881434
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.222088871383934
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 39358.95629999999,
+    "share_pct": 3.8556418075877463
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 3180.0300000000007,
+    "share_pct": 0.3115188452642802
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 2586.052100000001,
+    "share_pct": 0.2533321899432606
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 92228.84919999957,
+    "share_pct": 9.034828162890694
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 2712.6679,
+    "share_pct": 0.26573559739797414
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 59268.7911999999,
+    "share_pct": 5.806028683639368
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54255.48799999984,
+    "share_pct": 5.314920604840193
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73717.64569999967,
+    "share_pct": 7.221452585059017
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.326099999933,
+    "share_pct": 2.590414056351286
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19408.955899999983,
+    "share_pct": 1.9013202799197906
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155603.0877999998,
+    "share_pct": 15.243030484307488
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.354400000027,
+    "share_pct": 1.604341635510321
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 480.92779999992024,
+    "share_pct": 0.04711215709017394
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "gesummv_literal_cg": {
+  "total_um2": 1143326.5327,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 37.79259909062022
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 3.769675623482538
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 40188.876199999984,
+    "share_pct": 3.515082966288969
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 4045.0621,
+    "share_pct": 0.35379762336551956
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 3599.2461000000017,
+    "share_pct": 0.3148047383716595
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 166219.14200000113,
+    "share_pct": 14.538203850431916
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 2926.7979999999757,
+    "share_pct": 0.25598968591136023
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 104876.88620000007,
+    "share_pct": 9.172960060004042
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54240.591999999844,
+    "share_pct": 4.744103320326963
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73717.91169999968,
+    "share_pct": 6.44766911215754
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.326099999933,
+    "share_pct": 2.3128411126393806
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19408.689899999987,
+    "share_pct": 1.6975631497124255
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155601.22579999984,
+    "share_pct": 13.609517609334478
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.354400000027,
+    "share_pct": 1.4324301878418242
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 488.90779999985796,
+    "share_pct": 0.042761869511178704
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "mvt_dma_copy_cg": {
+  "total_um2": 878712.9244,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 49.17337628726016
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.9048671532206285
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 5094.4321,
+    "share_pct": 0.5797606884499353
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 1370.9640000000002,
+    "share_pct": 0.15601955563998532
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 948.8219999999999,
+    "share_pct": 0.10797860981137514
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 25958.407899999936,
+    "share_pct": 2.9541397627359096
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 2612.386000000008,
+    "share_pct": 0.29729686766400865
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 21259.51829999996,
+    "share_pct": 2.419392922269388
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54240.591999999844,
+    "share_pct": 6.17273178689573
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73718.70969999966,
+    "share_pct": 8.389396315108945
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.592099999936,
+    "share_pct": 3.009355088074534
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19405.763899999987,
+    "share_pct": 2.208430462457414
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155610.00379999983,
+    "share_pct": 17.708855700085778
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.620400000029,
+    "share_pct": 1.863819223005391
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 479.59779999975115,
+    "share_pct": 0.054579577320685094
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "atax_dma_copy_cg": {
+  "total_um2": 930030.7086,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 46.460058663056486
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.634223494069259
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 14497.5321,
+    "share_pct": 1.5588229470211281
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 2744.0560000000005,
+    "share_pct": 0.29505004239383675
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 1649.2000000000007,
+    "share_pct": 0.1773274779800105
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 51728.48769999985,
+    "share_pct": 5.562019320616641
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 2591.9041000000016,
+    "share_pct": 0.27869016324220774
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 35358.316599999955,
+    "share_pct": 3.801843989993166
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54240.591999999844,
+    "share_pct": 5.832129143525772
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73718.97569999965,
+    "share_pct": 7.9265098472899655
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.592099999936,
+    "share_pct": 2.843303114131164
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19405.763899999987,
+    "share_pct": 2.086572380949872
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155604.15179999985,
+    "share_pct": 16.731076765651633
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.620400000029,
+    "share_pct": 1.7609763041753423
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 478.0017999998189,
+    "share_pct": 0.05139634590339148
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "mvt_contiguous_w8_cg": {
+  "total_um2": 1025570.4604,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 42.13194797278698
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.20251004335577
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 60932.6204,
+    "share_pct": 5.9413392597359564
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 1370.1660000000002,
+    "share_pct": 0.133600376854224
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 949.3539999999999,
+    "share_pct": 0.09256838380755686
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 78728.28479999978,
+    "share_pct": 7.67653592219238
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 1983.8280000000364,
+    "share_pct": 0.19343653864857713
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 60090.4651,
+    "share_pct": 5.859223468328359
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54282.08799999987,
+    "share_pct": 5.2928677351752516
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73718.70969999966,
+    "share_pct": 7.188068742858231
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.060099999933,
+    "share_pct": 2.578375754863925
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19408.423899999983,
+    "share_pct": 1.8924515330160911
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155611.06779999982,
+    "share_pct": 15.173123038207176
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.354400000027,
+    "share_pct": 1.5969019226248404
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 482.5237999999398,
+    "share_pct": 0.04704930754457793
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "mvt_padded_w8_cg": {
+  "total_um2": 1025570.4604,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 42.13194797278698
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 4.20251004335577
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 60932.6204,
+    "share_pct": 5.9413392597359564
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 1370.1660000000002,
+    "share_pct": 0.133600376854224
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 949.3539999999999,
+    "share_pct": 0.09256838380755686
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 78728.28479999978,
+    "share_pct": 7.67653592219238
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 1983.8280000000364,
+    "share_pct": 0.19343653864857713
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 60090.4651,
+    "share_pct": 5.859223468328359
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54282.08799999987,
+    "share_pct": 5.2928677351752516
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73718.70969999966,
+    "share_pct": 7.188068742858231
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.060099999933,
+    "share_pct": 2.578375754863925
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19408.423899999983,
+    "share_pct": 1.8924515330160911
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155611.06779999982,
+    "share_pct": 15.173123038207176
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.354400000027,
+    "share_pct": 1.5969019226248404
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 482.5237999999398,
+    "share_pct": 0.04704930754457793
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
+ },
+ "bicg_sequential_contiguous_w8_cg": {
+  "total_um2": 1196199.3526,
+  "groups": [
+   {
+    "name": "tcdm_banks",
+    "label": "TCDM banks (macros)",
+    "area_um2": 432092.81279999996,
+    "share_pct": 36.12214066667268
+   },
+   {
+    "name": "icache_macros",
+    "label": "I-cache macros (data and tag)",
+    "area_um2": 43099.70160000001,
+    "share_pct": 3.603053412988447
+   },
+   {
+    "name": "acc_datapath",
+    "label": "accelerator datapath",
+    "area_um2": 119165.60669999999,
+    "share_pct": 9.962018992987037
+   },
+   {
+    "name": "acc_control",
+    "label": "accelerator control",
+    "area_um2": 2075.8640000000005,
+    "share_pct": 0.1735382982349894
+   },
+   {
+    "name": "acc_csr",
+    "label": "accelerator csr (with its peripherals)",
+    "area_um2": 1649.2000000000007,
+    "share_pct": 0.13786999603497366
+   },
+   {
+    "name": "streamers",
+    "label": "streamers",
+    "area_um2": 145549.34559999997,
+    "share_pct": 12.167649588142734
+   },
+   {
+    "name": "acc_interface",
+    "label": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+    "area_um2": 2077.4600999999975,
+    "share_pct": 0.17367172917160775
+   },
+   {
+    "name": "tcdm_interconnect",
+    "label": "TCDM interconnect (sparse or logarithmic)",
+    "area_um2": 104208.69409999985,
+    "share_pct": 8.711649431467837
+   },
+   {
+    "name": "tcdm_logic",
+    "label": "TCDM bank logic (AMO shims, muxes)",
+    "area_um2": 54244.58199999986,
+    "share_pct": 4.534744303455481
+   },
+   {
+    "name": "dma",
+    "label": "DMA (iDMA, its AXI-to-memory and interconnect)",
+    "area_um2": 73717.11369999965,
+    "share_pct": 6.162611068110993
+   },
+   {
+    "name": "cores",
+    "label": "RISC-V cores (Snitch, with the shared mul/div)",
+    "area_um2": 26443.32609999994,
+    "share_pct": 2.210611972203799
+   },
+   {
+    "name": "icache_logic",
+    "label": "I-cache logic (the hive without its macros and mul/div)",
+    "area_um2": 19408.955899999983,
+    "share_pct": 1.6225519482027497
+   },
+   {
+    "name": "axi",
+    "label": "AXI: the external cuts, both crossbars, the converters",
+    "area_um2": 155599.62979999985,
+    "share_pct": 13.007834309707336
+   },
+   {
+    "name": "peripherals",
+    "label": "cluster peripherals (with the barrier)",
+    "area_um2": 16377.354400000027,
+    "share_pct": 1.3691158053549364
+   },
+   {
+    "name": "others",
+    "label": "others (what no rule names)",
+    "area_um2": 489.70580000004236,
+    "share_pct": 0.040938477264315674
+   }
+  ],
+  "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d",
+  "macro_check": {
+   "groups_um2": 475192.5144,
+   "synth_dc_um2": 475192.51416,
+   "ok": true
+  }
  }
 }

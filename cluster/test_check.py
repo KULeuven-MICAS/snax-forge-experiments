@@ -238,6 +238,58 @@ def test_ram_summary_reported():
     assert check.ram_summary(36, False, []) == "RAMCOUNT 36 differ (reported)"
 
 
+def test_data_ok_ignores_counter_values():
+    ok, notes = check.data_ok(WANT, RUN.format(c=200))           # D123 would FAIL this counter; data is right
+    assert ok and notes == [], notes
+    ok, notes = check.data_ok(WANT, RUN.format(c=132).replace("0 errors", "3 errors"))
+    assert not ok and notes[0].startswith("data: want"), notes
+    ok, notes = check.data_ok(WANT, RUN.format(c=132).replace("mult_dot", "add_dot"))
+    assert not ok and notes[0].startswith("counters ['add_dot']"), notes
+
+
+def test_quiet_compare_tiers():
+    rtl = [{"mark": 1, "kind": "dma_in", "cycles": 305}, {"mark": 2, "kind": "acc_config", "cycles": 11},
+           {"mark": 3, "kind": "run", "cycles": 220}, {"mark": 4, "kind": "dma_out", "cycles": 100}]
+    gv = [{"mark": 0, "kind": "boot", "cycles": 999}, {"mark": 1, "kind": "dma_in", "cycles": 300},
+          {"mark": 2, "kind": "acc_config", "cycles": 4}, {"mark": 3, "kind": "run", "cycles": 190},
+          {"mark": 4, "kind": "dma_out", "cycles": 70}]
+    worst, rows = check.quiet_compare(rtl, gv[1:])
+    assert [r["verdict"] for r in rows] == ["OK", "SMALL", "WARNING", "INVESTIGATE"], rows
+    assert worst == "INVESTIGATE" and rows[2]["diff"] == 30 and rows[2]["pct"] == 15.79, rows
+    worst, rows = check.quiet_compare(rtl[:2], gv[1:3])
+    assert worst == "OK", rows
+    worst, rows = check.quiet_compare(rtl[:2], gv[1:2])
+    assert worst == "MISSING" and rows[1]["verdict"] == "MISSING", rows
+
+
+def test_hardware_diff():
+    a = {"bundle/snax_forge.hjson": b"h", "bundle/rtl/x.sv": b"x", "bundle/bundle.json": b"a",
+         "bundle/forge_expected.txt": b"1", "sw/forge.elf": b"e1"}
+    b = {**a, "bundle/bundle.json": b"b", "bundle/forge_expected.txt": b"2", "sw/forge.elf": b"e2"}
+    assert check.hardware_diff(a, b) == []
+    assert check.hardware_diff(a, {**b, "bundle/rtl/x.sv": b"y"}) == ["bundle/rtl/x.sv"]
+    assert check.hardware_diff(a, {**b, "bundle/rtl/y.sv": b"y"}) == ["bundle/rtl/y.sv"]
+    assert check.hardware_diff({"sw/forge.elf": b""}, {"sw/forge.elf": b""}) != []
+    # forge's folder name in the hjson's header comment and in emitted.json's "rtl" path is not hardware
+    ha = {"bundle/snax_forge.hjson": b"// from out/flow/mvt_v4_W_x1-8_datafull/x\n{cluster: 1}",
+          "bundle/rtl/emitted.json": b'{"rtl": "out/bundle/mvt_v4_W_x1-8_datafull/a.json", "top": "acc"}',
+          "bundle/rtl/acc.sv": b"module acc;"}
+    hb = {"bundle/snax_forge.hjson": b"// from out/flow/mvt_v4_W_x1-8_passes.layoutpadded_rows_datafull/x\n{cluster: 1}",
+          "bundle/rtl/emitted.json": b'{"top": "acc", "rtl": "out/bundle/mvt_v4_W_x1-8_passes.layout_datafull/a.json"}',
+          "bundle/rtl/acc.sv": b"module acc;"}
+    assert check.hardware_diff(ha, hb) == []
+    assert check.hardware_diff(ha, {**hb, "bundle/snax_forge.hjson": b"{cluster: 2}"}) == ["bundle/snax_forge.hjson"]
+    assert check.hardware_diff(ha, {**hb, "bundle/rtl/emitted.json": b'{"top": "acc2"}'}) == ["bundle/rtl/emitted.json"]
+
+
+def test_db_check():
+    ok, rows = check.db_check({"sram_d128_w39": b"not the lstp db"})
+    assert not ok and rows["sram_d128_w39"]["want"] == check.LSTP_DB_SHA256["sram_d128_w39"], rows
+    ok, _ = check.db_check({"sram_unknown": b""})
+    assert not ok
+    assert not check.db_check({})[0]
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

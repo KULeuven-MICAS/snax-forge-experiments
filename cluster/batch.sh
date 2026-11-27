@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
-# cluster/batch.sh POINT... [--from STEP]
+# cluster/batch.sh POINT... [--steps S,S,...] [--from STEP]
 #
-# Runs the cluster flow on each point in order, in series: cluster rtl, cluster syn --cores 16, cluster gls,
-# cluster pwr --cores 16, cluster-hwcost. --from starts the first point at STEP (rtl|syn|gls|pwr|hwcost).
+# Runs the cluster flow on each point in order, in series: cluster rtl, cluster syn --cores $CORES, cluster gls,
+# cluster pwr --cores $CORES, cluster-hwcost. --steps runs only those steps (in this order); --from starts the
+# first point at STEP. CORES (default 16) is PT's threads and DC's cores, DC capped at 16 (X109: PT 24 where free).
 # ALLOW_BRANCH=1 adds --allow-branch to the four cluster steps (snax_cluster off origin/main).
+# KEEP_GOING=1: a failed step skips the rest of its point and the batch goes on; the end says how many failed.
 #
 # Before each point: quota -v against the global stop (QUOTA_MAX_FILES files, QUOTA_MAX_KB 1K blocks), and, when
 # $OUT/heads.txt lists "<repo dir> <sha>" lines, git fetch in each repo and its origin/main against <sha>.
 # Each step's console goes to $OUT/<point>_<step>.log; one line per step to $OUT/status.txt
-# (<iso time> <point> <step> START|PASS|FAIL <seconds>). The first failure writes FAIL and exits non-zero; the end
-# writes ALL DONE. Run from the repo's root.
+# (<iso time> <point> <step> START|PASS|FAIL <seconds>). Without KEEP_GOING the first failure writes FAIL and exits
+# non-zero; the end writes ALL DONE. Run from the repo's root.
 set -u
 
-STEPS=(rtl syn gls pwr hwcost)
+ALL=(rtl syn gls pwr hwcost)
+STEPS=("${ALL[@]}")
+CORES=${CORES:-16}
 OUT=${BATCH_OUT:-tmp/overnight-1}               # the batch's folder (BATCH_OUT=tmp/<name> for another)
 STATUS=$OUT/status.txt
 QUOTA_MAX_FILES=${QUOTA_MAX_FILES:-1550000}
@@ -24,11 +28,16 @@ from=rtl
 while [ $# -gt 0 ]; do
     case "$1" in
         --from) from=${2:?--from needs a step}; shift 2 ;;
+        --steps) IFS=, read -r -a want <<< "${2:?--steps needs a list}"; shift 2
+                 j=",$(IFS=,; echo "${want[*]}"),"
+                 STEPS=(); for s in "${ALL[@]}"; do case "$j" in *",$s,"*) STEPS+=("$s") ;; esac; done
+                 [ ${#STEPS[@]} -eq ${#want[@]} ] || { echo "--steps: from ${ALL[*]}" >&2; exit 2; }
+                 from=${STEPS[0]} ;;
         -*) echo "unknown option $1" >&2; exit 2 ;;
         *) points+=("$1"); shift ;;
     esac
 done
-[ ${#points[@]} -gt 0 ] || { echo "usage: cluster/batch.sh POINT... [--from STEP]" >&2; exit 2; }
+[ ${#points[@]} -gt 0 ] || { echo "usage: cluster/batch.sh POINT... [--steps S,S] [--from STEP]" >&2; exit 2; }
 case " ${STEPS[*]} " in *" $from "*) ;; *) echo "--from: one of ${STEPS[*]}" >&2; exit 2 ;; esac
 
 mkdir -p "$OUT"
@@ -61,9 +70,9 @@ run_step() {   # point step
     local p=$1 s=$2 t0 rc cmd
     case $s in
         rtl) cmd=(pixi run cluster rtl "$p" "${ab[@]}") ;;
-        syn) cmd=(pixi run cluster syn "$p" --cores 16 "${ab[@]}") ;;
+        syn) cmd=(pixi run cluster syn "$p" --cores "$CORES" "${ab[@]}") ;;
         gls) cmd=(pixi run cluster gls "$p" "${ab[@]}") ;;
-        pwr) cmd=(pixi run cluster pwr "$p" --cores 16 "${ab[@]}") ;;
+        pwr) cmd=(pixi run cluster pwr "$p" --cores "$CORES" "${ab[@]}") ;;
         hwcost) cmd=(pixi run cluster-hwcost "$p") ;;
     esac
     line "$p" "$s" START 0
@@ -78,6 +87,7 @@ run_step() {   # point step
 }
 
 first=1
+failed=0
 for p in "${points[@]}"; do
     if ! quota_ok; then line "$p" quota FAIL 0; exit 3; fi
     if ! mains_ok; then line "$p" origin-main FAIL 0; exit 4; fi
@@ -85,8 +95,12 @@ for p in "${points[@]}"; do
     for s in "${STEPS[@]}"; do
         if [ $first = 1 ] && [ $started = 0 ] && [ "$s" != "$from" ]; then continue; fi
         started=1
-        run_step "$p" "$s" || exit 1
+        if ! run_step "$p" "$s"; then
+            [ "${KEEP_GOING:-0}" = 1 ] || exit 1
+            failed=$((failed + 1)); line "$p" rest SKIP 0; break
+        fi
     done
     first=0
 done
-echo "$(date -Iseconds) ALL DONE" >> "$STATUS"
+echo "$(date -Iseconds) ALL DONE ($failed failed)" >> "$STATUS"
+[ $failed -eq 0 ]

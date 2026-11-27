@@ -58,6 +58,7 @@ TAIL = 30
 TIMEOUT = {"forge": 3600, "rtl-gen": 3600, "clustergen": 600, "vsim_preparation": 1800,
            "snax-forge-sim": 3600, "snax-forge-run": 3600, "clean": 600, "gen-syn": 1800}
 SYN_FLIST = TB_DIR / "work-syn" / "syn_flist.tcl"        # snax_cluster's gen-syn output
+DC_MAX_CORES = 16           # NB (X109): DC's -max_cores takes 1 to 16; more is refused (CMD-019) and it runs on one
 SDC = HERE / "cluster.sdc"
 CHECK_TCL = HERE / "cluster_check.tcl"
 TREE_DEPTH = 4
@@ -116,7 +117,8 @@ def check_repos(allow_branch: bool) -> dict:
     for name, repo in (("snax_cluster", SC), ("snax_forge", FORGE)):
         if not (repo / ".git").exists():
             sys.exit(f"no {name} checkout at {repo}")
-        st = git(repo, "status", "--porcelain").stdout
+        # NB (X110): untracked files do not count (the editor's Save writes recipes/custom/), as forge's dirty flag
+        st = git(repo, "status", "--porcelain", "--untracked-files=no").stdout
         if st.strip():
             hint = " (a submodule line: PITFALLS E7)" if name == "snax_forge" else ""
             sys.exit(f"{name} at {repo} is not clean{hint}:\n{st.rstrip()}")
@@ -286,9 +288,38 @@ PROVENANCE_KEY = ("snax_forge_commit", "image_id", "command")
 
 
 def bundle_command(p: dict) -> str:
+    """forge's command for the point: its recipe and its sets, nothing added (X104: W is a label of the point)."""
     recipe = bundles.find_recipe(p["recipe"], FORGE)
-    sets = [f"W={p['W']}", *p.get("sets", [])]
-    return " ".join(["pixi", "run", "forge", str(recipe), *(f"--set {shlex.quote(s)}" for s in sets)])
+    return " ".join(["pixi", "run", "forge", str(recipe), *(f"--set {shlex.quote(s)}" for s in p.get("sets", []))])
+
+
+def flow_command(p: dict) -> str:
+    """The point's energy run on SNAX-GVSoC (snax-forge's flow --energy): the quiet build's windows (X108)."""
+    recipe = bundles.find_recipe(p["recipe"], FORGE)
+    return " ".join(["pixi", "run", "flow", str(recipe), "--platform", "platforms/snax_forge.json",
+                     *(f"--set {shlex.quote(s)}" for s in p.get("sets", [])), "--energy"])
+
+
+# ---------------------------------------------------------------- a netlist adopted (X105)
+ADOPTED = "syn/adopted.json"     # in the point's sim/runs zip: the twin whose netlist it uses
+
+
+def netlist_point(point: str) -> str:
+    """The point whose netlist this point's gls and pwr read: its twin when its syn step adopted one, else itself."""
+    z = RUN_ZIPS / f"{point}.zip"
+    if arc.has(z, ADOPTED):
+        return json.loads(arc.read(z, ADOPTED))["netlist_of"]
+    return point
+
+
+def adoption_diff(point: str, twin: str) -> list[str]:
+    """The hardware members (check.hardware) that differ between the two points' bundle zips; empty when they
+    are the same cluster."""
+    za, zb = RTL_ZIPS / f"{point}.zip", RTL_ZIPS / f"{twin}.zip"
+    for z in (za, zb):
+        if not z.is_file():
+            return [f"no bundle zip {z.name} in {z.parent.name}/"]
+    return check.hardware_diff(arc.read_all(za), arc.read_all(zb))
 
 
 def make_bundle(p: dict, images: dict, repos: dict, steps: Steps) -> tuple[Path, dict]:
@@ -366,12 +397,17 @@ def run_checks(work: Path, p: dict, ms: list[str]) -> dict:
     runs = {r: (work / r / "snax-forge-vsim.txt").read_text(errors="replace")
             for r in ("plain", "macro") if (work / r / "snax-forge-vsim.txt").is_file()}
     c = {}
+    data_notes = []
     for r in ("plain", "macro"):
         if r not in runs:
-            c[f"d123_{r}"] = {"status": "FAIL", "notes": [f"no {r} run output"]}
+            c[f"d123_{r}"] = {"status": "FAIL", "notes": [f"no {r} run output"], "gate": False}
+            data_notes.append(f"no {r} run output")
             continue
         ok, notes = check.compare(want, runs[r])
-        c[f"d123_{r}"] = {"status": "PASS" if ok else "FAIL", "notes": notes}
+        c[f"d123_{r}"] = {"status": "PASS" if ok else "FAIL", "notes": notes, "gate": False}   # X108: reported
+        ok, notes = check.data_ok(want, runs[r])
+        data_notes += [f"{r}: {n}" for n in notes]
+    c["data"] = {"status": "PASS" if not data_notes else "FAIL", "notes": data_notes}
     cyc = {r: check.parse(t)["cycles"] for r, t in runs.items()}
     c["cycles"] = {"status": "PASS" if cyc.get("plain") is not None and cyc.get("plain") == cyc.get("macro")
                    else "FAIL", "plain": cyc.get("plain"), "macro": cyc.get("macro")}
@@ -395,10 +431,93 @@ def failed_log(work: Path, name: str) -> Path:
     """The log to show for a failed check: the macro run's vlog.log, or the run whose output failed."""
     if name == "vlog":
         return work / "macro" / "vlog.log"
+    if name == "quiet":
+        return work / "quiet" / "vsim.txt"
     r = "plain" if name == "d123_plain" or (name == "success" and not check.success(
         (work / "plain" / "snax-forge-vsim.txt").read_text(errors="replace")
         if (work / "plain" / "snax-forge-vsim.txt").is_file() else "")) else "macro"
     return work / r / "snax-forge-vsim.txt"
+
+
+FLOW_OUT = re.compile(r"^flow \S+ .* -> (\S+?)/?$", re.M)      # flow's first line: its folder
+GE_DIR = ROOT / "results" / "cluster" / TECH / "ge"              # SNAX-GVSoC's energy run per point (GE1's form)
+
+
+def gvsoc_energy(work: Path, p: dict, steps: Steps, prov: dict) -> dict:
+    """The point's energy run on SNAX-GVSoC (X108): flow --energy in snax-forge's image, its energy.json into
+    work/gvsoc/ and results/cluster/<tech>/ge/<point>.json. Recorded, never a gate."""
+    out = {"command": flow_command(p), "gate": False, "status": "FAIL"}
+    try:
+        log = steps.image("gvsoc", "snax_forge", FORGE, out["command"], TIMEOUT["forge"])
+    except StepFailed as e:
+        out.update(why=e.why, log=str(e.log.relative_to(work)), tail=tail(e.log))
+        return out
+    m = FLOW_OUT.search(log.read_text(errors="replace"))
+    if not m:
+        out["why"] = "no flow line in its output"
+        return out
+    folder = FORGE / m.group(1)
+    ej, qe = folder / "energy" / "energy.json", folder / "sw" / "forge_quiet.elf"
+    if not ej.is_file():
+        out["why"] = f"no {ej}"
+        return out
+    (work / "gvsoc").mkdir(exist_ok=True)
+    shutil.copy(ej, work / "gvsoc" / "energy.json")
+    GE_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copy(ej, GE_DIR / f"{p['point']}.json")
+    q = hashlib.sha256(qe.read_bytes()).hexdigest() if qe.is_file() else None
+    out.update(status="PASS", folder=str(folder.relative_to(FORGE)), quiet_elf_sha256=q,
+               same_quiet_elf=q == prov.get("quiet_elf_sha256"), ge=str((GE_DIR / f"{p['point']}.json").relative_to(ROOT)))
+    return out
+
+
+def quiet_rtl(work: Path, steps: Steps) -> dict:
+    """The quiet build on the RTL with the macros (X108), right after the macro run, on its build: obs_o's changes
+    (power.quiet_do_file), the windows (power.windows). Its gate is [SUCCESS] (the program returns its error count,
+    data included) with no program output; the windows are recorded."""
+    import power  # noqa: PLC0415  cluster/power.py (it imports this file as the module cluster)
+    marks = json.loads((work / "sw" / "obs_marks.json").read_text())
+    _, chk = power.obs_marks(marks)
+    qdir = work / "quiet"
+    qdir.mkdir(exist_ok=True)
+    (qdir / "quiet.do").write_text(power.quiet_do_file(qdir, chk["mark"]))
+    script = (TB_DIR / "bin" / "snitch_cluster.vsim").read_text()
+    (qdir / "vsim_cmd.sh").write_text(power.vsim_command(script, qdir / "quiet.do", work / "sw" / "forge_quiet.elf"))
+    vtxt = qdir / "vsim.txt"
+    out: dict = {"status": "FAIL", "check_mark": chk["mark"]}
+    try:
+        steps.host("quiet_vsim", TB_DIR, f"bash {shlex.quote(str(qdir / 'vsim_cmd.sh'))} > {shlex.quote(str(vtxt))} 2>&1",
+                   TIMEOUT["snax-forge-run"])
+    except StepFailed as e:
+        out["why"] = e.why
+    run = vtxt.read_text(errors="replace") if vtxt.is_file() else ""
+    out["success"] = check.success(run)
+    out["program_lines"] = power.program_output(run)[:20]
+    try:
+        wins = power.windows((qdir / "obs_log.txt").read_text() if (qdir / "obs_log.txt").is_file() else "", marks)
+        out["windows"] = [{k: w[k] for k in ("mark", "kind", "label", "cycles")} for w in wins]
+        out["span_cycles"] = sum(w["cycles"] for w in wins)
+    except ValueError as e:
+        out["windows_error"] = str(e)
+    if out["success"] and not out["program_lines"]:
+        out["status"] = "PASS"
+    return out
+
+
+def quiet_windows(qr: dict, ge: dict, work: Path, default_cycles: int | None) -> dict:
+    """The quiet windows on the RTL against SNAX-GVSoC's (check.quiet_compare), and the quiet span beside the
+    default build's cycles; recorded, never a gate (X108)."""
+    out = {"gate": False, "status": "NONE", "default_cycles": default_cycles, "quiet_span": qr.get("span_cycles")}
+    ej = work / "gvsoc" / "energy.json"
+    if not qr.get("windows") or not ej.is_file():
+        out["why"] = "no quiet windows on the RTL or no energy run on SNAX-GVSoC"
+        return out
+    chk = qr["check_mark"]
+    gv = [w for w in json.loads(ej.read_text())["windows"] if 1 <= w["mark"] < chk]
+    worst, rows = check.quiet_compare(qr["windows"], gv)
+    out.update(status="PASS" if worst == "OK" else worst, worst=worst, rows=rows,
+               gvsoc_span=sum(w["cycles"] for w in gv))
+    return out
 
 
 def rtl(p: dict, images: dict, args) -> int:
@@ -421,6 +540,7 @@ def rtl(p: dict, images: dict, args) -> int:
         z, prov = make_bundle(p, images, repos, steps)
         res["bundle"] = {"zip": str(z.relative_to(ROOT)), "elf_sha256": prov["elf_sha256"], "command": prov["command"]}
         unpack(z, work)
+        ge = gvsoc_energy(work, p, steps, prov)
         cfg, elf = work / "bundle" / "snax_forge.hjson", work / "sw" / "forge.elf"
         q = shlex.quote
         steps.image("rtl-gen", "snax_cluster", TB_DIR,
@@ -453,6 +573,10 @@ def rtl(p: dict, images: dict, args) -> int:
                         if (TB_DIR / "work-vsim" / f).is_file():
                             shutil.copy(TB_DIR / "work-vsim" / f, work / r / f)
         res["checks"] = run_checks(work, p, ms)
+        qr = quiet_rtl(work, steps)
+        res["checks"]["quiet"] = qr
+        res["checks"]["gvsoc"] = ge
+        res["checks"]["quiet_windows"] = quiet_windows(qr, ge, work, res["checks"]["cycles"].get("macro"))
         bad = gates_failed(res["checks"])
         res["status"] = "PASS" if not bad else "FAIL"
         res["failed"] = ", ".join(bad) or None
@@ -502,6 +626,9 @@ def pack_run(work: Path, p: dict, res: dict) -> None:
     for r in ("plain", "macro"):
         for f in ("snax-forge-vsim.txt", "vlog.log", "vopt.log"):
             keep[f"{r}/{f}"] = work / r / f
+    for f in ("vsim.txt", "obs_log.txt", "quiet.do", "vsim_cmd.sh"):
+        keep[f"quiet/{f}"] = work / "quiet" / f
+    keep["gvsoc/energy.json"] = work / "gvsoc" / "energy.json"
     new = {f"rtl/{k}": v.read_bytes() for k, v in keep.items() if v.is_file()}
     new.update({f"rtl/logs/{k}": v.read_bytes() for k, v in arc.files_of(work / "logs").items()})
     new["rtl/check.json"] = (json.dumps(res, indent=2) + "\n").encode()
@@ -522,9 +649,15 @@ def summary(p: dict, res: dict) -> None:
     print(line, flush=True)
     if res.get("failed_tail"):
         print(f"  last {TAIL} lines of {res['failed_log']}:\n{res['failed_tail']}", flush=True)
+    qw = c.get("quiet_windows", {})
+    if qw:
+        print(f"  quiet windows (reported): {qw.get('status')}, span {qw.get('quiet_span')} on the RTL, "
+              f"{qw.get('gvsoc_span')} on SNAX-GVSoC; default build {qw.get('default_cycles')} cycles", flush=True)
     for k, v in c.items():
-        if v.get("status") != "PASS":
-            print(f"  {k}: {json.dumps({x: y for x, y in v.items() if x != 'status'})}", flush=True)
+        if v.get("status") != "PASS" and k != "quiet_windows":
+            how = "reported" if v.get("gate", True) is False else "gate"
+            skip = {"status", "gate", "windows", "rows", "tail"}
+            print(f"  {k} ({how}): {json.dumps({x: y for x, y in v.items() if x not in skip})}", flush=True)
 
 
 class Stop(Exception):
@@ -533,6 +666,31 @@ class Stop(Exception):
 
 def _sigterm(signum, frame):   # a watchdog's TERM still runs the cleanup (finally blocks)
     raise SystemExit(f"terminated by signal {signum}")
+
+
+def adopt(p: dict, step1: Path) -> bool:
+    """X105: the point takes its twin's netlist (points.json's netlist_of) when the twin's syn run has one and the
+    two bundles' hardware is byte-equal; syn/adopted.json in the point's run zip records it. False (and any
+    earlier record dropped) when it cannot: the point is then synthesized on its own."""
+    point, twin = p["point"], p["netlist_of"]
+    tz = synpy.run_zip(TECH, twin, synpy.DEFAULT_CLOCK)
+    why = None if arc.has(tz, NETLIST) else f"no netlist in {tz.relative_to(ROOT)}"
+    diff = [] if why else adoption_diff(point, twin)
+    if diff:
+        why = f"the hardware differs: {diff[:5]}"
+    members = arc.read_all(step1)
+    if why:
+        print(f"cluster syn {point}: not adopting {twin}'s netlist ({why}); synthesized on its own", flush=True)
+        if ADOPTED in members:
+            arc.write(step1, {k: v for k, v in members.items() if k != ADOPTED})
+        return False
+    rec = {"point": point, "netlist_of": twin, "netlist_sha256": hashlib.sha256(arc.read(tz, NETLIST)).hexdigest(),
+           "hardware_members": len(check.hardware(arc.read_all(RTL_ZIPS / f"{point}.zip"))),
+           "date": dt.datetime.now().isoformat(timespec="seconds")}
+    arc.write(step1, {**members, ADOPTED: (json.dumps(rec, indent=2) + "\n").encode()})
+    print(f"cluster syn {point}: PASS, adopts {twin}'s netlist ({rec['netlist_sha256'][:12]}; "
+          f"{rec['hardware_members']} hardware files equal); no DC", flush=True)
+    return True
 
 
 def syn(p: dict, images: dict, args) -> int:
@@ -544,6 +702,8 @@ def syn(p: dict, images: dict, args) -> int:
     if not arc.has(step1, "rtl/tc_sram_impl.sv"):
         sys.exit(f"no rtl/tc_sram_impl.sv in {step1.relative_to(ROOT)}: run pixi run cluster rtl {p['point']} first")
     synpy.use_source("cluster")
+    if p.get("netlist_of") and adopt(p, step1):
+        return 0
     tech = synpy.load_tech(TECH)
     res = synpy.resolve(tech)
     dc = os.environ.get("DC_SHELL", "dc_shell")
@@ -552,14 +712,14 @@ def syn(p: dict, images: dict, args) -> int:
     if not Path(res["lib_db"]).is_file():
         sys.exit(f"no library at {res['lib_db']}")
     res["lib_md5"] = synpy.md5_of(Path(res["lib_db"]))
-    sargs = SimpleNamespace(clock=synpy.DEFAULT_CLOCK, cores=args.cores, sdf=False)
+    sargs = SimpleNamespace(clock=synpy.DEFAULT_CLOCK, cores=min(args.cores, DC_MAX_CORES), sdf=False)
     point = p["point"]
     rdir = synpy.run_dir(TECH, point, sargs.clock)
     work = TMP / point
     shutil.rmtree(work, ignore_errors=True)
     work.mkdir(parents=True)
     print(f"cluster syn {point}: snax_cluster {repos['snax_cluster'][:12]} ({repos['snax_cluster_branch']}), "
-          f"snax-forge {repos['snax_forge'][:12]}, --cores {args.cores}; work {work}", flush=True)
+          f"snax-forge {repos['snax_forge'][:12]}, --cores {sargs.cores}; work {work}", flush=True)
     steps = Steps(work, images)
     t0 = time.monotonic()
     row, failed, dc_start = None, None, None
@@ -592,6 +752,11 @@ def syn(p: dict, images: dict, args) -> int:
         syn_env = synpy.dc_env(tech, res, point, sargs)
         syn_env.pop("SYN_FILELIST")
         dbs = [rdir / "macros" / f"{m}.db" for m in macros]
+        db_ok, db_rows = check.db_check({m: arc.read(Path(ram_zip(m)), f"{m}.db") for m in macros})
+        if not db_ok:                                      # NB (X107): DC links the lstp macros only
+            raise Stop(f"a macro's .db is not the lstp one: {db_rows}")
+        print("  macros' .db                   the lstp ones (" + ", ".join(f"{m} {r['sha256'][:12]}"
+                                                                         for m, r in db_rows.items()) + ")", flush=True)
         syn_env.update({"SYN_FLIST_TCL": str(rdir / "syn_flist.tcl"), "SYN_TOP": synpy.SOURCES["cluster"]["top"],
                         "SYN_EXTRA_SDC": str(rdir / "cluster.sdc"), "SYN_POST_TCL": str(CHECK_TCL),
                         "SYN_RAM_DBS": " ".join(str(d) for d in dbs),
@@ -624,7 +789,8 @@ def syn(p: dict, images: dict, args) -> int:
                         "snax_forge_commit": repos["snax_forge"], "snax_cluster_commit": repos["snax_cluster"],
                         "snax_cluster_on_main": repos["snax_cluster_on_main"], "images": images,
                         "bundle_zip": str(z.relative_to(ROOT)), "elf_sha256": prov["elf_sha256"],
-                        "srams": p["srams"], "macros": macros, "syn": syn_settings(p), "step_seconds": steps.times}
+                        "srams": p["srams"], "macros": macros, "macro_db": db_rows, "syn": syn_settings(p),
+                        "step_seconds": steps.times}
         row = synpy.finish_run(point, rdir, tech, res, sargs, syn_env, rc, {"ram": None, "cluster": cluster_info},
                                before_pack=write_tree)
         synpy.write_summary(tech, [row])
@@ -776,13 +942,18 @@ def gls(p: dict, images: dict, args) -> int:
         sys.exit(f"step 1 of {point} is {rtl_res.get('status')} ({step1.relative_to(ROOT)}), not PASS")
     rtl_run = arc.read_text(step1, "rtl/macro/snax-forge-vsim.txt")
     synpy.use_source("cluster")     # run_zip's folder is the source's
-    synz = synpy.run_zip(TECH, point, synpy.DEFAULT_CLOCK)
+    of = netlist_point(point)
+    synz = synpy.run_zip(TECH, of, synpy.DEFAULT_CLOCK)
     if not arc.has(synz, NETLIST):
-        sys.exit(f"no {NETLIST} in {synz.relative_to(ROOT)}: run pixi run cluster syn {point} first")
+        sys.exit(f"no {NETLIST} in {synz.relative_to(ROOT)}: run pixi run cluster syn {of} first")
     dc = json.loads(arc.read(synz, "tech.json"))["resolved"]["cluster"]
     z = RTL_ZIPS / f"{point}.zip"
     prov = json.loads(arc.read(z, "provenance.json"))
-    shas = {"bundle": prov["elf_sha256"], "step 1": rtl_res["bundle"]["elf_sha256"], "step 2": dc["elf_sha256"]}
+    shas = {"bundle": prov["elf_sha256"], "step 1": rtl_res["bundle"]["elf_sha256"]}
+    if of == point:
+        shas["step 2"] = dc["elf_sha256"]
+    elif diff := adoption_diff(point, of):
+        sys.exit(f"{point} adopts {of}'s netlist but their hardware differs: {diff[:5]}")
     if len(set(shas.values())) != 1:
         sys.exit(f"the ELF differs between the bundle zip and the steps: {shas}")
     changed = rtl_changes(dc["snax_cluster_commit"])
@@ -807,7 +978,7 @@ def gls(p: dict, images: dict, args) -> int:
            "snax_cluster_on_main": repos["snax_cluster_on_main"],
            "netlist_snax_cluster_commit": dc["snax_cluster_commit"],
            "snax_forge_commit": repos["snax_forge"], "bundle_snax_forge_commit": prov["snax_forge_commit"],
-           "netlist": {"zip": str(synz.relative_to(ROOT)), "member": NETLIST,
+           "netlist": {"zip": str(synz.relative_to(ROOT)), "member": NETLIST, "of": of,
                        "sha256": hashlib.sha256(arc.read(synz, NETLIST)).hexdigest()},
            "cells": str(cells), "elf_sha256": prov["elf_sha256"],
            "rtl_check": f"{step1.relative_to(ROOT)}:rtl/check.json",

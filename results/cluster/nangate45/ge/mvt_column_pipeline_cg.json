@@ -1,0 +1,398 @@
+{
+ "tech": "nangate45",
+ "source": {
+  "snax_forge": "04165576384c4f3031e3b2d27d0ee9c058498b51",
+  "snax_forge_FifoSlicer": "c5c7d3bad1eb1ccf2e4e4a3d841fea749677d3f3",
+  "snax_forge_mixed": "90e9fba98c080676b22e7c95137d26a0faa9636d",
+  "snax_forge_scalar": "8d9128c4452542956aeb715c24a3b0f9742040bf",
+  "snax_forge_experiments": "2237a048526f2a3c7bf08f364df270489c67b547",
+  "stimulus": "rand64 seed 0",
+  "clk_gate": "1"
+ },
+ "prices": {
+  "units": {
+   "vmul_x1": {"span": 1, "e_fire": 5.1659944},
+   "vsum_x1": {"span": 1, "e_fire": 1.9988246},
+   "mac_x2": {"span": 1, "e_fire": 8.692729799999999}
+  },
+  "links": {
+   "tmp1_prod": {"from": "vmul_x1", "e_fire": 4.5607168},
+   "vsum_x1.out": {"from": "vsum_x1", "e_fire": 0.7980181}
+  },
+  "slicers": {
+   "vsum_x1.seed": {"from": "vsum_x1", "count": "pushes", "e_fire": 0.9481932},
+   "mac_x2.b": {"from": "mac_x2", "count": "firings", "e_fire": 0.398618}
+  },
+  "ctrl_bits": 199,
+  "group_ctrl_bits": {"mvt": 132, "mac_x2": 67},
+  "e_ctrl": 0.005449600000000001,
+  "movers": {
+   "vmul_x1_a": {"write": false, "channels": 1, "e_beat": 3.291861},
+   "vmul_x1_b": {"write": false, "channels": 1, "e_beat": 3.291861},
+   "vsum_x1_seed": {"write": false, "channels": 1, "e_beat": 3.229712},
+   "vsum_x1_out": {"write": true, "channels": 1, "e_beat": 3.229712},
+   "mac_x2_a": {"write": false, "channels": 1, "e_beat": 3.291861},
+   "mac_x2_b": {"write": false, "channels": 1, "e_beat": 3.291861},
+   "mac_x2_seed": {"write": false, "channels": 4, "e_beat": 11.44502},
+   "mac_x2_out": {"write": true, "channels": 4, "e_beat": 11.44502}
+  },
+  "e_xbar_ro": 1.8392993176799999,
+  "e_xbar_wo": 1.454512707945,
+  "e_rd": 3.38552,
+  "e_wr": 6.45356,
+  "superbank_banks": 8,
+  "e_dma_burst": 106.40343564547366
+ },
+ "windows": [
+  {
+   "index": 0,
+   "mark": 0,
+   "kind": "boot",
+   "label": "boot",
+   "first": 0,
+   "last": 2744,
+   "cycles": 2744,
+   "counters": {
+    "inputs": {
+     "vmul_x1_a.lane0": {"grants": 0, "stalls": 0},
+     "vmul_x1_b.lane0": {"grants": 0, "stalls": 0},
+     "vsum_x1_seed.lane0": {"grants": 0, "stalls": 0},
+     "vsum_x1_out.lane0": {"grants": 0, "stalls": 0},
+     "mac_x2_a.lane0": {"grants": 0, "stalls": 0},
+     "mac_x2_b.lane0": {"grants": 0, "stalls": 0},
+     "mac_x2_seed.lane0": {"grants": 0, "stalls": 0},
+     "mac_x2_seed.lane1": {"grants": 0, "stalls": 0},
+     "mac_x2_seed.lane2": {"grants": 0, "stalls": 0},
+     "mac_x2_seed.lane3": {"grants": 0, "stalls": 0},
+     "mac_x2_out.lane0": {"grants": 0, "stalls": 0},
+     "mac_x2_out.lane1": {"grants": 0, "stalls": 0},
+     "mac_x2_out.lane2": {"grants": 0, "stalls": 0},
+     "mac_x2_out.lane3": {"grants": 0, "stalls": 0},
+     "core0": {"grants": 38, "stalls": 0},
+     "axi": {"grants": 0, "stalls": 0}
+    },
+    "banks": [
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0}
+    ],
+    "groups": {
+     "mvt": {"busy": 0, "stall_in": 0, "stall_out": 0, "flush": 0},
+     "mac_x2": {"busy": 0, "stall_in": 0, "stall_out": 0, "flush": 0}
+    },
+    "units": {
+     "vmul_x1": {"firings": 0, "pushes": 0},
+     "vsum_x1": {"firings": 0, "pushes": 0},
+     "mac_x2": {"firings": 0, "pushes": 0}
+    },
+    "movers": {
+     "mac_x2_a": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mac_x2_b": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mac_x2_seed": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mac_x2_out": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "vmul_x1_a": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "vmul_x1_b": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "vsum_x1_seed": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "vsum_x1_out": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0}
+    },
+    "copies": {"reads": 0, "writes": 0}
+   },
+   "energy": {
+    "parts": {
+     "datapath": 0.0,
+     "control": 0.0,
+     "streamers": 0.0,
+     "crossbar": 0.0,
+     "memory": 0.0,
+     "dma": 0.0
+    },
+    "total": 0.0,
+    "counts": {"fires": 0, "cycles": 0, "beats": 0.0, "requests": 0, "reads": 0, "writes": 0}
+   },
+   "background": {
+    "leak_design": 116.10350929196944,
+    "leak_core": 23.253265574111996,
+    "leak_rest": 110.22739371358381,
+    "idle": 64.75715337336018
+   }
+  },
+  {
+   "index": 1,
+   "mark": 1,
+   "kind": "run",
+   "label": "program window",
+   "first": 2744,
+   "last": 3653,
+   "cycles": 909,
+   "counters": {
+    "inputs": {
+     "vmul_x1_a.lane0": {"grants": 512, "stalls": 15},
+     "vmul_x1_b.lane0": {"grants": 512, "stalls": 15},
+     "vsum_x1_seed.lane0": {"grants": 32, "stalls": 3},
+     "vsum_x1_out.lane0": {"grants": 32, "stalls": 3},
+     "mac_x2_a.lane0": {"grants": 512, "stalls": 21},
+     "mac_x2_b.lane0": {"grants": 64, "stalls": 8},
+     "mac_x2_seed.lane0": {"grants": 8, "stalls": 3},
+     "mac_x2_seed.lane1": {"grants": 8, "stalls": 1},
+     "mac_x2_seed.lane2": {"grants": 8, "stalls": 1},
+     "mac_x2_seed.lane3": {"grants": 8, "stalls": 0},
+     "mac_x2_out.lane0": {"grants": 8, "stalls": 1},
+     "mac_x2_out.lane1": {"grants": 8, "stalls": 0},
+     "mac_x2_out.lane2": {"grants": 8, "stalls": 0},
+     "mac_x2_out.lane3": {"grants": 8, "stalls": 0},
+     "core0": {"grants": 0, "stalls": 0},
+     "axi": {"grants": 0, "stalls": 0}
+    },
+    "banks": [
+     {"reads": 100, "writes": 21, "conflicts": 19},
+     {"reads": 100, "writes": 21, "conflicts": 2},
+     {"reads": 100, "writes": 21, "conflicts": 2},
+     {"reads": 100, "writes": 21, "conflicts": 3},
+     {"reads": 100, "writes": 21, "conflicts": 4},
+     {"reads": 100, "writes": 21, "conflicts": 3},
+     {"reads": 100, "writes": 21, "conflicts": 2},
+     {"reads": 100, "writes": 21, "conflicts": 0},
+     {"reads": 44, "writes": 21, "conflicts": 0},
+     {"reads": 44, "writes": 21, "conflicts": 2},
+     {"reads": 44, "writes": 21, "conflicts": 4},
+     {"reads": 44, "writes": 21, "conflicts": 1},
+     {"reads": 44, "writes": 21, "conflicts": 2},
+     {"reads": 44, "writes": 21, "conflicts": 1},
+     {"reads": 44, "writes": 21, "conflicts": 1},
+     {"reads": 44, "writes": 21, "conflicts": 1},
+     {"reads": 36, "writes": 20, "conflicts": 2},
+     {"reads": 36, "writes": 20, "conflicts": 2},
+     {"reads": 36, "writes": 20, "conflicts": 1},
+     {"reads": 36, "writes": 20, "conflicts": 2},
+     {"reads": 36, "writes": 20, "conflicts": 3},
+     {"reads": 36, "writes": 20, "conflicts": 2},
+     {"reads": 36, "writes": 20, "conflicts": 1},
+     {"reads": 36, "writes": 20, "conflicts": 0},
+     {"reads": 36, "writes": 20, "conflicts": 3},
+     {"reads": 36, "writes": 20, "conflicts": 1},
+     {"reads": 36, "writes": 20, "conflicts": 1},
+     {"reads": 36, "writes": 20, "conflicts": 2},
+     {"reads": 36, "writes": 20, "conflicts": 1},
+     {"reads": 36, "writes": 20, "conflicts": 1},
+     {"reads": 36, "writes": 20, "conflicts": 1},
+     {"reads": 36, "writes": 20, "conflicts": 0}
+    ],
+    "groups": {
+     "mvt": {"busy": 526, "stall_in": 4, "stall_out": 0, "flush": 1},
+     "mac_x2": {"busy": 512, "stall_in": 23, "stall_out": 0, "flush": 1}
+    },
+    "units": {
+     "vmul_x1": {"firings": 512, "pushes": 512},
+     "vsum_x1": {"firings": 512, "pushes": 64},
+     "mac_x2": {"firings": 512, "pushes": 8}
+    },
+    "movers": {
+     "mac_x2_a": {"busy": 512, "stall_xbar": 21, "stall_fifo": 0, "idle": 6},
+     "mac_x2_b": {"busy": 64, "stall_xbar": 8, "stall_fifo": 391, "idle": 76},
+     "mac_x2_seed": {"busy": 11, "stall_xbar": 0, "stall_fifo": 0, "idle": 528},
+     "mac_x2_out": {"busy": 9, "stall_xbar": 0, "stall_fifo": 528, "idle": 2},
+     "vmul_x1_a": {"busy": 512, "stall_xbar": 15, "stall_fifo": 0, "idle": 7},
+     "vmul_x1_b": {"busy": 512, "stall_xbar": 15, "stall_fifo": 0, "idle": 7},
+     "vsum_x1_seed": {"busy": 32, "stall_xbar": 3, "stall_fifo": 340, "idle": 159},
+     "vsum_x1_out": {"busy": 32, "stall_xbar": 3, "stall_fifo": 497, "idle": 2}
+    },
+    "copies": {"reads": 0, "writes": 0}
+   },
+   "energy": {
+    "parts": {
+     "datapath": 10.7700019264,
+     "control": 0.5776793984,
+     "streamers": 5.887565089000001,
+     "crossbar": 3.2827339830443396,
+     "memory": 6.04653312,
+     "dma": 0.0
+    },
+    "total": 26.564513516844343,
+    "counts": {
+     "fires": 2688,
+     "cycles": 1067,
+     "beats": 1746.5,
+     "requests": 1799,
+     "reads": 1664,
+     "writes": 64
+    }
+   },
+   "background": {
+    "leak_design": 38.46140304169104,
+    "leak_core": 7.703067932531999,
+    "leak_rest": 36.514832684273934,
+    "idle": 21.451987032210063
+   }
+  },
+  {
+   "index": 2,
+   "mark": 2,
+   "kind": "check",
+   "label": "check",
+   "first": 3653,
+   "last": 9001,
+   "cycles": 5348,
+   "counters": {
+    "inputs": {
+     "vmul_x1_a.lane0": {"grants": 0, "stalls": 0},
+     "vmul_x1_b.lane0": {"grants": 0, "stalls": 0},
+     "vsum_x1_seed.lane0": {"grants": 0, "stalls": 0},
+     "vsum_x1_out.lane0": {"grants": 0, "stalls": 0},
+     "mac_x2_a.lane0": {"grants": 0, "stalls": 0},
+     "mac_x2_b.lane0": {"grants": 0, "stalls": 0},
+     "mac_x2_seed.lane0": {"grants": 0, "stalls": 0},
+     "mac_x2_seed.lane1": {"grants": 0, "stalls": 0},
+     "mac_x2_seed.lane2": {"grants": 0, "stalls": 0},
+     "mac_x2_seed.lane3": {"grants": 0, "stalls": 0},
+     "mac_x2_out.lane0": {"grants": 0, "stalls": 0},
+     "mac_x2_out.lane1": {"grants": 0, "stalls": 0},
+     "mac_x2_out.lane2": {"grants": 0, "stalls": 0},
+     "mac_x2_out.lane3": {"grants": 0, "stalls": 0},
+     "core0": {"grants": 6, "stalls": 0},
+     "axi": {"grants": 0, "stalls": 0}
+    },
+    "banks": [
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0}
+    ],
+    "groups": {
+     "mvt": {"busy": 0, "stall_in": 0, "stall_out": 0, "flush": 0},
+     "mac_x2": {"busy": 0, "stall_in": 0, "stall_out": 0, "flush": 0}
+    },
+    "units": {
+     "vmul_x1": {"firings": 0, "pushes": 0},
+     "vsum_x1": {"firings": 0, "pushes": 0},
+     "mac_x2": {"firings": 0, "pushes": 0}
+    },
+    "movers": {
+     "mac_x2_a": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mac_x2_b": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mac_x2_seed": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mac_x2_out": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "vmul_x1_a": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "vmul_x1_b": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "vsum_x1_seed": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "vsum_x1_out": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0}
+    },
+    "copies": {"reads": 0, "writes": 0}
+   },
+   "energy": {
+    "parts": {
+     "datapath": 0.0,
+     "control": 0.0,
+     "streamers": 0.0,
+     "crossbar": 0.0,
+     "memory": 0.0,
+     "dma": 0.0
+    },
+    "total": 0.0,
+    "counts": {"fires": 0, "cycles": 0, "beats": 0.0, "requests": 0, "reads": 0, "writes": 0}
+   },
+   "background": {
+    "leak_design": 226.28337015067513,
+    "leak_core": 45.320140047504,
+    "leak_rest": 214.8309408091276,
+    "idle": 126.21037035012036
+   }
+  }
+ ],
+ "total": {
+  "datapath": 10.7700019264,
+  "control": 0.5776793984,
+  "streamers": 5.887565089000001,
+  "crossbar": 3.2827339830443396,
+  "memory": 6.04653312,
+  "dma": 0.0
+ },
+ "static": {
+  "parts": {
+   "datapath": 10.7700019264,
+   "control": 0.5574177856000001,
+   "streamers": 5.656799488,
+   "crossbar": 3.153682877928,
+   "memory": 6.04653312,
+   "dma": 0.0
+  },
+  "total": 26.184435197928,
+  "counts": {
+   "fires": 2688,
+   "cycles": 1028,
+   "beats": 1680.0,
+   "requests": 1728,
+   "reads": 1664,
+   "writes": 64
+  }
+ },
+ "background": {
+  "design_uw": 4231.177452331248,
+  "core_uw": 847.4222147999999,
+  "rest_uw": 4017.033298599993,
+  "idle_pj_cycle": 23.599545690000067,
+  "clock_ns": 10.0
+ },
+ "background_total": {
+  "leak_design": 380.84828248433564,
+  "leak_core": 76.276473554148,
+  "leak_rest": 361.5731672069853,
+  "idle": 212.41951075569062
+ }
+}

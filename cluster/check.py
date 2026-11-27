@@ -11,6 +11,8 @@ the macro models' RAMCOUNT lines. The netlist run's gates against the RTL run ar
 
 from __future__ import annotations
 
+import json
+
 import re
 import sys
 from collections import Counter
@@ -189,6 +191,103 @@ def ram_summary(lines: int, ok: bool, extra: list[dict]) -> str:
 
 def success(text: str) -> bool:
     return SUCCESS in text
+
+
+def data_ok(want_text: str, got_text: str) -> tuple[bool, list[str]]:
+    """The rtl step's gate (X108): the run's data line equals the expected one and the run printed every counter
+    the expected file names; the counters' values are D123's, reported."""
+    want, got = parse(want_text), parse(got_text)
+    notes = []
+    if want["data"] is None:
+        notes.append("the expected file has no forge data line")
+    elif got["data"] != want["data"]:
+        notes.append(f"data: want '{want['data']}', got '{got['data']}'")
+    if [n for n, _ in got["counters"]] != [n for n, _ in want["counters"]]:
+        notes.append(f"counters {[n for n, _ in got['counters']]}, want {[n for n, _ in want['counters']]}")
+    return not notes, notes
+
+
+# X108: a quiet window's cycles on the RTL against SNAX-GVSoC's, recorded, never a gate
+QUIET_OK_PCT, QUIET_WARN_PCT = 10, 20
+QUIET_SMALL = 20          # a window of at most this many cycles gets its gap in cycles, no verdict
+
+
+def quiet_compare(rtl_wins: list[dict], gvsoc_wins: list[dict]) -> tuple[str, list[dict]]:
+    """Each quiet window (by mark) on the RTL against SNAX-GVSoC's: rows of mark, kind, both cycles, the gap and its
+    share of SNAX-GVSoC's, and the verdict: OK within QUIET_OK_PCT, WARNING within QUIET_WARN_PCT, INVESTIGATE
+    beyond, SMALL for a window of at most QUIET_SMALL cycles on both, MISSING for a mark one side lacks. The worst
+    verdict of the windows comes first (INVESTIGATE, MISSING, WARNING, OK; SMALL counts as OK)."""
+    gv = {w["mark"]: w for w in gvsoc_wins}
+    rows = []
+    for w in rtl_wins:
+        g = gv.get(w["mark"])
+        if g is None:
+            rows.append({"mark": w["mark"], "kind": w["kind"], "rtl": w["cycles"], "gvsoc": None, "diff": None,
+                         "pct": None, "verdict": "MISSING"})
+            continue
+        d = w["cycles"] - g["cycles"]
+        pct = 100.0 * d / g["cycles"] if g["cycles"] else (0.0 if d == 0 else 100.0)
+        if max(w["cycles"], g["cycles"]) <= QUIET_SMALL:
+            v = "SMALL"
+        else:
+            v = "OK" if abs(pct) <= QUIET_OK_PCT else "WARNING" if abs(pct) <= QUIET_WARN_PCT else "INVESTIGATE"
+        rows.append({"mark": w["mark"], "kind": w["kind"], "rtl": w["cycles"], "gvsoc": g["cycles"], "diff": d,
+                     "pct": round(pct, 2), "verdict": v})
+    seen = {w["mark"] for w in rtl_wins}
+    rows += [{"mark": m, "kind": g["kind"], "rtl": None, "gvsoc": g["cycles"], "diff": None, "pct": None,
+              "verdict": "MISSING"} for m, g in sorted(gv.items()) if m not in seen]
+    order = ("INVESTIGATE", "MISSING", "WARNING", "OK")
+    got = {("OK" if r["verdict"] == "SMALL" else r["verdict"]) for r in rows}
+    worst = next((v for v in order if v in got), "OK")
+    return worst, rows
+
+
+# X105: what a cluster's netlist is made of, in a bundle zip: the cluster file and the RTL DC reads
+def _hardware_text(name: str, data: bytes) -> bytes:
+    """A member as DC sees it: the hjson without its comment lines, emitted.json without its "rtl" path (both
+    name forge's output folder, which differs with the sets); every other member as it is."""
+    if name.endswith(".hjson"):
+        return b"\n".join(ln for ln in data.split(b"\n") if not ln.lstrip().startswith((b"//", b"#")))
+    if name.endswith("emitted.json"):
+        d = json.loads(data)
+        d.pop("rtl", None) if isinstance(d, dict) else None
+        return json.dumps(d, sort_keys=True).encode()
+    return data
+
+
+def hardware(members: dict[str, bytes]) -> dict[str, bytes]:
+    """The bundle zip's members that make the netlist: bundle/snax_forge.hjson and everything under bundle/rtl/,
+    each as _hardware_text gives it."""
+    return {k: _hardware_text(k, v) for k, v in members.items()
+            if k == "bundle/snax_forge.hjson" or k.startswith("bundle/rtl/")}
+
+
+def hardware_diff(a: dict[str, bytes], b: dict[str, bytes]) -> list[str]:
+    """The hardware members that differ between two bundle zips (hardware() of each), by name; empty when the
+    netlist of one is the netlist of the other. Two bundles without any hardware member never match."""
+    ha, hb = hardware(a), hardware(b)
+    if not ha or not hb:
+        return ["no bundle/snax_forge.hjson or bundle/rtl/ in one of the bundles"]
+    return sorted(k for k in ha.keys() | hb.keys() if ha.get(k) != hb.get(k))
+
+
+# X107: the lstp macros' .db (COST2 R1b, results/ram/runs/2026-11-26_cost2_r1b.md); DC and PT read only these
+LSTP_DB_SHA256 = {
+    "sram_d512_w64_m8": "334f95820c102c41648d267c9523dc3aa9db87e6f4b6e22660a270fa38eb96ce",
+    "sram_d128_w256_m8": "d5015ed6be916ffde78f656389c7da8ab47a28f76a7956570e76404662b420a0",
+    "sram_d128_w39": "f4b2ebfe8f5f4c0818f397f6f1355e59074e6ff5fe1185b4f710922783433e99",
+}
+
+
+def db_check(dbs: dict[str, bytes]) -> tuple[bool, dict[str, dict]]:
+    """Each macro's .db against LSTP_DB_SHA256: (all equal, {macro: {sha256, want, ok}}); a macro not in the map
+    fails."""
+    import hashlib  # noqa: PLC0415
+    out = {}
+    for m, data in sorted(dbs.items()):
+        s = hashlib.sha256(data).hexdigest()
+        out[m] = {"sha256": s, "want": LSTP_DB_SHA256.get(m), "ok": s == LSTP_DB_SHA256.get(m)}
+    return all(v["ok"] for v in out.values()) and bool(out), out
 
 
 def main() -> int:

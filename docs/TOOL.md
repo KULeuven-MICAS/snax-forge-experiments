@@ -10,7 +10,7 @@ Every command by job, one example each; flows in the folder READMEs and [`power.
 | Measure the energy | `pwr` | 4 |
 | Make the memories | `ram-build`, `ram` | 5 |
 | Make the tables HWCOST reads | `strm-table`, `xbar-kinds`, `char-export`, `char-table`, `cluster-fixed` | 6 |
-| Take a design through the whole cluster | `cluster`, `cluster/batch.sh`, `cluster-hwcost`, `cluster-breakdown`, `cluster-energy`, `cluster-sweep`, `ge-check`, `snb`, `snb-report`, `dma-copy` | 7 |
+| Take a design through the whole cluster | `cluster`, `cluster/batch.sh`, `cluster-hwcost`, `cluster-breakdown`, `cluster-energy`, `cluster-sweep`, `ge-check`, `tier-check`, `snb`, `snb-report`, `dma-copy` | 7 |
 | Compare forge with the HLS tools | `compare`, `compare-hls` | 8 |
 | Keep the repository clean | `arc`, `test`, `lint` | 9 |
 
@@ -102,10 +102,12 @@ Steps and checks in [`cluster/README.md`](../cluster/README.md); one cluster run
 | `cluster syn POINT [--cores 16] [--allow-branch]` | DC on the whole cluster |
 | `cluster gls POINT [--allow-branch]` | the netlist run, gated (X67 · X81 · X84) |
 | `cluster pwr POINT [--cores 16] [--again] [--allow-branch]` | one VCD, a SAIF per section, one PT session (X20 · X60 · X74) |
-| `cluster/batch.sh POINT ...` | steps in series (`BATCH_OUT`, `--from STEP`) |
+| `cluster/batch.sh POINT ...` | steps in series (`BATCH_OUT`, `--steps S,S`, `--from STEP`, `CORES`, `KEEP_GOING=1`; X109) |
 | `cluster-hwcost POINT` | HWCOST into `hwcost/<point>.json` (snax-forge's environment, `SNAX_FORGE`, `SNAX_FORGE_PYTHON`; a clean checkout) |
 | `cluster-breakdown [--md]` | area in groups, `breakdown.json` (X72) |
-| `cluster-energy [--md]` | energy per window in groups, `energy.json` |
+| `cluster-energy [--md]` | energy per window in groups, leakage per group beside it (X106), `energy.json` |
+| `tier-check [--md]` | tier A at three levels (the estimate from `$SNAX_FORGE`'s `paper/data/`, SNAX-GVSoC, the netlist) over the program window, per part, the order per kernel; `tier_check.json` |
+| `pixi run python results/initial_findings/figures.py` | the tier A points' area and energy at three levels as figures, with `numbers.csv` (`results/initial_findings/README.md`) |
 | `cluster-sweep [--recipe dot_v3] [--points A,B,... --out NAME] [--md]` | `sweep.csv` and figures (X78 · X80 · X86) |
 | `ge-check [--recipe dot_v3] [--md]` | snax-forge's D177 energy against hwcost and the netlist, Kendall's tau (cluster/README.md, "ge-check") |
 | `snb rtl RUN`, `snb gls RUN`, `snb pwr RUN [--cores 16] [--again]` (all `[--allow-branch]`) | Snitch-only runs `<config>_<kernel>_<type>` (X91) |
