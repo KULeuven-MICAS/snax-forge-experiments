@@ -67,7 +67,8 @@ Tool behaviour that gives wrong numbers, or none, without an error: one line eac
 - **PT7.** Averaged mode charges `when` power with independent pin probabilities, macros 12.5 % low: count (X50) or take as measured (X75).
 - **PT8.** `report_switching_activity -nosplit` stops the script (CMD-010): leave it out.
 - **PT9.** The SAIF holds a port net per level, PT once: denominator from PT.
-- **PT10.** Time-based mode gives about half the clock-pin energy of held flops: averaged (X20 · X60 · X74).
+- **PT10.** Time-based mode gives about half the clock-pin energy of held flops: averaged (X20 · X60 · X74). On `mvt_column_cg` (COST3 R3) clock network internal 0.58 and register internal 0.43 of averaged, switching and combinational equal; the logic 0.75 in all, the macros 1.21 (PT7 gone).
+- **PT12.** A time-based hierarchy row is Int, Switch, Leak, Peak Power, Peak Time (`t0-t1`), Glitch, X-tran, Total, %: the averaged parsers take peak power as the total; `power.hier_top` reads the eighth number.
 - **PT11.** Equal macro energy in every bank (2 048 cycles of `req_i`, 1 024 of `we_i`; 32 equal to seven digits) is not a floor: count `req_i`, `we_i` in the SAIF (X96).
 
 ## Licences

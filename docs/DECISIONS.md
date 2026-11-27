@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X115**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X116**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -537,8 +537,14 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 ### X114 — A cluster's banks counted from its SAIFs
 
 - **Decided:** a cluster's TCDM banks cost their reads and writes, counted per window from the SAIF, at the bank's `ram_table.csv` prices: writes = T1(`we_i`) / $t_{clk}$, reads = (T1(`req_i`) − T1(`we_i`)) / $t_{clk}$, exact because a bank writes only with `req_i` high; PT's averaged number kept beside it (`bank_counts.json`). The logic stays averaged PT (X20 · X60 · X74). Amends X75.
-- **Why:** averaged PT takes `req_i` and `we_i` as independent (PITFALLS PT7) and puts the DMA's accesses 34–67 % under their price; the macro's Liberty model is CACTI's energy per access, so counts × prices is what time-based PT gives for it. Ryan, 27 Nov: counted on all 17 tier A points, with one time-based cross-check.
-- **Where:** `report/bank_counts.py`; `results/cluster/runs/2026-11-27_cost3_r1.md`.
+- **Why:** averaged PT takes `req_i` and `we_i` as independent (PITFALLS PT7) and puts the DMA's accesses 34–67 % under their price; the macro's Liberty model is CACTI's energy per access, so counts × prices is what time-based PT gives for it. Ryan, 27 Nov: counted on all 17 tier A points, with one time-based cross-check. The cross-check (COST3 R3, `mvt_column_cg`, `cluster pwr --time-based`): time-based PT's banks are 1.0046 of the counts over the program's 13 windows (1.0000 on every `dma_in`, within 1.1 % on every window), averaged PT's 0.828 (0.53–0.59 on `dma_in`); the counts equal SNAX-GVSoC's bank counters on 21 of 22 points.
+- **Where:** `report/bank_counts.py`; `results/cluster/runs/2026-11-27_cost3_r1.md`, `2026-11-28_cost3_r3.md`.
+
+### X115 — SNAX-GVSoC's runs by pricing: `ge/csyn2/`, `ge/ge1/`, `ge/`
+
+- **Decided:** `ge/csyn2/` keeps CSYN2's energy runs of the 17 tier A points, `ge/ge1/` GE1's of the five `dot3_w*_cg` points (snax-forge `0416557`, bundles `b29bf0c`: the program their power runs used), and `ge/` the runs with the current prices (`cluster ge`, tier A only). `model-fit` and `ablation` read a point's run in that order (`model_fit.py`'s `GE_ORDER`); `ablation`'s `run` column is `ge/<point>.json` when it is not that run.
+- **Why:** today's dot3 programs are not the ones their netlists ran (window cycles, `stall_in`, a `copies` counter), so a new dot3 run would not match its power reports; the fits must read the runs as priced before the terms, which the new runs already include (Ryan, 28 Nov).
+- **Where:** `report/model_fit.py`, `report/ablation.py`, `cluster/README.md` ("ge"); `results/cluster/runs/2026-11-28_cost3_r3.md`.
 
 ## Reports and comparison
 
