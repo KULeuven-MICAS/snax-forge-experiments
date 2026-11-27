@@ -31,7 +31,8 @@ def test_committed_points():
         print("  (no snax-forge beside this repo: skipped)")
         return
     j = tc.check("nangate45")
-    assert not j["missing"] and len(j["points"]) >= 14
+    reps = tc.ROOT / "results" / "cluster" / "nangate45" / "power_reports"
+    assert len(j["points"]) >= 14 and all(not (reps / f"{m}.zip").is_file() for m in j["missing"]), j["missing"]
     for r in j["points"]:                                       # the netlist's windows are the RTL's
         assert r["netlist"]["cycles"] == sum(r["netlist"]["windows"].values())
         assert set(r["gvsoc"]["windows"]) == set(r["netlist"]["windows"]), r["id"]

@@ -28,7 +28,9 @@ def test_bundle_command_takes_sets_alone():
 def test_points_adopt_only_known_twins():
     names = {p["point"] for p in POINTS}
     twins = {p["point"]: p["netlist_of"] for p in POINTS if "netlist_of" in p}
-    assert twins == {"mvt_padded_w8_cg": "mvt_contiguous_w8_cg"}, twins
+    assert twins == {"mvt_padded_w8_cg": "mvt_contiguous_w8_cg", "mvt_column_pipeline_cg": "mvt_column_cg",
+                     "bicg_two_pass_pipeline_cg": "bicg_two_pass_cg",
+                     "bicg_pipeline_contiguous_w8_cg": "bicg_sequential_contiguous_w8_cg"}, twins
     assert all(t in names for t in twins.values())
     order = [p["point"] for p in POINTS]
     assert all(order.index(t) < order.index(a) for a, t in twins.items())      # the twin runs first

@@ -82,6 +82,7 @@ def estimate_side(r: dict, rates: dict) -> dict:
     return {"cycles": c,
             "dyn_nj": {k: float(r[f"static_{k}_nj"]) for k in DYN},
             "leak_uw": float(r["leak_uw"]), "leak_nj": float(r["static_leak_nj"]),
+            "leak_part_uw": {k: float(r[f"leak_{k}_uw"]) for k in AREA if r.get(f"leak_{k}_uw")},
             "fixed_nj": (rates["core_uw"] + rates["rest_uw"]) * c * t * 1e-6 + rates["idle_pj_cycle"] * c / 1e3,
             "area_um2": {k: float(r[f"area_{k}_um2"]) for k in AREA}}
 
@@ -230,12 +231,13 @@ def markdown(j: dict) -> str:
         cells = [f"{_n(n[k], 2)} ({_r(e[k], n[k])}, {_r(g[k], n[k])})" for k in DYN]
         L.append(f"| `{r['id']}` | " + " | ".join(cells) + f" | {_n(n['core'], 1)} | {_n(n['rest'], 1)} |")
     L += ["", "Each cell: the netlist's dynamic nJ (estimate / netlist, SNAX-GVSoC / netlist).", "",
-          "## Leakage per part (µW, cycle-weighted over the window)", "",
-          "| design | " + " | ".join(AREA) + " | six parts | estimate's six |", "|---|" + "---|" * (len(AREA) + 2)]
+          "## Leakage per part (µW, the netlist's cycle-weighted over the window; estimate / netlist)", "",
+          "| design | " + " | ".join(AREA) + " | six parts |", "|---|" + "---|" * (len(AREA) + 1)]
     for r in j["points"]:
-        u = r["netlist"]["leak_uw"]
-        L.append(f"| `{r['id']}` | " + " | ".join(_n(u[k], 0) for k in AREA)
-                 + f" | {_n(sum(u[k] for k in DYN), 0)} | {_n(r['estimate']['leak_uw'], 0)} |")
+        u, e = r["netlist"]["leak_uw"], r["estimate"].get("leak_part_uw", {})
+        six = sum(u[k] for k in DYN)
+        L.append(f"| `{r['id']}` | " + " | ".join(f"{_n(u[k], 0)} ({_r(e.get(k), u[k])})" for k in AREA)
+                 + f" | {_n(six, 0)} ({_r(r['estimate']['leak_uw'], six)}) |")
     L += ["", "## Area per part (µm², estimate / netlist)", "",
           "| design | " + " | ".join(AREA) + " |", "|---|" + "---|" * len(AREA)]
     for r in j["points"]:

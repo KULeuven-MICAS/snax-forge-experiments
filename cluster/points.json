@@ -38,6 +38,12 @@
     {"point": "mvt_padded_w8_cg", "recipe": "mvt_v4", "W": 8, "sets": ["design.data=full", "W_x1=8", "memory.passes.layout=padded_rows"],
      "srams": {"sram_d512_w64_m8": 32, "sram_d128_w256_m8": 2, "sram_d128_w39": 2}, "syn": {"clk_gate": true}, "netlist_of": "mvt_contiguous_w8_cg"},
     {"point": "bicg_sequential_contiguous_w8_cg", "recipe": "bicg_v2", "W": 8, "sets": ["design.data=full", "W=8", "design.schedule=sequential"],
-     "srams": {"sram_d512_w64_m8": 32, "sram_d128_w256_m8": 2, "sram_d128_w39": 2}, "syn": {"clk_gate": true}}
+     "srams": {"sram_d512_w64_m8": 32, "sram_d128_w256_m8": 2, "sram_d128_w39": 2}, "syn": {"clk_gate": true}},
+    {"point": "mvt_column_pipeline_cg", "recipe": "mvt_v5", "W": 8, "sets": ["design.data=full", "design.schedule=pipeline"],
+     "srams": {"sram_d512_w64_m8": 32, "sram_d128_w256_m8": 2, "sram_d128_w39": 2}, "syn": {"clk_gate": true}, "netlist_of": "mvt_column_cg"},
+    {"point": "bicg_two_pass_pipeline_cg", "recipe": "bicg_v2_1", "W": 8, "sets": ["design.data=full", "design.schedule=pipeline"],
+     "srams": {"sram_d512_w64_m8": 32, "sram_d128_w256_m8": 2, "sram_d128_w39": 2}, "syn": {"clk_gate": true}, "netlist_of": "bicg_two_pass_cg"},
+    {"point": "bicg_pipeline_contiguous_w8_cg", "recipe": "bicg_v2", "W": 8, "sets": ["design.data=full", "W=8", "design.schedule=pipeline"],
+     "srams": {"sram_d512_w64_m8": 32, "sram_d128_w256_m8": 2, "sram_d128_w39": 2}, "syn": {"clk_gate": true}, "netlist_of": "bicg_sequential_contiguous_w8_cg"}
   ]
 }

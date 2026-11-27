@@ -3,7 +3,11 @@
  "snax_forge": "/home/claude/snax-forge",
  "tie_pct": 1.0,
  "gap_pct": 20.0,
- "missing": [],
+ "missing": [
+  "mvt_column_pipeline_cg",
+  "bicg_two_pass_pipeline_cg",
+  "bicg_pipeline_contiguous_w8_cg"
+ ],
  "points": [
   {
    "id": "mvt_column",
@@ -21,6 +25,16 @@
     },
     "leak_uw": 4231.1775,
     "leak_nj": 43.4965,
+    "leak_part_uw": {
+     "datapath": 212.0233,
+     "control": 33.2919,
+     "streamers": 1157.4276,
+     "crossbar": 1416.5799,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 74.26693564707199,
     "area_um2": {
      "datapath": 11019.8108,
@@ -226,6 +240,16 @@
     },
     "leak_uw": 4297.0563,
     "leak_nj": 22.1298,
+    "leak_part_uw": {
+     "datapath": 442.4871,
+     "control": 33.4592,
+     "streamers": 1080.7657,
+     "crossbar": 1328.4894,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 37.205711924359996,
     "area_um2": {
      "datapath": 24378.808,
@@ -413,6 +437,16 @@
     },
     "leak_uw": 3393.5621,
     "leak_nj": 34.8858,
+    "leak_part_uw": {
+     "datapath": 205.2167,
+     "control": 33.2919,
+     "streamers": 767.828,
+     "crossbar": 975.3707,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 74.26693564707199,
     "area_um2": {
      "datapath": 10602.4199,
@@ -606,6 +640,16 @@
     },
     "leak_uw": 3450.0012,
     "leak_nj": 17.7675,
+    "leak_part_uw": {
+     "datapath": 435.6805,
+     "control": 33.4592,
+     "streamers": 682.2185,
+     "crossbar": 886.7882,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 37.205711924359996,
     "area_um2": {
      "datapath": 23961.4171,
@@ -781,6 +825,16 @@
     },
     "leak_uw": 3265.8821,
     "leak_nj": 17.0806,
+    "leak_part_uw": {
+     "datapath": 595.1063,
+     "control": 46.341,
+     "streamers": 501.7946,
+     "crossbar": 710.7853,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 37.783664730952,
     "area_um2": {
      "datapath": 31798.6845,
@@ -944,6 +998,16 @@
     },
     "leak_uw": 2951.6239,
     "leak_nj": 30.3427,
+    "leak_part_uw": {
+     "datapath": 302.8449,
+     "control": 33.2919,
+     "streamers": 492.847,
+     "crossbar": 710.7853,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 74.26693564707199,
     "area_um2": {
      "datapath": 14838.2511,
@@ -1125,6 +1189,16 @@
     },
     "leak_uw": 5330.3386,
     "leak_nj": 27.8244,
+    "leak_part_uw": {
+     "datapath": 856.5148,
+     "control": 49.5196,
+     "streamers": 1366.6033,
+     "crossbar": 1645.8461,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 37.711420630127996,
     "area_um2": {
      "datapath": 41473.9189,
@@ -1312,6 +1386,16 @@
     },
     "leak_uw": 5502.3704,
     "leak_nj": 57.0046,
+    "leak_part_uw": {
+     "datapath": 856.5148,
+     "control": 49.8542,
+     "streamers": 1461.1604,
+     "crossbar": 1722.9861,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 74.844888453664,
     "area_um2": {
      "datapath": 41473.9189,
@@ -1517,6 +1601,16 @@
     },
     "leak_uw": 8089.8355,
     "leak_nj": 166.6506,
+    "leak_part_uw": {
+     "datapath": 678.4217,
+     "control": 61.2303,
+     "streamers": 2711.882,
+     "crossbar": 3226.4466,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 148.82284769743998,
     "area_um2": {
      "datapath": 33774.8148,
@@ -1758,6 +1852,16 @@
     },
     "leak_uw": 2478.8961,
     "leak_nj": 296.2529,
+    "leak_part_uw": {
+     "datapath": 111.3937,
+     "control": 22.0831,
+     "streamers": 360.8478,
+     "crossbar": 572.7167,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 863.3892489476239,
     "area_um2": {
      "datapath": 5792.3183,
@@ -1969,6 +2073,16 @@
     },
     "leak_uw": 3500.6205,
     "leak_nj": 418.3592,
+    "leak_part_uw": {
+     "datapath": 295.4077,
+     "control": 44.1661,
+     "streamers": 768.0853,
+     "crossbar": 981.1065,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 863.3892489476239,
     "area_um2": {
      "datapath": 15063.3107,
@@ -2156,6 +2270,16 @@
     },
     "leak_uw": 5792.7645,
     "leak_nj": 59.5496,
+    "leak_part_uw": {
+     "datapath": 1248.5578,
+     "control": 22.0831,
+     "streamers": 1377.5576,
+     "crossbar": 1732.7111,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 74.26693564707199,
     "area_um2": {
      "datapath": 60833.096,
@@ -2361,6 +2485,16 @@
     },
     "leak_uw": 5792.7645,
     "leak_nj": 59.5496,
+    "leak_part_uw": {
+     "datapath": 1248.5578,
+     "control": 22.0831,
+     "streamers": 1377.5576,
+     "crossbar": 1732.7111,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 74.26693564707199,
     "area_um2": {
      "datapath": 60833.096,
@@ -2566,6 +2700,16 @@
     },
     "leak_uw": 9717.8352,
     "leak_nj": 99.8022,
+    "leak_part_uw": {
+     "datapath": 2451.8056,
+     "control": 33.2919,
+     "streamers": 2584.0119,
+     "crossbar": 3236.8709,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
     "fixed_nj": 74.19469154624801,
     "area_um2": {
      "datapath": 120676.3218,
