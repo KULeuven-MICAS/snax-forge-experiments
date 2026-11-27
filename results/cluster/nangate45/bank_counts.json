@@ -1,0 +1,1643 @@
+{
+ "tech": "nangate45",
+ "clock_ns": 10.0,
+ "points": {
+  "atax_column_shared_movers_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9500531712
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027730062240000002
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 1024,
+     "writes": 32,
+     "counted_nj": 3.6732864,
+     "pt_nj": 3.602984872442001
+    },
+    "6_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "7_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "8_run": {
+     "banks": 32,
+     "reads": 768,
+     "writes": 32,
+     "counted_nj": 2.80659328,
+     "pt_nj": 2.7346828667599996
+    },
+    "9_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10952829160950003
+    }
+   },
+   "total": {
+    "reads": 1824,
+    "writes": 584,
+    "counted_nj": 9.944067519999999,
+    "pt_nj": 8.424979264251501
+   }
+  },
+  "atax_dma_copy_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9500531712
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027730062240000002
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 1024,
+     "writes": 32,
+     "counted_nj": 3.6732864,
+     "pt_nj": 3.6030058028712006
+    },
+    "6_dma_copy": {
+     "banks": 32,
+     "reads": 32768,
+     "writes": 32768,
+     "counted_nj": 322.40697344000006,
+     "pt_nj": 241.850827094356
+    },
+    "7_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "8_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "9_run": {
+     "banks": 32,
+     "reads": 2560,
+     "writes": 32,
+     "counted_nj": 8.87344512,
+     "pt_nj": 8.827670738625997
+    },
+    "10_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10950690344729999
+    }
+   },
+   "total": {
+    "reads": 36384,
+    "writes": 33352,
+    "counted_nj": 338.41789280000006,
+    "pt_nj": 256.3687937727405
+   }
+  },
+  "atax_read_once_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9750535167999996
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027930526400000003
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 1024,
+     "writes": 32,
+     "counted_nj": 3.6732864,
+     "pt_nj": 3.602912390943301
+    },
+    "6_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10949093286949999
+    }
+   },
+   "total": {
+    "reads": 1056,
+    "writes": 552,
+    "counted_nj": 7.13747424,
+    "pt_nj": 5.7153873670128
+   }
+  },
+  "bicg_pipeline_contiguous_w8_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_run": {
+     "banks": 32,
+     "reads": 12928,
+     "writes": 4352,
+     "counted_nj": 71.85389568000001,
+     "pt_nj": 63.53512801562
+    }
+   },
+   "total": {
+    "reads": 12928,
+    "writes": 4352,
+    "counted_nj": 71.85389568000001,
+    "pt_nj": 63.53512801562
+   }
+  },
+  "bicg_read_once_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9463811135999993
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027785427600000006
+    },
+    "3_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027747516560000005
+    },
+    "4_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "6_run": {
+     "banks": 32,
+     "reads": 1032,
+     "writes": 64,
+     "counted_nj": 3.90688448,
+     "pt_nj": 3.745207143698401
+    },
+    "7_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10949823302719998
+    },
+    "8_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10951098344249996
+    }
+   },
+   "total": {
+    "reads": 1096,
+    "writes": 592,
+    "counted_nj": 7.53103744,
+    "pt_nj": 5.9661304179281
+   }
+  },
+  "bicg_sequential_contiguous_w8_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 4096,
+     "counted_nj": 26.433781760000002,
+     "pt_nj": 16.775834544000013
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 64,
+     "counted_nj": 0.41302784000000003,
+     "pt_nj": 0.22540017599999992
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 8192,
+     "writes": 64,
+     "counted_nj": 28.14720768,
+     "pt_nj": 28.341388505519998
+    },
+    "6_dma_out": {
+     "banks": 32,
+     "reads": 64,
+     "writes": 0,
+     "counted_nj": 0.21667328,
+     "pt_nj": 0.21906651660600007
+    },
+    "7_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 64,
+     "counted_nj": 0.41302784000000003,
+     "pt_nj": 0.22540017599999992
+    },
+    "8_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "9_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "10_run": {
+     "banks": 32,
+     "reads": 4608,
+     "writes": 64,
+     "counted_nj": 16.013504,
+     "pt_nj": 16.03511230455
+    },
+    "11_dma_out": {
+     "banks": 32,
+     "reads": 64,
+     "writes": 0,
+     "counted_nj": 0.21667328,
+     "pt_nj": 0.21900827717799998
+    }
+   },
+   "total": {
+    "reads": 12928,
+    "writes": 4352,
+    "counted_nj": 71.85389568000001,
+    "pt_nj": 62.04121049985401
+   }
+  },
+  "bicg_two_pass_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.966102502400001
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027785427600000006
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 1024,
+     "writes": 32,
+     "counted_nj": 3.6732864,
+     "pt_nj": 3.6030373153716995
+    },
+    "6_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10949822525670001
+    },
+    "7_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027902303999999996
+    },
+    "8_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "9_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "10_run": {
+     "banks": 32,
+     "reads": 576,
+     "writes": 32,
+     "counted_nj": 2.1565734400000003,
+     "pt_nj": 2.0809604360992005
+    },
+    "11_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10952801711199994
+    }
+   },
+   "total": {
+    "reads": 1664,
+    "writes": 592,
+    "counted_nj": 9.4540128,
+    "pt_nj": 7.924814227839601
+   }
+  },
+  "bicg_two_pass_pipeline_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_run": {
+     "banks": 32,
+     "reads": 1664,
+     "writes": 592,
+     "counted_nj": 9.454012800000001,
+     "pt_nj": 7.836005032500001
+    }
+   },
+   "total": {
+    "reads": 1664,
+    "writes": 592,
+    "counted_nj": 9.454012800000001,
+    "pt_nj": 7.836005032500001
+   }
+  },
+  "dot3_w16_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 2048,
+     "counted_nj": 13.216890880000001,
+     "pt_nj": 8.505152896000004
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 2048,
+     "counted_nj": 13.216890880000001,
+     "pt_nj": 8.565719558399996
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 4096,
+     "writes": 1,
+     "counted_nj": 13.87354348,
+     "pt_nj": 14.648533407100004
+    },
+    "6_dma_out": {
+     "banks": 32,
+     "reads": 8,
+     "writes": 0,
+     "counted_nj": 0.02708416,
+     "pt_nj": 0.0283235631448
+    }
+   },
+   "total": {
+    "reads": 4104,
+    "writes": 4097,
+    "counted_nj": 40.334409400000006,
+    "pt_nj": 31.747729424644803
+   }
+  },
+  "dot3_w2_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 2048,
+     "counted_nj": 13.216890880000001,
+     "pt_nj": 8.505152896000004
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 2048,
+     "counted_nj": 13.216890880000001,
+     "pt_nj": 8.565719558399996
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 4096,
+     "writes": 1,
+     "counted_nj": 13.87354348,
+     "pt_nj": 14.646839085269999
+    },
+    "6_dma_out": {
+     "banks": 32,
+     "reads": 8,
+     "writes": 0,
+     "counted_nj": 0.02708416,
+     "pt_nj": 0.0283235631448
+    }
+   },
+   "total": {
+    "reads": 4104,
+    "writes": 4097,
+    "counted_nj": 40.334409400000006,
+    "pt_nj": 31.746035102814798
+   }
+  },
+  "dot3_w32_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 2048,
+     "counted_nj": 13.216890880000001,
+     "pt_nj": 8.505152896000004
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 2048,
+     "counted_nj": 13.216890880000001,
+     "pt_nj": 8.565719558399996
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 4096,
+     "writes": 1,
+     "counted_nj": 13.87354348,
+     "pt_nj": 14.648481085299998
+    },
+    "6_dma_out": {
+     "banks": 32,
+     "reads": 8,
+     "writes": 0,
+     "counted_nj": 0.02708416,
+     "pt_nj": 0.028323567387000002
+    }
+   },
+   "total": {
+    "reads": 4104,
+    "writes": 4097,
+    "counted_nj": 40.334409400000006,
+    "pt_nj": 31.747677107087
+   }
+  },
+  "dot3_w4_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 2048,
+     "counted_nj": 13.216890880000001,
+     "pt_nj": 8.505152896000004
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 2048,
+     "counted_nj": 13.216890880000001,
+     "pt_nj": 8.565719558399996
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 4096,
+     "writes": 1,
+     "counted_nj": 13.87354348,
+     "pt_nj": 14.647148149522
+    },
+    "6_dma_out": {
+     "banks": 32,
+     "reads": 8,
+     "writes": 0,
+     "counted_nj": 0.02708416,
+     "pt_nj": 0.028323567387000002
+    }
+   },
+   "total": {
+    "reads": 4104,
+    "writes": 4097,
+    "counted_nj": 40.334409400000006,
+    "pt_nj": 31.746344171309
+   }
+  },
+  "dot3_w8_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 2048,
+     "counted_nj": 13.216890880000001,
+     "pt_nj": 8.505152896000004
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 2048,
+     "counted_nj": 13.216890880000001,
+     "pt_nj": 8.565719558399996
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 4096,
+     "writes": 1,
+     "counted_nj": 13.87354348,
+     "pt_nj": 14.64765939168
+    },
+    "6_dma_out": {
+     "banks": 32,
+     "reads": 8,
+     "writes": 0,
+     "counted_nj": 0.02708416,
+     "pt_nj": 0.028323567387000002
+    }
+   },
+   "total": {
+    "reads": 4104,
+    "writes": 4097,
+    "counted_nj": 40.334409400000006,
+    "pt_nj": 31.746855413467
+   }
+  },
+  "gesummv_factor_out_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9237908095999994
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027902303999999996
+    },
+    "3_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_run": {
+     "banks": 32,
+     "reads": 1024,
+     "writes": 32,
+     "counted_nj": 3.6732864,
+     "pt_nj": 3.6030857457546004
+    },
+    "6_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9822314944000003
+    },
+    "7_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "8_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "9_run": {
+     "banks": 32,
+     "reads": 1024,
+     "writes": 32,
+     "counted_nj": 3.6732864,
+     "pt_nj": 3.6046598020560006
+    },
+    "10_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "11_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "12_run": {
+     "banks": 32,
+     "reads": 64,
+     "writes": 32,
+     "counted_nj": 0.42318720000000004,
+     "pt_nj": 0.3347678222000001
+    },
+    "13_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.1095031898435
+    }
+   },
+   "total": {
+    "reads": 2144,
+    "writes": 1128,
+    "counted_nj": 14.53817056,
+    "pt_nj": 11.5859411678541
+   }
+  },
+  "gesummv_literal_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9519371359999995
+    },
+    "2_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "3_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "4_run": {
+     "banks": 32,
+     "reads": 512,
+     "writes": 2048,
+     "counted_nj": 14.95027712,
+     "pt_nj": 9.601560547336401
+    },
+    "5_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027617730240000003
+    },
+    "6_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "7_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "8_run": {
+     "banks": 32,
+     "reads": 2560,
+     "writes": 32,
+     "counted_nj": 8.87344512,
+     "pt_nj": 8.882942115167998
+    },
+    "9_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9822314944000003
+    },
+    "10_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "11_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "12_run": {
+     "banks": 32,
+     "reads": 512,
+     "writes": 2048,
+     "counted_nj": 14.95027712,
+     "pt_nj": 9.5880398362852
+    },
+    "13_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "14_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "15_run": {
+     "banks": 32,
+     "reads": 2560,
+     "writes": 32,
+     "counted_nj": 8.87344512,
+     "pt_nj": 8.883537348653999
+    },
+    "16_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "17_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "18_run": {
+     "banks": 32,
+     "reads": 64,
+     "writes": 32,
+     "counted_nj": 0.42318720000000004,
+     "pt_nj": 0.33390066442500005
+    },
+    "19_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10948517152879998
+    }
+   },
+   "total": {
+    "reads": 6240,
+    "writes": 5224,
+    "counted_nj": 54.839042240000005,
+    "pt_nj": 41.3612520440374
+   }
+  },
+  "gesummv_x_read_once_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9463811135999993
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027641986240000003
+    },
+    "3_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 2.0157836416000006
+    },
+    "4_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "6_run": {
+     "banks": 32,
+     "reads": 1536,
+     "writes": 64,
+     "counted_nj": 5.61318656,
+     "pt_nj": 5.480468811
+    },
+    "7_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "8_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "9_run": {
+     "banks": 32,
+     "reads": 64,
+     "writes": 32,
+     "counted_nj": 0.42318720000000004,
+     "pt_nj": 0.334098395048
+    },
+    "10_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10950322393010001
+    }
+   },
+   "total": {
+    "reads": 1632,
+    "writes": 1128,
+    "counted_nj": 12.80478432,
+    "pt_nj": 9.9138771714181
+   }
+  },
+  "mvt_column_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9500531712
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027730062240000002
+    },
+    "3_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 32,
+     "counted_nj": 0.20651392000000002,
+     "pt_nj": 0.11002934079999994
+    },
+    "4_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "6_run": {
+     "banks": 32,
+     "reads": 1056,
+     "writes": 32,
+     "counted_nj": 3.78162304,
+     "pt_nj": 3.7132183288750005
+    },
+    "7_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10952878388200003
+    },
+    "8_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027785427600000006
+    },
+    "9_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 32,
+     "counted_nj": 0.20651392000000002,
+     "pt_nj": 0.11067419327999994
+    },
+    "10_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "11_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "12_run": {
+     "banks": 32,
+     "reads": 608,
+     "writes": 32,
+     "counted_nj": 2.26491008,
+     "pt_nj": 2.190954552201
+    },
+    "13_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.109507729695
+    }
+   },
+   "total": {
+    "reads": 1728,
+    "writes": 656,
+    "counted_nj": 10.08371392,
+    "pt_nj": 8.349481589773
+   }
+  },
+  "mvt_column_pipeline_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_run": {
+     "banks": 32,
+     "reads": 1728,
+     "writes": 656,
+     "counted_nj": 10.083713920000001,
+     "pt_nj": 8.290188562788002
+    }
+   },
+   "total": {
+    "reads": 1728,
+    "writes": 656,
+    "counted_nj": 10.083713920000001,
+    "pt_nj": 8.290188562788002
+   }
+  },
+  "mvt_contiguous_w8_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 4096,
+     "counted_nj": 26.433781760000002,
+     "pt_nj": 16.734355334400004
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 64,
+     "counted_nj": 0.41302784000000003,
+     "pt_nj": 0.2248547328000001
+    },
+    "3_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 64,
+     "counted_nj": 0.41302784000000003,
+     "pt_nj": 0.22290670080000008
+    },
+    "4_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "6_run": {
+     "banks": 32,
+     "reads": 8256,
+     "writes": 64,
+     "counted_nj": 28.36388096,
+     "pt_nj": 28.560222036500008
+    },
+    "7_dma_out": {
+     "banks": 32,
+     "reads": 64,
+     "writes": 0,
+     "counted_nj": 0.21667328,
+     "pt_nj": 0.21896675008000002
+    },
+    "8_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 64,
+     "counted_nj": 0.41302784000000003,
+     "pt_nj": 0.22540017599999992
+    },
+    "9_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 64,
+     "counted_nj": 0.41302784000000003,
+     "pt_nj": 0.22502878080000013
+    },
+    "10_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "11_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "12_run": {
+     "banks": 32,
+     "reads": 8256,
+     "writes": 64,
+     "counted_nj": 28.36388096,
+     "pt_nj": 28.482628526444998
+    },
+    "13_dma_out": {
+     "banks": 32,
+     "reads": 64,
+     "writes": 0,
+     "counted_nj": 0.21667328,
+     "pt_nj": 0.21908525984200003
+    }
+   },
+   "total": {
+    "reads": 16640,
+    "writes": 4480,
+    "counted_nj": 85.24700159999999,
+    "pt_nj": 75.113448297667
+   }
+  },
+  "mvt_dma_copy_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9538545728000007
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027747516560000005
+    },
+    "3_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 32,
+     "counted_nj": 0.20651392000000002,
+     "pt_nj": 0.11061981855999994
+    },
+    "4_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "6_run": {
+     "banks": 32,
+     "reads": 1056,
+     "writes": 32,
+     "counted_nj": 3.78162304,
+     "pt_nj": 3.713058114019001
+    },
+    "7_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.1095287900442
+    },
+    "8_dma_copy": {
+     "banks": 32,
+     "reads": 32768,
+     "writes": 32768,
+     "counted_nj": 322.40697344000006,
+     "pt_nj": 241.81821735097603
+    },
+    "9_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027565422479999997
+    },
+    "10_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 32,
+     "counted_nj": 0.20651392000000002,
+     "pt_nj": 0.11122417280000009
+    },
+    "11_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "12_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "13_run": {
+     "banks": 32,
+     "reads": 1056,
+     "writes": 32,
+     "counted_nj": 3.78162304,
+     "pt_nj": 3.714481182965999
+    },
+    "14_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10946628806200004
+    }
+   },
+   "total": {
+    "reads": 34944,
+    "writes": 33424,
+    "counted_nj": 334.00740032000004,
+    "pt_nj": 251.69576322926724
+   }
+  },
+  "mvt_padded_w8_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 4160,
+     "counted_nj": 26.8468096,
+     "pt_nj": 16.97939087040001
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 64,
+     "counted_nj": 0.41302784000000003,
+     "pt_nj": 0.22290670080000008
+    },
+    "3_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 64,
+     "counted_nj": 0.41302784000000003,
+     "pt_nj": 0.2282235584
+    },
+    "4_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "5_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "6_run": {
+     "banks": 32,
+     "reads": 8256,
+     "writes": 64,
+     "counted_nj": 28.36388096,
+     "pt_nj": 28.560051139910005
+    },
+    "7_dma_out": {
+     "banks": 32,
+     "reads": 64,
+     "writes": 0,
+     "counted_nj": 0.21667328,
+     "pt_nj": 0.21901038050899993
+    },
+    "8_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 64,
+     "counted_nj": 0.41302784000000003,
+     "pt_nj": 0.22502878080000013
+    },
+    "9_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 64,
+     "counted_nj": 0.41302784000000003,
+     "pt_nj": 0.2246876575999999
+    },
+    "10_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "11_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "12_run": {
+     "banks": 32,
+     "reads": 8256,
+     "writes": 64,
+     "counted_nj": 28.36388096,
+     "pt_nj": 28.561024241189994
+    },
+    "13_dma_out": {
+     "banks": 32,
+     "reads": 64,
+     "writes": 0,
+     "counted_nj": 0.21667328,
+     "pt_nj": 0.21905159692479995
+    }
+   },
+   "total": {
+    "reads": 16640,
+    "writes": 4544,
+    "counted_nj": 85.66002943999999,
+    "pt_nj": 75.4393749265338
+   }
+  },
+  "mvt_read_once_cg": {
+   "macro": "sram_d512_w64_m8",
+   "e_rd_pj": 3.38552,
+   "e_wr_pj": 6.45356,
+   "windows": {
+    "1_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 512,
+     "counted_nj": 3.3042227200000003,
+     "pt_nj": 1.9393974976000008
+    },
+    "2_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027785427600000006
+    },
+    "3_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 32,
+     "counted_nj": 0.20651392000000002,
+     "pt_nj": 0.11067419327999994
+    },
+    "4_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 8,
+     "counted_nj": 0.051628480000000004,
+     "pt_nj": 0.027730062240000002
+    },
+    "5_dma_in": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 32,
+     "counted_nj": 0.20651392000000002,
+     "pt_nj": 0.11002934079999994
+    },
+    "6_streamer_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "7_acc_config": {
+     "banks": 32,
+     "reads": 0,
+     "writes": 0,
+     "counted_nj": 0.0,
+     "pt_nj": 0.0
+    },
+    "8_run": {
+     "banks": 32,
+     "reads": 1096,
+     "writes": 64,
+     "counted_nj": 4.12355776,
+     "pt_nj": 3.96621331074
+    },
+    "9_dma_out": {
+     "banks": 32,
+     "reads": 32,
+     "writes": 0,
+     "counted_nj": 0.10833664,
+     "pt_nj": 0.10952876164799998
+    },
+    "10_dma_out": {
+     "banks": 32,
+     "reads": 34,
+     "writes": 0,
+     "counted_nj": 0.11510768,
+     "pt_nj": 0.11629820607059997
+    }
+   },
+   "total": {
+    "reads": 1162,
+    "writes": 656,
+    "counted_nj": 8.167509599999999,
+    "pt_nj": 6.407656799978601
+   }
+  }
+ }
+}
