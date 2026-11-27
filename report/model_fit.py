@@ -7,7 +7,9 @@ From committed results only. The idle floor (X112): each CALIBRATION point's con
 accelerators and the DMA idle) per cycle against the design's shape: the streamers k_s (movers + channels) by least
 squares through 0, the crossbar a_x + b_x inputs by least squares, the DMA's mean f_dma. The transfers (X112): the
 dma group in the CALIBRATION points' dma_in and dma_out windows less f_dma a cycle, over their beats (the bank
-accesses SNAX-GVSoC's energy run counts beyond its priced ones, ge/<point>.json, over the superbank's banks): e_l2.
+accesses SNAX-GVSoC's energy run counts beyond its priced ones, over the superbank's banks): e_l2. SNAX-GVSoC's runs
+are read as priced before the terms, the first file of GE_ORDER that has the point: ge/csyn2/ (CSYN2's tier A),
+ge/ge1/ (GE1's dot3, the program their power runs used), then ge/ (the runs with the current prices).
 Refusals (X111): REF_PAIR's netlist difference per part less the fitted floor over the extra cycles, over SNAX-GVSoC's
 difference in refused requests at the granted price: r_strm, r_xbar, clamped at 0. Checks on tier A (cluster/
 points.json, the crossbar's inputs from SNAX_FORGE's paper/data/): the floor per point, e_l2 per point, the refusal pair REF_CHECK,
@@ -27,6 +29,7 @@ import dma_copy as dc  # noqa: E402
 import tier_check as tc  # noqa: E402
 
 CALIBRATION = ("dot3_w2_cg", "dot3_w4_cg", "dot3_w8_cg", "dot3_w16_cg", "dot3_w32_cg")
+GE_ORDER = ("csyn2", "ge1", "")  # ge/'s subfolders _ge reads a point's energy run from, first found
 REF_PAIR = ("mvt_contiguous_w8_cg", "mvt_padded_w8_cg")  # one netlist, equal grants, refusals the difference
 REF_CHECK = ("bicg_pipeline_contiguous_w8_cg", "bicg_sequential_contiguous_w8_cg")
 FLOOR_GROUPS = {"streamers": "streamers", "crossbar": "tcdm_interconnect", "dma": "dma"}
@@ -104,8 +107,17 @@ def fit_l2(en: dict, tech: str, f_dma: float) -> dict:
             "points": pts}
 
 
+def ge_path(tech: str, pt: str) -> Path:
+    """The point's energy run as the fits read it: the first of GE_ORDER's folders under ge/ that has it."""
+    for d in GE_ORDER:
+        f = _res(tech) / "ge" / d / f"{pt}.json"
+        if f.is_file():
+            return f
+    raise FileNotFoundError(f"no {pt}.json under ge/ ({', '.join(d + '/' if d else 'ge/' for d in GE_ORDER)})")
+
+
 def _ge(tech: str, pt: str) -> dict:
-    return json.loads((_res(tech) / "ge" / f"{pt}.json").read_text())
+    return json.loads(ge_path(tech, pt).read_text())
 
 
 def lane_prices(ge: dict) -> dict[str, tuple[float, float]]:

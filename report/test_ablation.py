@@ -18,6 +18,30 @@ import model_fit as mf  # noqa: E402
 REP = ab.report("nangate45")
 
 
+def test_run_column_only_beside_the_base():
+    """run is ge/<point>.json's program window when it is a run priced with the terms beside the base, else empty."""
+    import tempfile  # noqa: PLC0415
+    run = {"prices": {"r_strm": 0.1}, "windows": [{"mark": 1, "energy": {"parts": {"memory": 2.0, "dma": 1.0}}},
+                                                  {"mark": 9, "energy": {"parts": {"memory": 5.0}}}]}
+    with tempfile.TemporaryDirectory() as d:
+        old = ab.ROOT, mf.ROOT
+        ab.ROOT = mf.ROOT = Path(d)
+        try:
+            ge = Path(d) / "results" / "cluster" / "nangate45" / "ge"
+            (ge / "csyn2").mkdir(parents=True)
+            (ge / "p.json").write_text(json.dumps(run))
+            assert ab.rerun_nj("nangate45", "p", {1}) is None          # ge/p.json is the base itself
+            (ge / "csyn2" / "p.json").write_text(json.dumps({**run, "prices": {}}))
+            assert ab.rerun_nj("nangate45", "p", {1}) == 3.0           # beside CSYN2's: the program window's parts
+            assert ab.base_ge("nangate45", "p")["prices"] == {}
+            (ge / "p.json").write_text(json.dumps({**run, "prices": {}}))
+            assert ab.rerun_nj("nangate45", "p", {1}) is None          # not priced with the terms
+            (ge / "p.json").unlink()
+            assert ab.rerun_nj("nangate45", "p", {1}) is None          # no run
+        finally:
+            ab.ROOT, mf.ROOT = old
+
+
 def test_committed_is_the_energy_run():
     en = json.loads((ROOT / "results" / "cluster" / "nangate45" / "energy.json").read_text())
     for pid, r in REP["rows"].items():

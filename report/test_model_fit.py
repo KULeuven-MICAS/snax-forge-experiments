@@ -55,6 +55,30 @@ def test_copy_has_no_crossbar_access():
         assert abs(v["above_floor_pj_burst"]) < v["d184_pj_burst"] / 2, (pt, v)
 
 
+def test_ge_order():
+    """The runs as priced before the terms: CSYN2's tier A, GE1's dot3, else ge/ itself; a missing point fails."""
+    import json  # noqa: PLC0415
+    import tempfile  # noqa: PLC0415
+    assert mf.GE_ORDER == ("csyn2", "ge1", "")
+    assert mf.ge_path("nangate45", "mvt_column_cg").parent.name == "csyn2"
+    assert mf.ge_path("nangate45", "dot3_w8_cg").parent.name == "ge1"
+    with tempfile.TemporaryDirectory() as d:
+        old, mf.ROOT = mf.ROOT, Path(d)
+        try:
+            ge = Path(d) / "results" / "cluster" / "nangate45" / "ge"
+            for sub in ("", "ge1", "csyn2"):
+                (ge / sub).mkdir(parents=True, exist_ok=True)
+                (ge / sub / "p.json").write_text(json.dumps({"from": sub}))
+                assert mf._ge("nangate45", "p") == {"from": sub}   # each folder added wins over the ones before
+            try:
+                mf.ge_path("nangate45", "q")
+                raise AssertionError("no error for a missing point")
+            except FileNotFoundError as e:
+                assert "csyn2/" in str(e) and "ge1/" in str(e), e
+        finally:
+            mf.ROOT = old
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

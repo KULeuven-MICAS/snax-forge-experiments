@@ -3,7 +3,7 @@
 
     pixi run ablation [--tech nangate45] [--md]
 
-Re-prices each tier A point's energy run as CSYN2 priced it (ge/csyn2/<point>.json, else ge/<point>.json) over the
+Re-prices each tier A point's energy run as CSYN2 priced it (model_fit's _ge: ge/csyn2/, ge/ge1/, then ge/) over the
 program window with model_fit.json's terms, adding one per STEPS: refusals at r_strm and r_xbar of the granted price (D203), the idle floor of the
 streamers, crossbar and DMA (D205), the L2 <-> L1 transfers' bank accesses and e_l2 (D204), the copy at the dma
 group's e_burst (dma_copy.json) with no crossbar access (X113). Per step, the six parts' total over the netlist's
@@ -57,15 +57,17 @@ def steps(ge: dict, marks: set[int], fit: dict, e_burst: float, sh: dict) -> dic
 
 
 def base_ge(tech: str, pt: str) -> dict:
-    """The point's energy run as CSYN2 priced it: ge/csyn2/<point>.json once ge/ holds the runs priced with the
-    terms, ge/<point>.json before."""
-    old = ROOT / "results" / "cluster" / tech / "ge" / "csyn2" / f"{pt}.json"
-    return json.loads(old.read_text()) if old.is_file() else mf._ge(tech, pt)
+    """The point's energy run as CSYN2 priced it, as the fits read it (model_fit's _ge)."""
+    return mf._ge(tech, pt)
 
 
 def rerun_nj(tech: str, pt: str, marks: set[int]) -> float | None:
-    """ge/<point>.json's six parts over the program window when it is priced with the terms, else None."""
-    ge = mf._ge(tech, pt)
+    """ge/<point>.json's six parts over the program window when it is priced with the terms, else None: also when
+    there is no such file, or it is the one base_ge read (no run beside the base)."""
+    f = ROOT / "results" / "cluster" / tech / "ge" / f"{pt}.json"
+    if not f.is_file() or f.resolve() == mf.ge_path(tech, pt).resolve():
+        return None
+    ge = json.loads(f.read_text())
     if "r_strm" not in ge["prices"]:
         return None
     return sum(sum(v for k, v in w["energy"]["parts"].items() if k in tc.DYN) for w in ge["windows"] if w["mark"] in marks)
