@@ -279,7 +279,7 @@ $k_s$ by least squares through 0, $a_x$ and $b_x$ by least squares, $f_{dma}$ th
 
 $$e_{l2} = \frac{\sum (E - C\thinspace f_{dma})}{\sum n}$$
 
-54.48 pJ a beat on all five points, the AXI's share in the rest (42–50 pJ a beat) and the superbank muxes' (`tcdm_logic`, about 14) outside the six parts. The banks there cost 4.17 pJ an access, against CACTI's 3.39 (read) and 6.45 (write).
+54.48 pJ a beat on all five points, the AXI's share in the rest (42–50 pJ a beat) and the superbank muxes' (`tcdm_logic`, about 14) outside the six parts. PT puts the banks there at 4.17 pJ an access against CACTI's 3.39 (read) and 6.45 (write); that is averaged PT's macro bias on the DMA's correlated request and write enable (PITFALLS PT7, X96), so the model keeps CACTI's prices.
 
 **A refused request.** The pair `mvt_contiguous_w8_cg` and `mvt_padded_w8_cg` share a netlist and their grants; refusals and the cycles they take are the only difference. For a part, the netlist's difference less its floor over the extra cycles, over what SNAX-GVSoC charges for the extra refusals at the granted price:
 

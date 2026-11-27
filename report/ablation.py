@@ -6,8 +6,7 @@
 Re-prices each tier A point's committed energy run (ge/<point>.json) over the program window with model_fit.json's
 terms, adding one per STEPS: refusals at r_strm and r_xbar of the granted price (D203), the idle floor of the
 streamers, crossbar and DMA (D205), the L2 <-> L1 transfers' bank accesses and e_l2 (D204), the copy at the dma
-group's e_burst (dma_copy.json) with no crossbar access (X113), and as a candidate the DMA's bank accesses (transfers
-and copies) at e_bank_dma rather than CACTI's read and write. Per step, the six parts' total over the netlist's
+group's e_burst (dma_copy.json) with no crossbar access (X113). Per step, the six parts' total over the netlist's
 (energy.json), the pairs PAIRS' changes at both levels, and per kernel the dynamic top-1 and tau-a against the
 netlist (tier_check's rules). An energy run already priced with the terms is step `run`: re-pricing it must add
 nothing. Writes results/cluster/<tech>/ablation.json; --md prints the tables.
@@ -25,7 +24,7 @@ sys.path[:0] = [str(ROOT / "report")]
 import model_fit as mf  # noqa: E402
 import tier_check as tc  # noqa: E402
 
-STEPS = ("committed", "refusals", "floor", "transfers", "copy", "dma_banks")
+STEPS = ("committed", "refusals", "floor", "transfers", "copy")
 PAIRS = (("mvt_contiguous_w8", "mvt_padded_w8"), ("bicg_sequential_contiguous_w8", "bicg_pipeline_contiguous_w8"),
          ("mvt_column", "mvt_column_pipeline"), ("bicg_two_pass", "bicg_two_pass_pipeline"))
 
@@ -53,11 +52,6 @@ def steps(ge: dict, marks: set[int], fit: dict, e_burst: float, sh: dict) -> dic
     e["dma"] -= bursts * (pr.get("e_dma_burst", 0.0) - e_burst) / 1e3
     e["crossbar"] -= bursts * (pr["e_xbar_ro"] + pr["e_xbar_wo"]) / 1e3
     out["copy"] = dict(e)
-    sb = mf.SUPERBANK
-    cr, cw = (sum(w["counters"].get("copies", {k: 0})[k] for w in ws) for k in ("reads", "writes"))
-    at_cacti = rd * pr["e_rd"] + wr * pr["e_wr"] + sb * (cr * pr["e_rd"] + cw * pr["e_wr"])
-    e["memory"] += ((rd + wr + sb * (cr + cw)) * fit["l2"]["e_bank_dma_pj"] - at_cacti) / 1e3
-    out["dma_banks"] = dict(e)
     return out
 
 

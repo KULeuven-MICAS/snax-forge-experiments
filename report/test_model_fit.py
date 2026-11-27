@@ -35,7 +35,6 @@ def test_l2():
     l2 = REP["l2"]
     assert 50 < l2["e_l2_pj"] < 60, l2["e_l2_pj"]
     assert all(abs(p["pj"] / l2["e_l2_pj"] - 1) < 0.01 for p in l2["points"].values())
-    assert 3.5 < l2["e_bank_dma_pj"] < 4.5, l2["e_bank_dma_pj"]
     assert all(abs(v["pj"] / l2["e_l2_pj"] - 1) < 0.12 for v in REP["check"]["l2"].values())
 
 

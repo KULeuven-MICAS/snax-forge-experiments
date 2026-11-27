@@ -29,7 +29,7 @@ def test_committed_is_the_energy_run():
 
 def test_steps_touch_their_parts():
     touches = {"refusals": {"streamers", "crossbar"}, "floor": {"streamers", "crossbar", "dma"},
-               "transfers": {"memory", "dma"}, "copy": {"crossbar", "dma"}, "dma_banks": {"memory"}}
+               "transfers": {"memory", "dma"}, "copy": {"crossbar", "dma"}}
     for pid, r in REP["rows"].items():
         for prev, step in zip(ab.STEPS, ab.STEPS[1:]):
             a, b = r["steps"][prev]["parts"], r["steps"][step]["parts"]

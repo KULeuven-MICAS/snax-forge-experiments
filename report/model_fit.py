@@ -7,8 +7,7 @@ From committed results only. The idle floor (X112): each CALIBRATION point's con
 accelerators and the DMA idle) per cycle against the design's shape: the streamers k_s (movers + channels) by least
 squares through 0, the crossbar a_x + b_x inputs by least squares, the DMA's mean f_dma. The transfers (X112): the
 dma group in the CALIBRATION points' dma_in and dma_out windows less f_dma a cycle, over their beats (the bank
-accesses SNAX-GVSoC's energy run counts beyond its priced ones, ge/<point>.json, over the superbank's banks): e_l2;
-the banks' energy there over those accesses: e_bank_dma, a DMA access's bank price, a candidate beside CACTI's.
+accesses SNAX-GVSoC's energy run counts beyond its priced ones, ge/<point>.json, over the superbank's banks): e_l2.
 Refusals (X111): REF_PAIR's netlist difference per part less the fitted floor over the extra cycles, over SNAX-GVSoC's
 difference in refused requests at the granted price: r_strm, r_xbar, clamped at 0. Checks on tier A (cluster/
 points.json, the crossbar's inputs from SNAX_FORGE's paper/data/): the floor per point, e_l2 per point, the refusal pair REF_CHECK,
@@ -91,21 +90,17 @@ def l2_accesses(w: dict) -> tuple[int, int]:
 def transfer_windows(en: dict, ge: dict, pt: str, f_dma: float) -> dict:
     """The point's dma_in and dma_out windows: beats and the dma group's nJ above f_dma."""
     gw = {w["mark"]: w for w in ge["windows"]}
-    acc = nj = banks = 0.0
+    beats = nj = 0.0
     for w in en[pt]["windows"]:
         if w["kind"] in TRANSFER:
-            acc += sum(l2_accesses(gw[w["mark"]]))
+            beats += sum(l2_accesses(gw[w["mark"]])) / SUPERBANK
             nj += (w["groups"]["dma"] - f_dma) * w["cycles"] / 1e3
-            banks += w["groups"]["tcdm_banks"] * w["cycles"] / 1e3
-    beats = acc / SUPERBANK
-    return {"beats": beats, "dma_above_floor_nj": nj, "pj": nj * 1e3 / beats if beats else None,
-            "accesses": acc, "banks_nj": banks, "bank_pj": banks * 1e3 / acc if acc else None}
+    return {"beats": beats, "dma_above_floor_nj": nj, "pj": nj * 1e3 / beats if beats else None}
 
 
 def fit_l2(en: dict, tech: str, f_dma: float) -> dict:
     pts = {pt: transfer_windows(en, _ge(tech, pt), pt, f_dma) for pt in CALIBRATION}
     return {"e_l2_pj": sum(p["dma_above_floor_nj"] for p in pts.values()) * 1e3 / sum(p["beats"] for p in pts.values()),
-            "e_bank_dma_pj": sum(p["banks_nj"] for p in pts.values()) * 1e3 / sum(p["accesses"] for p in pts.values()),
             "points": pts}
 
 
@@ -231,7 +226,7 @@ def markdown(j: dict) -> str:
     out = ["The idle floor (pJ a cycle):", "",
            f"- streamers {fl['streamers']['k_pj']:.4f} a mover or channel; crossbar {fl['crossbar']['a_pj']:.3f} "
            f"+ {fl['crossbar']['b_pj']:.4f} an input; DMA {fl['dma']['pj']:.3f}",
-           f"- e_l2 {j['l2']['e_l2_pj']:.2f} pJ a beat, e_bank_dma {j['l2']['e_bank_dma_pj']:.3f} pJ an access; r_strm {r['r_strm']:.4f}, r_xbar {r['r_xbar']:.4f} "
+           f"- e_l2 {j['l2']['e_l2_pj']:.2f} pJ a beat; r_strm {r['r_strm']:.4f}, r_xbar {r['r_xbar']:.4f} "
            f"(raw {r['fit']['parts']['crossbar']['raw']:.4f})", "",
            "| point | streamers fitted / measured | crossbar | DMA | e_l2 pJ a beat |", "|---|---|---|---|---|"]
     for pt, v in j["check"]["floor"].items():
