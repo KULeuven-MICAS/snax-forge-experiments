@@ -3,13 +3,14 @@
 
     pixi run tier-check [--tech nangate45] [--md]
 
-For every point of cluster/points.json whose id is a row of snax-forge's paper/data/{forms,limits}.csv (read
-through SNAX_FORGE, default ../snax-forge), over the program window (the quiet build's windows from the first mark
-to the check's): cycles; area in the eight parts (groups.json's `parts`); dynamic energy in the six parts the
-graph prices and in the core and the rest; leakage apart (X106). Per kernel, the order of its designs at each
-level in four metrics (cycles, dynamic, dynamic + the design's leakage, + the fixed cluster) and area: top-1 and
-Kendall's tau-a per pair of levels, a pair within TIE_PCT tied; pooled over every design too. "Where they differ"
-lists every cycle gap over GAP_PCT between levels (spans and windows) and every pair two levels order oppositely.
+For every point of cluster/points.json whose id is a row of snax-forge's paper/data/{forms,limits}.csv (read through
+SNAX_FORGE, default ../snax-forge), over the program window (the quiet build's windows from the first mark to the
+check's): cycles; area in the eight parts (groups.json's `parts`; a point with `netlist_of` takes its twin's);
+dynamic energy in the six parts the graph prices and in the core and the rest; leakage apart (X106). Per kernel, the
+order of its designs at each level in four metrics (cycles, dynamic, dynamic + the design's leakage, + the fixed
+cluster) and area: top-1 and Kendall's tau-a per pair of levels, a pair within TIE_PCT tied; pooled over every
+design too. "Where they differ" lists every cycle gap over GAP_PCT between levels (spans and windows) and every pair
+two levels order oppositely.
 Writes results/cluster/<tech>/tier_check.json; --md prints the tables. Standard library and arc/arc.py.
 """
 
@@ -190,11 +191,12 @@ def check(tech: str) -> dict:
         if pid not in paper:
             continue
         ge_path = res / "ge" / f"{name}.json"
-        if name not in en or name not in br or not ge_path.is_file():
+        area = br.get(name) or br.get(p.get("netlist_of", ""))  # an adopted netlist's area is its twin's
+        if name not in en or area is None or not ge_path.is_file():
             missing.append(name)
             continue
         ge = json.loads(ge_path.read_text())
-        n = netlist_side(en[name], br[name], parts)
+        n = netlist_side(en[name], area, parts)
         g = gvsoc_side(ge, set(n["windows"]))
         e = estimate_side(paper[pid], ge["background"])
         rows.append({"id": pid, "point": name, "kernel": kernel_of(pid), "estimate": e, "gvsoc": g, "netlist": n,

@@ -15263,5 +15263,857 @@
   "failed": [],
   "snax_forge_commit": "3c4d4bc03dc06085daa50495d907e6f417ac961f",
   "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d"
+ },
+ "mvt_column_pipeline_cg": {
+  "windows": [
+   {
+    "name": "1_run",
+    "mark": 1,
+    "kind": "run",
+    "label": "program window",
+    "cycles": 891,
+    "clock_ns": 10.0,
+    "pj_cycle": 74.02693000000001,
+    "nj": 65.95799463,
+    "groups": {
+     "tcdm_banks": 9.304364268000002,
+     "icache_macros": 0.8648143116700001,
+     "acc_datapath": 8.569471,
+     "acc_control": 0.677713,
+     "acc_csr": 0.6620986,
+     "streamers": 10.103447300000004,
+     "acc_interface": 0.6181293100000007,
+     "tcdm_interconnect": 5.857701000000003,
+     "tcdm_logic": 4.998470690000014,
+     "dma": 9.291345500000004,
+     "cores": 3.674495050000008,
+     "icache_logic": 1.0615951983299994,
+     "axi": 11.190116099100043,
+     "peripherals": 7.114858559000005,
+     "others": 0.03831011390000069
+    },
+    "leak_uw": {
+     "tcdm_banks": 4.493824000000002,
+     "icache_macros": 0.3201234,
+     "acc_datapath": 196.35649999999998,
+     "acc_control": 42.33565,
+     "acc_csr": 28.625660000000003,
+     "streamers": 1324.0915999999968,
+     "acc_interface": 59.06087000000005,
+     "tcdm_interconnect": 965.2836999999993,
+     "tcdm_logic": 1104.3579099999974,
+     "dma": 1356.0304700000022,
+     "cores": 479.8204914000002,
+     "icache_logic": 369.6234766000004,
+     "axi": 2595.923524999987,
+     "peripherals": 295.6337140999966,
+     "others": 11.230485500000135
+    },
+    "leak_top_uw": 8833.188,
+    "check": {
+     "power_pt_e_dyn_pj": 74.02693,
+     "ok": true
+    }
+   }
+  ],
+  "labels": {
+   "tcdm_banks": "TCDM banks (macros)",
+   "icache_macros": "I-cache macros (data and tag)",
+   "acc_datapath": "accelerator datapath",
+   "acc_control": "accelerator control",
+   "acc_csr": "accelerator csr (with its peripherals)",
+   "streamers": "streamers",
+   "acc_interface": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+   "tcdm_interconnect": "TCDM interconnect (sparse or logarithmic)",
+   "tcdm_logic": "TCDM bank logic (AMO shims, muxes)",
+   "dma": "DMA (iDMA, its AXI-to-memory and interconnect)",
+   "cores": "RISC-V cores (Snitch, with the shared mul/div)",
+   "icache_logic": "I-cache logic (the hive without its macros and mul/div)",
+   "axi": "AXI: the external cuts, both crossbars, the converters",
+   "peripherals": "cluster peripherals (with the barrier)",
+   "others": "others (what no rule names)"
+  },
+  "span": {
+   "cycles": 891,
+   "nj": 65.95799463,
+   "groups": [
+    {
+     "name": "tcdm_banks",
+     "nj": 8.290188562788002,
+     "share_pct": 12.568891169740528,
+     "leak_nj": 0.04003997184000001
+    },
+    {
+     "name": "icache_macros",
+     "nj": 0.77054955169797,
+     "share_pct": 1.168242843070758,
+     "leak_nj": 0.0028522994939999997
+    },
+    {
+     "name": "acc_datapath",
+     "nj": 7.635398661,
+     "share_pct": 11.576153434972921,
+     "leak_nj": 1.749536415
+    },
+    {
+     "name": "acc_control",
+     "nj": 0.603842283,
+     "share_pct": 0.9154952123504243,
+     "leak_nj": 0.37721064149999994
+    },
+    {
+     "name": "acc_csr",
+     "nj": 0.5899298526,
+     "share_pct": 0.8944023479023107,
+     "leak_nj": 0.2550546306
+    },
+    {
+     "name": "streamers",
+     "nj": 9.002171544300005,
+     "share_pct": 13.64834027292501,
+     "leak_nj": 11.79765615599997
+    },
+    {
+     "name": "acc_interface",
+     "nj": 0.5507532152100005,
+     "share_pct": 0.8350060038961505,
+     "leak_nj": 0.5262323517000005
+    },
+    {
+     "name": "tcdm_interconnect",
+     "nj": 5.219211591000003,
+     "share_pct": 7.912932496322626,
+     "leak_nj": 8.600677766999993
+    },
+    {
+     "name": "tcdm_logic",
+     "nj": 4.453637384790012,
+     "share_pct": 6.752232856340272,
+     "leak_nj": 9.839828978099975
+    },
+    {
+     "name": "dma",
+     "nj": 8.278588840500005,
+     "share_pct": 12.551304640081664,
+     "leak_nj": 12.08223148770002
+    },
+    {
+     "name": "cores",
+     "nj": 3.273975089550007,
+     "share_pct": 4.9637274570213945,
+     "leak_nj": 4.275200578374002
+    },
+    {
+     "name": "icache_logic",
+     "nj": 0.9458813217120295,
+     "share_pct": 1.4340662220221743,
+     "leak_nj": 3.293345176506003
+    },
+    {
+     "name": "axi",
+     "nj": 9.97039344429814,
+     "share_pct": 15.116277412963152,
+     "leak_nj": 23.12967860774988
+    },
+    {
+     "name": "peripherals",
+     "nj": 6.339338976069004,
+     "share_pct": 9.61117603958452,
+     "leak_nj": 2.6340963926309695
+    },
+    {
+     "name": "others",
+     "nj": 0.03413431148490061,
+     "share_pct": 0.051751590806211584,
+     "leak_nj": 0.10006362580500121
+    }
+   ],
+   "leak_nj": 78.70370507999982
+  },
+  "run": [
+   {
+    "window": "1_run",
+    "cycles": 891,
+    "idle_window": null,
+    "groups": [
+     {
+      "group": "tcdm_banks",
+      "run_pj_cycle": 9.304364268000002,
+      "idle_pj_cycle": null,
+      "run_nj": 8.290188562788002,
+      "above_idle_nj": null
+     },
+     {
+      "group": "icache_macros",
+      "run_pj_cycle": 0.8648143116700001,
+      "idle_pj_cycle": null,
+      "run_nj": 0.77054955169797,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_datapath",
+      "run_pj_cycle": 8.569471,
+      "idle_pj_cycle": null,
+      "run_nj": 7.635398661,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_control",
+      "run_pj_cycle": 0.677713,
+      "idle_pj_cycle": null,
+      "run_nj": 0.603842283,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_csr",
+      "run_pj_cycle": 0.6620986,
+      "idle_pj_cycle": null,
+      "run_nj": 0.5899298526,
+      "above_idle_nj": null
+     },
+     {
+      "group": "streamers",
+      "run_pj_cycle": 10.103447300000004,
+      "idle_pj_cycle": null,
+      "run_nj": 9.002171544300005,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_interface",
+      "run_pj_cycle": 0.6181293100000007,
+      "idle_pj_cycle": null,
+      "run_nj": 0.5507532152100005,
+      "above_idle_nj": null
+     },
+     {
+      "group": "tcdm_interconnect",
+      "run_pj_cycle": 5.857701000000003,
+      "idle_pj_cycle": null,
+      "run_nj": 5.219211591000003,
+      "above_idle_nj": null
+     },
+     {
+      "group": "tcdm_logic",
+      "run_pj_cycle": 4.998470690000014,
+      "idle_pj_cycle": null,
+      "run_nj": 4.453637384790012,
+      "above_idle_nj": null
+     },
+     {
+      "group": "dma",
+      "run_pj_cycle": 9.291345500000004,
+      "idle_pj_cycle": null,
+      "run_nj": 8.278588840500005,
+      "above_idle_nj": null
+     },
+     {
+      "group": "cores",
+      "run_pj_cycle": 3.674495050000008,
+      "idle_pj_cycle": null,
+      "run_nj": 3.273975089550007,
+      "above_idle_nj": null
+     },
+     {
+      "group": "icache_logic",
+      "run_pj_cycle": 1.0615951983299994,
+      "idle_pj_cycle": null,
+      "run_nj": 0.9458813217120295,
+      "above_idle_nj": null
+     },
+     {
+      "group": "axi",
+      "run_pj_cycle": 11.190116099100043,
+      "idle_pj_cycle": null,
+      "run_nj": 9.97039344429814,
+      "above_idle_nj": null
+     },
+     {
+      "group": "peripherals",
+      "run_pj_cycle": 7.114858559000005,
+      "idle_pj_cycle": null,
+      "run_nj": 6.339338976069004,
+      "above_idle_nj": null
+     },
+     {
+      "group": "others",
+      "run_pj_cycle": 0.03831011390000069,
+      "idle_pj_cycle": null,
+      "run_nj": 0.03413431148490061,
+      "above_idle_nj": null
+     }
+    ]
+   }
+  ],
+  "failed": [],
+  "snax_forge_commit": "b5e16549408d9b12602eb65154f45d789bb52f3a",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d"
+ },
+ "bicg_two_pass_pipeline_cg": {
+  "windows": [
+   {
+    "name": "1_run",
+    "mark": 1,
+    "kind": "run",
+    "label": "program window",
+    "cycles": 850,
+    "clock_ns": 10.0,
+    "pj_cycle": 72.15177,
+    "nj": 61.3290045,
+    "groups": {
+     "tcdm_banks": 9.218829450000001,
+     "icache_macros": 0.7833560805800001,
+     "acc_datapath": 9.148672999999999,
+     "acc_control": 0.7013201,
+     "acc_csr": 0.6782575,
+     "streamers": 9.504072700000009,
+     "acc_interface": 0.6184825400000082,
+     "tcdm_interconnect": 5.317069999999997,
+     "tcdm_logic": 4.724037330000012,
+     "dma": 8.970595800000002,
+     "cores": 3.454572110000008,
+     "icache_logic": 1.0150280694199996,
+     "axi": 10.867828689200053,
+     "peripherals": 7.112756759000005,
+     "others": 0.03688987179999457
+    },
+    "leak_uw": {
+     "tcdm_banks": 4.493824000000002,
+     "icache_macros": 0.3201234,
+     "acc_datapath": 191.4262,
+     "acc_control": 42.162,
+     "acc_csr": 28.669730000000005,
+     "streamers": 909.5870000000019,
+     "acc_interface": 52.190320000000014,
+     "tcdm_interconnect": 695.5211999999989,
+     "tcdm_logic": 1103.3121799999976,
+     "dma": 1349.510919999995,
+     "cores": 479.2317914000001,
+     "icache_logic": 365.8828766000002,
+     "axi": 2589.5793359999875,
+     "peripherals": 295.65181409999656,
+     "others": 11.128684500000187
+    },
+    "leak_top_uw": 8118.668000000001,
+    "check": {
+     "power_pt_e_dyn_pj": 72.15177,
+     "ok": true
+    }
+   }
+  ],
+  "labels": {
+   "tcdm_banks": "TCDM banks (macros)",
+   "icache_macros": "I-cache macros (data and tag)",
+   "acc_datapath": "accelerator datapath",
+   "acc_control": "accelerator control",
+   "acc_csr": "accelerator csr (with its peripherals)",
+   "streamers": "streamers",
+   "acc_interface": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+   "tcdm_interconnect": "TCDM interconnect (sparse or logarithmic)",
+   "tcdm_logic": "TCDM bank logic (AMO shims, muxes)",
+   "dma": "DMA (iDMA, its AXI-to-memory and interconnect)",
+   "cores": "RISC-V cores (Snitch, with the shared mul/div)",
+   "icache_logic": "I-cache logic (the hive without its macros and mul/div)",
+   "axi": "AXI: the external cuts, both crossbars, the converters",
+   "peripherals": "cluster peripherals (with the barrier)",
+   "others": "others (what no rule names)"
+  },
+  "span": {
+   "cycles": 850,
+   "nj": 61.3290045,
+   "groups": [
+    {
+     "name": "tcdm_banks",
+     "nj": 7.836005032500001,
+     "share_pct": 12.776996946852448,
+     "leak_nj": 0.038197504000000014
+    },
+    {
+     "name": "icache_macros",
+     "nj": 0.665852668493,
+     "share_pct": 1.0857059786336496,
+     "leak_nj": 0.0027210489
+    },
+    {
+     "name": "acc_datapath",
+     "nj": 7.776372049999999,
+     "share_pct": 12.67976239529536,
+     "leak_nj": 1.6271227
+    },
+    {
+     "name": "acc_control",
+     "nj": 0.596122085,
+     "share_pct": 0.9720067851419305,
+     "leak_nj": 0.358377
+    },
+    {
+     "name": "acc_csr",
+     "nj": 0.576518875,
+     "share_pct": 0.9400427737254401,
+     "leak_nj": 0.243692705
+    },
+    {
+     "name": "streamers",
+     "nj": 8.078461795000008,
+     "share_pct": 13.172334788183308,
+     "leak_nj": 7.7314895000000154
+    },
+    {
+     "name": "acc_interface",
+     "nj": 0.5257101590000071,
+     "share_pct": 0.8571966287175051,
+     "leak_nj": 0.44361772000000005
+    },
+    {
+     "name": "tcdm_interconnect",
+     "nj": 4.519509499999997,
+     "share_pct": 7.369285604497293,
+     "leak_nj": 5.911930199999991
+    },
+    {
+     "name": "tcdm_logic",
+     "nj": 4.01543173050001,
+     "share_pct": 6.54736166555583,
+     "leak_nj": 9.378153529999981
+    },
+    {
+     "name": "dma",
+     "nj": 7.625006430000001,
+     "share_pct": 12.432953204058611,
+     "leak_nj": 11.470842819999957
+    },
+    {
+     "name": "cores",
+     "nj": 2.9363862935000067,
+     "share_pct": 4.787924274068408,
+     "leak_nj": 4.0734702269000005
+    },
+    {
+     "name": "icache_logic",
+     "nj": 0.8627738590069997,
+     "share_pct": 1.4067957992160132,
+     "leak_nj": 3.1100044511000013
+    },
+    {
+     "name": "axi",
+     "nj": 9.237654385820045,
+     "share_pct": 15.06245611050159,
+     "leak_nj": 22.011424355999893
+    },
+    {
+     "name": "peripherals",
+     "nj": 6.045843245150005,
+     "share_pct": 9.858048886396004,
+     "leak_nj": 2.5130404198499705
+    },
+    {
+     "name": "others",
+     "nj": 0.031356391029995385,
+     "share_pct": 0.05112815915672556,
+     "leak_nj": 0.09459381825000159
+    }
+   ],
+   "leak_nj": 69.0086779999998
+  },
+  "run": [
+   {
+    "window": "1_run",
+    "cycles": 850,
+    "idle_window": null,
+    "groups": [
+     {
+      "group": "tcdm_banks",
+      "run_pj_cycle": 9.218829450000001,
+      "idle_pj_cycle": null,
+      "run_nj": 7.836005032500001,
+      "above_idle_nj": null
+     },
+     {
+      "group": "icache_macros",
+      "run_pj_cycle": 0.7833560805800001,
+      "idle_pj_cycle": null,
+      "run_nj": 0.665852668493,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_datapath",
+      "run_pj_cycle": 9.148672999999999,
+      "idle_pj_cycle": null,
+      "run_nj": 7.776372049999999,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_control",
+      "run_pj_cycle": 0.7013201,
+      "idle_pj_cycle": null,
+      "run_nj": 0.596122085,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_csr",
+      "run_pj_cycle": 0.6782575,
+      "idle_pj_cycle": null,
+      "run_nj": 0.576518875,
+      "above_idle_nj": null
+     },
+     {
+      "group": "streamers",
+      "run_pj_cycle": 9.504072700000009,
+      "idle_pj_cycle": null,
+      "run_nj": 8.078461795000008,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_interface",
+      "run_pj_cycle": 0.6184825400000082,
+      "idle_pj_cycle": null,
+      "run_nj": 0.5257101590000071,
+      "above_idle_nj": null
+     },
+     {
+      "group": "tcdm_interconnect",
+      "run_pj_cycle": 5.317069999999997,
+      "idle_pj_cycle": null,
+      "run_nj": 4.519509499999997,
+      "above_idle_nj": null
+     },
+     {
+      "group": "tcdm_logic",
+      "run_pj_cycle": 4.724037330000012,
+      "idle_pj_cycle": null,
+      "run_nj": 4.01543173050001,
+      "above_idle_nj": null
+     },
+     {
+      "group": "dma",
+      "run_pj_cycle": 8.970595800000002,
+      "idle_pj_cycle": null,
+      "run_nj": 7.625006430000001,
+      "above_idle_nj": null
+     },
+     {
+      "group": "cores",
+      "run_pj_cycle": 3.454572110000008,
+      "idle_pj_cycle": null,
+      "run_nj": 2.9363862935000067,
+      "above_idle_nj": null
+     },
+     {
+      "group": "icache_logic",
+      "run_pj_cycle": 1.0150280694199996,
+      "idle_pj_cycle": null,
+      "run_nj": 0.8627738590069997,
+      "above_idle_nj": null
+     },
+     {
+      "group": "axi",
+      "run_pj_cycle": 10.867828689200053,
+      "idle_pj_cycle": null,
+      "run_nj": 9.237654385820045,
+      "above_idle_nj": null
+     },
+     {
+      "group": "peripherals",
+      "run_pj_cycle": 7.112756759000005,
+      "idle_pj_cycle": null,
+      "run_nj": 6.045843245150005,
+      "above_idle_nj": null
+     },
+     {
+      "group": "others",
+      "run_pj_cycle": 0.03688987179999457,
+      "idle_pj_cycle": null,
+      "run_nj": 0.031356391029995385,
+      "above_idle_nj": null
+     }
+    ]
+   }
+  ],
+  "failed": [],
+  "snax_forge_commit": "b5e16549408d9b12602eb65154f45d789bb52f3a",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d"
+ },
+ "bicg_pipeline_contiguous_w8_cg": {
+  "windows": [
+   {
+    "name": "1_run",
+    "mark": 1,
+    "kind": "run",
+    "label": "program window",
+    "cycles": 1580,
+    "clock_ns": 10.0,
+    "pj_cycle": 237.95786999999999,
+    "nj": 375.97343459999996,
+    "groups": {
+     "tcdm_banks": 40.212106339,
+     "icache_macros": 0.41840542362000005,
+     "acc_datapath": 69.24069,
+     "acc_control": 0.41375057000000004,
+     "acc_csr": 0.6080144900000002,
+     "streamers": 32.56605199999989,
+     "acc_interface": 0.23737341000001583,
+     "tcdm_interconnect": 19.00407199999997,
+     "tcdm_logic": 16.83588895000001,
+     "dma": 24.222829300000004,
+     "cores": 3.174725370000006,
+     "icache_logic": 0.78372316638,
+     "axi": 23.061109037800076,
+     "peripherals": 7.107128059000004,
+     "others": 0.07200188420000542
+    },
+    "leak_uw": {
+     "tcdm_banks": 4.493824000000002,
+     "icache_macros": 0.3201234,
+     "acc_datapath": 2365.475,
+     "acc_control": 41.96977999999999,
+     "acc_csr": 28.668740000000003,
+     "streamers": 2599.9999999999777,
+     "acc_interface": 40.034850000000915,
+     "tcdm_interconnect": 2110.4520000000025,
+     "tcdm_logic": 1106.9806299999973,
+     "dma": 1356.002700000002,
+     "cores": 479.36259140000004,
+     "icache_logic": 366.53717660000035,
+     "axi": 2595.0240099999905,
+     "peripherals": 295.5506140999966,
+     "others": 11.257960499999864
+    },
+    "leak_top_uw": 13402.13,
+    "check": {
+     "power_pt_e_dyn_pj": 237.9579,
+     "ok": true
+    }
+   }
+  ],
+  "labels": {
+   "tcdm_banks": "TCDM banks (macros)",
+   "icache_macros": "I-cache macros (data and tag)",
+   "acc_datapath": "accelerator datapath",
+   "acc_control": "accelerator control",
+   "acc_csr": "accelerator csr (with its peripherals)",
+   "streamers": "streamers",
+   "acc_interface": "SNAX CSR path (the cores' translators, the accelerator wrapper's demux and glue)",
+   "tcdm_interconnect": "TCDM interconnect (sparse or logarithmic)",
+   "tcdm_logic": "TCDM bank logic (AMO shims, muxes)",
+   "dma": "DMA (iDMA, its AXI-to-memory and interconnect)",
+   "cores": "RISC-V cores (Snitch, with the shared mul/div)",
+   "icache_logic": "I-cache logic (the hive without its macros and mul/div)",
+   "axi": "AXI: the external cuts, both crossbars, the converters",
+   "peripherals": "cluster peripherals (with the barrier)",
+   "others": "others (what no rule names)"
+  },
+  "span": {
+   "cycles": 1580,
+   "nj": 375.97343459999996,
+   "groups": [
+    {
+     "name": "tcdm_banks",
+     "nj": 63.53512801562,
+     "share_pct": 16.898834377278636,
+     "leak_nj": 0.07100241920000003
+    },
+    {
+     "name": "icache_macros",
+     "nj": 0.6610805693196,
+     "share_pct": 0.1758317233298483,
+     "leak_nj": 0.0050579497200000005
+    },
+    {
+     "name": "acc_datapath",
+     "nj": 109.4002902,
+     "share_pct": 29.0978777041499,
+     "leak_nj": 37.374505
+    },
+    {
+     "name": "acc_control",
+     "nj": 0.6537259006,
+     "share_pct": 0.17387555620665124,
+     "leak_nj": 0.6631225239999998
+    },
+    {
+     "name": "acc_csr",
+     "nj": 0.9606628942000003,
+     "share_pct": 0.2555135032936714,
+     "leak_nj": 0.45296609200000004
+    },
+    {
+     "name": "streamers",
+     "nj": 51.45436215999983,
+     "share_pct": 13.68563771393646,
+     "leak_nj": 41.07999999999964
+    },
+    {
+     "name": "acc_interface",
+     "nj": 0.375049987800025,
+     "share_pct": 0.0997543850934688,
+     "leak_nj": 0.6325506300000145
+    },
+    {
+     "name": "tcdm_interconnect",
+     "nj": 30.02643375999995,
+     "share_pct": 7.9863179141753,
+     "leak_nj": 33.34514160000004
+    },
+    {
+     "name": "tcdm_logic",
+     "nj": 26.600704541000017,
+     "share_pct": 7.075155341573705,
+     "leak_nj": 17.490293953999956
+    },
+    {
+     "name": "dma",
+     "nj": 38.272070294,
+     "share_pct": 10.179461305482356,
+     "leak_nj": 21.424842660000028
+    },
+    {
+     "name": "cores",
+     "nj": 5.01606608460001,
+     "share_pct": 1.334154390438949,
+     "leak_nj": 7.57392894412
+    },
+    {
+     "name": "icache_logic",
+     "nj": 1.2382826028804,
+     "share_pct": 0.3293537492077905,
+     "leak_nj": 5.791287390280004
+    },
+    {
+     "name": "axi",
+     "nj": 36.43655227972412,
+     "share_pct": 9.691257127910953,
+     "leak_nj": 41.00137935799985
+    },
+    {
+     "name": "peripherals",
+     "nj": 11.229262333220007,
+     "share_pct": 2.9867169591827345,
+     "leak_nj": 4.669699702779947
+    },
+    {
+     "name": "others",
+     "nj": 0.11376297703600856,
+     "share_pct": 0.030258248739579583,
+     "leak_nj": 0.17787577589999784
+    }
+   ],
+   "leak_nj": 211.75365399999947
+  },
+  "run": [
+   {
+    "window": "1_run",
+    "cycles": 1580,
+    "idle_window": null,
+    "groups": [
+     {
+      "group": "tcdm_banks",
+      "run_pj_cycle": 40.212106339,
+      "idle_pj_cycle": null,
+      "run_nj": 63.53512801562,
+      "above_idle_nj": null
+     },
+     {
+      "group": "icache_macros",
+      "run_pj_cycle": 0.41840542362000005,
+      "idle_pj_cycle": null,
+      "run_nj": 0.6610805693196,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_datapath",
+      "run_pj_cycle": 69.24069,
+      "idle_pj_cycle": null,
+      "run_nj": 109.4002902,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_control",
+      "run_pj_cycle": 0.41375057000000004,
+      "idle_pj_cycle": null,
+      "run_nj": 0.6537259006,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_csr",
+      "run_pj_cycle": 0.6080144900000002,
+      "idle_pj_cycle": null,
+      "run_nj": 0.9606628942000003,
+      "above_idle_nj": null
+     },
+     {
+      "group": "streamers",
+      "run_pj_cycle": 32.56605199999989,
+      "idle_pj_cycle": null,
+      "run_nj": 51.45436215999983,
+      "above_idle_nj": null
+     },
+     {
+      "group": "acc_interface",
+      "run_pj_cycle": 0.23737341000001583,
+      "idle_pj_cycle": null,
+      "run_nj": 0.375049987800025,
+      "above_idle_nj": null
+     },
+     {
+      "group": "tcdm_interconnect",
+      "run_pj_cycle": 19.00407199999997,
+      "idle_pj_cycle": null,
+      "run_nj": 30.02643375999995,
+      "above_idle_nj": null
+     },
+     {
+      "group": "tcdm_logic",
+      "run_pj_cycle": 16.83588895000001,
+      "idle_pj_cycle": null,
+      "run_nj": 26.600704541000017,
+      "above_idle_nj": null
+     },
+     {
+      "group": "dma",
+      "run_pj_cycle": 24.222829300000004,
+      "idle_pj_cycle": null,
+      "run_nj": 38.272070294,
+      "above_idle_nj": null
+     },
+     {
+      "group": "cores",
+      "run_pj_cycle": 3.174725370000006,
+      "idle_pj_cycle": null,
+      "run_nj": 5.01606608460001,
+      "above_idle_nj": null
+     },
+     {
+      "group": "icache_logic",
+      "run_pj_cycle": 0.78372316638,
+      "idle_pj_cycle": null,
+      "run_nj": 1.2382826028804,
+      "above_idle_nj": null
+     },
+     {
+      "group": "axi",
+      "run_pj_cycle": 23.061109037800076,
+      "idle_pj_cycle": null,
+      "run_nj": 36.43655227972412,
+      "above_idle_nj": null
+     },
+     {
+      "group": "peripherals",
+      "run_pj_cycle": 7.107128059000004,
+      "idle_pj_cycle": null,
+      "run_nj": 11.229262333220007,
+      "above_idle_nj": null
+     },
+     {
+      "group": "others",
+      "run_pj_cycle": 0.07200188420000542,
+      "idle_pj_cycle": null,
+      "run_nj": 0.11376297703600856,
+      "above_idle_nj": null
+     }
+    ]
+   }
+  ],
+  "failed": [],
+  "snax_forge_commit": "b5e16549408d9b12602eb65154f45d789bb52f3a",
+  "snax_cluster_commit": "baf8785821e0f061b51f92c92f015d9ec3bc773d"
  }
 }

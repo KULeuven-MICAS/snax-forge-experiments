@@ -3,11 +3,7 @@
  "snax_forge": "/home/claude/snax-forge",
  "tie_pct": 1.0,
  "gap_pct": 20.0,
- "missing": [
-  "mvt_column_pipeline_cg",
-  "bicg_two_pass_pipeline_cg",
-  "bicg_pipeline_contiguous_w8_cg"
- ],
+ "missing": [],
  "points": [
   {
    "id": "mvt_column",
@@ -2886,6 +2882,435 @@
    },
    "paper_cycles": 1967,
    "paper_dynamic_nj": 211.0157
+  },
+  {
+   "id": "mvt_column_pipeline",
+   "point": "mvt_column_pipeline_cg",
+   "kernel": "mvt",
+   "estimate": {
+    "cycles": 514,
+    "dyn_nj": {
+     "datapath": 10.77,
+     "control": 0.5574,
+     "streamers": 5.6568,
+     "crossbar": 3.1537,
+     "memory": 6.0465,
+     "dma": 0.0
+    },
+    "leak_uw": 4231.1775,
+    "leak_nj": 21.7483,
+    "leak_part_uw": {
+     "datapath": 212.0233,
+     "control": 33.2919,
+     "streamers": 1157.4276,
+     "crossbar": 1416.5799,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
+    "fixed_nj": 37.133467823535995,
+    "area_um2": {
+     "datapath": 11019.8108,
+     "control": 2107.9584,
+     "streamers": 61672.6309,
+     "crossbar": 53987.0063,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 909,
+    "windows": {
+     "1": 909
+    },
+    "dyn_nj": {
+     "datapath": 10.7700019264,
+     "control": 0.5776793984,
+     "streamers": 5.887565089000001,
+     "crossbar": 3.2827339830443396,
+     "memory": 6.04653312,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 38.46140304169104,
+     "leak_core": 7.703067932531999,
+     "leak_rest": 36.514832684273934,
+     "idle": 21.451987032210063
+    },
+    "background_rates": {
+     "design_uw": 4231.177452331248,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 891,
+    "windows": {
+     "1": 891
+    },
+    "kinds": {
+     "1": [
+      "run",
+      "program window"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 7.635398661,
+     "control": 0.603842283,
+     "streamers": 9.002171544300005,
+     "crossbar": 5.219211591000003,
+     "memory": 8.290188562788002,
+     "dma": 8.278588840500005,
+     "core": 4.990405962960006,
+     "rest": 21.938187184452058
+    },
+    "leak_nj": {
+     "datapath": 1.749536415,
+     "control": 0.37721064149999994,
+     "streamers": 11.79765615599997,
+     "crossbar": 8.600677766999993,
+     "memory": 0.04003997184000001,
+     "dma": 12.08223148770002,
+     "core": 7.571398054374005,
+     "rest": 36.484954586585836
+    },
+    "leak_uw": {
+     "datapath": 196.3565,
+     "control": 42.33565,
+     "streamers": 1324.0915999999968,
+     "crossbar": 965.2836999999993,
+     "memory": 4.493824000000002,
+     "dma": 1356.0304700000022,
+     "core": 849.7640914000007,
+     "rest": 4094.8321645999813
+    },
+    "area_um2": {
+     "datapath": 10128.4821,
+     "control": 2075.5980000000004,
+     "streamers": 74517.7712999997,
+     "crossbar": 48387.79489999992,
+     "memory": 432092.81279999996,
+     "dma": 73718.70969999966,
+     "core": 88951.18559999992,
+     "rest": 231497.94209999964
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 514,
+     "dynamic": 26.1844,
+     "dynamic_leak": 47.9327,
+     "total": 85.06616782353599,
+     "area": 951435.1222
+    },
+    "gvsoc": {
+     "cycles": 909,
+     "dynamic": 26.564513516844343,
+     "dynamic_leak": 65.02591655853539,
+     "total": 130.6958042075514,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 891,
+     "dynamic": 39.029401482588014,
+     "dynamic_leak": 73.676753921628,
+     "total": 144.6616997099999,
+     "area": 961370.2964999988
+    }
+   },
+   "paper_cycles": 904,
+   "paper_dynamic_nj": 26.5645
+  },
+  {
+   "id": "bicg_two_pass_pipeline",
+   "point": "bicg_two_pass_pipeline_cg",
+   "kernel": "bicg",
+   "estimate": {
+    "cycles": 514,
+    "dyn_nj": {
+     "datapath": 10.7093,
+     "control": 0.5574,
+     "streamers": 5.4619,
+     "crossbar": 3.036,
+     "memory": 5.8299,
+     "dma": 0.0
+    },
+    "leak_uw": 3393.5621,
+    "leak_nj": 17.4429,
+    "leak_part_uw": {
+     "datapath": 205.2167,
+     "control": 33.2919,
+     "streamers": 767.828,
+     "crossbar": 975.3707,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
+    "fixed_nj": 37.133467823535995,
+    "area_um2": {
+     "datapath": 10602.4199,
+     "control": 2107.9584,
+     "streamers": 40920.9073,
+     "crossbar": 37751.8538,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 853,
+    "windows": {
+     "1": 853
+    },
+    "dyn_nj": {
+     "datapath": 10.709317561599999,
+     "control": 0.5762298048,
+     "streamers": 5.665242575,
+     "crossbar": 3.14769555963423,
+     "memory": 5.82985984,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 28.94708445549091,
+     "leak_core": 7.2285114922439995,
+     "leak_rest": 34.265294037057934,
+     "idle": 20.130412473570058
+    },
+    "background_rates": {
+     "design_uw": 3393.5620698113607,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 850,
+    "windows": {
+     "1": 850
+    },
+    "kinds": {
+     "1": [
+      "run",
+      "program window"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 7.776372049999999,
+     "control": 0.596122085,
+     "streamers": 8.078461795000008,
+     "crossbar": 4.519509499999997,
+     "memory": 7.836005032500001,
+     "dma": 7.625006430000001,
+     "core": 4.465012821000006,
+     "rest": 20.43251478650006
+    },
+    "leak_nj": {
+     "datapath": 1.6271227,
+     "control": 0.358377,
+     "streamers": 7.7314895000000154,
+     "crossbar": 5.911930199999991,
+     "memory": 0.038197504000000014,
+     "dma": 11.470842819999957,
+     "core": 7.186195726900003,
+     "rest": 34.684522549099846
+    },
+    "leak_uw": {
+     "datapath": 191.4262,
+     "control": 42.162,
+     "streamers": 909.5870000000018,
+     "crossbar": 695.5211999999989,
+     "memory": 4.493824000000002,
+     "dma": 1349.510919999995,
+     "core": 845.4347914000003,
+     "rest": 4080.5320645999823
+    },
+    "area_um2": {
+     "datapath": 9822.582100000001,
+     "control": 2076.662,
+     "streamers": 51575.53769999982,
+     "crossbar": 35172.38259999995,
+     "memory": 432092.81279999996,
+     "dma": 73718.44369999965,
+     "core": 88952.24959999992,
+     "rest": 231092.02609999955
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 514,
+     "dynamic": 25.5945,
+     "dynamic_leak": 43.037400000000005,
+     "total": 80.170867823536,
+     "area": 914030.8552
+    },
+    "gvsoc": {
+     "cycles": 853,
+     "dynamic": 25.92834534103423,
+     "dynamic_leak": 54.87542979652514,
+     "total": 116.49964779939714,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 850,
+     "dynamic": 36.43147689250001,
+     "dynamic_leak": 63.56943661649997,
+     "total": 130.3376824999999,
+     "area": 924502.6965999989
+    }
+   },
+   "paper_cycles": 861,
+   "paper_dynamic_nj": 25.9283
+  },
+  {
+   "id": "bicg_pipeline_contiguous_w8",
+   "point": "bicg_pipeline_contiguous_w8_cg",
+   "kernel": "bicg",
+   "estimate": {
+    "cycles": 514,
+    "dyn_nj": {
+     "datapath": 104.8758,
+     "control": 0.5571,
+     "streamers": 36.7295,
+     "crossbar": 23.7292,
+     "memory": 44.1607,
+     "dma": 0.0
+    },
+    "leak_uw": 9717.8352,
+    "leak_nj": 49.9497,
+    "leak_part_uw": {
+     "datapath": 2451.8056,
+     "control": 33.2919,
+     "streamers": 2584.0119,
+     "crossbar": 3236.8709,
+     "memory": 4.4938,
+     "dma": 1407.361,
+     "core": 847.4222,
+     "rest": 4017.0333
+    },
+    "fixed_nj": 37.133467823535995,
+    "area_um2": {
+     "datapath": 120676.3218,
+     "control": 2107.9584,
+     "streamers": 138009.0431,
+     "crossbar": 116931.7789,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 1561,
+    "windows": {
+     "1": 1561
+    },
+    "dyn_nj": {
+     "datapath": 104.8758473728,
+     "control": 0.8740776928000001,
+     "streamers": 55.617056544,
+     "crossbar": 35.89816767303013,
+     "memory": 44.16071168,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 151.69540763469084,
+     "leak_core": 13.228260773027998,
+     "leak_rest": 62.705889791145886,
+     "idle": 36.83889082209011
+    },
+    "background_rates": {
+     "design_uw": 9717.83521042222,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 1580,
+    "windows": {
+     "1": 1580
+    },
+    "kinds": {
+     "1": [
+      "run",
+      "program window"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 109.4002902,
+     "control": 0.6537259006,
+     "streamers": 51.45436215999983,
+     "crossbar": 30.02643375999995,
+     "memory": 63.53512801562,
+     "dma": 38.272070294,
+     "core": 6.91542925680001,
+     "rest": 75.71599501298019
+    },
+    "leak_nj": {
+     "datapath": 37.374505,
+     "control": 0.6631225239999998,
+     "streamers": 41.07999999999964,
+     "crossbar": 33.34514160000004,
+     "memory": 0.07100241920000003,
+     "dma": 21.424842660000028,
+     "core": 13.370274284120006,
+     "rest": 64.42476551267977
+    },
+    "leak_uw": {
+     "datapath": 2365.475,
+     "control": 41.969779999999986,
+     "streamers": 2599.9999999999777,
+     "crossbar": 2110.4520000000025,
+     "memory": 4.493824000000002,
+     "dma": 1356.002700000002,
+     "core": 846.2198914000004,
+     "rest": 4077.5168045999853
+    },
+    "area_um2": {
+     "datapath": 119165.60669999999,
+     "control": 2075.8640000000005,
+     "streamers": 145549.34559999997,
+     "crossbar": 104208.69409999985,
+     "memory": 432092.81279999996,
+     "dma": 73717.11369999965,
+     "core": 88951.98359999993,
+     "rest": 230437.93209999977
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 514,
+     "dynamic": 210.0523,
+     "dynamic_leak": 260.002,
+     "total": 297.13546782353603,
+     "area": 1200372.818
+    },
+    "gvsoc": {
+     "cycles": 1561,
+     "dynamic": 241.4258609626301,
+     "dynamic_leak": 393.121268597321,
+     "total": 505.89430998358495,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 1580,
+     "dynamic": 293.3420103302198,
+     "dynamic_leak": 427.3006245334195,
+     "total": 587.7270885999995,
+     "area": 1196199.3525999992
+    }
+   },
+   "paper_cycles": 1561,
+   "paper_dynamic_nj": 241.4259
   }
  ],
  "kernels": {
@@ -2893,23 +3318,24 @@
    "cycles": {
     "top": {
      "estimate": [
-      "mvt_read_once"
+      "mvt_read_once",
+      "mvt_column_pipeline"
      ],
      "gvsoc": [
-      "mvt_read_once"
+      "mvt_column_pipeline"
      ],
      "netlist": [
-      "mvt_read_once"
+      "mvt_column_pipeline"
      ]
     },
     "top_agrees": true,
     "tau": {
      "estimate-gvsoc": {
-      "tau": 0.7,
+      "tau": 0.7333333333333333,
       "discordant": []
      },
      "estimate-netlist": {
-      "tau": 0.7,
+      "tau": 0.7333333333333333,
       "discordant": []
      },
      "gvsoc-netlist": {
@@ -2921,23 +3347,24 @@
    "dynamic": {
     "top": {
      "estimate": [
-      "mvt_column"
+      "mvt_column",
+      "mvt_column_pipeline"
      ],
      "gvsoc": [
       "mvt_column"
      ],
      "netlist": [
-      "mvt_read_once"
+      "mvt_column_pipeline"
      ]
     },
     "top_agrees": false,
     "tau": {
      "estimate-gvsoc": {
-      "tau": 0.9,
+      "tau": 0.8666666666666667,
       "discordant": []
      },
      "estimate-netlist": {
-      "tau": 0.7,
+      "tau": 0.7333333333333333,
       "discordant": [
        [
         "mvt_column",
@@ -2946,11 +3373,15 @@
       ]
      },
      "gvsoc-netlist": {
-      "tau": 0.8,
+      "tau": 0.7333333333333333,
       "discordant": [
        [
         "mvt_column",
         "mvt_read_once"
+       ],
+       [
+        "mvt_column",
+        "mvt_column_pipeline"
        ]
       ]
      }
@@ -2959,23 +3390,23 @@
    "dynamic_leak": {
     "top": {
      "estimate": [
-      "mvt_read_once"
+      "mvt_column_pipeline"
      ],
      "gvsoc": [
-      "mvt_read_once"
+      "mvt_column_pipeline"
      ],
      "netlist": [
-      "mvt_read_once"
+      "mvt_column_pipeline"
      ]
     },
     "top_agrees": true,
     "tau": {
      "estimate-gvsoc": {
-      "tau": 0.9,
+      "tau": 0.9333333333333333,
       "discordant": []
      },
      "estimate-netlist": {
-      "tau": 0.9,
+      "tau": 0.9333333333333333,
       "discordant": []
      },
      "gvsoc-netlist": {
@@ -2987,23 +3418,23 @@
    "total": {
     "top": {
      "estimate": [
-      "mvt_read_once"
+      "mvt_column_pipeline"
      ],
      "gvsoc": [
-      "mvt_read_once"
+      "mvt_column_pipeline"
      ],
      "netlist": [
-      "mvt_read_once"
+      "mvt_column_pipeline"
      ]
     },
     "top_agrees": true,
     "tau": {
      "estimate-gvsoc": {
-      "tau": 0.9,
+      "tau": 0.9333333333333333,
       "discordant": []
      },
      "estimate-netlist": {
-      "tau": 0.9,
+      "tau": 0.9333333333333333,
       "discordant": []
      },
      "gvsoc-netlist": {
@@ -3024,7 +3455,7 @@
     "top_agrees": true,
     "tau": {
      "estimate-netlist": {
-      "tau": 0.8,
+      "tau": 0.7333333333333333,
       "discordant": []
      }
     }
@@ -3034,24 +3465,36 @@
    "cycles": {
     "top": {
      "estimate": [
-      "bicg_read_once"
+      "bicg_read_once",
+      "bicg_two_pass_pipeline",
+      "bicg_pipeline_contiguous_w8"
      ],
      "gvsoc": [
-      "bicg_read_once"
+      "bicg_two_pass_pipeline"
      ],
      "netlist": [
-      "bicg_read_once"
+      "bicg_two_pass_pipeline"
      ]
     },
     "top_agrees": true,
     "tau": {
      "estimate-gvsoc": {
-      "tau": 0.6666666666666666,
-      "discordant": []
+      "tau": 0.4,
+      "discordant": [
+       [
+        "bicg_two_pass",
+        "bicg_pipeline_contiguous_w8"
+       ]
+      ]
      },
      "estimate-netlist": {
-      "tau": 0.6666666666666666,
-      "discordant": []
+      "tau": 0.4,
+      "discordant": [
+       [
+        "bicg_two_pass",
+        "bicg_pipeline_contiguous_w8"
+       ]
+      ]
      },
      "gvsoc-netlist": {
       "tau": 1.0,
@@ -3062,23 +3505,25 @@
    "dynamic": {
     "top": {
      "estimate": [
-      "bicg_two_pass"
+      "bicg_two_pass",
+      "bicg_two_pass_pipeline"
      ],
      "gvsoc": [
       "bicg_two_pass"
      ],
      "netlist": [
-      "bicg_read_once"
+      "bicg_read_once",
+      "bicg_two_pass_pipeline"
      ]
     },
     "top_agrees": false,
     "tau": {
      "estimate-gvsoc": {
-      "tau": 1.0,
+      "tau": 0.8,
       "discordant": []
      },
      "estimate-netlist": {
-      "tau": 0.3333333333333333,
+      "tau": 0.5,
       "discordant": [
        [
         "bicg_two_pass",
@@ -3087,11 +3532,15 @@
       ]
      },
      "gvsoc-netlist": {
-      "tau": 0.3333333333333333,
+      "tau": 0.5,
       "discordant": [
        [
         "bicg_two_pass",
         "bicg_read_once"
+       ],
+       [
+        "bicg_two_pass",
+        "bicg_two_pass_pipeline"
        ]
       ]
      }
@@ -3100,13 +3549,13 @@
    "dynamic_leak": {
     "top": {
      "estimate": [
-      "bicg_read_once"
+      "bicg_two_pass_pipeline"
      ],
      "gvsoc": [
-      "bicg_read_once"
+      "bicg_two_pass_pipeline"
      ],
      "netlist": [
-      "bicg_read_once"
+      "bicg_two_pass_pipeline"
      ]
     },
     "top_agrees": true,
@@ -3128,13 +3577,13 @@
    "total": {
     "top": {
      "estimate": [
-      "bicg_read_once"
+      "bicg_two_pass_pipeline"
      ],
      "gvsoc": [
-      "bicg_read_once"
+      "bicg_two_pass_pipeline"
      ],
      "netlist": [
-      "bicg_read_once"
+      "bicg_two_pass_pipeline"
      ]
     },
     "top_agrees": true,
@@ -3157,17 +3606,19 @@
     "top": {
      "estimate": [
       "bicg_two_pass",
-      "bicg_read_once"
+      "bicg_read_once",
+      "bicg_two_pass_pipeline"
      ],
      "netlist": [
       "bicg_two_pass",
-      "bicg_read_once"
+      "bicg_read_once",
+      "bicg_two_pass_pipeline"
      ]
     },
     "top_agrees": true,
     "tau": {
      "estimate-netlist": {
-      "tau": 0.6666666666666666,
+      "tau": 0.6,
       "discordant": []
      }
     }
@@ -3442,27 +3893,55 @@
    "top": {
     "estimate": [
      "mvt_read_once",
-     "bicg_read_once"
+     "bicg_read_once",
+     "mvt_column_pipeline",
+     "bicg_two_pass_pipeline",
+     "bicg_pipeline_contiguous_w8"
     ],
     "gvsoc": [
      "atax_read_once"
     ],
     "netlist": [
-     "atax_read_once"
+     "atax_read_once",
+     "bicg_two_pass_pipeline"
     ]
    },
-   "top_agrees": false,
+   "top_agrees": true,
    "tau": {
     "estimate-gvsoc": {
-     "tau": 0.6703296703296703,
+     "tau": 0.6176470588235294,
      "discordant": [
       [
        "mvt_read_once",
        "atax_read_once"
       ],
       [
+       "bicg_two_pass",
+       "bicg_pipeline_contiguous_w8"
+      ],
+      [
        "bicg_read_once",
        "atax_read_once"
+      ],
+      [
+       "atax_read_once",
+       "mvt_column_pipeline"
+      ],
+      [
+       "atax_read_once",
+       "bicg_two_pass_pipeline"
+      ],
+      [
+       "atax_read_once",
+       "bicg_pipeline_contiguous_w8"
+      ],
+      [
+       "atax_column_shared_movers",
+       "bicg_pipeline_contiguous_w8"
+      ],
+      [
+       "gesummv_x_read_once",
+       "bicg_pipeline_contiguous_w8"
       ],
       [
        "gesummv_literal",
@@ -3471,15 +3950,35 @@
      ]
     },
     "estimate-netlist": {
-     "tau": 0.6703296703296703,
+     "tau": 0.6323529411764706,
      "discordant": [
       [
        "mvt_read_once",
        "atax_read_once"
       ],
       [
+       "bicg_two_pass",
+       "bicg_pipeline_contiguous_w8"
+      ],
+      [
        "bicg_read_once",
        "atax_read_once"
+      ],
+      [
+       "atax_read_once",
+       "mvt_column_pipeline"
+      ],
+      [
+       "atax_read_once",
+       "bicg_pipeline_contiguous_w8"
+      ],
+      [
+       "atax_column_shared_movers",
+       "bicg_pipeline_contiguous_w8"
+      ],
+      [
+       "gesummv_x_read_once",
+       "bicg_pipeline_contiguous_w8"
       ],
       [
        "gesummv_literal",
@@ -3488,31 +3987,38 @@
      ]
     },
     "gvsoc-netlist": {
-     "tau": 1.0,
-     "discordant": []
+     "tau": 0.9705882352941176,
+     "discordant": [
+      [
+       "bicg_read_once",
+       "mvt_column_pipeline"
+      ]
+     ]
     }
    }
   },
   "dynamic": {
    "top": {
     "estimate": [
-     "bicg_two_pass"
+     "bicg_two_pass",
+     "bicg_two_pass_pipeline"
     ],
     "gvsoc": [
      "bicg_two_pass"
     ],
     "netlist": [
-     "bicg_read_once"
+     "bicg_read_once",
+     "bicg_two_pass_pipeline"
     ]
    },
    "top_agrees": false,
    "tau": {
     "estimate-gvsoc": {
-     "tau": 0.978021978021978,
+     "tau": 0.9485294117647058,
      "discordant": []
     },
     "estimate-netlist": {
-     "tau": 0.8351648351648352,
+     "tau": 0.8235294117647058,
      "discordant": [
       [
        "mvt_column",
@@ -3535,13 +4041,21 @@
        "atax_read_once"
       ],
       [
+       "bicg_two_pass",
+       "mvt_column_pipeline"
+      ],
+      [
        "atax_read_once",
        "gesummv_x_read_once"
+      ],
+      [
+       "atax_read_once",
+       "mvt_column_pipeline"
       ]
      ]
     },
     "gvsoc-netlist": {
-     "tau": 0.8461538461538461,
+     "tau": 0.8235294117647058,
      "discordant": [
       [
        "mvt_column",
@@ -3550,6 +4064,10 @@
       [
        "mvt_column",
        "atax_read_once"
+      ],
+      [
+       "mvt_column",
+       "mvt_column_pipeline"
       ],
       [
        "mvt_read_once",
@@ -3564,8 +4082,20 @@
        "atax_read_once"
       ],
       [
+       "bicg_two_pass",
+       "mvt_column_pipeline"
+      ],
+      [
+       "bicg_two_pass",
+       "bicg_two_pass_pipeline"
+      ],
+      [
        "atax_read_once",
        "gesummv_x_read_once"
+      ],
+      [
+       "atax_read_once",
+       "mvt_column_pipeline"
       ]
      ]
     }
@@ -3574,20 +4104,19 @@
   "dynamic_leak": {
    "top": {
     "estimate": [
-     "bicg_read_once"
+     "bicg_two_pass_pipeline"
     ],
     "gvsoc": [
-     "bicg_read_once",
-     "atax_read_once"
+     "bicg_two_pass_pipeline"
     ],
     "netlist": [
-     "atax_read_once"
+     "bicg_two_pass_pipeline"
     ]
    },
-   "top_agrees": false,
+   "top_agrees": true,
    "tau": {
     "estimate-gvsoc": {
-     "tau": 0.8901098901098901,
+     "tau": 0.8897058823529411,
      "discordant": [
       [
        "bicg_two_pass",
@@ -3602,13 +4131,21 @@
        "gesummv_x_read_once"
       ],
       [
+       "gesummv_literal",
+       "bicg_pipeline_contiguous_w8"
+      ],
+      [
        "mvt_contiguous_w8",
        "bicg_sequential_contiguous_w8"
+      ],
+      [
+       "mvt_padded_w8",
+       "bicg_pipeline_contiguous_w8"
       ]
      ]
     },
     "estimate-netlist": {
-     "tau": 0.9010989010989011,
+     "tau": 0.8970588235294118,
      "discordant": [
       [
        "bicg_two_pass",
@@ -3623,13 +4160,21 @@
        "gesummv_x_read_once"
       ],
       [
+       "gesummv_literal",
+       "bicg_pipeline_contiguous_w8"
+      ],
+      [
        "mvt_contiguous_w8",
        "bicg_sequential_contiguous_w8"
+      ],
+      [
+       "mvt_padded_w8",
+       "bicg_pipeline_contiguous_w8"
       ]
      ]
     },
     "gvsoc-netlist": {
-     "tau": 0.967032967032967,
+     "tau": 0.9779411764705882,
      "discordant": [
       [
        "bicg_two_pass",
@@ -3642,10 +4187,11 @@
   "total": {
    "top": {
     "estimate": [
-     "bicg_read_once"
+     "bicg_two_pass_pipeline"
     ],
     "gvsoc": [
-     "atax_read_once"
+     "atax_read_once",
+     "bicg_two_pass_pipeline"
     ],
     "netlist": [
      "atax_read_once"
@@ -3654,7 +4200,7 @@
    "top_agrees": false,
    "tau": {
     "estimate-gvsoc": {
-     "tau": 0.9010989010989011,
+     "tau": 0.9117647058823529,
      "discordant": [
       [
        "bicg_read_once",
@@ -3671,11 +4217,15 @@
      ]
     },
     "estimate-netlist": {
-     "tau": 0.8571428571428571,
+     "tau": 0.8823529411764706,
      "discordant": [
       [
        "bicg_read_once",
        "atax_read_once"
+      ],
+      [
+       "atax_read_once",
+       "bicg_two_pass_pipeline"
       ],
       [
        "gesummv_literal",
@@ -3696,7 +4246,7 @@
      ]
     },
     "gvsoc-netlist": {
-     "tau": 0.9560439560439561,
+     "tau": 0.9558823529411765,
      "discordant": [
       [
        "gesummv_literal",
@@ -3722,7 +4272,7 @@
    "top_agrees": true,
    "tau": {
     "estimate-netlist": {
-     "tau": 0.8791208791208791,
+     "tau": 0.8676470588235294,
      "discordant": []
     }
    }
@@ -4050,6 +4600,27 @@
    "level": 31,
    "netlist": 45,
    "pct": -31.1
+  },
+  {
+   "id": "mvt_column_pipeline",
+   "where": "span, estimate",
+   "level": 514,
+   "netlist": 891,
+   "pct": -42.3
+  },
+  {
+   "id": "bicg_two_pass_pipeline",
+   "where": "span, estimate",
+   "level": 514,
+   "netlist": 850,
+   "pct": -39.5
+  },
+  {
+   "id": "bicg_pipeline_contiguous_w8",
+   "where": "span, estimate",
+   "level": 514,
+   "netlist": 1580,
+   "pct": -67.5
   }
  ]
 }

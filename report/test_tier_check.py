@@ -36,6 +36,11 @@ def test_committed_points():
     for r in j["points"]:                                       # the netlist's windows are the RTL's
         assert r["netlist"]["cycles"] == sum(r["netlist"]["windows"].values())
         assert set(r["gvsoc"]["windows"]) == set(r["netlist"]["windows"]), r["id"]
+    twins = {p["point"]: p["netlist_of"] for p in json.loads(tc.POINTS.read_text())["points"] if "netlist_of" in p}
+    area = {r["point"]: r["netlist"]["area_um2"] for r in j["points"]}
+    for point, twin in twins.items():                          # an adopted netlist has its twin's area
+        if point in area and twin in area:
+            assert area[point] == area[twin], point
     json.dumps(j, default=list)
 
 

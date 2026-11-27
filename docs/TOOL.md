@@ -107,6 +107,7 @@ Steps and checks in [`cluster/README.md`](../cluster/README.md); one cluster run
 | `cluster-breakdown [--md]` | area in groups, `breakdown.json` (X72) |
 | `cluster-energy [--md]` | energy per window in groups, leakage per group beside it (X106), `energy.json` |
 | `tier-check [--md]` | tier A at three levels (the estimate from `$SNAX_FORGE`'s `paper/data/`, SNAX-GVSoC, the netlist) over the program window, per part, the order per kernel; `tier_check.json` |
+| `pixi run python results/initial_findings/figures.py` | the tier A points' area and energy at three levels as figures, with `numbers.csv` (`results/initial_findings/README.md`) |
 | `cluster-sweep [--recipe dot_v3] [--points A,B,... --out NAME] [--md]` | `sweep.csv` and figures (X78 · X80 · X86) |
 | `ge-check [--recipe dot_v3] [--md]` | snax-forge's D177 energy against hwcost and the netlist, Kendall's tau (cluster/README.md, "ge-check") |
 | `snb rtl RUN`, `snb gls RUN`, `snb pwr RUN [--cores 16] [--again]` (all `[--allow-branch]`) | Snitch-only runs `<config>_<kernel>_<type>` (X91) |
