@@ -9,9 +9,9 @@ checked against power_pt.csv within 0.01 %. Beside it snax-forge's price of the 
 each a read and a write on every bank of its superbank (DMA_BITS over the bank's width; results/ram/<tech>/
 ram_table.csv's bank of the config's L1 macros) and two crossbar accesses at a full crossbar's e_access on the banks
 (results/strm/<tech>/xbar.csv) less the read-only and the write-only saving (xbar_kinds.json's energy at that bank
-count). Then the engine's price per burst (X102): the dma and axi groups' energy less their idle floor (the same groups
-in a clock-gated cluster's run window, the DMA idle: IDLE_POINT's IDLE_WINDOW in results/cluster/<tech>/energy.json),
-per burst, and its mean over the runs, e_burst_pj. Writes results/snb/<tech>/dma_copy.json; --md prints the tables.
+count). Then the engine's price per burst (X113): the dma group's energy less its idle floor (the group in a clock-gated
+cluster's configuration window, the accelerators and the DMA idle: IDLE_POINT's IDLE_WINDOW in results/cluster/<tech>/
+energy.json, the floor report/model_fit.py fits), per burst, and its mean over the runs, e_burst_pj. Writes results/snb/<tech>/dma_copy.json; --md prints the tables.
 Standard library and arc/arc.py.
 """
 
@@ -30,8 +30,8 @@ import arc  # noqa: E402
 import cluster_energy as ce  # noqa: E402
 
 GROUPS = ROOT / "cluster" / "groups.json"
-ENGINE = ("dma", "axi")                          # the groups a copy drives beyond D184's banks and crossbar
-IDLE_POINT, IDLE_WINDOW = "dot3_w8_cg", "5_run"  # the engine's idle floor: a run window with the DMA idle
+ENGINE = ("dma",)  # the DMA part a copy drives beyond D184's banks; the AXI is in the rest at gate level
+IDLE_POINT, IDLE_WINDOW = "dot3_w8_cg", "4_acc_config"  # the engine's idle floor: accelerators and DMA idle
 POINTS = ROOT / "cluster" / "snb_points.json"
 KERNEL = "dma_transpose"
 BANK = re.compile(r"sram_d(\d+)_w(\d+)")

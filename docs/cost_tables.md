@@ -1,6 +1,6 @@
 # The cost tables
 
-snax-forge's first-order cost model (HWCOST) prices a design from four files made in this repo, all on Nangate 45 nm: the SRAM banks (`results/ram/nangate45/ram_table.csv`), the streamer's data mover (`results/strm/nangate45/streamer.csv`), the TCDM sparse interconnect (`results/strm/nangate45/xbar.csv`) and its read-only and write-only inputs (`results/strm/nangate45/xbar_kinds.json`). This page explains, for each one, what a number means, how it was measured, how a cost is read between grid points and how far that can be trusted, then the leakage every table carries (X101), the DMA engine's price per burst (X102) and the cluster's fixed parts (X103). The costs are for comparing design variants with each other, not for sign-off. Dynamic energy and leakage are kept apart: snax-forge shows leakage only when asked. Every table comes from clock-gated synthesis (X83 · X85), `xbar_kinds.json`'s factors included.
+snax-forge's first-order cost model (HWCOST) prices a design from four files made in this repo, all on Nangate 45 nm: the SRAM banks (`results/ram/nangate45/ram_table.csv`), the streamer's data mover (`results/strm/nangate45/streamer.csv`), the TCDM sparse interconnect (`results/strm/nangate45/xbar.csv`) and its read-only and write-only inputs (`results/strm/nangate45/xbar_kinds.json`). This page explains, for each one, what a number means, how it was measured, how a cost is read between grid points and how far that can be trusted, then the leakage every table carries (X101), the DMA engine's price per burst (X113), the cluster's fixed parts (X103) and the model's terms fitted at gate level (X111, X112). The costs are for comparing design variants with each other, not for sign-off. Dynamic energy and leakage are kept apart: snax-forge shows leakage only when asked. Every table comes from clock-gated synthesis (X83 · X85), `xbar_kinds.json`'s factors included.
 
 ## Symbols
 
@@ -243,13 +243,13 @@ Example: a reader at $D$ = 8, $L$ = 2, $C$ = 4 leaks 0.018 µW/µm² of its area
 
 ## The DMA engine
 
-**What it gives.** `results/snb/nangate45/dma_copy.json`'s `engine.e_burst_pj`: the energy one burst of a DMA copy inside L1 costs in the engine (the iDMA, its AXI-to-memory and the wide AXI path), on top of the burst's bank and crossbar accesses (snax-forge D184): 106.40 pJ (X102).
+**What it gives.** `results/snb/nangate45/dma_copy.json`'s `engine.e_burst_pj`: the energy one burst of a DMA copy inside L1 costs in the DMA (the iDMA, its AXI-to-memory and its own interconnect to the superbanks), on top of the burst's bank accesses (snax-forge D184): 78.08 pJ (X113). The AXI's share is in the rest, as the netlist books it.
 
-**How it is found.** From the gate-level copy of a 64 × 64 matrix (`snitch1_cg_dma_transpose_int8` and `_int64`, X95): the `dma` and `axi` groups' energy in the copy's window, less what they spend per cycle with the DMA idle (their floor in `dot3_w8_cg`'s run window: 4.81 and 6.03 pJ a cycle), per burst:
+**How it is found.** From the gate-level copy of a 64 × 64 matrix (`snitch1_cg_dma_transpose_int8` and `_int64`, X95): the `dma` group's energy in the copy's window, less its floor (its pJ a cycle in `dot3_w8_cg`'s configuration window, the accelerators and the DMA idle: 3.37), per burst:
 
-$$e_{\mathrm{burst}} = \frac{(E_{\mathrm{dma}} - C\thinspace p^{\mathrm{idle}}_{\mathrm{dma}}) + (E_{\mathrm{axi}} - C\thinspace p^{\mathrm{idle}}_{\mathrm{axi}})}{N_{\mathrm{burst}}}$$
+$$e_{\mathrm{burst}} = \frac{E_{\mathrm{dma}} - C\thinspace p^{\mathrm{idle}}_{\mathrm{dma}}}{N_{\mathrm{burst}}}$$
 
-with $C$ = 10,967 cycles and $N_{\mathrm{burst}}$ = 4,096: 72.32 + 30.41 = 102.73 pJ at int8, 76.13 + 33.94 = 110.07 pJ at int64, the mean 106.40 pJ. The element's size moves it by 7 %, so one price serves every type.
+with $C$ = 10,967 cycles and $N_{\mathrm{burst}}$ = 4,096: 76.18 pJ at int8, 79.99 pJ at int64, the mean 78.08 pJ. The element's size moves it by 5 %, so one price serves every type.
 
 ## The cluster's fixed parts
 
@@ -264,6 +264,28 @@ with $C$ = 10,967 cycles and $N_{\mathrm{burst}}$ = 4,096: 72.32 + 30.41 = 102.7
 | rest | 227,921 | 4,017 | 14.03 |
 
 At 10 ns the fixed parts cost $6.27\ \mathrm{mW} \cdot 10\ \mathrm{ns} + 23.6\ \mathrm{pJ} \approx 86$ pJ a cycle. Their area is exactly what HWCOST leaves out of the synthesized cluster but its banks (`breakdown.json`'s `not_costed_um2`).
+
+## The model's gate-level terms
+
+**What it gives.** `results/cluster/nangate45/model_fit.json` (`pixi run model-fit`): three terms an event-priced model leaves out, fitted on points §D does not report and checked on tier A (X111, X112). Every number comes from committed reports; no tool runs.
+
+**The idle floor.** What a part spends a cycle with its clock running and nothing to do: the clock tree to its gates, the enables, the arbiters. Only the parts that stay clocked have one; the accelerator's datapath and control are gated (at most 0.27 pJ a cycle together) and the banks spend nothing idle. Each `dot3_w*_cg` point's configuration window gives a part's pJ a cycle $p$; with $n_s$ the streamers' movers plus their channels and $n_x$ the crossbar's inputs:
+
+$$p_{strm} = k_s\thinspace n_s, \qquad p_{xbar} = a_x + b_x\thinspace n_x, \qquad p_{dma} = f_{dma}$$
+
+$k_s$ by least squares through 0, $a_x$ and $b_x$ by least squares, $f_{dma}$ the mean: 0.126 pJ, 1.424 + 0.0574 pJ an input, 3.378 pJ. Example: `mvt_column` (8 movers, 14 channels, 16 inputs) has $p$ = 2.78 + 2.34 + 3.38 = 8.50 pJ a cycle (measured 2.88, 2.10, 3.37).
+
+**An L2 ↔ L1 transfer.** A beat is a DMA access to a superbank of $B$ = 8 banks. Over `dot3`'s `dma_in` and `dma_out` windows, $n$ beats (the bank accesses beyond the priced ones, over $B$) and the `dma` group's energy $E$ over $C$ cycles:
+
+$$e_{l2} = \frac{\sum (E - C\thinspace f_{dma})}{\sum n}$$
+
+54.48 pJ a beat on all five points, the AXI's share in the rest (42–50 pJ a beat) and the superbank muxes' (`tcdm_logic`, about 14) outside the six parts. The banks there cost 4.17 pJ an access, against CACTI's 3.39 (read) and 6.45 (write).
+
+**A refused request.** The pair `mvt_contiguous_w8_cg` and `mvt_padded_w8_cg` share a netlist and their grants; refusals and the cycles they take are the only difference. For a part, the netlist's difference less its floor over the extra cycles, over what SNAX-GVSoC charges for the extra refusals at the granted price:
+
+$$r = \frac{\Delta E_{nl} - p\thinspace\Delta C}{\Delta E_{granted}}$$
+
+Streamers (13.23 − 7.58) / 66.67 = 0.085; crossbar (5.88 − 7.02) / 43.46 < 0, so 0.
 
 ## Reading a table
 

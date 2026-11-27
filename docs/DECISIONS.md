@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X111**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X114**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -466,7 +466,7 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 - **Decided:** a copy's engine (the iDMA, its AXI-to-memory, the wide AXI path) costs `e_burst_pj` per burst on top of D184's L1 accesses: the `dma` and `axi` groups' energy in the copy's run window less their floor with the DMA idle (`dot3_w8_cg`'s run window), per burst, the mean of the int8 and int64 copies: 106.40 pJ (`dma_copy.json`'s `engine`).
 - **Why:** X95's copy cost 3× D184; the engine is about 106 pJ a burst, the rest is paid every cycle whatever runs (X103).
-- **Where:** `report/dma_copy.py`; `cost_tables.md`, "The DMA engine"; `results/runs/2026-11-26_cost2_r1c.md`.
+- **Where:** `report/dma_copy.py`; `cost_tables.md`, "The DMA engine"; `results/runs/2026-11-26_cost2_r1c.md`. Amended by X113.
 
 ### X103 — The cluster's fixed parts
 
@@ -515,6 +515,24 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** the cluster driver's clean check on snax-forge and snax_cluster ignores untracked files (`git status --untracked-files=no`), as forge's bundle `dirty` flag does; a tracked change still refuses the run.
 - **Why:** the editor's Save writes Ryan's own recipes into `recipes/custom/`; they change no bundle.
 - **Where:** `cluster/cluster.py` (`check_repos`).
+
+### X111 — A refused request's price
+
+- **Decided:** a refused request costs $r$ of a granted one per part, fitted on `mvt_contiguous_w8_cg` against `mvt_padded_w8_cg` (one netlist, equal grants, 23 637 more refusals): the netlist's difference less the fitted floor (X112) over the 2 729 extra cycles, over SNAX-GVSoC's difference at the granted price: $r_{strm}$ = 0.085, $r_{xbar}$ = 0 (−0.026, clamped); the banks pay nothing (−0.33 nJ). Checked on `bicg_pipeline_contiguous_w8_cg` against its sequential twin: streamers and crossbar −2.37 nJ at the netlist, −1.89 in the model.
+- **Why:** pricing a refusal as a grant made SNAX-GVSoC's contiguous mvt 32 % above its padded twin against the netlist's 10 %; the stall cycles' cost is the floor's.
+- **Where:** `report/model_fit.py`; `cost_tables.md`, "The model's gate-level terms"; `results/cluster/runs/2026-11-27_cost3_r1.md`.
+
+### X112 — The idle floor and the L2 ↔ L1 transfers
+
+- **Decided:** the floor per cycle of the parts that stay clocked, from the configuration window (accelerators and DMA idle) of the five `dot3_w*_cg` points: the streamers 0.126 pJ a mover or channel (least squares through 0), the crossbar 1.424 + 0.0574 pJ an input (least squares), the DMA 3.378 pJ. A transfer beat (a DMA access to a superbank of 8 banks) costs the `dma` group's energy in the points' `dma_in` and `dma_out` windows less the DMA's floor, per beat: $e_{l2}$ = 54.48 pJ (54.47–54.49 on the five). The banks there cost 4.17 pJ an access, a candidate for the DMA's bank accesses beside CACTI's 3.39 and 6.45 (`e_bank_dma_pj`).
+- **Why:** the configuration window is the one every point has with nothing moving; counts the estimate knows exactly beat areas, the streamers' estimated area being 6–35 % under DC's on tier A. Held out on tier A: the floor within −17 to +6 % (streamers), −5 to +22 % (crossbar), −2 to +4 % (DMA); $e_{l2}$ 54.3–59.7 pJ.
+- **Where:** `report/model_fit.py`; `cost_tables.md`, "The model's gate-level terms"; `results/cluster/runs/2026-11-27_cost3_r1.md`.
+
+### X113 — The DMA engine per burst, the DMA alone
+
+- **Decided:** `e_burst_pj` is the `dma` group alone, less its floor in `dot3_w8_cg`'s configuration window (3.37 pJ a cycle, X112's), per burst, the mean of X102's two copies: 78.08 pJ (76.18 at int8, 79.99 at int64). A copy's beat takes no crossbar access: the copies' crossbar sits at its floor (−0.06 and 1.11 pJ a burst above it, against D184's 3.29). Amends X102.
+- **Why:** the netlist books the AXI in the rest, so X102's 106.40 pJ put the AXI's share in the DMA part and the copies at 1.22 of the netlist's DMA; the DMA reaches the banks through its own superbank port.
+- **Where:** `report/dma_copy.py`, `report/model_fit.py`; `cost_tables.md`, "The DMA engine"; `results/cluster/runs/2026-11-27_cost3_r1.md`.
 
 ## Reports and comparison
 

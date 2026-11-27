@@ -37,12 +37,12 @@ def test_e_burst():
     floor = rep["engine"]["idle"]["pj_cycle"]
     for r in rep["runs"].values():
         e = r["e_burst"]
-        assert abs(e["pj"] - e["dma_pj"] - e["axi_pj"]) < 1e-9, e
+        assert abs(e["pj"] - e["dma_pj"]) < 1e-9 and "axi_pj" not in e, e
         want = (r["groups"]["dma"] * 1e3 - r["cycles"] * floor["dma"]) / r["d184"]["bursts"]
         assert abs(e["dma_pj"] - want) < 1e-9, e
     mean = sum(r["e_burst"]["pj"] for r in rep["runs"].values()) / len(rep["runs"])
     assert abs(rep["engine"]["e_burst_pj"] - mean) < 1e-9
-    assert 90 < mean < 120, mean
+    assert 70 < mean < 90, mean
 
 
 def test_no_reports_yet_is_empty():
