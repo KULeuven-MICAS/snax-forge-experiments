@@ -490,7 +490,7 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 - **Decided:** `cluster-energy` records each group's leakage per window (µW, and nJ over the window) beside its dynamic energy, never summed into it; `groups.json` maps the groups to snax-forge's eight parts (core, DMA, datapath, control, streamers, crossbar, memory, rest; `acc_csr`, `acc_interface` and `tcdm_logic` in rest). Amends X13 for the reports only.
 - **Why:** §D compares dynamic alone and dynamic with leakage; the sum is made where it is read.
-- **Where:** `report/cluster_energy.py`, `cluster/groups.json` (CSYN2 R3).
+- **Where:** `report/cluster_energy.py`, `cluster/groups.json`, `report/tier_check.py`.
 
 ### X107 — The lstp macros only
 

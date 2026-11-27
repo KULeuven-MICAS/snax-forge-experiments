@@ -1,0 +1,3911 @@
+{
+ "tech": "nangate45",
+ "snax_forge": "/home/claude/snax-forge",
+ "tie_pct": 1.0,
+ "gap_pct": 20.0,
+ "missing": [],
+ "points": [
+  {
+   "id": "mvt_column",
+   "point": "mvt_column_cg",
+   "kernel": "mvt",
+   "estimate": {
+    "cycles": 1028,
+    "dyn_nj": {
+     "datapath": 10.77,
+     "control": 0.5574,
+     "streamers": 5.6568,
+     "crossbar": 3.1537,
+     "memory": 6.0465,
+     "dma": 0.0
+    },
+    "leak_uw": 4231.1775,
+    "leak_nj": 43.4965,
+    "fixed_nj": 74.26693564707199,
+    "area_um2": {
+     "datapath": 11019.8108,
+     "control": 2107.9584,
+     "streamers": 61672.6309,
+     "crossbar": 53987.0063,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 1556,
+    "windows": {
+     "1": 125,
+     "2": 32,
+     "3": 37,
+     "4": 61,
+     "5": 3,
+     "6": 543,
+     "7": 35,
+     "8": 24,
+     "9": 37,
+     "10": 52,
+     "11": 12,
+     "12": 539,
+     "13": 56
+    },
+    "dyn_nj": {
+     "datapath": 10.7700019264,
+     "control": 0.5610254208000001,
+     "streamers": 5.690546183999999,
+     "crossbar": 3.172760810593275,
+     "memory": 6.046533119999999,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 65.83712115827421,
+     "leak_core": 13.185889662287996,
+     "leak_rest": 62.505038126215894,
+     "idle": 36.72089309364011
+    },
+    "background_rates": {
+     "design_uw": 4231.177452331248,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 1601,
+    "windows": {
+     "1": 116,
+     "2": 38,
+     "3": 58,
+     "4": 43,
+     "5": 3,
+     "6": 550,
+     "7": 35,
+     "8": 35,
+     "9": 42,
+     "10": 48,
+     "11": 9,
+     "12": 549,
+     "13": 75
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_y1"
+     ],
+     "3": [
+      "dma_in",
+      "dma load_x1"
+     ],
+     "4": [
+      "streamer_config",
+      "streamer config mvt"
+     ],
+     "5": [
+      "acc_config",
+      "acc config mvt"
+     ],
+     "6": [
+      "run",
+      "run mvt"
+     ],
+     "7": [
+      "dma_out",
+      "dma store_x1"
+     ],
+     "8": [
+      "dma_in",
+      "dma load_y2"
+     ],
+     "9": [
+      "dma_in",
+      "dma load_x2"
+     ],
+     "10": [
+      "streamer_config",
+      "streamer config mac_x2"
+     ],
+     "11": [
+      "acc_config",
+      "acc config mac_x2"
+     ],
+     "12": [
+      "run",
+      "run mac_x2"
+     ],
+     "13": [
+      "dma_out",
+      "dma store_x2"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 7.44330926112,
+     "control": 0.6483898224831001,
+     "streamers": 10.988944895220028,
+     "crossbar": 6.712254105599999,
+     "memory": 8.349481589773001,
+     "dma": 10.352022631997203,
+     "core": 8.863147460760015,
+     "rest": 32.76989681804678
+    },
+    "leak_nj": {
+     "datapath": 3.1084957970000002,
+     "control": 0.6776970583999999,
+     "streamers": 20.860833269999937,
+     "crossbar": 15.306011668999995,
+     "memory": 0.07194612224000002,
+     "dma": 21.8334429332,
+     "core": 13.555535471314005,
+     "rest": 65.80679529884569
+    },
+    "leak_uw": {
+     "datapath": 194.15963753903813,
+     "control": 42.32961014366022,
+     "streamers": 1302.9877120549618,
+     "crossbar": 956.0282116801994,
+     "memory": 4.493824000000002,
+     "dma": 1363.7378471705185,
+     "core": 846.6917845917557,
+     "rest": 4110.355733844203
+    },
+    "area_um2": {
+     "datapath": 10128.4821,
+     "control": 2075.5980000000004,
+     "streamers": 74517.7712999997,
+     "crossbar": 48387.79489999992,
+     "memory": 432092.81279999996,
+     "dma": 73718.70969999966,
+     "core": 88951.18559999992,
+     "rest": 231497.94209999964
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 1028,
+     "dynamic": 26.1844,
+     "dynamic_leak": 69.6809,
+     "total": 143.947835647072,
+     "area": 951435.1222
+    },
+    "gvsoc": {
+     "cycles": 1556,
+     "dynamic": 26.240867461793275,
+     "dynamic_leak": 92.07798862006749,
+     "total": 204.4898095022115,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 1601,
+     "dynamic": 44.49440230619333,
+     "dynamic_leak": 106.35282915603327,
+     "total": 227.34820420499977,
+     "area": 961370.2964999988
+    }
+   },
+   "paper_cycles": 1578,
+   "paper_dynamic_nj": 26.2409
+  },
+  {
+   "id": "mvt_read_once",
+   "point": "mvt_read_once_cg",
+   "kernel": "mvt",
+   "estimate": {
+    "cycles": 515,
+    "dyn_nj": {
+     "datapath": 16.2776,
+     "control": 0.5613,
+     "streamers": 3.7886,
+     "crossbar": 2.109,
+     "memory": 4.1236,
+     "dma": 0.0
+    },
+    "leak_uw": 4297.0563,
+    "leak_nj": 22.1298,
+    "fixed_nj": 37.205711924359996,
+    "area_um2": {
+     "datapath": 24378.808,
+     "control": 2118.5512,
+     "streamers": 57623.047,
+     "crossbar": 50742.7323,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 989,
+    "windows": {
+     "1": 130,
+     "2": 24,
+     "3": 37,
+     "4": 32,
+     "5": 37,
+     "6": 100,
+     "7": 15,
+     "8": 542,
+     "9": 19,
+     "10": 53
+    },
+    "dyn_nj": {
+     "datapath": 16.2775654464,
+     "control": 0.56566848,
+     "streamers": 3.8323543664999997,
+     "crossbar": 2.133556696104075,
+     "memory": 4.12355776,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 42.497886369039264,
+     "leak_core": 8.381005704371997,
+     "leak_rest": 39.72845932315393,
+     "idle": 23.339950687410067
+    },
+    "background_rates": {
+     "design_uw": 4297.056255716811,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 1025,
+    "windows": {
+     "1": 122,
+     "2": 35,
+     "3": 42,
+     "4": 38,
+     "5": 58,
+     "6": 76,
+     "7": 12,
+     "8": 549,
+     "9": 24,
+     "10": 69
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_y1"
+     ],
+     "3": [
+      "dma_in",
+      "dma load_x1"
+     ],
+     "4": [
+      "dma_in",
+      "dma load_y2"
+     ],
+     "5": [
+      "dma_in",
+      "dma load_x2"
+     ],
+     "6": [
+      "streamer_config",
+      "streamer config mvt"
+     ],
+     "7": [
+      "acc_config",
+      "acc config mvt"
+     ],
+     "8": [
+      "run",
+      "run mvt"
+     ],
+     "9": [
+      "dma_out",
+      "dma store_x1"
+     ],
+     "10": [
+      "dma_out",
+      "dma store_x2"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 12.213295213959999,
+     "control": 0.6369900755519999,
+     "streamers": 8.363397317479995,
+     "crossbar": 4.512143976199999,
+     "memory": 6.407656799978601,
+     "dma": 8.410954010769503,
+     "core": 6.110562613310008,
+     "rest": 22.87871844474995
+    },
+    "leak_nj": {
+     "datapath": 4.289431769000001,
+     "control": 0.48207040719999994,
+     "streamers": 12.49958749999996,
+     "crossbar": 9.364639073999998,
+     "memory": 0.04606169600000001,
+     "dma": 13.90980713949999,
+     "core": 8.701757368850004,
+     "rest": 41.87041326544979
+    },
+    "leak_uw": {
+     "datapath": 418.4811481951221,
+     "control": 47.031259239024386,
+     "streamers": 1219.4719512195084,
+     "crossbar": 913.6233242926827,
+     "memory": 4.493824000000002,
+     "dma": 1357.0543550731697,
+     "core": 848.9519384243907,
+     "rest": 4084.9183673609555
+    },
+    "area_um2": {
+     "datapath": 23103.164499999988,
+     "control": 2261.5320000000006,
+     "streamers": 69639.59739999977,
+     "crossbar": 45756.25689999986,
+     "memory": 432092.81279999996,
+     "dma": 73718.70969999966,
+     "core": 88951.71759999993,
+     "rest": 231135.1179999996
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 515,
+     "dynamic": 26.8601,
+     "dynamic_leak": 48.9899,
+     "total": 86.19561192436,
+     "area": 957510.8543
+    },
+    "gvsoc": {
+     "cycles": 989,
+     "dynamic": 26.932702749004076,
+     "dynamic_leak": 69.43058911804334,
+     "total": 140.88000483297935,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 1025,
+     "dynamic": 40.54443739394009,
+     "dynamic_leak": 81.13603497964004,
+     "total": 160.6974866719998,
+     "area": 966658.9088999988
+    }
+   },
+   "paper_cycles": 899,
+   "paper_dynamic_nj": 26.9327
+  },
+  {
+   "id": "bicg_two_pass",
+   "point": "bicg_two_pass_cg",
+   "kernel": "bicg",
+   "estimate": {
+    "cycles": 1028,
+    "dyn_nj": {
+     "datapath": 10.7093,
+     "control": 0.5574,
+     "streamers": 5.4619,
+     "crossbar": 3.036,
+     "memory": 5.8299,
+     "dma": 0.0
+    },
+    "leak_uw": 3393.5621,
+    "leak_nj": 34.8858,
+    "fixed_nj": 74.26693564707199,
+    "area_um2": {
+     "datapath": 10602.4199,
+     "control": 2107.9584,
+     "streamers": 40920.9073,
+     "crossbar": 37751.8538,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 1454,
+    "windows": {
+     "1": 112,
+     "2": 24,
+     "3": 39,
+     "4": 12,
+     "5": 545,
+     "6": 33,
+     "7": 33,
+     "8": 40,
+     "9": 12,
+     "10": 539,
+     "11": 65
+    },
+    "dyn_nj": {
+     "datapath": 10.709317561599999,
+     "control": 0.5603060736000001,
+     "streamers": 5.4777307959999995,
+     "crossbar": 3.04362507174594,
+     "memory": 5.82985984,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 49.34239249505718,
+     "leak_core": 12.321519003191998,
+     "leak_rest": 58.4076641616439,
+     "idle": 34.313739433260096
+    },
+    "background_rates": {
+     "design_uw": 3393.5620698113607,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 1504,
+    "windows": {
+     "1": 108,
+     "2": 35,
+     "3": 42,
+     "4": 3,
+     "5": 551,
+     "6": 49,
+     "7": 30,
+     "8": 35,
+     "9": 9,
+     "10": 557,
+     "11": 85
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_p"
+     ],
+     "3": [
+      "streamer_config",
+      "streamer config matvec"
+     ],
+     "4": [
+      "acc_config",
+      "acc config matvec"
+     ],
+     "5": [
+      "run",
+      "run matvec"
+     ],
+     "6": [
+      "dma_out",
+      "dma store_q"
+     ],
+     "7": [
+      "dma_in",
+      "dma load_r"
+     ],
+     "8": [
+      "streamer_config",
+      "streamer config mac"
+     ],
+     "9": [
+      "acc_config",
+      "acc config mac"
+     ],
+     "10": [
+      "run",
+      "run mac"
+     ],
+     "11": [
+      "dma_out",
+      "dma store_s"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 7.5942523267599995,
+     "control": 0.6373996100996001,
+     "streamers": 9.436415169380023,
+     "crossbar": 5.797280933400003,
+     "memory": 7.924814227839601,
+     "dma": 9.427789152989499,
+     "core": 8.032329055940014,
+     "rest": 30.34678842959137
+    },
+    "leak_nj": {
+     "datapath": 2.874248558,
+     "control": 0.6342531368,
+     "streamers": 13.48963226799996,
+     "crossbar": 10.366841951999978,
+     "memory": 0.06758711296000003,
+     "dma": 20.493013512699992,
+     "core": 12.746532384656007,
+     "rest": 61.72754343488372
+    },
+    "leak_uw": {
+     "datapath": 191.10695199468083,
+     "control": 42.17108622340425,
+     "streamers": 896.9170390957421,
+     "crossbar": 689.2847042553177,
+     "memory": 4.493824000000002,
+     "dma": 1362.5673878124994,
+     "core": 847.508802171277,
+     "rest": 4104.224962425779
+    },
+    "area_um2": {
+     "datapath": 9822.582100000001,
+     "control": 2076.662,
+     "streamers": 51575.53769999982,
+     "crossbar": 35172.38259999995,
+     "memory": 432092.81279999996,
+     "dma": 73718.44369999965,
+     "core": 88952.24959999992,
+     "rest": 231092.02609999955
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 1028,
+     "dynamic": 25.5945,
+     "dynamic_leak": 60.4803,
+     "total": 134.747235647072,
+     "area": 914030.8552
+    },
+    "gvsoc": {
+     "cycles": 1454,
+     "dynamic": 25.62083934294594,
+     "dynamic_leak": 74.96323183800313,
+     "total": 180.0061544360991,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 1504,
+     "dynamic": 40.817951420468724,
+     "dynamic_leak": 88.74352796092865,
+     "total": 201.59672126599975,
+     "area": 924502.6965999989
+    }
+   },
+   "paper_cycles": 1477,
+   "paper_dynamic_nj": 25.6208
+  },
+  {
+   "id": "bicg_read_once",
+   "point": "bicg_read_once_cg",
+   "kernel": "bicg",
+   "estimate": {
+    "cycles": 515,
+    "dyn_nj": {
+     "datapath": 16.2169,
+     "control": 0.5613,
+     "streamers": 3.5929,
+     "crossbar": 1.9912,
+     "memory": 3.9069,
+     "dma": 0.0
+    },
+    "leak_uw": 3450.0012,
+    "leak_nj": 17.7675,
+    "fixed_nj": 37.205711924359996,
+    "area_um2": {
+     "datapath": 23961.4171,
+     "control": 2118.5512,
+     "streamers": 36374.9674,
+     "crossbar": 34498.6211,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 899,
+    "windows": {
+     "1": 124,
+     "2": 25,
+     "3": 33,
+     "4": 82,
+     "5": 6,
+     "6": 551,
+     "7": 31,
+     "8": 47
+    },
+    "dyn_nj": {
+     "datapath": 16.2168810816,
+     "control": 0.56348864,
+     "streamers": 3.6058853729999996,
+     "crossbar": 1.997448546595755,
+     "memory": 3.90688448,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 31.015510983556272,
+     "leak_core": 7.618325711051999,
+     "leak_rest": 36.11312935441393,
+     "idle": 21.21599157531006
+    },
+    "background_rates": {
+     "design_uw": 3450.0012217526446,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 933,
+    "windows": {
+     "1": 118,
+     "2": 35,
+     "3": 37,
+     "4": 72,
+     "5": 12,
+     "6": 556,
+     "7": 32,
+     "8": 71
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_p"
+     ],
+     "3": [
+      "dma_in",
+      "dma load_r"
+     ],
+     "4": [
+      "streamer_config",
+      "streamer config bicg_types"
+     ],
+     "5": [
+      "acc_config",
+      "acc config bicg_types"
+     ],
+     "6": [
+      "run",
+      "run bicg_types"
+     ],
+     "7": [
+      "dma_out",
+      "dma store_q"
+     ],
+     "8": [
+      "dma_out",
+      "dma store_s"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 11.956056191770006,
+     "control": 0.6312589256999999,
+     "streamers": 7.072039731210003,
+     "crossbar": 3.4255528240000026,
+     "memory": 5.9661304179281,
+     "dma": 7.510115903589498,
+     "core": 5.123051087120008,
+     "rest": 20.544261222682437
+    },
+    "leak_nj": {
+     "datapath": 3.9198513100000008,
+     "control": 0.4406836529,
+     "streamers": 7.439223111999985,
+     "crossbar": 5.941244537999997,
+     "memory": 0.04192737792000001,
+     "dma": 12.601191114199995,
+     "core": 7.9249578147620054,
+     "rest": 38.00602312021781
+    },
+    "leak_uw": {
+     "datapath": 420.13411682743845,
+     "control": 47.23297458735263,
+     "streamers": 797.3443849946394,
+     "crossbar": 636.7893395498389,
+     "memory": 4.493824000000002,
+     "dma": 1350.6099800857444,
+     "core": 849.4059822896041,
+     "rest": 4073.5287374295617
+    },
+    "area_um2": {
+     "datapath": 23024.162499999988,
+     "control": 2261.5320000000006,
+     "streamers": 45857.06969999986,
+     "crossbar": 31977.72259999999,
+     "memory": 432092.81279999996,
+     "dma": 73718.97569999966,
+     "core": 88947.99359999993,
+     "rest": 230786.39199999953
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 515,
+     "dynamic": 26.269199999999998,
+     "dynamic_leak": 44.036699999999996,
+     "total": 81.24241192436,
+     "area": 919601.2726
+    },
+    "gvsoc": {
+     "cycles": 899,
+     "dynamic": 26.290588121195754,
+     "dynamic_leak": 57.30609910475202,
+     "total": 122.253545745528,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 933,
+     "dynamic": 36.56115399419761,
+     "dynamic_leak": 66.94527509921758,
+     "total": 138.54356834399985,
+     "area": 928666.660899999
+    }
+   },
+   "paper_cycles": 856,
+   "paper_dynamic_nj": 26.2906
+  },
+  {
+   "id": "atax_read_once",
+   "point": "atax_read_once_cg",
+   "kernel": "atax",
+   "estimate": {
+    "cycles": 523,
+    "dyn_nj": {
+     "datapath": 20.6169,
+     "control": 0.7895,
+     "streamers": 3.4632,
+     "crossbar": 1.93,
+     "memory": 3.6733,
+     "dma": 0.0
+    },
+    "leak_uw": 3265.8821,
+    "leak_nj": 17.0806,
+    "fixed_nj": 37.783664730952,
+    "area_um2": {
+     "datapath": 31798.6845,
+     "control": 2934.1934,
+     "streamers": 26776.3575,
+     "crossbar": 28052.506,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 820,
+    "windows": {
+     "1": 112,
+     "2": 24,
+     "3": 52,
+     "4": 5,
+     "5": 560,
+     "6": 67
+    },
+    "dyn_nj": {
+     "datapath": 20.616877030399998,
+     "control": 0.7940176192000001,
+     "streamers": 3.4665105649999997,
+     "crossbar": 1.93182620727624,
+     "memory": 3.6732864,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 26.780233103856776,
+     "leak_core": 6.948862161359998,
+     "leak_rest": 32.939673048519936,
+     "idle": 19.351627465800053
+    },
+    "background_rates": {
+     "design_uw": 3265.8820858361923,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 843,
+    "windows": {
+     "1": 104,
+     "2": 29,
+     "3": 45,
+     "4": 11,
+     "5": 563,
+     "6": 91
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_x"
+     ],
+     "3": [
+      "streamer_config",
+      "streamer config atax"
+     ],
+     "4": [
+      "acc_config",
+      "acc config atax"
+     ],
+     "5": [
+      "run",
+      "run atax"
+     ],
+     "6": [
+      "dma_out",
+      "dma store_y"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 15.831023164950002,
+     "control": 0.7472350964799999,
+     "streamers": 6.325557547919999,
+     "crossbar": 3.0157418378000003,
+     "memory": 5.7153873670128,
+     "dma": 6.824609152060199,
+     "core": 4.393610394150007,
+     "rest": 18.646405538627018
+    },
+    "leak_nj": {
+     "datapath": 5.055514528,
+     "control": 0.5218483289999999,
+     "streamers": 4.765863511999991,
+     "crossbar": 4.253934957999995,
+     "memory": 0.03788293632000001,
+     "dma": 11.433888197000002,
+     "core": 7.161738557502005,
+     "rest": 34.28678222217783
+    },
+    "leak_uw": {
+     "datapath": 599.7051634638198,
+     "control": 61.90371637010676,
+     "streamers": 565.345612336891,
+     "crossbar": 504.61861897983334,
+     "memory": 4.493824000000002,
+     "dma": 1356.33311945433,
+     "core": 849.5538027879008,
+     "rest": 4067.2339528087577
+    },
+    "area_um2": {
+     "datapath": 31488.01669999997,
+     "control": 3040.380000000001,
+     "streamers": 32527.80969999989,
+     "crossbar": 25635.484499999988,
+     "memory": 432092.81279999996,
+     "dma": 73718.70969999966,
+     "core": 88949.85559999992,
+     "rest": 230087.07809999952
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 523,
+     "dynamic": 30.4729,
+     "dynamic_leak": 47.5535,
+     "total": 85.337164730952,
+     "area": 912209.4572
+    },
+    "gvsoc": {
+     "cycles": 820,
+     "dynamic": 30.482517821876236,
+     "dynamic_leak": 57.262750925733016,
+     "total": 116.502913601413,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 843,
+     "dynamic": 38.459554166223,
+     "dynamic_leak": 64.52848662654299,
+     "total": 129.01702333899982,
+     "area": 917540.1470999989
+    }
+   },
+   "paper_cycles": 796,
+   "paper_dynamic_nj": 30.4825
+  },
+  {
+   "id": "atax_column_shared_movers",
+   "point": "atax_column_shared_movers_cg",
+   "kernel": "atax",
+   "estimate": {
+    "cycles": 1028,
+    "dyn_nj": {
+     "datapath": 14.5356,
+     "control": 0.5574,
+     "streamers": 6.0939,
+     "crossbar": 3.3891,
+     "memory": 6.4799,
+     "dma": 0.0
+    },
+    "leak_uw": 2951.6239,
+    "leak_nj": 30.3427,
+    "fixed_nj": 74.26693564707199,
+    "area_um2": {
+     "datapath": 14838.2511,
+     "control": 2107.9584,
+     "streamers": 26280.0015,
+     "crossbar": 28052.506,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 1409,
+    "windows": {
+     "1": 122,
+     "2": 32,
+     "3": 49,
+     "4": 3,
+     "5": 537,
+     "6": 65,
+     "7": 14,
+     "8": 530,
+     "9": 57
+    },
+    "dyn_nj": {
+     "datapath": 14.535627807999997,
+     "control": 0.5603060736000001,
+     "streamers": 6.133179591999999,
+     "crossbar": 3.40964563596426,
+     "memory": 6.47987968,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 41.58838123428696,
+     "leak_core": 11.940179006531999,
+     "leak_rest": 56.59999917727391,
+     "idle": 33.2517598772101
+    },
+    "background_rates": {
+     "design_uw": 2951.6239342999975,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 1436,
+    "windows": {
+     "1": 116,
+     "2": 38,
+     "3": 46,
+     "4": 3,
+     "5": 556,
+     "6": 47,
+     "7": 14,
+     "8": 545,
+     "9": 71
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_x"
+     ],
+     "3": [
+      "streamer_config",
+      "streamer config atax"
+     ],
+     "4": [
+      "acc_config",
+      "acc config matvec"
+     ],
+     "5": [
+      "run",
+      "run matvec"
+     ],
+     "6": [
+      "streamer_config",
+      "streamer config atax"
+     ],
+     "7": [
+      "acc_config",
+      "acc config mac"
+     ],
+     "8": [
+      "run",
+      "run mac"
+     ],
+     "9": [
+      "dma_out",
+      "dma store_y"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 17.4530673691,
+     "control": 0.6328161844444,
+     "streamers": 9.473933589030002,
+     "crossbar": 5.411998196300001,
+     "memory": 8.424979264251501,
+     "dma": 8.885152234777198,
+     "core": 7.853799417240014,
+     "rest": 29.699369115856964
+    },
+    "leak_nj": {
+     "datapath": 4.193313185999999,
+     "control": 0.6057794723000001,
+     "streamers": 7.980397421999985,
+     "crossbar": 7.357430608999995,
+     "memory": 0.06453131264000002,
+     "dma": 19.495086536699997,
+     "core": 12.192117002504009,
+     "rest": 58.68031090885571
+    },
+    "leak_uw": {
+     "datapath": 292.0134530640668,
+     "control": 42.185200020891365,
+     "streamers": 555.7379820334252,
+     "crossbar": 512.3558919916431,
+     "memory": 4.493824000000002,
+     "dma": 1357.5965554805011,
+     "core": 849.0332174445689,
+     "rest": 4086.3726259648824
+    },
+    "area_um2": {
+     "datapath": 14042.406099999998,
+     "control": 2077.1940000000004,
+     "streamers": 31608.24769999992,
+     "crossbar": 25635.750499999987,
+     "memory": 432092.81279999996,
+     "dma": 73719.24169999963,
+     "core": 88949.85559999992,
+     "rest": 231305.6240999995
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 1028,
+     "dynamic": 31.0559,
+     "dynamic_leak": 61.3986,
+     "total": 135.66553564707198,
+     "area": 893926.4328
+    },
+    "gvsoc": {
+     "cycles": 1409,
+     "dynamic": 31.118638789564258,
+     "dynamic_leak": 72.70702002385121,
+     "total": 174.4989580848672,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 1436,
+     "dynamic": 50.28194683790311,
+     "dynamic_leak": 89.97848537654309,
+     "total": 198.40408182099978,
+     "area": 899431.1324999989
+    }
+   },
+   "paper_cycles": 1308,
+   "paper_dynamic_nj": 31.1186
+  },
+  {
+   "id": "gesummv_x_read_once",
+   "point": "gesummv_x_read_once_cg",
+   "kernel": "gesummv",
+   "estimate": {
+    "cycles": 522,
+    "dyn_nj": {
+     "datapath": 12.3918,
+     "control": 0.7354,
+     "streamers": 5.5377,
+     "crossbar": 3.0825,
+     "memory": 6.0364,
+     "dma": 0.0
+    },
+    "leak_uw": 5330.3386,
+    "leak_nj": 27.8244,
+    "fixed_nj": 37.711420630127996,
+    "area_um2": {
+     "datapath": 41473.9189,
+     "control": 3135.4558,
+     "streamers": 72825.7446,
+     "crossbar": 63157.7369,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 1033,
+    "windows": {
+     "1": 124,
+     "2": 34,
+     "3": 86,
+     "4": 69,
+     "5": 5,
+     "6": 536,
+     "7": 63,
+     "8": 15,
+     "9": 34,
+     "10": 67
+    },
+    "dyn_nj": {
+     "datapath": 12.391829312,
+     "control": 0.741636064,
+     "streamers": 5.6947111999999995,
+     "crossbar": 3.1568615438179046,
+     "memory": 6.03637376,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 55.062397903755695,
+     "leak_core": 8.753871478884,
+     "leak_rest": 41.495953974537926,
+     "idle": 24.37833069777007
+    },
+    "background_rates": {
+     "design_uw": 5330.33861604605,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 1062,
+    "windows": {
+     "1": 118,
+     "2": 44,
+     "3": 89,
+     "4": 59,
+     "5": 11,
+     "6": 549,
+     "7": 45,
+     "8": 12,
+     "9": 44,
+     "10": 91
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_x"
+     ],
+     "3": [
+      "dma_in",
+      "dma load_B"
+     ],
+     "4": [
+      "streamer_config",
+      "streamer config gesummv"
+     ],
+     "5": [
+      "acc_config",
+      "acc config gesummv"
+     ],
+     "6": [
+      "run",
+      "run gesummv"
+     ],
+     "7": [
+      "streamer_config",
+      "streamer config axpby"
+     ],
+     "8": [
+      "acc_config",
+      "acc config axpby"
+     ],
+     "9": [
+      "run",
+      "run axpby"
+     ],
+     "10": [
+      "dma_out",
+      "dma store_out"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 8.69898623842,
+     "control": 0.8469181965180002,
+     "streamers": 9.529822344589995,
+     "crossbar": 5.824334298500006,
+     "memory": 9.9138771714181,
+     "dma": 11.204642912050396,
+     "core": 5.733488703580011,
+     "rest": 26.991889074923552
+    },
+    "leak_nj": {
+     "datapath": 7.353079826999998,
+     "control": 0.6814888787999998,
+     "streamers": 15.489318187999896,
+     "crossbar": 11.90359948,
+     "memory": 0.04772441088000001,
+     "dma": 14.412609091099991,
+     "core": 9.006666556668003,
+     "rest": 43.467986307551804
+    },
+    "leak_uw": {
+     "datapath": 692.3803980225988,
+     "control": 64.17032757062145,
+     "streamers": 1458.5045374764497,
+     "crossbar": 1120.8662410546142,
+     "memory": 4.493824000000001,
+     "dma": 1357.1195001035774,
+     "core": 848.0853631514127,
+     "rest": 4093.0307257581735
+    },
+    "area_um2": {
+     "datapath": 39355.764299999995,
+     "control": 3157.1540000000005,
+     "streamers": 84498.0910999996,
+     "crossbar": 56687.793199999986,
+     "memory": 432092.81279999996,
+     "dma": 73714.98569999967,
+     "core": 88950.91959999992,
+     "rest": 231610.9919999994
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 522,
+     "dynamic": 27.7838,
+     "dynamic_leak": 55.6082,
+     "total": 93.31962063012799,
+     "area": 1003240.5719999999
+    },
+    "gvsoc": {
+     "cycles": 1033,
+     "dynamic": 28.021411879817904,
+     "dynamic_leak": 83.0838097835736,
+     "total": 157.7119659347656,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 1062,
+     "dynamic": 46.0185811614965,
+     "dynamic_leak": 95.90640103727638,
+     "total": 181.10643167999976,
+     "area": 1010068.5126999986
+    }
+   },
+   "paper_cycles": 918,
+   "paper_dynamic_nj": 28.0214
+  },
+  {
+   "id": "gesummv_factor_out",
+   "point": "gesummv_factor_out_cg",
+   "kernel": "gesummv",
+   "estimate": {
+    "cycles": 1036,
+    "dyn_nj": {
+     "datapath": 12.3918,
+     "control": 0.741,
+     "streamers": 7.2231,
+     "crossbar": 4.0242,
+     "memory": 7.7698,
+     "dma": 0.0
+    },
+    "leak_uw": 5502.3704,
+    "leak_nj": 57.0046,
+    "fixed_nj": 74.844888453664,
+    "area_um2": {
+     "datapath": 41473.9189,
+     "control": 3156.6413,
+     "streamers": 77868.0405,
+     "crossbar": 66240.3427,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 1584,
+    "windows": {
+     "1": 122,
+     "2": 33,
+     "3": 39,
+     "4": 12,
+     "5": 539,
+     "6": 98,
+     "7": 51,
+     "8": 14,
+     "9": 527,
+     "10": 52,
+     "11": 15,
+     "12": 25,
+     "13": 57
+    },
+    "dyn_nj": {
+     "datapath": 12.391829312,
+     "control": 0.7458431552000001,
+     "streamers": 7.260520389999999,
+     "crossbar": 4.04399625105663,
+     "memory": 7.76976,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 87.15754654485116,
+     "leak_core": 13.423167882431997,
+     "leak_rest": 63.62980744982389,
+     "idle": 37.381680372960105
+    },
+    "background_rates": {
+     "design_uw": 5502.370362679998,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 1627,
+    "windows": {
+     "1": 132,
+     "2": 30,
+     "3": 34,
+     "4": 9,
+     "5": 549,
+     "6": 101,
+     "7": 49,
+     "8": 14,
+     "9": 536,
+     "10": 47,
+     "11": 15,
+     "12": 40,
+     "13": 71
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_x"
+     ],
+     "3": [
+      "streamer_config",
+      "streamer config matvec"
+     ],
+     "4": [
+      "acc_config",
+      "acc config matvec"
+     ],
+     "5": [
+      "run",
+      "run matvec"
+     ],
+     "6": [
+      "dma_in",
+      "dma load_B"
+     ],
+     "7": [
+      "streamer_config",
+      "streamer config matvec_1"
+     ],
+     "8": [
+      "acc_config",
+      "acc config matvec_1"
+     ],
+     "9": [
+      "run",
+      "run matvec_1"
+     ],
+     "10": [
+      "streamer_config",
+      "streamer config axpby"
+     ],
+     "11": [
+      "acc_config",
+      "acc config axpby"
+     ],
+     "12": [
+      "run",
+      "run axpby"
+     ],
+     "13": [
+      "dma_out",
+      "dma store_out"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 8.67345485196,
+     "control": 0.9155411927889997,
+     "streamers": 13.802384310510071,
+     "crossbar": 8.5816501882,
+     "memory": 11.5859411678541,
+     "dma": 13.126565944570991,
+     "core": 8.929179140090014,
+     "rest": 36.38427963302597
+    },
+    "leak_nj": {
+     "datapath": 11.127902939,
+     "control": 1.0512086020999998,
+     "streamers": 25.82930224499978,
+     "crossbar": 18.88916779000001,
+     "memory": 0.07311451648000002,
+     "dma": 22.0687274677,
+     "core": 13.813547934078006,
+     "rest": 66.68099476564169
+    },
+    "leak_uw": {
+     "datapath": 683.9522396435157,
+     "control": 64.61023983405039,
+     "streamers": 1587.5416253841292,
+     "crossbar": 1160.9814253226805,
+     "memory": 4.493824000000002,
+     "dma": 1356.4061135648433,
+     "core": 849.0195411234178,
+     "rest": 4098.401645091683
+    },
+    "area_um2": {
+     "datapath": 39358.95629999999,
+     "control": 3180.0300000000007,
+     "streamers": 92228.84919999957,
+     "crossbar": 59268.7911999999,
+     "memory": 432092.81279999996,
+     "dma": 73717.64569999967,
+     "core": 88951.98359999992,
+     "rest": 232015.5779999996
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 1036,
+     "dynamic": 32.1499,
+     "dynamic_leak": 89.15450000000001,
+     "total": 163.999388453664,
+     "area": 1011386.6592
+    },
+    "gvsoc": {
+     "cycles": 1584,
+     "dynamic": 32.211949108256626,
+     "dynamic_leak": 119.36949565310778,
+     "total": 233.80415135832374,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 1627,
+     "dynamic": 56.68553765588416,
+     "dynamic_leak": 135.72496121616393,
+     "total": 261.5329626889996,
+     "area": 1020814.6467999986
+    }
+   },
+   "paper_cycles": 1366,
+   "paper_dynamic_nj": 32.2119
+  },
+  {
+   "id": "gesummv_literal",
+   "point": "gesummv_literal_cg",
+   "kernel": "gesummv",
+   "estimate": {
+    "cycles": 2060,
+    "dyn_nj": {
+     "datapath": 27.8839,
+     "control": 0.9307,
+     "streamers": 30.8655,
+     "crossbar": 17.5157,
+     "memory": 48.0706,
+     "dma": 0.0
+    },
+    "leak_uw": 8089.8355,
+    "leak_nj": 166.6506,
+    "fixed_nj": 148.82284769743998,
+    "area_um2": {
+     "datapath": 33774.8148,
+     "control": 3876.9487,
+     "streamers": 144635.1032,
+     "crossbar": 116555.2012,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 2805,
+    "windows": {
+     "1": 120,
+     "2": 48,
+     "3": 3,
+     "4": 545,
+     "5": 36,
+     "6": 52,
+     "7": 14,
+     "8": 539,
+     "9": 98,
+     "10": 48,
+     "11": 14,
+     "12": 547,
+     "13": 55,
+     "14": 14,
+     "15": 536,
+     "16": 50,
+     "17": 4,
+     "18": 34,
+     "19": 48
+    },
+    "dyn_nj": {
+     "datapath": 27.883855334399996,
+     "control": 0.9415055936000002,
+     "streamers": 31.469754785999996,
+     "crossbar": 17.82626034623412,
+     "memory": 48.07063168,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 226.91988502637656,
+     "leak_core": 23.770193125139997,
+     "leak_rest": 112.6777840257298,
+     "idle": 66.19672566045018
+    },
+    "background_rates": {
+     "design_uw": 8089.835473311108,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 2860,
+    "windows": {
+     "1": 115,
+     "2": 43,
+     "3": 3,
+     "4": 548,
+     "5": 46,
+     "6": 46,
+     "7": 11,
+     "8": 549,
+     "9": 101,
+     "10": 46,
+     "11": 11,
+     "12": 557,
+     "13": 47,
+     "14": 14,
+     "15": 549,
+     "16": 43,
+     "17": 7,
+     "18": 45,
+     "19": 79
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "streamer_config",
+      "streamer config scale_a"
+     ],
+     "3": [
+      "acc_config",
+      "acc config scale_a"
+     ],
+     "4": [
+      "run",
+      "run scale_a"
+     ],
+     "5": [
+      "dma_in",
+      "dma load_x"
+     ],
+     "6": [
+      "streamer_config",
+      "streamer config matvec"
+     ],
+     "7": [
+      "acc_config",
+      "acc config matvec"
+     ],
+     "8": [
+      "run",
+      "run matvec"
+     ],
+     "9": [
+      "dma_in",
+      "dma load_B"
+     ],
+     "10": [
+      "streamer_config",
+      "streamer config scale_b"
+     ],
+     "11": [
+      "acc_config",
+      "acc config scale_b"
+     ],
+     "12": [
+      "run",
+      "run scale_b"
+     ],
+     "13": [
+      "streamer_config",
+      "streamer config matvec_1"
+     ],
+     "14": [
+      "acc_config",
+      "acc config matvec_1"
+     ],
+     "15": [
+      "run",
+      "run matvec_1"
+     ],
+     "16": [
+      "streamer_config",
+      "streamer config acc"
+     ],
+     "17": [
+      "acc_config",
+      "acc config acc"
+     ],
+     "18": [
+      "run",
+      "run acc"
+     ],
+     "19": [
+      "dma_out",
+      "dma store_out"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 30.00781688268,
+     "control": 1.413821696975,
+     "streamers": 53.62590122428026,
+     "crossbar": 34.732262335899975,
+     "memory": 41.3612520440374,
+     "dma": 17.973109337871996,
+     "core": 14.628136528870028,
+     "rest": 68.53711514338573
+    },
+    "leak_nj": {
+     "datapath": 23.040270991000014,
+     "control": 2.3809112710999996,
+     "streamers": 82.66683352299938,
+     "crossbar": 61.678298600000055,
+     "memory": 0.12852336640000003,
+     "dma": 38.8501991555,
+     "core": 24.17291923504001,
+     "rest": 117.88744415795948
+    },
+    "leak_uw": {
+     "datapath": 805.6038808041964,
+     "control": 83.24864584265733,
+     "streamers": 2890.448724580398,
+     "crossbar": 2156.5838671328693,
+     "memory": 4.493824000000002,
+     "dma": 1358.3985718706294,
+     "core": 845.2069662601402,
+     "rest": 4121.93860692166
+    },
+    "area_um2": {
+     "datapath": 40188.876199999984,
+     "control": 4045.0621,
+     "streamers": 166219.14200000113,
+     "crossbar": 104876.88620000007,
+     "memory": 432092.81279999996,
+     "dma": 73717.91169999968,
+     "core": 88951.71759999993,
+     "rest": 233234.12409999955
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 2060,
+     "dynamic": 125.2664,
+     "dynamic_leak": 291.91700000000003,
+     "total": 440.73984769744004,
+     "area": 1121489.7837
+    },
+    "gvsoc": {
+     "cycles": 2805,
+     "dynamic": 126.1920077402341,
+     "dynamic_leak": 353.11189276661065,
+     "total": 555.7565955779306,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 2860,
+     "dynamic": 179.11416352174464,
+     "dynamic_leak": 387.8592004287441,
+     "total": 613.0848154939993,
+     "area": 1143326.5327000003
+    }
+   },
+   "paper_cycles": 2438,
+   "paper_dynamic_nj": 126.192
+  },
+  {
+   "id": "mvt_dma_copy",
+   "point": "mvt_dma_copy_cg",
+   "kernel": "mvt",
+   "estimate": {
+    "cycles": 11951,
+    "dyn_nj": {
+     "datapath": 12.2305,
+     "control": 0.7395,
+     "streamers": 7.1551,
+     "crossbar": 17.4691,
+     "memory": 329.9702,
+     "dma": 435.8285
+    },
+    "leak_uw": 2478.8961,
+    "leak_nj": 296.2529,
+    "fixed_nj": 863.3892489476239,
+    "area_um2": {
+     "datapath": 5792.3183,
+     "control": 1398.2438,
+     "streamers": 19197.2197,
+     "crossbar": 22387.2231,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 12518,
+    "windows": {
+     "1": 113,
+     "2": 33,
+     "3": 36,
+     "4": 52,
+     "5": 12,
+     "6": 553,
+     "7": 31,
+     "8": 10972,
+     "9": 37,
+     "10": 36,
+     "11": 52,
+     "12": 3,
+     "13": 542,
+     "14": 46
+    },
+    "dyn_nj": {
+     "datapath": 12.230463705600002,
+     "control": 0.744524352,
+     "streamers": 7.1972450179999985,
+     "crossbar": 17.49151477389954,
+     "memory": 329.97021952000006,
+     "dma": 435.82847240386013
+    },
+    "background_nj": {
+     "leak_design": 310.30821666281906,
+     "leak_core": 106.08031284866398,
+     "leak_rest": 502.85222831874717,
+     "idle": 295.41911294742084
+    },
+    "background_rates": {
+     "design_uw": 2478.8961228855974,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 12591,
+    "windows": {
+     "1": 114,
+     "2": 37,
+     "3": 43,
+     "4": 49,
+     "5": 9,
+     "6": 565,
+     "7": 34,
+     "8": 10976,
+     "9": 51,
+     "10": 34,
+     "11": 45,
+     "12": 3,
+     "13": 557,
+     "14": 74
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_y1"
+     ],
+     "3": [
+      "dma_in",
+      "dma load_x1"
+     ],
+     "4": [
+      "streamer_config",
+      "streamer config mvt_1"
+     ],
+     "5": [
+      "acc_config",
+      "acc config mvt_1"
+     ],
+     "6": [
+      "run",
+      "run mvt_1"
+     ],
+     "7": [
+      "dma_out",
+      "dma store_x1"
+     ],
+     "8": [
+      "dma_copy",
+      "dma transpose_A_T"
+     ],
+     "9": [
+      "dma_in",
+      "dma load_y2"
+     ],
+     "10": [
+      "dma_in",
+      "dma load_x2"
+     ],
+     "11": [
+      "streamer_config",
+      "streamer config mvt_1"
+     ],
+     "12": [
+      "acc_config",
+      "acc config mvt_1"
+     ],
+     "13": [
+      "run",
+      "run mvt_1"
+     ],
+     "14": [
+      "dma_out",
+      "dma store_x2"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 8.385657733698,
+     "control": 1.284688243018,
+     "streamers": 22.594010953519973,
+     "crossbar": 25.037752057300015,
+     "memory": 251.69576322926721,
+     "dma": 357.8419542032687,
+     "core": 30.125731415419992,
+     "rest": 414.4604513815087
+    },
+    "leak_nj": {
+     "datapath": 12.473780480599999,
+     "control": 3.4795469343,
+     "streamers": 58.21249666600007,
+     "crossbar": 51.38228851500005,
+     "memory": 0.5658173798400001,
+     "dma": 170.8594315723004,
+     "core": 106.46637696117403,
+     "rest": 515.895306520784
+    },
+    "leak_uw": {
+     "datapath": 99.06902136923199,
+     "control": 27.635191281868003,
+     "streamers": 462.3341804940043,
+     "crossbar": 408.0874316178227,
+     "memory": 4.493824000000002,
+     "dma": 1356.9965179278884,
+     "core": 845.5752280293386,
+     "rest": 4097.333861653435
+    },
+    "area_um2": {
+     "datapath": 5094.4321,
+     "control": 1370.9640000000002,
+     "streamers": 25958.407899999936,
+     "crossbar": 21259.51829999996,
+     "memory": 432092.81279999996,
+     "dma": 73718.70969999966,
+     "core": 88949.05759999993,
+     "rest": 230269.02199999947
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 11951,
+     "dynamic": 803.3928999999999,
+     "dynamic_leak": 1099.6458,
+     "total": 1963.0350489476239,
+     "area": 871422.7207
+    },
+    "gvsoc": {
+     "cycles": 12518,
+     "dynamic": 803.4624397733597,
+     "dynamic_leak": 1113.7706564361788,
+     "total": 2018.1223105510107,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 12591,
+     "dynamic": 666.8398264200719,
+     "dynamic_leak": 963.8131879681123,
+     "total": 2030.761054246999,
+     "area": 878712.9243999989
+    }
+   },
+   "paper_cycles": 12509,
+   "paper_dynamic_nj": 803.4624
+  },
+  {
+   "id": "atax_dma_copy",
+   "point": "atax_dma_copy_cg",
+   "kernel": "atax",
+   "estimate": {
+    "cycles": 11951,
+    "dyn_nj": {
+     "datapath": 15.3047,
+     "control": 0.7395,
+     "streamers": 11.1736,
+     "crossbar": 20.1766,
+     "memory": 334.9537,
+     "dma": 435.8285
+    },
+    "leak_uw": 3500.6205,
+    "leak_nj": 418.3592,
+    "fixed_nj": 863.3892489476239,
+    "area_um2": {
+     "datapath": 15063.3107,
+     "control": 2796.4876,
+     "streamers": 40931.2813,
+     "crossbar": 37973.8601,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 12376,
+    "windows": {
+     "1": 122,
+     "2": 32,
+     "3": 48,
+     "4": 3,
+     "5": 542,
+     "6": 10960,
+     "7": 62,
+     "8": 3,
+     "9": 556,
+     "10": 48
+    },
+    "dyn_nj": {
+     "datapath": 15.3046905472,
+     "control": 0.7553145600000001,
+     "streamers": 11.448820283499998,
+     "crossbar": 20.343113655792013,
+     "memory": 334.95370496000004,
+     "dma": 435.82847240386013
+    },
+    "background_nj": {
+     "leak_design": 433.23678712756555,
+     "leak_core": 104.87697330364799,
+     "leak_rest": 497.1480410347351,
+     "idle": 292.06797745944084
+    },
+    "background_rates": {
+     "design_uw": 3500.6204519034063,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 12408,
+    "windows": {
+     "1": 116,
+     "2": 38,
+     "3": 45,
+     "4": 3,
+     "5": 554,
+     "6": 10957,
+     "7": 57,
+     "8": 3,
+     "9": 566,
+     "10": 69
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_x"
+     ],
+     "3": [
+      "streamer_config",
+      "streamer config matvec"
+     ],
+     "4": [
+      "acc_config",
+      "acc config matvec"
+     ],
+     "5": [
+      "run",
+      "run matvec"
+     ],
+     "6": [
+      "dma_copy",
+      "dma transpose_A_T"
+     ],
+     "7": [
+      "streamer_config",
+      "streamer config matvec_1"
+     ],
+     "8": [
+      "acc_config",
+      "acc config matvec_1"
+     ],
+     "9": [
+      "run",
+      "run matvec_1"
+     ],
+     "10": [
+      "dma_out",
+      "dma store_y"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 11.94053515504,
+     "control": 1.7803522045019997,
+     "streamers": 43.78315987998999,
+     "crossbar": 36.52573710800001,
+     "memory": 256.3687937727405,
+     "dma": 356.30094157827733,
+     "core": 29.34543873163001,
+     "rest": 414.67153716382103
+    },
+    "leak_nj": {
+     "datapath": 33.314812418,
+     "control": 6.8247412205,
+     "streamers": 111.2312840949993,
+     "crossbar": 86.32089447999968,
+     "memory": 0.5575936819200003,
+     "dma": 168.27600527029983,
+     "core": 105.52518764491202,
+     "rest": 508.8635612093656
+    },
+    "leak_uw": {
+     "datapath": 268.4946197453256,
+     "control": 55.00275000402967,
+     "streamers": 896.4481310041853,
+     "crossbar": 695.6874152159872,
+     "memory": 4.493824000000002,
+     "dma": 1356.1895976007402,
+     "core": 850.4608933342363,
+     "rest": 4101.092530700883
+    },
+    "area_um2": {
+     "datapath": 14497.5321,
+     "control": 2744.0560000000005,
+     "streamers": 51728.48769999985,
+     "crossbar": 35358.316599999955,
+     "memory": 432092.81279999996,
+     "dma": 73718.97569999965,
+     "core": 88949.05759999993,
+     "rest": 230941.47009999954
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 11951,
+     "dynamic": 818.1766,
+     "dynamic_leak": 1236.5358,
+     "total": 2099.925048947624,
+     "area": 919412.6555
+    },
+    "gvsoc": {
+     "cycles": 12376,
+     "dynamic": 818.6341164103521,
+     "dynamic_leak": 1251.8709035379177,
+     "total": 2145.9638953357417,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 12408,
+     "dynamic": 706.6995196985498,
+     "dynamic_leak": 1113.2248508642685,
+     "total": 2171.6305756139973,
+     "area": 930030.7085999988
+    }
+   },
+   "paper_cycles": 12365,
+   "paper_dynamic_nj": 818.6341
+  },
+  {
+   "id": "mvt_contiguous_w8",
+   "point": "mvt_contiguous_w8_cg",
+   "kernel": "mvt",
+   "estimate": {
+    "cycles": 1028,
+    "dyn_nj": {
+     "datapath": 106.0184,
+     "control": 0.7395,
+     "streamers": 47.0366,
+     "crossbar": 30.5567,
+     "memory": 56.7278,
+     "dma": 0.0
+    },
+    "leak_uw": 5792.7645,
+    "leak_nj": 59.5496,
+    "fixed_nj": 74.26693564707199,
+    "area_um2": {
+     "datapath": 60833.096,
+     "control": 1398.2438,
+     "streamers": 73560.1705,
+     "crossbar": 66614.2211,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 4777,
+    "windows": {
+     "1": 573,
+     "2": 40,
+     "3": 41,
+     "4": 61,
+     "5": 3,
+     "6": 543,
+     "7": 39,
+     "8": 30,
+     "9": 41,
+     "10": 53,
+     "11": 12,
+     "12": 3272,
+     "13": 69
+    },
+    "dyn_nj": {
+     "datapath": 106.0184123392,
+     "control": 2.7090615552,
+     "streamers": 114.450286796,
+     "crossbar": 74.4629562466934,
+     "memory": 56.72776192,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 276.72035905339203,
+     "leak_core": 40.481359200995996,
+     "leak_rest": 191.89368067412164,
+     "idle": 112.73502976113032
+    },
+    "background_rates": {
+     "design_uw": 5792.764476729999,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 4836,
+    "windows": {
+     "1": 561,
+     "2": 48,
+     "3": 63,
+     "4": 43,
+     "5": 3,
+     "6": 550,
+     "7": 40,
+     "8": 45,
+     "9": 47,
+     "10": 49,
+     "11": 9,
+     "12": 3293,
+     "13": 85
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_y1"
+     ],
+     "3": [
+      "dma_in",
+      "dma load_x1"
+     ],
+     "4": [
+      "streamer_config",
+      "streamer config mvt_1"
+     ],
+     "5": [
+      "acc_config",
+      "acc config mvt_1"
+     ],
+     "6": [
+      "run",
+      "run mvt_1"
+     ],
+     "7": [
+      "dma_out",
+      "dma store_x1"
+     ],
+     "8": [
+      "dma_in",
+      "dma load_y2"
+     ],
+     "9": [
+      "dma_in",
+      "dma load_x2"
+     ],
+     "10": [
+      "streamer_config",
+      "streamer config mvt_1"
+     ],
+     "11": [
+      "acc_config",
+      "acc config mvt_1"
+     ],
+     "12": [
+      "run",
+      "run mvt_1"
+     ],
+     "13": [
+      "dma_out",
+      "dma store_x2"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 110.60970065970601,
+     "control": 0.9867718407120001,
+     "streamers": 67.8411064137901,
+     "crossbar": 42.7521345894,
+     "memory": 75.113448297667,
+     "dma": 48.61593655202001,
+     "core": 23.634157718050044,
+     "rest": 128.7702767306553
+    },
+    "leak_nj": {
+     "datapath": 60.01170186999998,
+     "control": 1.3389454056999999,
+     "streamers": 69.52545213999974,
+     "crossbar": 57.58161126000004,
+     "memory": 0.2173213286400001,
+     "dma": 66.50387001169995,
+     "core": 40.94861377810401,
+     "rest": 198.13817315585516
+    },
+    "leak_uw": {
+     "datapath": 1240.9367632340773,
+     "control": 27.68704312861869,
+     "streamers": 1437.6644363109956,
+     "crossbar": 1190.6867506203482,
+     "memory": 4.493824000000002,
+     "dma": 1375.1834162882537,
+     "core": 846.7455289103394,
+     "rest": 4097.149982544566
+    },
+    "area_um2": {
+     "datapath": 60932.6204,
+     "control": 1370.1660000000002,
+     "streamers": 78728.28479999978,
+     "crossbar": 60090.4651,
+     "memory": 432092.81279999996,
+     "dma": 73718.70969999966,
+     "core": 88951.18559999992,
+     "rest": 229686.2159999997
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 1028,
+     "dynamic": 241.079,
+     "dynamic_leak": 300.6286,
+     "total": 374.895535647072,
+     "area": 1025053.4471999999
+    },
+    "gvsoc": {
+     "cycles": 4777,
+     "dynamic": 354.3684788570934,
+     "dynamic_leak": 631.0888379104854,
+     "total": 976.1989075467334,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 4836,
+     "dynamic": 345.9190983532951,
+     "dynamic_leak": 601.0980003693348,
+     "total": 992.5892217519993,
+     "area": 1025570.460399999
+    }
+   },
+   "paper_cycles": 4629,
+   "paper_dynamic_nj": 354.3685
+  },
+  {
+   "id": "mvt_padded_w8",
+   "point": "mvt_padded_w8_cg",
+   "kernel": "mvt",
+   "estimate": {
+    "cycles": 1028,
+    "dyn_nj": {
+     "datapath": 106.0184,
+     "control": 0.7395,
+     "streamers": 47.0366,
+     "crossbar": 30.5567,
+     "memory": 56.7278,
+     "dma": 0.0
+    },
+    "leak_uw": 5792.7645,
+    "leak_nj": 59.5496,
+    "fixed_nj": 74.26693564707199,
+    "area_um2": {
+     "datapath": 60833.096,
+     "control": 1398.2438,
+     "streamers": 73560.1705,
+     "crossbar": 66614.2211,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 2056,
+    "windows": {
+     "1": 583,
+     "2": 40,
+     "3": 40,
+     "4": 52,
+     "5": 3,
+     "6": 547,
+     "7": 48,
+     "8": 40,
+     "9": 41,
+     "10": 64,
+     "11": 3,
+     "12": 545,
+     "13": 50
+    },
+    "dyn_nj": {
+     "datapath": 106.0184123392,
+     "control": 0.7495597824000001,
+     "streamers": 47.77945797899999,
+     "crossbar": 31.005138458739058,
+     "memory": 56.72776192,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 119.09923764156876,
+     "leak_core": 17.423000736287996,
+     "leak_rest": 82.59020461921585,
+     "idle": 48.520665938640136
+    },
+    "background_rates": {
+     "design_uw": 5792.764476729999,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 2107,
+    "windows": {
+     "1": 573,
+     "2": 63,
+     "3": 34,
+     "4": 45,
+     "5": 3,
+     "6": 557,
+     "7": 43,
+     "8": 47,
+     "9": 49,
+     "10": 59,
+     "11": 3,
+     "12": 557,
+     "13": 74
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_y1"
+     ],
+     "3": [
+      "dma_in",
+      "dma load_x1"
+     ],
+     "4": [
+      "streamer_config",
+      "streamer config mvt_1"
+     ],
+     "5": [
+      "acc_config",
+      "acc config mvt_1"
+     ],
+     "6": [
+      "run",
+      "run mvt_1"
+     ],
+     "7": [
+      "dma_out",
+      "dma store_x1"
+     ],
+     "8": [
+      "dma_in",
+      "dma load_y2"
+     ],
+     "9": [
+      "dma_in",
+      "dma load_x2"
+     ],
+     "10": [
+      "streamer_config",
+      "streamer config mvt_1"
+     ],
+     "11": [
+      "acc_config",
+      "acc config mvt_1"
+     ],
+     "12": [
+      "run",
+      "run mvt_1"
+     ],
+     "13": [
+      "dma_out",
+      "dma store_x2"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 102.048262277706,
+     "control": 0.852691567432,
+     "streamers": 54.61152251219014,
+     "crossbar": 36.86901456690001,
+     "memory": 75.43937492653382,
+     "dma": 40.06555067744008,
+     "core": 10.421982385760014,
+     "rest": 86.79773634903842
+    },
+    "leak_nj": {
+     "datapath": 25.86388645,
+     "control": 0.5861488238,
+     "streamers": 29.875503859999885,
+     "crossbar": 24.831077710000002,
+     "memory": 0.09468487168000003,
+     "dma": 28.819727307399983,
+     "core": 17.823726889798007,
+     "rest": 85.9254044773216
+    },
+    "leak_uw": {
+     "datapath": 1227.5219008068343,
+     "control": 27.81911835785477,
+     "streamers": 1417.916652112002,
+     "crossbar": 1178.5039254864737,
+     "memory": 4.493824000000002,
+     "dma": 1367.8086050023721,
+     "core": 845.9291357284294,
+     "rest": 4078.092286536384
+    },
+    "area_um2": {
+     "datapath": 60932.6204,
+     "control": 1370.1660000000002,
+     "streamers": 78728.28479999978,
+     "crossbar": 60090.4651,
+     "memory": 432092.81279999996,
+     "dma": 73718.70969999966,
+     "core": 88951.18559999992,
+     "rest": 229686.2159999997
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 1028,
+     "dynamic": 241.079,
+     "dynamic_leak": 300.6286,
+     "total": 374.895535647072,
+     "area": 1025053.4471999999
+    },
+    "gvsoc": {
+     "cycles": 2056,
+     "dynamic": 242.28033047933906,
+     "dynamic_leak": 361.37956812090783,
+     "total": 509.9134394150518,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 2107,
+     "dynamic": 309.88641652820206,
+     "dynamic_leak": 419.95744555108195,
+     "total": 620.926295653,
+     "area": 1025570.460399999
+    }
+   },
+   "paper_cycles": 1883,
+   "paper_dynamic_nj": 242.2803
+  },
+  {
+   "id": "bicg_sequential_contiguous_w8",
+   "point": "bicg_sequential_contiguous_w8_cg",
+   "kernel": "bicg",
+   "estimate": {
+    "cycles": 1027,
+    "dyn_nj": {
+     "datapath": 104.8758,
+     "control": 0.5571,
+     "streamers": 36.7295,
+     "crossbar": 23.7292,
+     "memory": 44.1607,
+     "dma": 0.0
+    },
+    "leak_uw": 9717.8352,
+    "leak_nj": 99.8022,
+    "fixed_nj": 74.19469154624801,
+    "area_um2": {
+     "datapath": 120676.3218,
+     "control": 2107.9584,
+     "streamers": 138009.0431,
+     "crossbar": 116931.7789,
+     "memory": 432092.8,
+     "dma": 73719.2417,
+     "core": 88914.368,
+     "rest": 227921.3061
+    }
+   },
+   "gvsoc": {
+    "cycles": 1930,
+    "windows": {
+     "1": 560,
+     "2": 30,
+     "3": 39,
+     "4": 12,
+     "5": 543,
+     "6": 39,
+     "7": 31,
+     "8": 38,
+     "9": 12,
+     "10": 557,
+     "11": 69
+    },
+    "dyn_nj": {
+     "datapath": 104.8758473728,
+     "control": 0.5661480448,
+     "streamers": 37.3296700005,
+     "crossbar": 24.08334732392325,
+     "memory": 44.160711680000006,
+     "dma": 0.0
+    },
+    "background_nj": {
+     "leak_design": 187.55421956114884,
+     "leak_core": 16.355248745639997,
+     "leak_rest": 77.52874266297987,
+     "idle": 45.54712318170013
+    },
+    "background_rates": {
+     "design_uw": 9717.83521042222,
+     "core_uw": 847.4222147999999,
+     "rest_uw": 4017.033298599993,
+     "idle_pj_cycle": 23.599545690000067,
+     "clock_ns": 10.0
+    }
+   },
+   "netlist": {
+    "cycles": 1983,
+    "windows": {
+     "1": 553,
+     "2": 45,
+     "3": 42,
+     "4": 3,
+     "5": 549,
+     "6": 42,
+     "7": 45,
+     "8": 35,
+     "9": 9,
+     "10": 575,
+     "11": 85
+    },
+    "kinds": {
+     "1": [
+      "dma_in",
+      "dma load_A"
+     ],
+     "2": [
+      "dma_in",
+      "dma load_p"
+     ],
+     "3": [
+      "streamer_config",
+      "streamer config matvec"
+     ],
+     "4": [
+      "acc_config",
+      "acc config matvec"
+     ],
+     "5": [
+      "run",
+      "run matvec"
+     ],
+     "6": [
+      "dma_out",
+      "dma store_q"
+     ],
+     "7": [
+      "dma_in",
+      "dma load_r"
+     ],
+     "8": [
+      "streamer_config",
+      "streamer config mac"
+     ],
+     "9": [
+      "acc_config",
+      "acc config mac"
+     ],
+     "10": [
+      "run",
+      "run mac"
+     ],
+     "11": [
+      "dma_out",
+      "dma store_s"
+     ]
+    },
+    "dyn_nj": {
+     "datapath": 103.64745860854,
+     "control": 0.6672848085716001,
+     "streamers": 53.325438934880125,
+     "crossbar": 30.524118959899976,
+     "memory": 62.04121049985401,
+     "dma": 37.68061240862001,
+     "core": 9.91891908974002,
+     "rest": 80.0165346898946
+    },
+    "leak_nj": {
+     "datapath": 46.70573426,
+     "control": 0.8339327726,
+     "streamers": 50.990314659999605,
+     "crossbar": 41.45535968000004,
+     "memory": 0.08911252992000003,
+     "dma": 27.1089595102,
+     "core": 16.771902447462008,
+     "rest": 81.14740983981761
+    },
+    "leak_uw": {
+     "datapath": 2355.3068209783155,
+     "control": 42.054098466969236,
+     "streamers": 2571.3723983862637,
+     "crossbar": 2090.5375532022213,
+     "memory": 4.493824000000002,
+     "dma": 1367.0680539687341,
+     "core": 845.7842888281397,
+     "rest": 4092.1537992848016
+    },
+    "area_um2": {
+     "datapath": 119165.60669999999,
+     "control": 2075.8640000000005,
+     "streamers": 145549.34559999997,
+     "crossbar": 104208.69409999985,
+     "memory": 432092.81279999996,
+     "dma": 73717.11369999965,
+     "core": 88951.98359999993,
+     "rest": 230437.93209999977
+    }
+   },
+   "metrics": {
+    "estimate": {
+     "cycles": 1027,
+     "dynamic": 210.0523,
+     "dynamic_leak": 309.85450000000003,
+     "total": 384.04919154624804,
+     "area": 1200372.818
+    },
+    "gvsoc": {
+     "cycles": 1930,
+     "dynamic": 211.01572442202325,
+     "dynamic_leak": 398.5699439831721,
+     "total": 538.0010585734921,
+     "area": null
+    },
+    "netlist": {
+     "cycles": 1983,
+     "dynamic": 287.88612422036573,
+     "dynamic_leak": 455.06953763308536,
+     "total": 642.9243036999997,
+     "area": 1196199.3525999992
+    }
+   },
+   "paper_cycles": 1967,
+   "paper_dynamic_nj": 211.0157
+  }
+ ],
+ "kernels": {
+  "mvt": {
+   "cycles": {
+    "top": {
+     "estimate": [
+      "mvt_read_once"
+     ],
+     "gvsoc": [
+      "mvt_read_once"
+     ],
+     "netlist": [
+      "mvt_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 0.7,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 0.7,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "dynamic": {
+    "top": {
+     "estimate": [
+      "mvt_column"
+     ],
+     "gvsoc": [
+      "mvt_column"
+     ],
+     "netlist": [
+      "mvt_read_once"
+     ]
+    },
+    "top_agrees": false,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 0.9,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 0.7,
+      "discordant": [
+       [
+        "mvt_column",
+        "mvt_read_once"
+       ]
+      ]
+     },
+     "gvsoc-netlist": {
+      "tau": 0.8,
+      "discordant": [
+       [
+        "mvt_column",
+        "mvt_read_once"
+       ]
+      ]
+     }
+    }
+   },
+   "dynamic_leak": {
+    "top": {
+     "estimate": [
+      "mvt_read_once"
+     ],
+     "gvsoc": [
+      "mvt_read_once"
+     ],
+     "netlist": [
+      "mvt_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 0.9,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 0.9,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "total": {
+    "top": {
+     "estimate": [
+      "mvt_read_once"
+     ],
+     "gvsoc": [
+      "mvt_read_once"
+     ],
+     "netlist": [
+      "mvt_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 0.9,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 0.9,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "area": {
+    "top": {
+     "estimate": [
+      "mvt_dma_copy"
+     ],
+     "netlist": [
+      "mvt_dma_copy"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-netlist": {
+      "tau": 0.8,
+      "discordant": []
+     }
+    }
+   }
+  },
+  "bicg": {
+   "cycles": {
+    "top": {
+     "estimate": [
+      "bicg_read_once"
+     ],
+     "gvsoc": [
+      "bicg_read_once"
+     ],
+     "netlist": [
+      "bicg_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 0.6666666666666666,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 0.6666666666666666,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "dynamic": {
+    "top": {
+     "estimate": [
+      "bicg_two_pass"
+     ],
+     "gvsoc": [
+      "bicg_two_pass"
+     ],
+     "netlist": [
+      "bicg_read_once"
+     ]
+    },
+    "top_agrees": false,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 0.3333333333333333,
+      "discordant": [
+       [
+        "bicg_two_pass",
+        "bicg_read_once"
+       ]
+      ]
+     },
+     "gvsoc-netlist": {
+      "tau": 0.3333333333333333,
+      "discordant": [
+       [
+        "bicg_two_pass",
+        "bicg_read_once"
+       ]
+      ]
+     }
+    }
+   },
+   "dynamic_leak": {
+    "top": {
+     "estimate": [
+      "bicg_read_once"
+     ],
+     "gvsoc": [
+      "bicg_read_once"
+     ],
+     "netlist": [
+      "bicg_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "total": {
+    "top": {
+     "estimate": [
+      "bicg_read_once"
+     ],
+     "gvsoc": [
+      "bicg_read_once"
+     ],
+     "netlist": [
+      "bicg_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "area": {
+    "top": {
+     "estimate": [
+      "bicg_two_pass",
+      "bicg_read_once"
+     ],
+     "netlist": [
+      "bicg_two_pass",
+      "bicg_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-netlist": {
+      "tau": 0.6666666666666666,
+      "discordant": []
+     }
+    }
+   }
+  },
+  "atax": {
+   "cycles": {
+    "top": {
+     "estimate": [
+      "atax_read_once"
+     ],
+     "gvsoc": [
+      "atax_read_once"
+     ],
+     "netlist": [
+      "atax_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "dynamic": {
+    "top": {
+     "estimate": [
+      "atax_read_once"
+     ],
+     "gvsoc": [
+      "atax_read_once"
+     ],
+     "netlist": [
+      "atax_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "dynamic_leak": {
+    "top": {
+     "estimate": [
+      "atax_read_once"
+     ],
+     "gvsoc": [
+      "atax_read_once"
+     ],
+     "netlist": [
+      "atax_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "total": {
+    "top": {
+     "estimate": [
+      "atax_read_once"
+     ],
+     "gvsoc": [
+      "atax_read_once"
+     ],
+     "netlist": [
+      "atax_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "area": {
+    "top": {
+     "estimate": [
+      "atax_column_shared_movers"
+     ],
+     "netlist": [
+      "atax_column_shared_movers"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-netlist": {
+      "tau": 0.6666666666666666,
+      "discordant": []
+     }
+    }
+   }
+  },
+  "gesummv": {
+   "cycles": {
+    "top": {
+     "estimate": [
+      "gesummv_x_read_once"
+     ],
+     "gvsoc": [
+      "gesummv_x_read_once"
+     ],
+     "netlist": [
+      "gesummv_x_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "dynamic": {
+    "top": {
+     "estimate": [
+      "gesummv_x_read_once"
+     ],
+     "gvsoc": [
+      "gesummv_x_read_once"
+     ],
+     "netlist": [
+      "gesummv_x_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "dynamic_leak": {
+    "top": {
+     "estimate": [
+      "gesummv_x_read_once"
+     ],
+     "gvsoc": [
+      "gesummv_x_read_once"
+     ],
+     "netlist": [
+      "gesummv_x_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "total": {
+    "top": {
+     "estimate": [
+      "gesummv_x_read_once"
+     ],
+     "gvsoc": [
+      "gesummv_x_read_once"
+     ],
+     "netlist": [
+      "gesummv_x_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-gvsoc": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "estimate-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     },
+     "gvsoc-netlist": {
+      "tau": 1.0,
+      "discordant": []
+     }
+    }
+   },
+   "area": {
+    "top": {
+     "estimate": [
+      "gesummv_x_read_once",
+      "gesummv_factor_out"
+     ],
+     "netlist": [
+      "gesummv_x_read_once"
+     ]
+    },
+    "top_agrees": true,
+    "tau": {
+     "estimate-netlist": {
+      "tau": 0.6666666666666666,
+      "discordant": []
+     }
+    }
+   }
+  }
+ },
+ "pooled": {
+  "cycles": {
+   "top": {
+    "estimate": [
+     "mvt_read_once",
+     "bicg_read_once"
+    ],
+    "gvsoc": [
+     "atax_read_once"
+    ],
+    "netlist": [
+     "atax_read_once"
+    ]
+   },
+   "top_agrees": false,
+   "tau": {
+    "estimate-gvsoc": {
+     "tau": 0.6703296703296703,
+     "discordant": [
+      [
+       "mvt_read_once",
+       "atax_read_once"
+      ],
+      [
+       "bicg_read_once",
+       "atax_read_once"
+      ],
+      [
+       "gesummv_literal",
+       "mvt_contiguous_w8"
+      ]
+     ]
+    },
+    "estimate-netlist": {
+     "tau": 0.6703296703296703,
+     "discordant": [
+      [
+       "mvt_read_once",
+       "atax_read_once"
+      ],
+      [
+       "bicg_read_once",
+       "atax_read_once"
+      ],
+      [
+       "gesummv_literal",
+       "mvt_contiguous_w8"
+      ]
+     ]
+    },
+    "gvsoc-netlist": {
+     "tau": 1.0,
+     "discordant": []
+    }
+   }
+  },
+  "dynamic": {
+   "top": {
+    "estimate": [
+     "bicg_two_pass"
+    ],
+    "gvsoc": [
+     "bicg_two_pass"
+    ],
+    "netlist": [
+     "bicg_read_once"
+    ]
+   },
+   "top_agrees": false,
+   "tau": {
+    "estimate-gvsoc": {
+     "tau": 0.978021978021978,
+     "discordant": []
+    },
+    "estimate-netlist": {
+     "tau": 0.8351648351648352,
+     "discordant": [
+      [
+       "mvt_column",
+       "mvt_read_once"
+      ],
+      [
+       "mvt_column",
+       "atax_read_once"
+      ],
+      [
+       "mvt_read_once",
+       "atax_read_once"
+      ],
+      [
+       "bicg_two_pass",
+       "bicg_read_once"
+      ],
+      [
+       "bicg_two_pass",
+       "atax_read_once"
+      ],
+      [
+       "atax_read_once",
+       "gesummv_x_read_once"
+      ]
+     ]
+    },
+    "gvsoc-netlist": {
+     "tau": 0.8461538461538461,
+     "discordant": [
+      [
+       "mvt_column",
+       "mvt_read_once"
+      ],
+      [
+       "mvt_column",
+       "atax_read_once"
+      ],
+      [
+       "mvt_read_once",
+       "atax_read_once"
+      ],
+      [
+       "bicg_two_pass",
+       "bicg_read_once"
+      ],
+      [
+       "bicg_two_pass",
+       "atax_read_once"
+      ],
+      [
+       "atax_read_once",
+       "gesummv_x_read_once"
+      ]
+     ]
+    }
+   }
+  },
+  "dynamic_leak": {
+   "top": {
+    "estimate": [
+     "bicg_read_once"
+    ],
+    "gvsoc": [
+     "bicg_read_once",
+     "atax_read_once"
+    ],
+    "netlist": [
+     "atax_read_once"
+    ]
+   },
+   "top_agrees": false,
+   "tau": {
+    "estimate-gvsoc": {
+     "tau": 0.8901098901098901,
+     "discordant": [
+      [
+       "bicg_two_pass",
+       "atax_column_shared_movers"
+      ],
+      [
+       "bicg_two_pass",
+       "gesummv_x_read_once"
+      ],
+      [
+       "atax_column_shared_movers",
+       "gesummv_x_read_once"
+      ],
+      [
+       "mvt_contiguous_w8",
+       "bicg_sequential_contiguous_w8"
+      ]
+     ]
+    },
+    "estimate-netlist": {
+     "tau": 0.9010989010989011,
+     "discordant": [
+      [
+       "bicg_two_pass",
+       "gesummv_x_read_once"
+      ],
+      [
+       "bicg_read_once",
+       "atax_read_once"
+      ],
+      [
+       "atax_column_shared_movers",
+       "gesummv_x_read_once"
+      ],
+      [
+       "mvt_contiguous_w8",
+       "bicg_sequential_contiguous_w8"
+      ]
+     ]
+    },
+    "gvsoc-netlist": {
+     "tau": 0.967032967032967,
+     "discordant": [
+      [
+       "bicg_two_pass",
+       "atax_column_shared_movers"
+      ]
+     ]
+    }
+   }
+  },
+  "total": {
+   "top": {
+    "estimate": [
+     "bicg_read_once"
+    ],
+    "gvsoc": [
+     "atax_read_once"
+    ],
+    "netlist": [
+     "atax_read_once"
+    ]
+   },
+   "top_agrees": false,
+   "tau": {
+    "estimate-gvsoc": {
+     "tau": 0.9010989010989011,
+     "discordant": [
+      [
+       "bicg_read_once",
+       "atax_read_once"
+      ],
+      [
+       "gesummv_literal",
+       "mvt_contiguous_w8"
+      ],
+      [
+       "mvt_contiguous_w8",
+       "bicg_sequential_contiguous_w8"
+      ]
+     ]
+    },
+    "estimate-netlist": {
+     "tau": 0.8571428571428571,
+     "discordant": [
+      [
+       "bicg_read_once",
+       "atax_read_once"
+      ],
+      [
+       "gesummv_literal",
+       "mvt_contiguous_w8"
+      ],
+      [
+       "gesummv_literal",
+       "mvt_padded_w8"
+      ],
+      [
+       "gesummv_literal",
+       "bicg_sequential_contiguous_w8"
+      ],
+      [
+       "mvt_contiguous_w8",
+       "bicg_sequential_contiguous_w8"
+      ]
+     ]
+    },
+    "gvsoc-netlist": {
+     "tau": 0.9560439560439561,
+     "discordant": [
+      [
+       "gesummv_literal",
+       "mvt_padded_w8"
+      ],
+      [
+       "gesummv_literal",
+       "bicg_sequential_contiguous_w8"
+      ]
+     ]
+    }
+   }
+  },
+  "area": {
+   "top": {
+    "estimate": [
+     "mvt_dma_copy"
+    ],
+    "netlist": [
+     "mvt_dma_copy"
+    ]
+   },
+   "top_agrees": true,
+   "tau": {
+    "estimate-netlist": {
+     "tau": 0.8791208791208791,
+     "discordant": []
+    }
+   }
+  }
+ },
+ "gaps": [
+  {
+   "id": "mvt_column",
+   "where": "span, estimate",
+   "level": 1028,
+   "netlist": 1601,
+   "pct": -35.8
+  },
+  {
+   "id": "mvt_column",
+   "where": "window 3 dma_in (dma load_x1)",
+   "level": 37,
+   "netlist": 58,
+   "pct": -36.2
+  },
+  {
+   "id": "mvt_column",
+   "where": "window 4 streamer_config (streamer config mvt)",
+   "level": 61,
+   "netlist": 43,
+   "pct": 41.9
+  },
+  {
+   "id": "mvt_column",
+   "where": "window 8 dma_in (dma load_y2)",
+   "level": 24,
+   "netlist": 35,
+   "pct": -31.4
+  },
+  {
+   "id": "mvt_column",
+   "where": "window 13 dma_out (dma store_x2)",
+   "level": 56,
+   "netlist": 75,
+   "pct": -25.3
+  },
+  {
+   "id": "mvt_read_once",
+   "where": "span, estimate",
+   "level": 515,
+   "netlist": 1025,
+   "pct": -49.8
+  },
+  {
+   "id": "mvt_read_once",
+   "where": "window 2 dma_in (dma load_y1)",
+   "level": 24,
+   "netlist": 35,
+   "pct": -31.4
+  },
+  {
+   "id": "mvt_read_once",
+   "where": "window 5 dma_in (dma load_x2)",
+   "level": 37,
+   "netlist": 58,
+   "pct": -36.2
+  },
+  {
+   "id": "mvt_read_once",
+   "where": "window 6 streamer_config (streamer config mvt)",
+   "level": 100,
+   "netlist": 76,
+   "pct": 31.6
+  },
+  {
+   "id": "mvt_read_once",
+   "where": "window 9 dma_out (dma store_x1)",
+   "level": 19,
+   "netlist": 24,
+   "pct": -20.8
+  },
+  {
+   "id": "mvt_read_once",
+   "where": "window 10 dma_out (dma store_x2)",
+   "level": 53,
+   "netlist": 69,
+   "pct": -23.2
+  },
+  {
+   "id": "bicg_two_pass",
+   "where": "span, estimate",
+   "level": 1028,
+   "netlist": 1504,
+   "pct": -31.6
+  },
+  {
+   "id": "bicg_two_pass",
+   "where": "window 2 dma_in (dma load_p)",
+   "level": 24,
+   "netlist": 35,
+   "pct": -31.4
+  },
+  {
+   "id": "bicg_two_pass",
+   "where": "window 6 dma_out (dma store_q)",
+   "level": 33,
+   "netlist": 49,
+   "pct": -32.7
+  },
+  {
+   "id": "bicg_two_pass",
+   "where": "window 11 dma_out (dma store_s)",
+   "level": 65,
+   "netlist": 85,
+   "pct": -23.5
+  },
+  {
+   "id": "bicg_read_once",
+   "where": "span, estimate",
+   "level": 515,
+   "netlist": 933,
+   "pct": -44.8
+  },
+  {
+   "id": "bicg_read_once",
+   "where": "window 2 dma_in (dma load_p)",
+   "level": 25,
+   "netlist": 35,
+   "pct": -28.6
+  },
+  {
+   "id": "bicg_read_once",
+   "where": "window 8 dma_out (dma store_s)",
+   "level": 47,
+   "netlist": 71,
+   "pct": -33.8
+  },
+  {
+   "id": "atax_read_once",
+   "where": "span, estimate",
+   "level": 523,
+   "netlist": 843,
+   "pct": -38.0
+  },
+  {
+   "id": "atax_read_once",
+   "where": "window 6 dma_out (dma store_y)",
+   "level": 67,
+   "netlist": 91,
+   "pct": -26.4
+  },
+  {
+   "id": "atax_column_shared_movers",
+   "where": "span, estimate",
+   "level": 1028,
+   "netlist": 1436,
+   "pct": -28.4
+  },
+  {
+   "id": "atax_column_shared_movers",
+   "where": "window 6 streamer_config (streamer config atax)",
+   "level": 65,
+   "netlist": 47,
+   "pct": 38.3
+  },
+  {
+   "id": "gesummv_x_read_once",
+   "where": "span, estimate",
+   "level": 522,
+   "netlist": 1062,
+   "pct": -50.8
+  },
+  {
+   "id": "gesummv_x_read_once",
+   "where": "window 2 dma_in (dma load_x)",
+   "level": 34,
+   "netlist": 44,
+   "pct": -22.7
+  },
+  {
+   "id": "gesummv_x_read_once",
+   "where": "window 7 streamer_config (streamer config axpby)",
+   "level": 63,
+   "netlist": 45,
+   "pct": 40.0
+  },
+  {
+   "id": "gesummv_x_read_once",
+   "where": "window 9 run (run axpby)",
+   "level": 34,
+   "netlist": 44,
+   "pct": -22.7
+  },
+  {
+   "id": "gesummv_x_read_once",
+   "where": "window 10 dma_out (dma store_out)",
+   "level": 67,
+   "netlist": 91,
+   "pct": -26.4
+  },
+  {
+   "id": "gesummv_factor_out",
+   "where": "span, estimate",
+   "level": 1036,
+   "netlist": 1627,
+   "pct": -36.3
+  },
+  {
+   "id": "gesummv_factor_out",
+   "where": "window 12 run (run axpby)",
+   "level": 25,
+   "netlist": 40,
+   "pct": -37.5
+  },
+  {
+   "id": "gesummv_literal",
+   "where": "span, estimate",
+   "level": 2060,
+   "netlist": 2860,
+   "pct": -28.0
+  },
+  {
+   "id": "gesummv_literal",
+   "where": "window 5 dma_in (dma load_x)",
+   "level": 36,
+   "netlist": 46,
+   "pct": -21.7
+  },
+  {
+   "id": "gesummv_literal",
+   "where": "window 18 run (run acc)",
+   "level": 34,
+   "netlist": 45,
+   "pct": -24.4
+  },
+  {
+   "id": "gesummv_literal",
+   "where": "window 19 dma_out (dma store_out)",
+   "level": 48,
+   "netlist": 79,
+   "pct": -39.2
+  },
+  {
+   "id": "mvt_dma_copy",
+   "where": "window 9 dma_in (dma load_y2)",
+   "level": 37,
+   "netlist": 51,
+   "pct": -27.5
+  },
+  {
+   "id": "mvt_dma_copy",
+   "where": "window 14 dma_out (dma store_x2)",
+   "level": 46,
+   "netlist": 74,
+   "pct": -37.8
+  },
+  {
+   "id": "atax_dma_copy",
+   "where": "window 10 dma_out (dma store_y)",
+   "level": 48,
+   "netlist": 69,
+   "pct": -30.4
+  },
+  {
+   "id": "mvt_contiguous_w8",
+   "where": "span, estimate",
+   "level": 1028,
+   "netlist": 4836,
+   "pct": -78.7
+  },
+  {
+   "id": "mvt_contiguous_w8",
+   "where": "window 3 dma_in (dma load_x1)",
+   "level": 41,
+   "netlist": 63,
+   "pct": -34.9
+  },
+  {
+   "id": "mvt_contiguous_w8",
+   "where": "window 4 streamer_config (streamer config mvt_1)",
+   "level": 61,
+   "netlist": 43,
+   "pct": 41.9
+  },
+  {
+   "id": "mvt_contiguous_w8",
+   "where": "window 8 dma_in (dma load_y2)",
+   "level": 30,
+   "netlist": 45,
+   "pct": -33.3
+  },
+  {
+   "id": "mvt_padded_w8",
+   "where": "span, estimate",
+   "level": 1028,
+   "netlist": 2107,
+   "pct": -51.2
+  },
+  {
+   "id": "mvt_padded_w8",
+   "where": "window 2 dma_in (dma load_y1)",
+   "level": 40,
+   "netlist": 63,
+   "pct": -36.5
+  },
+  {
+   "id": "mvt_padded_w8",
+   "where": "window 13 dma_out (dma store_x2)",
+   "level": 50,
+   "netlist": 74,
+   "pct": -32.4
+  },
+  {
+   "id": "bicg_sequential_contiguous_w8",
+   "where": "span, estimate",
+   "level": 1027,
+   "netlist": 1983,
+   "pct": -48.2
+  },
+  {
+   "id": "bicg_sequential_contiguous_w8",
+   "where": "window 2 dma_in (dma load_p)",
+   "level": 30,
+   "netlist": 45,
+   "pct": -33.3
+  },
+  {
+   "id": "bicg_sequential_contiguous_w8",
+   "where": "window 7 dma_in (dma load_r)",
+   "level": 31,
+   "netlist": 45,
+   "pct": -31.1
+  }
+ ]
+}

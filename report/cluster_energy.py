@@ -6,7 +6,8 @@
 For every point of cluster/points.json with its PrimePower reports, sums each window's power_hierarchy.rpt into
 cluster/groups.json's groups (report/cluster_breakdown.py's rules), E_g,w = (P_int + P_sw)_g,w x C_w x t_clk, then
 sets the run window against the idle window before it, HWCOST's five parts and the shell measured alone. Each
-window's total must equal power_pt.csv's e_dyn_pj within 0.01 %. Writes results/cluster/<tech>/energy.json; --md
+window's total must equal power_pt.csv's e_dyn_pj within 0.01 %. Leakage per group and window (µW, and nJ over
+the span) is kept beside the dynamic energy, never in it (X106). Writes results/cluster/<tech>/energy.json; --md
 prints the tables. The rules are in cluster/README.md, "The reports". Standard library and arc/arc.py.
 """
 
@@ -54,7 +55,7 @@ def parse_hierarchy(text: str) -> list[dict]:
         stack.append((depth, name))
         path = "/".join(n for _, n in stack[1:])
         rows.append({"path": path, "design": design, "total": float(m.group(4)) + float(m.group(5)),
-                     "int": float(m.group(4)), "sw": float(m.group(5))})
+                     "int": float(m.group(4)), "sw": float(m.group(5)), "leak": float(m.group(6))})
     return rows
 
 
@@ -69,6 +70,16 @@ def share(x: float, total: float) -> float:
 def window_groups(rows: list[dict], cfg: dict, clock_ns: float) -> dict[str, float]:
     """pJ per cycle per group, in groups.json's order; they add up to the top's dynamic power."""
     return {k: pj_per_cycle(v, clock_ns) for k, v in cb.groups(rows, cfg).items()}
+
+
+def window_leak_uw(rows: list[dict], cfg: dict) -> dict[str, float]:
+    """µW of leakage per group (X106): the hierarchy's leakage column summed by the same rules; kept apart from
+    the dynamic energy, never added to it."""
+    return {k: v * 1e6 for k, v in cb.groups([{**r, "total": r["leak"]} for r in rows], cfg).items()}
+
+
+def leak_nj(uw: float, cycles: int, clock_ns: float) -> float:
+    return uw * cycles * clock_ns * 1e-6        # µW * ns = fJ; / 1e6 = nJ
 
 
 def idle_for(wins: list[dict], i: int) -> int | None:
@@ -154,16 +165,21 @@ def point_energy(point: dict, tech: str, cfg: dict) -> dict | None:
         if not ok:
             bad.append(wname)
         c = int(w["cycles"])
+        lk = window_leak_uw(rows, cfg)
         wins.append({"name": wname, "mark": w["mark"], "kind": w["kind"], "label": w["label"], "cycles": c,
                      "clock_ns": clock_ns, "pj_cycle": top, "nj": top * c / 1e3, "groups": g,
+                     "leak_uw": lk, "leak_top_uw": rows[0]["leak"] * 1e6,
                      "check": {"power_pt_e_dyn_pj": want, "ok": ok}})
         if w["kind"] == "run":
             run_rows[wname] = (rows, c, clock_ns)
     span = sum(w["nj"] for w in wins)
     by_group = {k: sum(w["groups"][k] * w["cycles"] / 1e3 for w in wins) for k in labels}
+    leak_by = {k: sum(leak_nj(w["leak_uw"][k], w["cycles"], w["clock_ns"]) for w in wins) for k in labels}
     out: dict = {"windows": wins, "labels": labels,
                  "span": {"cycles": sum(w["cycles"] for w in wins), "nj": span,
-                          "groups": [{"name": k, "nj": v, "share_pct": share(v, span)} for k, v in by_group.items()]},
+                          "groups": [{"name": k, "nj": v, "share_pct": share(v, span), "leak_nj": leak_by[k]}
+                                     for k, v in by_group.items()],
+                          "leak_nj": sum(leak_by.values())},
                  "run": run_phase(wins), "failed": bad}
     if pt:
         any_row = next(iter(pt.values()))

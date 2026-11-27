@@ -44,5 +44,15 @@
     "streamers": ["streamers"],
     "crossbar": ["tcdm_interconnect"],
     "memory": ["tcdm_banks"]
+  },
+  "parts": {
+    "datapath": ["acc_datapath"],
+    "control": ["acc_control"],
+    "streamers": ["streamers"],
+    "crossbar": ["tcdm_interconnect"],
+    "memory": ["tcdm_banks"],
+    "dma": ["dma"],
+    "core": ["cores", "icache_logic", "icache_macros"],
+    "rest": ["axi", "peripherals", "tcdm_logic", "acc_csr", "acc_interface", "others"]
   }
 }

@@ -125,6 +125,20 @@ def test_the_real_groups_file_maps_every_part():
     assert set(cfg["hwcost"]) == set(ce.PARTS) and all(set(v) <= names for v in cfg["hwcost"].values())
 
 
+def test_leakage_per_group_adds_up_and_stays_out():
+    """On a committed CSYN2 point: each window's groups' leakage adds up to the top's, the dynamic sums are as before."""
+    cfg = json.loads((ROOT / "cluster" / "groups.json").read_text())
+    pts = json.loads((ROOT / "cluster" / "points.json").read_text())["points"]
+    p = next(x for x in pts if x["point"] == "mvt_column_cg")
+    out = ce.point_energy(p, "nangate45", cfg)
+    assert out is not None and not out["failed"]
+    for w in out["windows"]:
+        assert abs(sum(w["leak_uw"].values()) - w["leak_top_uw"]) <= 1e-6 * w["leak_top_uw"], w["name"]
+        assert abs(sum(w["groups"].values()) - w["pj_cycle"]) <= 1e-6 * w["pj_cycle"], w["name"]
+    assert abs(out["span"]["nj"] - sum(w["nj"] for w in out["windows"])) < 1e-9
+    assert set(cfg["parts"]) == {"datapath", "control", "streamers", "crossbar", "memory", "dma", "core", "rest"}
+    assert sorted(sum(cfg["parts"].values(), [])) == sorted(g["name"] for g in cfg["groups"])
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
