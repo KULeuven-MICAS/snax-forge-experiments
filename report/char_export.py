@@ -12,10 +12,12 @@ interpolate, slope; X89; the stream blocks none, one point per entry, X94), and 
 as a sequential cell (X83 · X85). A block whose rows name another snax-forge commit than the first row's (FifoSlicer's)
 has it as source.snax_forge_<block>; the mixed pairs (X98, a SimdLanes or Mac whose a and b differ in width, each
 its own entry with its exact inTypes) as source.snax_forge_mixed; SimdLanes' scalar forms (X99, k, k1, k2 baked or
-from a CSR, each its own entry by those params) as source.snax_forge_scalar.
+from a CSR, each its own entry by those params) as source.snax_forge_scalar; SimdLanes' requant, axpbypcz and
+threshold (X111, each its own entry at its own types and slots) as source.snax_forge_e2e1.
 """
 from __future__ import annotations
 
+import functools
 import json
 import math
 import subprocess
@@ -99,6 +101,8 @@ def n_bits(datapath: str, params: dict) -> int:
         return width(params["outType"])
     if datapath == "LinkBuffer":
         return w * params["depth"] * width(params["dtype"])
+    if datapath == "HaloLink":                      # H = ceil((T - 1) / W) held beats (snax-forge D206)
+        return (params["taps"] + w - 2) // w * w * width(params["dtype"])
     fail(f"{datapath}: no register rule")
 
 
@@ -177,6 +181,7 @@ def counter_factor(tech: str, area: float, hold_fj: float) -> dict:
     return {**s, "value": round(s["mean"], 2), "points": per, "bits": bits, "e_ctrl": e_ctrl}
 
 
+@functools.cache
 def catalogue_at(commit: str) -> dict:
     """blocks.json at snax-forge `commit` (git show in the sibling checkout, read only)."""
     done = subprocess.run(["git", "-C", str(BLOCKS_JSON.parents[2]), "show", f"{commit}:hw/chisel/blocks.json"],
@@ -221,14 +226,17 @@ def type_free(params: dict) -> dict:
 
 def blocks(d: dict, points: list[dict], cat: dict) -> dict:
     """char.json's blocks: per block one entry per params (lanes and depth aside, so one per type pair), params
-    checked against blocks.json; seq_cells against the bits printed where they differ (a clock gate is a sequential
-    cell). A narrow fold's entry has one point, at W0, and the slope rule: the int64 entry's cost per lane between
-    SLOPE_WS times w_in / 64 (X89). The points char_table.check_only names are left out."""
+    checked against blocks.json `cat` (the first row's commit), an X111 point's against blocks.json at its own commit
+    (the first has no k3, d, lo, hi or HaloLink); seq_cells against the bits printed where they differ (a clock gate
+    is a sequential cell). A narrow fold's entry has one point, at W0, and the slope rule: the
+    int64 entry's cost per lane between SLOPE_WS times w_in / 64 (X89). The points char_table.check_only names are
+    left out."""
     out: dict = {}
     for p in points:
         name, dp = p["point"], p["datapath"]
-        params = as_measured(dp, p["params"], cat)
-        check_params(dp, params, cat, name)
+        own = catalogue_at(d[name]["synth"]["snax_forge_commit"]) if ct.group(d[name]) == ct.E2E1 else cat
+        params = as_measured(dp, p["params"], own)
+        check_params(dp, params, own, name)
         if ct.check_only(dp, params):
             continue
         flops = int(d[name]["synth"]["seq_cells"])

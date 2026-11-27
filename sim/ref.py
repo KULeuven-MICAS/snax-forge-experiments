@@ -45,7 +45,11 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
 #   SimdLanes         out_l = cast(cast(a_l, A, op) op cast(b_l, B, op) at op, op, out) (combinational); one stream
 #                     (a alone): b_l is the scalar k at op, its pin's bits (kCsr) or the baked k; max and min compare
 #                     by op's signedness; axpby: out_l = cast(k1 a + k2 b at op, op, out), k1 a + b without k2, each
-#                     k from its pin (k1Csr, k2Csr) or baked (k1, k2); a pin's value is the slot's pins[<k>]
+#                     k from its pin (k1Csr, k2Csr) or baked (k1, k2); a pin's value is the slot's pins[<k>];
+#                     axpbypcz (three streams): out_l = cast(fl(k1 a + k2 b + k3 c at op), op, out), an unset k
+#                     the input itself, each product and the sum at op's bits; requant: cast(min(max(fl(a), lo),
+#                     hi) at op, op, out); threshold: hi where a - k + 1 at op is at least 1 by op's signedness, else
+#                     0; fl(x) = x // d, arithmetic at a signed op and logical at an unsigned one (d a power of 2)
 #   Mac (accumulate)  p_l = cast(cast(a_l, A, op) cast(b_l, B, op) at op, op, out);
 #                     on fire: s_l <- first ? p_l : s_l + p_l at out; out_l = s_l; with rows R > 1 (D191) R rows
 #                     of sums: on fire s[row]_l <- first ? p_l : s[row]_l + p_l; out_l = s[drain]_l
@@ -53,6 +57,8 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
 #   SerialAccumulate  on read: acc <- (first and lane = 0 ? 0 : acc) + cast(in_lane, in, out) at out; out = acc
 #   LinkBuffer        on load: slot[wslot] <- in; out = slot[rslot] (combinational read; slot 0 at depth 1); in
 #                     the stream window rslot = wslot = t mod D, so out at slot t is the beat loaded at t - D
+#   HaloLink          H = ceil((T - 1) / W) held beats; e = the held beats' elements oldest first, then in's;
+#                     taps_t_l = e[l + t] (combinational); on load: the held beats shift, in the newest (D206)
 #   FifoPacker        r = words 64 / (width inLanes) pushes to a beat, element e at bits [w(e+1)-1 : we]; sending =
 #                     count = r - 1 or last; out_valid = in_valid sending, in_ready = not sending or out_ready;
 #                     out_bits: slot u the push when u = count, held[u] when u < count, zero above; on a push
@@ -66,7 +72,7 @@ def ref(kernel: str, ins: dict, pins: dict) -> dict:
 # written before read.
 M64 = (1 << 64) - 1
 CHAR_OPS = {"add": lambda a, b: a + b, "mul": lambda a, b: a * b}
-SCALARS = ("k", "k1", "k2")     # SimdLanes' scalar slots, each baked (params[<k>]) or from its pin (params[<k>Csr])
+SCALARS = ("k", "k1", "k2", "k3")     # SimdLanes' scalar slots, each baked (params[<k>]) or from its pin (params[<k>Csr])
 
 
 def _width(t: str) -> int:
@@ -89,17 +95,38 @@ def _value(x: int, t: str) -> int:
 
 
 def _scalar(params: dict, name: str, pins: dict) -> int | None:
-    """SimdLanes' scalar `name` as op's bits: its pin's value (params[<name>Csr]), the baked params[name], or None."""
+    """SimdLanes' scalar `name` as op's bits: its pin's value (params[<name>Csr]), the baked params[name], or None
+    (also lo and hi, always baked)."""
     if params.get(f"{name}Csr"):
         return pins[name] & ((1 << _width(params["opType"])) - 1)
     v = params.get(name)
     return None if v is None else v & ((1 << _width(params["opType"])) - 1)
 
 
-def _lanes_out(params: dict, a: int, b: int | None, pins: dict) -> int:
-    """One SimdLanes lane at op's bits: a and b already cast to op (b None at one stream, the scalar k in its
-    place), the result not yet cast to out."""
+def _floor_div(x: int, params: dict) -> int:
+    """x // d at op's bits (x op's bits, d a power of two): arithmetic at a signed op, logical at an unsigned one."""
+    top = params["opType"]
+    s = params["d"].bit_length() - 1
+    return (_value(x, top) >> s) & ((1 << _width(top)) - 1)
+
+
+def _lanes_out(params: dict, a: int, b: int | None, pins: dict, c: int | None = None) -> int:
+    """One SimdLanes lane at op's bits: a, b and c already cast to op (b None at one stream, the scalar k in its
+    place; c only at three), the result not yet cast to out."""
     top, op = params["opType"], params["op"]
+    m = (1 << _width(top)) - 1
+    if op == "axpbypcz":
+        ks = [_scalar(params, n, pins) for n in ("k1", "k2", "k3")]
+        total = sum(x if k is None else (k * x) & m for k, x in zip(ks, (a, b, c))) & m
+        return _floor_div(total, params)
+    if op == "requant":
+        lo, hi = (_scalar(params, n, {}) for n in ("lo", "hi"))
+        q = _floor_div(a, params)
+        q = max(q, lo, key=lambda x: _value(x, top))
+        return min(q, hi, key=lambda x: _value(x, top))
+    if op == "threshold":
+        delta = (a - _scalar(params, "k", pins) + 1) & m
+        return _scalar(params, "hi", {}) if (_value(delta, top) > 0 if not top.startswith("u") else delta) else 0
     if op == "axpby":
         k1, k2 = _scalar(params, "k1", pins), _scalar(params, "k2", pins)
         return k1 * a + (b if k2 is None else k2 * b)
@@ -118,11 +145,12 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
     (0 before any). A SimdLanes' scalar read from its pin is the slot's pins[<k>] (sim/pwr.py's char_stimulus
     holds one value a window)."""
     w = params.get("lanes", 1)
-    cur, nb = [0] * (2 * w if datapath in ("SimdLanes", "Mac") else max(w, params.get("inLanes", 1),
-                                                                         params.get("words", 1))), 0
+    cur, nb = [0] * (len(params["inTypes"]) * w if datapath in ("SimdLanes", "Mac") else
+                     max(w, params.get("inLanes", 1), params.get("words", 1))), 0
     if datapath in ("SimdLanes", "Mac"):
         ins = params["inTypes"]
         ta, tb = ins[0], ins[1] if len(ins) > 1 else None   # a SimdLanes of one stream: a alone
+        tc = ins[2] if len(ins) > 2 else None               # axpbypcz's c
         top, tout = params["opType"], params["outType"]
         mo = (1 << _width(tout)) - 1
         prod = lambda i: _cast(_cast(cur[i], ta, top) * _cast(cur[w + i], tb, top), top, tout)  # noqa: E731
@@ -135,6 +163,9 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
     elif datapath == "LinkBuffer":
         depth = params["depth"]
         mem = [[0] * w for _ in range(depth)]
+    elif datapath == "HaloLink":
+        taps = params["taps"]
+        hold = [[0] * w for _ in range((taps + w - 2) // w)]
     elif datapath == "FifoPacker":
         lw, nl = _width(params["laneType"]), params["inLanes"]
         r = params["words"] * 64 // (lw * nl)
@@ -156,13 +187,18 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
         # the falling edge: what the registers hold, the combinational outputs of this slot's inputs
         if datapath == "SimdLanes":
             out.append([_cast(_lanes_out(params, _cast(cur[i], ta, top), None if tb is None else
-                                         _cast(cur[w + i], tb, top), p), top, tout) for i in range(w)])
+                                         _cast(cur[w + i], tb, top), p,
+                                         None if tc is None else _cast(cur[2 * w + i], tc, top)), top, tout)
+                        for i in range(w)])
         elif datapath == "Mac":
             out.append(list(bank[p.get("drain", 0)]))
         elif datapath in ("TreeAccumulate", "SerialAccumulate"):
             out.append([acc])
         elif datapath == "LinkBuffer":
             out.append(list(mem[p["rslot"] if depth > 1 else 0]))
+        elif datapath == "HaloLink":
+            e = [x for beat in hold for x in beat] + list(cur[:w])
+            out.append([e[lane + t] for t in range(taps) for lane in range(w)])
         elif datapath == "FifoSlicer":
             last = r == 1 or count == r - 1
             ready = bool(p["enable"]) and (not full or (bool(p["out_ready"]) and last))
@@ -190,6 +226,8 @@ def char_ref(datapath: str, params: dict, slots: list[dict], beats: list[list[in
             acc = ((0 if p["first"] and lane == 0 else acc) + _cast(cur[lane], tin, tout)) & mo
         elif datapath == "LinkBuffer" and p["load"]:
             mem[p["wslot"] if depth > 1 else 0] = list(cur)
+        elif datapath == "HaloLink" and p["load"]:
+            hold = hold[1:] + [list(cur[:w])]
         elif datapath == "FifoPacker":
             if p["in_valid"] and ready and r > 1:
                 if sending:

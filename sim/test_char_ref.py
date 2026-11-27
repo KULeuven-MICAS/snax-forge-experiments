@@ -96,6 +96,70 @@ def test_stimulus_scalars_per_window() -> None:
     assert all(x == [0] for x in b["exps"][:cs.SETTLE])          # settling: data and scalars 0
 
 
+def e2e1(ins: list[str], t: str, out: str, op: str, **slots) -> dict:
+    """An X111 form's params: every slot written out, as char/points.json has them."""
+    return {**lanes(ins, t, op), "outType": out, "k3": None, "d": None, "lo": None, "hi": None, "k3Csr": False,
+            **slots}
+
+
+def test_e2e1_forms_by_hand() -> None:
+    """The run note's spot checks (X111): requant's floor and clamp, gray's and blur's sums and slices, threshold's
+    wrap at int16."""
+    rq = e2e1(["int32"], "int32", "int8", "requant", d=1024, lo=0, hi=127)
+    got = [one(rq, [bits(a, 32)], {}) for a in (127 * 1024, 128 * 1024, -1, 1023, M31 - 1, -M31, 5120)]
+    assert got == [127, 127, 0, 0, 127, 0, 5]
+    assert one({**rq, "d": 512}, [65023], {}) == 126                  # 126.99 floors to 126
+    assert one({**rq, "lo": -5, "outType": "int32"}, [bits(-6000, 32)], {}) == bits(-5, 32)   # -5.86 floors to -6
+    gray = e2e1(["uint8"] * 3, "uint16", "uint8", "axpbypcz", k1=77, k2=150, k3=29, d=256)
+    got = [one(gray, abc, {}) for abc in ([255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255], [0, 0, 0])]
+    assert got == [255, 76, 149, 28, 0]                               # 65280, 19635, 38250, 7395 >> 8
+    blur = e2e1(["uint8"] * 3, "uint16", "uint8", "axpbypcz", k2=2, d=4)
+    assert [one(blur, abc, {}) for abc in ([255, 255, 255], [1, 2, 3], [3, 0, 0])] == [255, 2, 0]
+    th = e2e1(["uint8"], "int16", "uint8", "threshold", kCsr=True, hi=255)
+    k = lambda v: {"k": bits(v, 16)}                                  # noqa: E731
+    assert [one(th, [a], k(128)) for a in (127, 128, 255, 0)] == [0, 255, 255, 0]
+    assert [one(th, [a], k(-1)) for a in (0, 255)] == [255, 255]      # a + 2
+    assert [one(th, [a], k(-32768)) for a in (0, 255)] == [0, 0]      # a + 32769 wraps negative
+    assert one(th, [0], k(-32767)) == 0                               # 32768 wraps to -32768
+    assert one(th, [0], k(0)) == 255
+
+
+def test_three_streams_ports() -> None:
+    gray = e2e1(["uint8"] * 3, "uint16", "uint8", "axpbypcz", k1=77, k2=150, k3=29, d=256, lanes=8)
+    assert cs.port_bits("SimdLanes", gray) == {"a": 8, "b": 8, "c": 8, "out": 8}
+    assert cs.scalar_bits("SimdLanes", gray) == {}
+    th = e2e1(["uint8"], "int16", "uint8", "threshold", kCsr=True, hi=255)
+    assert cs.port_bits("SimdLanes", th) == {"a": 8, "out": 8} and cs.scalar_bits("SimdLanes", th) == {"k": 16}
+    w = 2       # the reference reads c from the third W of a beat
+    beat = [1, 2, 10, 20, 100, 200]
+    slot = {"window": "busy", "new": True, "fire": True, "pins": {}}
+    assert char_ref("SimdLanes", {**gray, "lanes": w, "k1": 1, "k2": 1, "k3": 1, "d": 1}, [slot], [beat]) == [[111, 222]]
+
+
+def halo(t: int, w: int) -> dict:
+    return {"taps": t, "lanes": w, "dtype": "int8"}
+
+
+def test_halo_taps() -> None:
+    """Tap t lane l is e[l + t], e the held beats oldest first, then the input; a load shifts them (D206)."""
+    ld = lambda: {"window": "stream", "new": True, "fire": True, "pins": {"load": 1}}  # noqa: E731
+    assert char_ref("HaloLink", halo(3, 1), [ld() for _ in range(4)], [[10], [20], [30], [40]]) == \
+        [[0, 0, 10], [0, 10, 20], [10, 20, 30], [20, 30, 40]]
+    hold = {"window": "stream", "new": True, "fire": False, "pins": {"load": 0}}
+    assert char_ref("HaloLink", halo(3, 2), [ld(), hold], [[1, 2], [3, 4]]) == \
+        [[0, 0, 0, 1, 1, 2], [1, 2, 2, 3, 3, 4]]                     # H = 1: taps [h0 h1], [h1 i0], [i0 i1]
+    assert cs.held(halo(3, 1)) == 2 and cs.held(halo(3, 8)) == 1 and cs.held(halo(9, 8)) == 1 and cs.held(halo(10, 8)) == 2
+
+
+def test_halo_schedule() -> None:
+    """The fill is H loads outside the window, then 128 loads in stream."""
+    tb = {"kind": "halo", "W": 1, "depth": "", "held": 2}
+    slots = cs.schedule(tb)
+    assert [s["window"] for s in slots[cs.SETTLE:cs.SETTLE + 3]] == [None, None, "stream"]
+    assert sum(1 for s in slots if s["window"] == "stream" and s["fire"] and s["pins"]["load"]) == cs.CYCLES
+    assert len(slots) == cs.SETTLE + 2 + cs.CYCLES
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

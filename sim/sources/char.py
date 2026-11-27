@@ -24,17 +24,17 @@ RTL = ROOT / "rtl" / "char"
 SETTLE = 4          # slots with every input low after reset
 CYCLES = 128        # each window's cycles (beats for serial's firing windows)
 KINDS = {"SimdLanes": "lanes", "Mac": "fold", "TreeAccumulate": "fold", "SerialAccumulate": "serial",
-         "LinkBuffer": "link", "FifoPacker": "pack", "FifoSlicer": "slice"}
-INS = {"SimdLanes": ["a", "b"], "Mac": ["a", "b"], "TreeAccumulate": ["in"], "SerialAccumulate": ["in"],
-       "LinkBuffer": ["in"], "FifoPacker": ["in_bits"], "FifoSlicer": ["in_bits"]}
+         "LinkBuffer": "link", "FifoPacker": "pack", "FifoSlicer": "slice", "HaloLink": "halo"}
+INS = {"SimdLanes": ["a", "b", "c"], "Mac": ["a", "b"], "TreeAccumulate": ["in"], "SerialAccumulate": ["in"],
+       "LinkBuffer": ["in"], "FifoPacker": ["in_bits"], "FifoSlicer": ["in_bits"], "HaloLink": ["in"]}
 OUTS = {"FifoPacker": ["out_bits", "out_valid", "in_ready"],
-        "FifoSlicer": ["out_bits", "out_valid", "in_ready"]}    # the others: out
+        "FifoSlicer": ["out_bits", "out_valid", "in_ready"], "HaloLink": ["taps"]}    # the others: out
 PINS = {"lanes": [], "fold": ["fire", "first"], "bank": ["fire", "first", "row", "drain"], "serial": ["read", "lane", "first"], "link": ["load", "wslot", "rslot"],
-        "pack": ["in_valid", "out_ready", "clear", "last"], "slice": ["in_valid", "out_ready", "enable", "clear"]}
+        "halo": ["load"], "pack": ["in_valid", "out_ready", "clear", "last"], "slice": ["in_valid", "out_ready", "enable", "clear"]}
 WINDOWS = {"lanes": ["busy", "idle"], "fold": ["busy", "idle"], "bank": ["busy", "idle"], "serial": ["busy", "idle"], "link": ["stream"],
-           "pack": ["busy", "idle"], "slice": ["busy", "idle"]}
+           "halo": ["stream"], "pack": ["busy", "idle"], "slice": ["busy", "idle"]}
 SEQ_FILES = {k: [f"char_{k}_seq.sv"] for k in PINS}
-SCALARS = ("k", "k1", "k2")     # SimdLanes' scalar slots; one read from its CSR is an input pin io_<k> of opType's width
+SCALARS = ("k", "k1", "k2", "k3")     # SimdLanes' scalar slots; one read from its CSR is an input pin io_<k> of opType's width
 CORE = "char_seq_core.svh"
 
 
@@ -44,6 +44,11 @@ def point_dir(point: str, bundle: Path) -> Path:
         if not (bundle / f).is_file():
             raise FileNotFoundError(f"{point}: no {f} in {RTL / point}.zip (pixi run char-rtl)")
     return bundle
+
+
+def held(params: dict) -> int:
+    """A HaloLink's held beats, H = ceil((T - 1) / W) (snax-forge D206)."""
+    return (params["taps"] + params["lanes"] - 2) // params["lanes"]
 
 
 def rows(params: dict) -> int:
@@ -86,9 +91,11 @@ def width(dtype: str) -> int:
 
 def port_bits(datapath: str, params: dict) -> dict:
     """{port base: bits} of the data ports from the params, what the netlist must show (D175's types); a SimdLanes of
-    one stream has a alone."""
+    one stream has a alone, of three (axpbypcz) a, b and c."""
     if datapath in ("SimdLanes", "Mac"):
-        return {**dict(zip(("a", "b"), (width(t) for t in params["inTypes"][:2]))), "out": width(params["outType"])}
+        return {**dict(zip(INS[datapath], (width(t) for t in params["inTypes"]))), "out": width(params["outType"])}
+    if datapath == "HaloLink":
+        return {"in": width(params["dtype"]), "taps": width(params["dtype"])}
     if datapath in ("TreeAccumulate", "SerialAccumulate"):
         return {"in": width(params["inType"]), "out": width(params["outType"])}
     if datapath == "LinkBuffer":
@@ -103,12 +110,13 @@ def slicer_r(params: dict) -> int:
     return params["words"] * 64 // (width(params["laneType"]) * params["outLanes"])
 
 
-def _base(p: str, bases: list[str]) -> tuple[int, int] | None:
-    """(the base's index, the lane) of port io_<base> or io_<base>_<lane>, None for another port."""
+def _base(p: str, bases: list[str]) -> tuple[int, tuple[int, ...]] | None:
+    """(the base's index, its indices) of port io_<base>, io_<base>_<lane> or io_<base>_<tap>_<lane> (a HaloLink's
+    taps, tap-major), None for another port."""
     for i, b in enumerate(bases):
-        m = re.fullmatch(rf"io_{b}(?:_(\d+))?", p)
+        m = re.fullmatch(rf"io_{b}(?:_(\d+))?(?:_(\d+))?", p)
         if m:
-            return i, int(m.group(1) or 0)
+            return i, tuple(int(g) for g in m.groups() if g is not None) or (0,)
     return None
 
 
@@ -123,24 +131,27 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
       reset    {port: reset, active: high, sync: false}
       control  {kind: "char_<kind>"}
       data_in  [{port, bits}]  every data input, one per lane, its width from the netlist (its type's), in the
-                             catalogue's port order then lane order (SimdLanes and Mac: a_0 .. a_{W-1}, b_0 ..;
+                             catalogue's port order then lane order (SimdLanes and Mac: a_0 .. a_{W-1}, b_0 .., c_0 ..;
                              FifoPacker and FifoSlicer in_bits_0 ..; the others in_0 ..): rand64 draws one stream per
                              port in this order and keeps the port's low bits
-      outs     [{port, bits}]  every output compared (out, or out_0 .. out_{W-1}; FifoPacker and FifoSlicer
+      outs     [{port, bits}]  every output compared (out, or out_0 .. out_{W-1}; a HaloLink's taps_0_0 ..
+                             taps_{T-1}_{W-1}, tap-major; FifoPacker and FifoSlicer
                              out_bits_0 .., out_valid, in_ready), its width from the netlist; a FifoSlicer's out_bits
                              compared through out_valid (0 when it holds no word: its data register has no reset)
       pins     {name: {port, bits}}  the kind's pins present in the netlist: a pin of no bits is absent (LinkBuffer's
                              wslot and rslot at depth 1, SerialAccumulate's lane at lanes 1)
       scalars  {name: {port, bits}}  only where a SimdLanes reads a scalar from its CSR (scalar_bits): io_k, io_k1,
-                             io_k2 at opType's width; sim/pwr.py holds one random value on each a window
+                             io_k2, io_k3 at opType's width; sim/pwr.py holds one random value on each a window
+      taps, held             a HaloLink's T and H (its fill is H loads)
       windows  [{name, cycles, fires}]  in the order the sequencer runs them (schedule())
       tb_files [sim/tb/ files]  the kind's sequencer and the shared core it includes
 
     The ports must be exactly clock, reset, data_in, outs, the present pins and the scalars (SimdLanes keeps an unused
     clock and reset), each data port as wide as its type (port_bits), W lanes of each input (a SimdLanes of one stream:
-    a alone), each scalar pin as wide as opType. The kinds, by datapath: lanes (SimdLanes), fold (Mac in its
-    accumulating form, TreeAccumulate), bank (an accumulating Mac of 2 rows or more, tb.json's rows), serial (SerialAccumulate), link (LinkBuffer), pack (FifoPacker), slice
-    (FifoSlicer).
+    a alone; of three: a, b and c), T x W taps of a HaloLink, each scalar pin as wide as opType. The kinds, by
+    datapath: lanes (SimdLanes), fold (Mac in its accumulating form, TreeAccumulate), bank (an accumulating Mac of 2
+    rows or more, tb.json's rows), serial (SerialAccumulate), link (LinkBuffer), halo (HaloLink), pack (FifoPacker),
+    slice (FifoSlicer).
 
     """
     d = point_dir(point, bundle)
@@ -173,6 +184,9 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
         lanes = {b: sum(1 for p in data_in if _base(p, INS[dp])[0] == i) for i, b in enumerate(INS[dp])}
         if lanes != {b: params["lanes"] if b in want else 0 for b in INS[dp]}:
             raise ValueError(f"{point}: data inputs {lanes} per port, {params['lanes']} lanes of {sorted(set(want) - {'out'})}")
+    if dp == "HaloLink" and (len(data_in), len(outs)) != (params["lanes"], params["taps"] * params["lanes"]):
+        raise ValueError(f"{point}: {len(data_in)} inputs and {len(outs)} taps, {params['lanes']} lanes and "
+                         f"{params['taps']} x {params['lanes']} taps expected")
     for n, p in [*pins.items(), *scalars.items()]:
         if ports[p["port"]] != ("in", p["bits"]):
             raise ValueError(f"{point}: pin {p['port']} is {ports[p['port']]}, expected an input of {p['bits']} bits")
@@ -183,6 +197,7 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
           "top": top, "W": params.get("lanes", 1), "depth": params.get("depth", ""),
           **({"r": slicer_r(params)} if kind == "slice" else {}),
           **({"rows": rows(params)} if kind == "bank" else {}),
+          **({"taps": params["taps"], "held": held(params)} if kind == "halo" else {}),
           "snax_forge_commit": pj["snax_forge_commit"],
           "clock": {"port": CLK}, "reset": {"port": RST, "active": "high", "sync": False},
           "control": {"kind": f"char_{kind}"},
@@ -225,7 +240,9 @@ def schedule(tb: dict) -> list[dict]:
     offers held: no pop, no take), each after one lead-in slot of its own kind; a fire is a pop; link has
     stream only, a FIFO at full rate: a lead-in of D loads round the ring (the fill), then 128 cycles with a load of
     new data every cycle into slot t mod D and rslot the oldest slot, the same slot (read before the edge that
-    overwrites it), so out at cycle t is the beat loaded at t - D. A slot's inputs are applied at its rising edge (after the flops have taken the slot
+    overwrites it), so out at cycle t is the beat loaded at t - D; halo has stream only, the link at full rate: a
+    lead-in of H loads (the fill: the held beats real data), then 128 cycles with a load of new data every cycle (each
+    tap reads the held beats and the incoming one). A slot's inputs are applied at its rising edge (after the flops have taken the slot
     before, as the forge points' TBs and a block's neighbours inside an accelerator change them), the outputs are sampled
     at its falling edge, and the next rising edge takes it. A window's rising edges are its own slots' input changes
     and the captures of its lead-in and its own slots but the last, which falls on the next lead-in's edge: every
@@ -298,6 +315,11 @@ def schedule(tb: dict) -> list[dict]:
             slot(None, 1, 1, load=1, wslot=t, rslot=t)
         for t in range(CYCLES):                           # full rate at full occupancy: read the oldest, which is
             slot("stream", 1, 1, load=1, wslot=t % depth, rslot=t % depth)   # the slot this edge overwrites
+    elif kind == "halo":
+        for _ in range(tb["held"]):                       # the lead-in: the fill, H loads
+            slot(None, 1, 1, load=1)
+        for _ in range(CYCLES):
+            slot("stream", 1, 1, load=1)
     else:
         raise ValueError(f"kind {kind}")
     return out

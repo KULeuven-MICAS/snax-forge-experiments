@@ -1249,6 +1249,9 @@ def tb_top_char(tb: dict, netlist: Path) -> str:
         sw = max(1, pins.get("wslot", {}).get("bits", 0))
         params.update({"D": tb["depth"], "SW": sw})
         wires = [("load", 1), ("wslot", sw), ("rslot", sw)]
+    elif kind == "halo":
+        params["H"] = tb["held"]
+        wires = [("load", 1)]
     elif kind == "pack":
         wires = [("in_valid", 1), ("out_ready", 1), ("clear", 1), ("last", 1)]
     elif kind == "slice":
