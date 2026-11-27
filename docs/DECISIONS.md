@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X110**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X111**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -410,7 +410,7 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 ### X68 — Cluster constraints and budget
 
-- **Decided:** `cluster/cluster.sdc`: reset and static ports false-pathed, I/O delay 30 % (AXI), 10 % (CSR); one cluster run alone at `--cores 16` (24 where the licences allow, X109), `SYN_IGNORE_LOAD=1` (PITFALLS DC13), replacing X16 · X59 here.
+- **Decided:** `cluster/cluster.sdc`: reset and static ports false-pathed, I/O delay 30 % (AXI), 10 % (CSR); one cluster run alone at `--cores 16` (PT 24 where the licences allow, X109), `SYN_IGNORE_LOAD=1` (PITFALLS DC13), replacing X16 · X59 here.
 - **Why:** a cluster sits in a SoC; cluster runs are few.
 - **Where:** `cluster/README.md`.
 
@@ -482,7 +482,7 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 ### X105 — One netlist per hardware
 
-- **Decided:** a point with `netlist_of` adopts its twin's netlist when the twin's syn run has one and the two bundles' hardware (`bundle/snax_forge.hjson`, `bundle/rtl/`) is byte-equal: no DC, `syn/adopted.json` in its run zip, and `gls` and `pwr` run its own ELF on the twin's netlist. When the hardware differs it is synthesized on its own.
+- **Decided:** a point with `netlist_of` adopts its twin's netlist when the twin's syn run has one and the two bundles' hardware (`bundle/snax_forge.hjson` without its comment lines, `bundle/rtl/` with `emitted.json`'s `rtl` path left out, both naming forge's output folder) is byte-equal: no DC, `syn/adopted.json` in its run zip, and `gls` and `pwr` run its own ELF on the twin's netlist. When the hardware differs it is synthesized on its own.
 - **Why:** a schedule or a layout changes the program, not the cluster; DC is most of a point's time.
 - **Where:** `cluster/cluster.py` (`adopt`, `netlist_point`), `cluster/check.py` (`hardware_diff`).
 
@@ -506,9 +506,15 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 ### X109 — One run at a time, more cores
 
-- **Decided:** `cluster/batch.sh` takes `CORES` (DC's cores and PT's threads; 24 where the licences allow, else 16), `--steps`, and `KEEP_GOING=1` (a failed step skips the rest of its point, the batch goes on); still one DC, Questa or PT run at a time.
+- **Decided:** `cluster/batch.sh` takes `CORES` (PT's threads, 24 where the licences allow, else 16; DC's cores, capped at 16, as DC refuses more and then runs on one core), `--steps`, and `KEEP_GOING=1` (a failed step skips the rest of its point, the batch goes on); still one DC, Questa or PT run at a time.
 - **Why:** parallel cluster runs would share snax_cluster's generated folders and the Scala caches; more cores per run is safe.
 - **Where:** `cluster/batch.sh`.
+
+### X110 — Untracked files do not make a checkout dirty
+
+- **Decided:** the cluster driver's clean check on snax-forge and snax_cluster ignores untracked files (`git status --untracked-files=no`), as forge's bundle `dirty` flag does; a tracked change still refuses the run.
+- **Why:** the editor's Save writes Ryan's own recipes into `recipes/custom/`; they change no bundle.
+- **Where:** `cluster/cluster.py` (`check_repos`).
 
 ## Reports and comparison
 

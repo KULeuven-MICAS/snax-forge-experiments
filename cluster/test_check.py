@@ -270,6 +270,16 @@ def test_hardware_diff():
     assert check.hardware_diff(a, {**b, "bundle/rtl/x.sv": b"y"}) == ["bundle/rtl/x.sv"]
     assert check.hardware_diff(a, {**b, "bundle/rtl/y.sv": b"y"}) == ["bundle/rtl/y.sv"]
     assert check.hardware_diff({"sw/forge.elf": b""}, {"sw/forge.elf": b""}) != []
+    # forge's folder name in the hjson's header comment and in emitted.json's "rtl" path is not hardware
+    ha = {"bundle/snax_forge.hjson": b"// from out/flow/mvt_v4_W_x1-8_datafull/x\n{cluster: 1}",
+          "bundle/rtl/emitted.json": b'{"rtl": "out/bundle/mvt_v4_W_x1-8_datafull/a.json", "top": "acc"}',
+          "bundle/rtl/acc.sv": b"module acc;"}
+    hb = {"bundle/snax_forge.hjson": b"// from out/flow/mvt_v4_W_x1-8_passes.layoutpadded_rows_datafull/x\n{cluster: 1}",
+          "bundle/rtl/emitted.json": b'{"top": "acc", "rtl": "out/bundle/mvt_v4_W_x1-8_passes.layout_datafull/a.json"}',
+          "bundle/rtl/acc.sv": b"module acc;"}
+    assert check.hardware_diff(ha, hb) == []
+    assert check.hardware_diff(ha, {**hb, "bundle/snax_forge.hjson": b"{cluster: 2}"}) == ["bundle/snax_forge.hjson"]
+    assert check.hardware_diff(ha, {**hb, "bundle/rtl/emitted.json": b'{"top": "acc2"}'}) == ["bundle/rtl/emitted.json"]
 
 
 def test_db_check():

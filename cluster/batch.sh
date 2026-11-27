@@ -3,7 +3,7 @@
 #
 # Runs the cluster flow on each point in order, in series: cluster rtl, cluster syn --cores $CORES, cluster gls,
 # cluster pwr --cores $CORES, cluster-hwcost. --steps runs only those steps (in this order); --from starts the
-# first point at STEP. CORES (default 16) is DC's cores and PT's threads (X109: 24 where the licences allow).
+# first point at STEP. CORES (default 16) is PT's threads and DC's cores, DC capped at 16 (X109: PT 24 where free).
 # ALLOW_BRANCH=1 adds --allow-branch to the four cluster steps (snax_cluster off origin/main).
 # KEEP_GOING=1: a failed step skips the rest of its point and the batch goes on; the end says how many failed.
 #

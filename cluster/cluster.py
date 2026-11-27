@@ -58,6 +58,7 @@ TAIL = 30
 TIMEOUT = {"forge": 3600, "rtl-gen": 3600, "clustergen": 600, "vsim_preparation": 1800,
            "snax-forge-sim": 3600, "snax-forge-run": 3600, "clean": 600, "gen-syn": 1800}
 SYN_FLIST = TB_DIR / "work-syn" / "syn_flist.tcl"        # snax_cluster's gen-syn output
+DC_MAX_CORES = 16           # NB (X109): DC's -max_cores takes 1 to 16; more is refused (CMD-019) and it runs on one
 SDC = HERE / "cluster.sdc"
 CHECK_TCL = HERE / "cluster_check.tcl"
 TREE_DEPTH = 4
@@ -116,7 +117,8 @@ def check_repos(allow_branch: bool) -> dict:
     for name, repo in (("snax_cluster", SC), ("snax_forge", FORGE)):
         if not (repo / ".git").exists():
             sys.exit(f"no {name} checkout at {repo}")
-        st = git(repo, "status", "--porcelain").stdout
+        # NB (X110): untracked files do not count (the editor's Save writes recipes/custom/), as forge's dirty flag
+        st = git(repo, "status", "--porcelain", "--untracked-files=no").stdout
         if st.strip():
             hint = " (a submodule line: PITFALLS E7)" if name == "snax_forge" else ""
             sys.exit(f"{name} at {repo} is not clean{hint}:\n{st.rstrip()}")
@@ -710,14 +712,14 @@ def syn(p: dict, images: dict, args) -> int:
     if not Path(res["lib_db"]).is_file():
         sys.exit(f"no library at {res['lib_db']}")
     res["lib_md5"] = synpy.md5_of(Path(res["lib_db"]))
-    sargs = SimpleNamespace(clock=synpy.DEFAULT_CLOCK, cores=args.cores, sdf=False)
+    sargs = SimpleNamespace(clock=synpy.DEFAULT_CLOCK, cores=min(args.cores, DC_MAX_CORES), sdf=False)
     point = p["point"]
     rdir = synpy.run_dir(TECH, point, sargs.clock)
     work = TMP / point
     shutil.rmtree(work, ignore_errors=True)
     work.mkdir(parents=True)
     print(f"cluster syn {point}: snax_cluster {repos['snax_cluster'][:12]} ({repos['snax_cluster_branch']}), "
-          f"snax-forge {repos['snax_forge'][:12]}, --cores {args.cores}; work {work}", flush=True)
+          f"snax-forge {repos['snax_forge'][:12]}, --cores {sargs.cores}; work {work}", flush=True)
     steps = Steps(work, images)
     t0 = time.monotonic()
     row, failed, dc_start = None, None, None

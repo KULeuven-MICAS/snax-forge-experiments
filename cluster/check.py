@@ -11,6 +11,8 @@ the macro models' RAMCOUNT lines. The netlist run's gates against the RTL run ar
 
 from __future__ import annotations
 
+import json
+
 import re
 import sys
 from collections import Counter
@@ -241,9 +243,23 @@ def quiet_compare(rtl_wins: list[dict], gvsoc_wins: list[dict]) -> tuple[str, li
 
 
 # X105: what a cluster's netlist is made of, in a bundle zip: the cluster file and the RTL DC reads
+def _hardware_text(name: str, data: bytes) -> bytes:
+    """A member as DC sees it: the hjson without its comment lines, emitted.json without its "rtl" path (both
+    name forge's output folder, which differs with the sets); every other member as it is."""
+    if name.endswith(".hjson"):
+        return b"\n".join(ln for ln in data.split(b"\n") if not ln.lstrip().startswith((b"//", b"#")))
+    if name.endswith("emitted.json"):
+        d = json.loads(data)
+        d.pop("rtl", None) if isinstance(d, dict) else None
+        return json.dumps(d, sort_keys=True).encode()
+    return data
+
+
 def hardware(members: dict[str, bytes]) -> dict[str, bytes]:
-    """The bundle zip's members that make the netlist: bundle/snax_forge.hjson and everything under bundle/rtl/."""
-    return {k: v for k, v in members.items() if k == "bundle/snax_forge.hjson" or k.startswith("bundle/rtl/")}
+    """The bundle zip's members that make the netlist: bundle/snax_forge.hjson and everything under bundle/rtl/,
+    each as _hardware_text gives it."""
+    return {k: _hardware_text(k, v) for k, v in members.items()
+            if k == "bundle/snax_forge.hjson" or k.startswith("bundle/rtl/")}
 
 
 def hardware_diff(a: dict[str, bytes], b: dict[str, bytes]) -> list[str]:
