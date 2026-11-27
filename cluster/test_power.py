@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import power  # noqa: E402
 
 pwr = power.pwr
+cl_mod = power.cl
 
 MARKS = [{"mark": 1, "kind": "dma_in", "label": "dma load_A"}, {"mark": 2, "kind": "dma_in", "label": "dma load_B"},
          {"mark": 3, "kind": "run", "label": "run dot"}, {"mark": 4, "kind": "check", "label": "check"}]
@@ -173,6 +174,23 @@ def test_windows_file():
     raises(power.windows_file, w, saifs, has="whitespace")
 
 
+def test_windows_file_time_based():
+    # time-based: each window's VCD cut and its bounds in ns (the cuts' 10ps unit, X76), exact
+    assert power.cut_ns(796750) == "7967.50" and power.cut_ns(1054705) == "10547.05" and power.cut_ns(99) == "0.99"
+    w = power.windows(LOG, MARKS)
+    vcds = {power.window_name(x): Path(f"/k/{power.window_name(x)}.vcd") for x in w}
+    lines = power.windows_file(w, vcds, times=True).splitlines()
+    assert len(lines) == len(w) and all(len(ln.split()) == 4 for ln in lines), lines
+    name, f, t0, t1 = lines[0].split()
+    assert (name, f) == ("1_dma_in", "/k/1_dma_in.vcd")
+    assert float(t0) == w[0]["cut_t0"] / 100 and float(t1) == w[0]["cut_t1"] / 100, (lines[0], w[0])
+    ts = power.time_site()
+    assert (ts.pwr_dir, ts.pt_dir, ts.analysis, ts.power_csv) == ("pwr_time", "pt_time", "time_based", None)
+    assert ts.power_reports == power.POWER_REPORTS_TIME != power.POWER_REPORTS
+    fs = power.forge_site()
+    assert (fs.pwr_dir, fs.pt_dir, fs.analysis) == ("pwr", "pt", "averaged") and fs.power_csv == power.POWER_CSV
+
+
 def test_part1_current():
     old = {"status": "PASS", "netlist": {"sha256": "n" * 64}, "quiet_elf_sha256": "q" * 64,
            "snax_cluster_commit": "c" * 40}
@@ -307,6 +325,28 @@ def test_hierarchy_total():
     assert abs(top[3] - total) > power.HIER_TOL * total
 
 
+HIER_TIME = """****************************************
+Report : Time Based Power
+	-hierarchy
+Design : snax_forge_cluster_wrapper
+****************************************
+
+                                      Int                       Switch                    Leak                      Peak                      Peak                             Glitch
+Hierarchy                             Power                     Power                     Power                     Power                     Time                             Power
+--------------------------------------------------------------------------------------------------------------------------------
+snax_forge_cluster_wrapper            3.223882e-03              1.134443e-03              8.819431e-03              5.248917e+00              10640.00-10640.01                0.000000e+00              2.622217e-05              1.317776e-02              100.0
+  i_cluster (snitch_cluster_48)       1.000000e-03              1.000000e-04              1.000000e-03              1.000000e+00              0.00-0.01                0.000000e+00              0.000000e+00              2.100000e-03              15.9
+"""
+
+
+def test_hierarchy_total_time_based():
+    # time-based: peak power, peak time, glitch and X-transition before the total
+    top = power.hier_top(HIER_TIME)
+    assert top[:3] == (3.223882e-03, 1.134443e-03, 8.819431e-03), top
+    assert top[3] == 1.317776e-02 and abs(sum(top[:3]) - top[3]) <= power.HIER_TOL * top[3], top
+    assert power.hier_top(HIER.format(total="1.528582e-01"))[3] == 1.528582e-01     # averaged unchanged
+
+
 def test_pack2_report_zip_size():
     # the run zip's pt/pt_check.json has the report zip's size; the report zip's own pt_check.json has no report_zip
     (power.ROOT / "tmp").mkdir(exist_ok=True)
@@ -330,6 +370,38 @@ def test_pack2_report_zip_size():
         outer = json.loads(power.arc.read(run_zip, "pt/pt_check.json"))
         assert "report_zip" not in inner and outer["report_zip"]["bytes"] == z.stat().st_size
         assert outer["report_zip"]["members"] == 6 and power.arc.has(run_zip, "pwr/windows.json")
+
+
+def test_pack_time_based_beside_averaged():
+    # --time-based packs pwr_time/ and pt_time/ and its own report zip; pwr/, pt/ and power_reports/ stay as they are
+    (power.ROOT / "tmp").mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=power.ROOT / "tmp") as d:
+        d = Path(d)
+        old = cl_mod.RUN_ZIPS, power.POWER_REPORTS, power.POWER_REPORTS_TIME
+        cl_mod.RUN_ZIPS, power.POWER_REPORTS, power.POWER_REPORTS_TIME = d / "runs", d / "avg", d / "time"
+        try:
+            run_zip = cl_mod.RUN_ZIPS / "p.zip"
+            before = {"pwr/windows.json": b"[1]\n", "pwr/5_run/w.saif": b"avg", "pt/pt_check.json": b"{}\n",
+                      "rtl/check.json": b"{}\n"}
+            power.arc.write(run_zip, before)
+            work = d / "work"
+            (work / "pwr_time" / "5_run").mkdir(parents=True)
+            (work / "pwr_time" / "5_run" / "w.saif").write_text("time")
+            (work / "pwr_time" / "windows.json").write_text("[2]\n")
+            power.pack(work, "p", {"status": "PASS"}, "pwr_time")
+            pt = d / "pt"
+            (pt / "reports" / "5_run").mkdir(parents=True)
+            for f in power.REPORT_FILES:
+                (pt / "reports" / "5_run" / f).write_text(f)
+            power.pack2(pt, "p", {"status": "PASS"}, [{"mark": 5, "kind": "run"}], run_zip, power.time_site())
+            got = power.arc.read_all(run_zip)
+            assert {k: got[k] for k in before} == before, got
+            assert got["pwr_time/5_run/w.saif"] == b"time" and "pwr_time/check.json" in got
+            assert "pt_time/pt_check.json" in got
+            assert power.arc.read((d / "time" / "p.zip"), "windows.json") == b"[2]\n"
+            assert not (d / "avg").exists()
+        finally:
+            cl_mod.RUN_ZIPS, power.POWER_REPORTS, power.POWER_REPORTS_TIME = old
 
 
 def test_quiet_do_file_and_own_ref():

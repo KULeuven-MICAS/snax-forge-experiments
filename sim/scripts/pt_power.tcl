@@ -1,6 +1,6 @@
 #-----------------------------
 # sim/scripts/pt_power.tcl
-# PrimePower (pt_shell, averaged mode) on one mapped netlist from syn/runs/, with the same
+# PrimePower (pt_shell, averaged mode; time_based in cluster mode) on one mapped netlist from syn/runs/, with the same
 # library, constraints and wire-load setting as syn/scripts/dc_syn.tcl. Nothing is
 # resynthesized and nothing under syn/runs/ is written: sim/pwr.py runs it in a folder of its own.
 # First proved by hand on one point (results/hls/runs/2026-10-29_pwr_step0.md).
@@ -16,7 +16,10 @@
 #                cluster  cluster/power.py: the netlist linked once, then per window of PWR_WINDOWS
 #                         reset_switching_activity, read_saif -strip_path PWR_STRIP, update_power and the
 #                         reports into PWR_OUT/<name>/, with a `done` file (each stage's seconds); licenses.rpt once
-#   PWR_WINDOWS  cluster: a file, one `<name> <saif path>` per line
+#   PWR_WINDOWS  cluster: a file, one `<name> <saif path>` per line; in time_based analysis
+#                `<name> <vcd path> <t0_ns> <t1_ns>`: read_vcd -strip_path PWR_STRIP -time {t0 t1} in place
+#                of read_saif (cluster/power.py --time-based, one VCD cut per window)
+#   PWR_ANALYSIS power_analysis_mode: averaged (default) or time_based (cluster mode only)
 #   PWR_EXTRA_SDC  sourced after constraints.sdc when set (cluster: cluster/cluster.sdc)
 #   PWR_RAM_DBS  the macros' .db, space separated, linked beside the library (a Vitis RAM swapped; the cluster's 3 macros)
 #   PWR_ACT      the SAIF (saif)
@@ -79,8 +82,13 @@ puts "pt_power.tcl: $run, mode $mode, library $lib_name ($lib_db, md5 $md5 as in
 #-----------------------------
 # Library and netlist
 #-----------------------------
+set analysis   [expr {[info exists ::env(PWR_ANALYSIS)] ? $::env(PWR_ANALYSIS) : "averaged"}]
+if {$analysis ni {averaged time_based} || ($analysis eq "time_based" && $mode ne "cluster")} {
+    puts "pt_power.tcl: PWR_ANALYSIS must be averaged, or time_based in cluster mode, not '$analysis' (mode $mode)"
+    exit 2
+}
 set power_enable_analysis true
-set power_analysis_mode averaged
+set power_analysis_mode $analysis
 set search_path [list . [file dirname $lib_db]]
 set link_library [list * $lib_db]
 # SRAM macros (a Vitis RAM swapped by syn.py), their .db beside the library (PWR_RAM_DBS, space separated)
@@ -134,12 +142,16 @@ if {$mode eq "cluster"} {
     close $fh
     set fh [open $::env(PWR_WINDOWS) r]; set wlines [split [string trim [read $fh]] "\n"]; close $fh
     foreach wline $wlines {
-        lassign $wline name saif
+        lassign $wline name act w0 w1
         set wout [file join $out $name]
         file mkdir $wout
         set t0 [clock milliseconds]
         reset_switching_activity
-        read_saif -strip_path $::env(PWR_STRIP) $saif
+        if {$analysis eq "time_based"} {
+            read_vcd -strip_path $::env(PWR_STRIP) -time [list $w0 $w1] $act
+        } else {
+            read_saif -strip_path $::env(PWR_STRIP) $act
+        }
         set t1 [clock milliseconds]
         update_power
         set t2 [clock milliseconds]

@@ -4,7 +4,8 @@
   pixi run cluster rtl <point> [--allow-branch]    step 1: the RTL with every memory as an SRAM macro
   pixi run cluster syn <point> [--cores N] [--allow-branch]   step 2: DC on the whole cluster
   pixi run cluster gls <point> [--allow-branch]    step 3: the netlist in the same testbench
-  pixi run cluster pwr <point> [--cores N] [--again] [--allow-branch]   step 4: the energy per program section
+  pixi run cluster pwr <point> [--cores N] [--again | --time-based] [--allow-branch]   step 4: the energy per program section
+  pixi run cluster ge <point> [--allow-branch]     step 1's energy run on SNAX-GVSoC alone, into ge/<point>.json
 
 A point is an entry of cluster/points.json; snax_cluster is read from SNAX_CLUSTER (default ../snax_cluster),
 clean and on origin/main unless --allow-branch, snax-forge from SNAX_FORGE (default ../snax-forge), clean. Every
@@ -469,6 +470,44 @@ def gvsoc_energy(work: Path, p: dict, steps: Steps, prov: dict) -> dict:
     out.update(status="PASS", folder=str(folder.relative_to(FORGE)), quiet_elf_sha256=q,
                same_quiet_elf=q == prov.get("quiet_elf_sha256"), ge=str((GE_DIR / f"{p['point']}.json").relative_to(ROOT)))
     return out
+
+
+def ge_run(work: Path, p: dict, steps: Steps) -> dict:
+    """gvsoc_energy alone, against the bundle zip's provenance (same_quiet_elf) when the point has one; the energy
+    run's windows (mark, kind, label, cycles) added when it passed."""
+    z = RTL_ZIPS / f"{p['point']}.zip"
+    prov = json.loads(arc.read(z, "provenance.json")) if arc.has(z, "provenance.json") else {}
+    out = gvsoc_energy(work, p, steps, prov)
+    out["bundle_quiet_elf_sha256"] = prov.get("quiet_elf_sha256")
+    if out["status"] == "PASS":
+        ws = json.loads((work / "gvsoc" / "energy.json").read_text())["windows"]
+        out["windows"] = [{k: w.get(k) for k in ("mark", "kind", "label", "cycles")} for w in ws]
+    return out
+
+
+def ge(p: dict, images: dict, args) -> int:
+    """`cluster ge POINT`: the point's energy run on SNAX-GVSoC alone (gvsoc_energy, rtl's own step), into
+    results/cluster/<tech>/ge/<point>.json; nothing else is run or kept, the work folder is deleted."""
+    repos = check_repos(args.allow_branch)
+    work = TMP / p["point"]
+    shutil.rmtree(work, ignore_errors=True)
+    work.mkdir(parents=True)
+    print(f"cluster ge {p['point']}: snax-forge {repos['snax_forge'][:12]} ({FORGE}); work {work}", flush=True)
+    try:
+        out = ge_run(work, p, Steps(work, images))
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+        if TMP.is_dir() and not any(TMP.iterdir()):
+            TMP.rmdir()
+    if out["status"] == "PASS":
+        wins = ", ".join(f"{w['mark']} {w['kind']} {w['cycles']}" for w in out["windows"])
+        print(f"cluster ge {p['point']}: PASS, {out['ge']} from {out['folder']}; quiet ELF "
+              f"{str(out['quiet_elf_sha256'])[:16]}, the bundle's {'same' if out['same_quiet_elf'] else 'NOT the same'}"
+              f"; windows {wins}", flush=True)
+        return 0
+    print(f"cluster ge {p['point']}: FAIL ({out.get('why')})" + (f"; last {TAIL} lines of {out['log']}:\n{out['tail']}"
+                                                                  if out.get("tail") else ""), flush=True)
+    return 1
 
 
 def quiet_rtl(work: Path, steps: Steps) -> dict:
@@ -1143,13 +1182,21 @@ def main() -> int:
     w.add_argument("point")
     w.add_argument("--cores", type=int, default=16, help="PT's threads (default 16, lowered to the free cores)")
     w.add_argument("--again", action="store_true", help="run part 1 again even when pwr/check.json is current")
+    w.add_argument("--time-based", action="store_true",
+                   help="part 1 again into pwr_time/ keeping each window's VCD cut, then PT in time-based mode on the "
+                        "cuts into pt_time/ and power_reports_time/; the averaged results are left as they are")
+    w.add_argument("--recheck", action="store_true",
+                   help="with --time-based: part 2's checks again from what it packed, with no Questa and no PT")
     w.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
+    e = sub.add_parser("ge", help="the point's energy run on SNAX-GVSoC alone (rtl's flow --energy), into ge/<point>.json")
+    e.add_argument("point")
+    e.add_argument("--allow-branch", action="store_true", help="snax_cluster's HEAD need not be on origin/main")
     a = ap.parse_args()
     images, p = load(a.point)
     if a.cmd == "pwr":
         import power  # noqa: PLC0415  cluster/power.py (it imports this file as the module cluster)
         return power.main(p, images, a)
-    return {"rtl": rtl, "syn": syn, "gls": gls}[a.cmd](p, images, a)
+    return {"rtl": rtl, "syn": syn, "gls": gls, "ge": ge}[a.cmd](p, images, a)
 
 
 if __name__ == "__main__":

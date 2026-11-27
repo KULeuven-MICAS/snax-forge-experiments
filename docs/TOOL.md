@@ -102,6 +102,8 @@ Steps and checks in [`cluster/README.md`](../cluster/README.md); one cluster run
 | `cluster syn POINT [--cores 16] [--allow-branch]` | DC on the whole cluster |
 | `cluster gls POINT [--allow-branch]` | the netlist run, gated (X67 · X81 · X84) |
 | `cluster pwr POINT [--cores 16] [--again] [--allow-branch]` | one VCD, a SAIF per section, one PT session (X20 · X60 · X74) |
+| `cluster pwr POINT --time-based [--recheck]` | part 1 again into `pwr_time/` keeping each window's VCD cut, PT time-based on the cuts into `pt_time/` and `power_reports_time/<point>.zip`; the averaged results untouched; `--recheck` redoes part 2's checks from what it packed, no tool run |
+| `cluster ge POINT [--allow-branch]` | step 1's energy run on SNAX-GVSoC alone (`flow --energy` in snax-forge's image from `SNAX_FORGE`), into `ge/<point>.json`; for a new price on the same program |
 | `cluster/batch.sh POINT ...` | steps in series (`BATCH_OUT`, `--steps S,S`, `--from STEP`, `CORES`, `KEEP_GOING=1`; X109) |
 | `cluster-hwcost POINT` | HWCOST into `hwcost/<point>.json` (snax-forge's environment, `SNAX_FORGE`, `SNAX_FORGE_PYTHON`; a clean checkout) |
 | `cluster-breakdown [--md]` | area in groups, `breakdown.json` (X72) |

@@ -7,7 +7,9 @@ the log gives one window per program section, every window is cut from the VCD i
 checks one SAIF per cut, kept under pwr/ of sim/runs/cluster/nangate45/<point>.zip. Part 2: one PrimePower
 session in averaged mode over the windows, into results/cluster/nangate45/power_pt.csv (one row per window) and
 power_reports/<point>.zip. Part 1 is skipped when its check.json is PASS for the same netlist, quiet ELF and
-snax_cluster (--again reruns it). The steps and checks are in cluster/README.md, "pwr".
+snax_cluster (--again reruns it). --time-based: part 1 into pwr_time/ keeping each window's VCD cut, PT time-based
+on the cuts into pt_time/ and power_reports_time/ (main_time; --recheck: recheck_time). The steps and checks are in
+cluster/README.md, "pwr" and "pwr --time-based".
 """
 
 from __future__ import annotations
@@ -340,9 +342,11 @@ def build(work: Path, steps, pre: dict) -> tuple[Path, Path, str]:
     return netlist, cfg, opts
 
 
-def saif_jobs(vcd: Path, wins: list[dict], pdir: Path, res: dict, instance: str = TB_TOP) -> None:
+def saif_jobs(vcd: Path, wins: list[dict], pdir: Path, res: dict, instance: str = TB_TOP,
+              keep: Path | None = None) -> None:
     """Steps 6 and 7: one cut pass, vcd2saif per window (at most j jobs, no more cuts on disk than jobs), the checks;
-    instance is the wrapper's in the testbench (vcd2saif -instance)."""
+    instance is the wrapper's in the testbench (vcd2saif -instance). With keep (--time-based), each cut is moved to
+    keep/<window>.vcd after its vcd2saif instead of deleted, for PT's time-based session."""
     j = max(1, min(os.cpu_count() or 1, len(wins)))
     vcd2saif = pwr.tool("vcd2saif")
     names = {f"{w['mark']}_{w['kind']}": w for w in wins}
@@ -360,6 +364,8 @@ def saif_jobs(vcd: Path, wins: list[dict], pdir: Path, res: dict, instance: str 
                                  "-instance", instance, "-time", str(w["cut_t0"]), str(w["cut_t1"])],
                                 pdir / n / "vcd2saif.log", pdir / n, stdin_null=True)
         finally:
+            if keep is not None and cuts[n].is_file():
+                cuts[n].replace(keep / f"{n}.vcd")
             cuts[n].unlink(missing_ok=True)        # each cut at once
             secs[n] = round(time.monotonic() - t, 1)
             slots.release()
@@ -410,9 +416,10 @@ def saif_jobs(vcd: Path, wins: list[dict], pdir: Path, res: dict, instance: str 
               flush=True)
 
 
-def part1(p: dict, images: dict, args, pre: dict | None = None) -> dict:
-    """Part 1: the quiet netlist run, the windows, the SAIFs, packed under pwr/ of the point's zip. Returns the
-    check.json it packed; part 2 reads the SAIFs from the zip, and main skips this when part1_current says so."""
+def part1(p: dict, images: dict, args, pre: dict | None = None, sub: str = "pwr", keep: Path | None = None) -> dict:
+    """Part 1: the quiet netlist run, the windows, the SAIFs, packed under sub/ of the point's zip (pwr/; pwr_time/
+    for --time-based, whose VCD cuts are kept in keep/). Returns the check.json it packed; part 2 reads the SAIFs from
+    the zip, and main skips this when part1_current says so."""
     pre = pre or preflight(p, images, args)
     repos, images, point = pre["repos"], pre["images"], p["point"]
     marks = json.loads(arc.read(pre["z"], "sw/obs_marks.json"))
@@ -420,9 +427,9 @@ def part1(p: dict, images: dict, args, pre: dict | None = None) -> dict:
     work = cl.TMP / point
     shutil.rmtree(work, ignore_errors=True)
     work.mkdir(parents=True)
-    pdir = work / "pwr"
+    pdir = work / sub
     pdir.mkdir()
-    print(f"cluster pwr {point} (part 1): snax_cluster {repos['snax_cluster'][:12]} ({repos['snax_cluster_branch']}), "
+    print(f"cluster pwr {point} (part 1{', time-based: the cuts kept' if keep else ''}): snax_cluster {repos['snax_cluster'][:12]} ({repos['snax_cluster_branch']}), "
           f"netlist of {pre['dc']['snax_cluster_commit'][:12]}, quiet ELF {pre['quiet_sha'][:12]}; marks "
           f"{upto[0]['mark']} to {chk['mark']} (check); work {work}", flush=True)
     steps = cl.Steps(work, images)
@@ -437,7 +444,7 @@ def part1(p: dict, images: dict, args, pre: dict | None = None) -> dict:
            "elf_sha256": pre["prov"]["elf_sha256"], "quiet_elf_sha256": pre["quiet_sha"], "cells": str(pre["cells"]),
            "images": {k: images[k] for k in ("snax_cluster", "snax_cluster_id")},
            "vcd2saif": None, "clock": {"tb_ps": CLOCK_PS, "flow_ns": pwr.CLOCK_NS, "cut_timescale": "10ps"},
-           "seconds": {}, "obs_marks": marks}
+           "seconds": {}, "obs_marks": marks, "cuts_kept": keep is not None}
     try:
         t = time.monotonic()
         netlist, cfg, opts = build(work, steps, pre)
@@ -515,12 +522,12 @@ def part1(p: dict, images: dict, args, pre: dict | None = None) -> dict:
             raise cl.StepFailed("vcd scopes", vtxt, f"{h['scopes']} $scope in dut.vcd, not {want}: a vcd add missed")
         res["vcd2saif"] = (subprocess.run([pwr.tool("vcd2saif"), "-help"], capture_output=True, text=True,
                                           check=False).stdout.splitlines() or ["unknown"])[0]
-        saif_jobs(vcd, wins, pdir, res)
+        saif_jobs(vcd, wins, pdir, res, keep=keep)
         bad = [n for n, i in res["saif"].items() if i["status"] != "PASS"]
         res["status"] = "PASS" if not bad else "FAIL"
         res["failed"] = (", ".join(f"saif {n}" for n in bad)) or None
         if bad:
-            res["failed_log"], res["failed_tail"] = f"pwr/{bad[0]}/vcd2saif.log", cl.tail(pdir / bad[0] / "vcd2saif.log")
+            res["failed_log"], res["failed_tail"] = f"{sub}/{bad[0]}/vcd2saif.log", cl.tail(pdir / bad[0] / "vcd2saif.log")
     except cl.StepFailed as e:
         res["failed"] = f"step {e.step} ({e.why})"
         res["failed_log"], res["failed_tail"] = str(e.log), cl.tail(e.log)
@@ -544,9 +551,9 @@ def part1(p: dict, images: dict, args, pre: dict | None = None) -> dict:
             print(f"  could not delete vsim.wlf: {e!r}", flush=True)
         t = time.monotonic()
         try:
-            pack(work, point, res)
+            pack(work, point, res, sub)
         except Exception as e:  # noqa: BLE001
-            print(f"  could not pack pwr/ of {pre['step1'].relative_to(ROOT)}: {e!r}", flush=True)
+            print(f"  could not pack {sub}/ of {pre['step1'].relative_to(ROOT)}: {e!r}", flush=True)
         res["pack_s"] = round(time.monotonic() - t, 1)
         shutil.rmtree(work, ignore_errors=True)
         try:
@@ -563,25 +570,25 @@ def part1(p: dict, images: dict, args, pre: dict | None = None) -> dict:
     return res
 
 
-def pack(work: Path, point: str, res: dict) -> None:
-    """Under pwr/ of sim/runs/cluster/nangate45/<point>.zip; the zip's other members (rtl/, gls/) kept."""
+def pack(work: Path, point: str, res: dict, sub: str = "pwr") -> None:
+    """Under sub/ (pwr/, or pwr_time/) of sim/runs/cluster/nangate45/<point>.zip; the zip's other members kept."""
     z = cl.RUN_ZIPS / f"{point}.zip"
-    pdir = work / "pwr"
+    pdir = work / sub
     new = {}
     for f in ("pwr.do", "vcd_add.do", "vsim_cmd.sh", "vsim.txt", "obs_log.txt", "windows.json"):
         if (pdir / f).is_file():
-            new[f"pwr/{f}"] = (pdir / f).read_bytes()
+            new[f"{sub}/{f}"] = (pdir / f).read_bytes()
     for d in sorted(x for x in pdir.iterdir() if x.is_dir()):
         for f in ("w.saif", "vcd2saif.log"):
             if (d / f).is_file():
-                new[f"pwr/{d.name}/{f}"] = (d / f).read_bytes()
+                new[f"{sub}/{d.name}/{f}"] = (d / f).read_bytes()
     if (work / "logs").is_dir():
-        new.update({f"pwr/logs/{k}": v.read_bytes() for k, v in arc.files_of(work / "logs").items()})
-    new["pwr/check.json"] = (json.dumps(res, indent=2) + "\n").encode()
-    old = {k: v for k, v in arc.read_all(z).items() if not k.startswith("pwr/")}
+        new.update({f"{sub}/logs/{k}": v.read_bytes() for k, v in arc.files_of(work / "logs").items()})
+    new[f"{sub}/check.json"] = (json.dumps(res, indent=2) + "\n").encode()
+    old = {k: v for k, v in arc.read_all(z).items() if not k.startswith(f"{sub}/")}
     arc.write(z, {**old, **new})
     res["zip"] = str(z.relative_to(ROOT))
-    print(f"  packed {res['zip']} ({len(new)} members under pwr/)", flush=True)
+    print(f"  packed {res['zip']} ({len(new)} members under {sub}/)", flush=True)
 
 
 def summary(point: str, res: dict) -> str:
@@ -608,6 +615,7 @@ STRIP_LEVELS = len(TB_TOP.split("/"))                # the SAIF's instance level
 RESULTS = ROOT / "results" / "cluster" / TECH
 POWER_CSV = RESULTS / "power_pt.csv"
 POWER_REPORTS = RESULTS / "power_reports"
+POWER_REPORTS_TIME = RESULTS / "power_reports_time"
 
 
 @dataclass(frozen=True)
@@ -618,13 +626,23 @@ class Site:
     tmp: Path           # the work folders
     netlist: str        # the netlist's member in the DC run zip
     strip: str          # the wrapper's instance in the testbench (read_saif -strip_path)
-    power_csv: Path     # results/<source>/<tech>/power_pt.csv
+    power_csv: Path | None  # results/<source>/<tech>/power_pt.csv (None: no rows written)
     power_reports: Path  # results/<source>/<tech>/power_reports/
+    pwr_dir: str = "pwr"         # part 1's folder in the run zip
+    pt_dir: str = "pt"           # part 2's folder in the run zip
+    analysis: str = "averaged"   # PrimePower's power_analysis_mode (time_based: read_vcd on part 1's cuts)
 
 
 def forge_site() -> Site:
     """forge's cluster, from the module's names as they are at the call (a test may point POWER_REPORTS elsewhere)."""
     return Site("cluster pwr", cl.RUN_ZIPS, cl.TMP, cl.NETLIST, STRIP, POWER_CSV, POWER_REPORTS)
+
+
+def time_site() -> Site:
+    """forge's cluster in time-based mode (--time-based): pwr_time/ and pt_time/ of the run zip, the reports in
+    power_reports_time/, no power_pt.csv row; the averaged results are left as they are."""
+    return Site("cluster pwr --time-based", cl.RUN_ZIPS, cl.TMP, cl.NETLIST, STRIP, None, POWER_REPORTS_TIME,
+                "pwr_time", "pt_time", "time_based")
 REPORT_FILES = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt", "units.rpt")
 HIER_TOL = 1e-5                                      # relative: report_power's 6 significant digits
 CSV_COLUMNS = ["point", "tech", "clock_ns", "mark", "kind", "label", "cycles", "t0_ps", "t1_ps",
@@ -652,14 +670,20 @@ def window_name(w: dict) -> str:
     return f"{w['mark']}_{w['kind']}"
 
 
-def windows_file(wins: list[dict], saifs: dict[str, Path]) -> str:
-    """PWR_WINDOWS: one `<name> <saif path>` per line, in the span's order (pt_power.tcl's cluster mode)."""
+def cut_ns(t: int) -> str:
+    """A cut's time (tb_bin's ps numbers, read at the cuts' 10ps unit, X76) in ns for read_vcd -time, exactly."""
+    return f"{t // 100}.{t % 100:02d}"
+
+
+def windows_file(wins: list[dict], saifs: dict[str, Path], times: bool = False) -> str:
+    """PWR_WINDOWS: one `<name> <activity file>` per line, in the span's order (pt_power.tcl's cluster mode); with
+    times (a VCD cut per window), also the window's bounds in ns, `<name> <vcd> <t0_ns> <t1_ns>`."""
     lines = []
     for w in wins:
         n, f = window_name(w), str(saifs[window_name(w)])
         if re.search(r"\s", n + f):
-            raise ValueError(f"whitespace in a window's name or SAIF path: {n!r} {f!r}")
-        lines.append(f"{n} {f}")
+            raise ValueError(f"whitespace in a window's name or activity path: {n!r} {f!r}")
+        lines.append(f"{n} {f} {cut_ns(w['cut_t0'])} {cut_ns(w['cut_t1'])}" if times else f"{n} {f}")
     return "\n".join(lines) + "\n"
 
 
@@ -718,11 +742,15 @@ def power_table(text: str) -> tuple[dict, float]:
 
 
 def hier_top(text: str) -> tuple[float, float, float, float]:
-    """report_power -hierarchy's first row, the top: (internal, switching, leakage, total)."""
+    """report_power -hierarchy's first row, the top: (internal, switching, leakage, total). A time-based report's
+    row is internal, switching, leakage, peak power, peak time, glitch, X-transition, total, %."""
+    timed = "Report : Time Based Power" in text
+    row = (rf"^(\S+)\s+({NUM})\s+({NUM})\s+({NUM})\s+(?:{NUM}|N/A)\s+\S+\s+{NUM}\s+{NUM}\s+({NUM})" if timed
+           else rf"^(\S+)\s+({NUM})\s+({NUM})\s+({NUM})\s+({NUM})")
     lines = text.splitlines()
     for i, ln in enumerate(lines):
         if ln.startswith("-----"):
-            m = re.match(rf"^(\S+)\s+({NUM})\s+({NUM})\s+({NUM})\s+({NUM})", lines[i + 1])
+            m = re.match(row, lines[i + 1])
             if m:
                 return tuple(float(x) for x in m.groups()[1:])
             break
@@ -821,9 +849,11 @@ def pt_threads(cores: int, lic: dict) -> tuple[int, str]:
     return cores, f"--cores {cores}: {free:.1f} cores free (nproc {os.cpu_count()}, load {os.getloadavg()[0]:.1f})"
 
 
-def part2(p: dict, pre: dict, args, p1: dict, site: Site | None = None) -> dict:
+def part2(p: dict, pre: dict, args, p1: dict, site: Site | None = None, vcds: dict[str, Path] | None = None) -> dict:
     """Part 2: one PT session on the netlist, a window after another (pt_power.tcl's cluster mode), the checks per
-    window, power_pt.csv, the report zip and pt/ of the run zip; site is where (forge's cluster by default)."""
+    window, power_pt.csv, the report zip and pt/ of the run zip; site is where (forge's cluster by default). In
+    time-based mode (site.analysis) PT reads each window's VCD cut (vcds) between its bounds; the SAIFs still serve
+    the annotation's check."""
     site = site or forge_site()
     point, images = p["point"], pre["images"]
     wins = p1["windows"]
@@ -840,7 +870,7 @@ def part2(p: dict, pre: dict, args, p1: dict, site: Site | None = None) -> dict:
     res = {"point": point, "tech": TECH, "part": 2, "status": "FAIL", "failed": None, "windows": {},
            "snax_cluster_commit": pre["repos"]["snax_cluster"], "bundle_snax_forge_commit": commits["snax_forge"],
            "netlist": {"zip": str(pre["synz"].relative_to(ROOT)), "sha256": pre["netlist_sha"]},
-           "quiet_elf_sha256": pre["quiet_sha"], "seconds": {}}
+           "quiet_elf_sha256": pre["quiet_sha"], "seconds": {}, "analysis": site.analysis}
     rows = []
     try:
         lic = pwr.licences()
@@ -867,11 +897,14 @@ def part2(p: dict, pre: dict, args, p1: dict, site: Site | None = None) -> dict:
         for w in wins:
             n = window_name(w)
             saifs[n] = pt / "saifs" / f"{n}.saif"
-            saifs[n].write_bytes(arc.read(run_zip, f"pwr/{n}/w.saif"))
-        (pt / "windows.txt").write_text(windows_file(wins, saifs))
+            saifs[n].write_bytes(arc.read(run_zip, f"{site.pwr_dir}/{n}/w.saif"))
+        timed = site.analysis == "time_based"
+        if timed and (not vcds or any(not vcds.get(window_name(w), Path("/nonexistent")).is_file() for w in wins)):
+            raise cl.Stop(f"time-based: a window has no VCD cut ({sorted(vcds or {})})")
+        (pt / "windows.txt").write_text(windows_file(wins, vcds if timed else saifs, times=timed))
         res["seconds"]["unpack"] = round(time.monotonic() - t, 1)
         env = {**os.environ, "PWR_RUN": str(pt / "run"), "PWR_MODE": "cluster", "PWR_WINDOWS": str(pt / "windows.txt"),
-               "PWR_STRIP": site.strip, "PWR_EXTRA_SDC": str(pt / "run" / "cluster.sdc"),
+               "PWR_STRIP": site.strip, "PWR_EXTRA_SDC": str(pt / "run" / "cluster.sdc"), "PWR_ANALYSIS": site.analysis,
                "PWR_RAM_DBS": " ".join(str(d) for d in dbs), "PWR_THREADS": str(threads), "PWR_OUT": str(pt / "reports")}
         argv = ["/usr/bin/time", "-v", "-o", str(pt / "time.txt"), pwr.tool("pt_shell", "PT_SHELL"), "-no_init",
                 "-f", str(pwr.PT_SCRIPT), "-output_log_file", str(pt / "pt_shell.log")]
@@ -939,7 +972,7 @@ def part2(p: dict, pre: dict, args, p1: dict, site: Site | None = None) -> dict:
         res["date"] = dt.datetime.now().isoformat(timespec="seconds")
         t = time.monotonic()
         try:
-            if rows:
+            if rows and site.power_csv is not None:
                 merge_csv(site.power_csv, rows)
             pack2(pt, point, res, wins, run_zip, site)
         except Exception as e:  # noqa: BLE001
@@ -968,30 +1001,92 @@ def pack2(pt: Path, point: str, res: dict, wins: list[dict], run_zip: Path, site
     for f in ("wire_load.rpt", "licenses.rpt"):
         if (rep / f).is_file():
             members[f] = (rep / f).read_bytes()
-    members["windows.json"] = arc.read(run_zip, "pwr/windows.json")
+    site = site or forge_site()
+    members["windows.json"] = arc.read(run_zip, f"{site.pwr_dir}/windows.json")
     members["pt_check.json"] = check_json
-    z = (site or forge_site()).power_reports / f"{point}.zip"
+    z = site.power_reports / f"{point}.zip"
     arc.write(z, members)
     res["report_zip"] = {"zip": str(z.relative_to(ROOT)), "bytes": z.stat().st_size, "members": len(members)}
-    new = {"pt/pt_check.json": (json.dumps(res, indent=2, default=str) + "\n").encode()}
+    d = site.pt_dir
+    new = {f"{d}/pt_check.json": (json.dumps(res, indent=2, default=str) + "\n").encode()}
     for f in ("pt_shell.log", "time.txt", "windows.txt"):
         if (pt / f).is_file():
-            new[f"pt/{f}"] = (pt / f).read_bytes()
+            new[f"{d}/{f}"] = (pt / f).read_bytes()
     for f in ("setup_times.txt", "cluster_ports.rpt"):
         for src in (rep / f, pt / "reports" / f):
             if src.is_file():
-                new[f"pt/{f}"] = src.read_bytes()
+                new[f"{d}/{f}"] = src.read_bytes()
     for w in wins:
         n = window_name(w)
         for f in ("not_annotated.rpt", "done"):
             if (rep / n / f).is_file():
-                new[f"pt/{n}/{f}"] = (rep / n / f).read_bytes()
+                new[f"{d}/{n}/{f}"] = (rep / n / f).read_bytes()
     if (pt.parent / "logs").is_dir():
-        new.update({f"pt/logs/{k}": v.read_bytes() for k, v in arc.files_of(pt.parent / "logs").items()})
-    old = {k: v for k, v in arc.read_all(run_zip).items() if not k.startswith("pt/")}
+        new.update({f"{d}/logs/{k}": v.read_bytes() for k, v in arc.files_of(pt.parent / "logs").items()})
+    old = {k: v for k, v in arc.read_all(run_zip).items() if not k.startswith(f"{d}/")}
     arc.write(run_zip, {**old, **new})
     print(f"  packed {z.relative_to(ROOT)} ({len(members)} members, {z.stat().st_size / 1e6:.1f} MB) and "
-          f"{run_zip.relative_to(ROOT)} ({len(new)} members under pt/)", flush=True)
+          f"{run_zip.relative_to(ROOT)} ({len(new)} members under {d}/)", flush=True)
+
+
+def recheck_time(p: dict, pre: dict) -> int:
+    """--time-based --recheck: part 2's checks again from what the time-based run packed (the report zip, pt_time/'s
+    not-annotated lists, pwr_time/'s SAIFs), with no Questa and no PT; both pt_check.json are rewritten."""
+    point, site = p["point"], time_site()
+    run_zip, rep_zip = site.run_zips / f"{point}.zip", site.power_reports / f"{point}.zip"
+    old = json.loads(arc.read(run_zip, f"{site.pt_dir}/pt_check.json"))
+    p1 = json.loads(arc.read(run_zip, f"{site.pwr_dir}/check.json"))
+    if old.get("netlist", {}).get("sha256") != pre["netlist_sha"] or p1.get("quiet_elf_sha256") != pre["quiet_sha"]:
+        raise SystemExit(f"{run_zip.name}: the time-based run is not of this netlist and quiet ELF")
+    work = site.tmp / point
+    shutil.rmtree(work, ignore_errors=True)
+    rep = work / "reports"
+    try:
+        for name, data in arc.read_all(rep_zip).items():
+            (rep / name).parent.mkdir(parents=True, exist_ok=True)
+            (rep / name).write_bytes(data)
+        wl = wire_load(cl._text(rep / "wire_load.rpt"))
+        tx = {n: i.get("tx_nets") for n, i in (p1.get("saif") or {}).items()}
+        for w in p1["windows"]:
+            n = window_name(w)
+            wdir = rep / n
+            (wdir / "not_annotated.rpt").write_bytes(arc.read(run_zip, f"{site.pt_dir}/{n}/not_annotated.rpt"))
+            saif = work / f"{n}.saif"
+            saif.write_bytes(arc.read(run_zip, f"{site.pwr_dir}/{n}/w.saif"))
+            try:
+                c, e = check_window(wdir, saif, w, wl)
+                want = ((p1.get("saif") or {}).get(n) or {}).get("entries")
+                c["saif_entries"] = {"parsed": c["annotation"]["saif_entries"], "part1": want,
+                                     "status": "PASS" if want == c["annotation"]["saif_entries"] else "FAIL"}
+                bad = [k for k, v in c.items() if v["status"] != "PASS"]
+            except pwr.Fail as ex:
+                c, e, bad = {"parse": {"status": "FAIL", "why": str(ex)}}, {}, ["parse"]
+            saif.unlink()
+            prev = old["windows"].get(n, {})
+            old["windows"][n] = {**prev, "status": "PASS" if not bad else "FAIL", "checks": c, "energy": e,
+                                 "cycles": w["cycles"], "tx_nets": tx.get(n)}
+            print(f"  {n:<20s} {'ok' if not bad else 'failed: ' + ', '.join(bad)}: e_dyn {e.get('e_dyn_pj', 0):.1f} "
+                  f"pJ/cycle, e_win {e.get('e_win_pj', 0) / 1000:.2f} nJ", flush=True)
+        bad = [n for n, v in old["windows"].items() if v["status"] != "PASS"]
+        was = old.get("status")
+        old["status"], old["failed"] = ("PASS" if not bad else "FAIL"), (", ".join(bad) or None)
+        old.setdefault("rechecked", []).append({"date": dt.datetime.now().isoformat(timespec="seconds"), "was": was,
+                                                "why": "the checks again from the packed reports (no PT)"})
+        members = arc.read_all(rep_zip)
+        members["pt_check.json"] = (json.dumps({k: v for k, v in old.items() if k != "report_zip"}, indent=2,
+                                               default=str) + "\n").encode()
+        arc.write(rep_zip, members)
+        old["report_zip"] = {"zip": str(rep_zip.relative_to(ROOT)), "bytes": rep_zip.stat().st_size,
+                             "members": len(members)}
+        rz = arc.read_all(run_zip)
+        rz[f"{site.pt_dir}/pt_check.json"] = (json.dumps(old, indent=2, default=str) + "\n").encode()
+        arc.write(run_zip, rz)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+        if site.tmp.is_dir() and not any(site.tmp.iterdir()):
+            site.tmp.rmdir()
+    print(summary2(point, old) + f" (rechecked; was {was})", flush=True)
+    return 0 if old["status"] == "PASS" else 1
 
 
 def summary2(point: str, res: dict) -> str:
@@ -1011,9 +1106,47 @@ def summary2(point: str, res: dict) -> str:
     return line
 
 
+CUTS = ROOT / "tmp" / "cluster_time"               # --time-based: each window's VCD cut, between part 1 and part 2
+
+
+def main_time(p: dict, images: dict, args, pre: dict) -> int:
+    """--time-based: part 1 again into pwr_time/ with every window's cut kept in CUTS/<point>/, then PT in
+    time-based mode on the cuts (time_site); the cuts are deleted at the end, also on a failure. The averaged
+    results (pwr/, pt/, power_pt.csv, power_reports/) are not touched."""
+    point = p["point"]
+    keep = CUTS / point
+    shutil.rmtree(keep, ignore_errors=True)
+    keep.mkdir(parents=True)
+    try:
+        print(f"cluster pwr {point} --time-based: part 1 into pwr_time/, the cuts kept in {keep}", flush=True)
+        res1 = part1(p, images, args, pre, sub="pwr_time", keep=keep)
+        print(summary(point, res1) + f" (pack {res1.get('pack_s', 0):.0f} s)", flush=True)
+        if res1["status"] != "PASS":
+            if res1.get("failed_tail"):
+                print(f"  last {TAIL} lines of {res1.get('failed_log')}:\n{res1['failed_tail']}", flush=True)
+            return 1
+        vcds = {window_name(w): keep / f"{window_name(w)}.vcd" for w in res1["windows"]}
+        print(f"cluster pwr {point} --time-based (part 2): PT time-based on {len(vcds)} cuts "
+              f"({sum(v.stat().st_size for v in vcds.values() if v.is_file()) / 1e6:.1f} MB)", flush=True)
+        res2 = part2(p, pre, args, res1, time_site(), vcds)
+        print(summary2(point, res2) + f" (pack {res2.get('pack_s', 0):.0f} s)", flush=True)
+        if res2["status"] != "PASS" and res2.get("failed_tail"):
+            print(f"  last {TAIL} lines of {res2.get('failed_log')}:\n{res2['failed_tail']}", flush=True)
+        return 0 if res2["status"] == "PASS" else 1
+    finally:
+        shutil.rmtree(keep, ignore_errors=True)
+        if CUTS.is_dir() and not any(CUTS.iterdir()):
+            CUTS.rmdir()
+        print(f"  cuts deleted: {keep}", flush=True)
+
+
 def main(p: dict, images: dict, args) -> int:
     signal.signal(signal.SIGTERM, cl._sigterm)
     pre = preflight(p, images, args)
+    if getattr(args, "time_based", False):
+        if getattr(args, "recheck", False):
+            return recheck_time(p, pre)
+        return main_time(p, images, args, pre)
     z = cl.RUN_ZIPS / f"{p['point']}.zip"
     old = json.loads(arc.read(z, "pwr/check.json")) if arc.has(z, "pwr/check.json") else None
     current, why = part1_current(old, pre["netlist_sha"], pre["quiet_sha"], pre["repos"]["snax_cluster"])

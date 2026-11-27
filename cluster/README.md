@@ -97,6 +97,16 @@ Part 2, run by the same command; part 1 is skipped when the zip's pwr/check.json
 5. results/cluster/nangate45/power_pt.csv, one row per window merged on (point, mark): the per-cycle energies of sim/pwr.py plus e_macro_pj (black_box + memory, the macros as PT measures them in averaged mode, PITFALLS PT7) and e_io_pj, e_dyn_pj, p_dyn_uw, e_win_pj = e_dyn x cycles, the annotation, tx_nets (part 1), the commits, status; no leakage
 6. results/cluster/nangate45/power_reports/<point>.zip: per window power.rpt, power_hierarchy.rpt, switching_activity.rpt, units.rpt; wire_load.rpt, licenses.rpt, windows.json, pt_check.json. pt/ of the run zip: the not-annotated lists, pt_shell.log, the done files, logs/, pt_check.json; also on a failure. Then tmp/cluster/<point>/ is deleted. One line at the end.
 
+### ge
+
+`cluster ge POINT` runs step 1's energy run alone, for a point whose program is made again with new prices and nothing else: `flow --energy` in snax-forge's image from `SNAX_FORGE` (rtl's `gvsoc_energy`, the same command), its `energy.json` into `results/cluster/nangate45/ge/<point>.json`. Checks: snax_cluster and snax-forge as rtl's (clean, snax_cluster on origin/main unless `--allow-branch`); the run's quiet ELF against the bundle zip's `quiet_elf_sha256` (rtl/cluster/<point>.zip's provenance), printed as same or not, never a gate. Nothing else is run or kept: no bundle is made, the run zip is not touched, the work folder `tmp/cluster/<point>/` is deleted; the flow's folder stays in snax-forge's `out/flow/`. One line at the end: PASS with the file, the quiet ELF's verdict and the windows (mark, kind, cycles), or FAIL with at most 30 lines of the flow's log.
+
+`ge/csyn2/` holds CSYN2's runs (tier A), `ge/ge1/` GE1's dot3 runs (the ones their power reports match), and `ge/` the runs with the current prices; `model-fit` and `ablation` read a point's run in that order (`model_fit.py`'s `GE_ORDER`).
+
+### pwr --time-based
+
+`cluster pwr POINT --time-based` is a cross-check of part 2's averaged mode (PITFALLS PT7, PT10), not a replacement: part 1 runs again as above into `pwr_time/` of the run zip, each window's VCD cut moved to `tmp/cluster_time/<point>/` after its vcd2saif instead of deleted; then one PT session with `PWR_ANALYSIS=time_based` (`set power_analysis_mode time_based`), per window `read_vcd -strip_path tb_bin/i_dut/i_snax_forge_cluster -time {t0 t1}` on its cut, t0 and t1 the window's bounds in ns at the cuts' 10ps unit (PITFALLS PT4), and the same reports and checks (the hierarchy's total from its eighth column, PT12). Results: `pt_time/` of the run zip and `results/cluster/nangate45/power_reports_time/<point>.zip`; no `power_pt.csv` row, and `pwr/`, `pt/` and `power_reports/` stay as they are. The cuts are deleted at the end, also on a failure. `--recheck` redoes part 2's checks from the report zip, `pt_time/`'s not-annotated lists and `pwr_time/`'s SAIFs, with no Questa and no PT, and rewrites both `pt_check.json` (`rechecked` records it).
+
 ## The reports
 
 ### cluster-breakdown

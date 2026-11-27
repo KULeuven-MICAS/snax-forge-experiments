@@ -81,6 +81,64 @@ def test_quiet_windows():
         assert none["status"] == "NONE" and none["gate"] is False, none
 
 
+def test_ge_run_alone():
+    """cluster ge: flow --energy's folder read from its first line, its energy.json into ge/<point>.json, the quiet
+    ELF against the bundle's provenance, the windows listed; a flow with no energy.json is a FAIL."""
+    mvt = next(p for p in POINTS if p["point"] == "mvt_column_cg")
+    ej = {"windows": [{"mark": 0, "kind": "boot", "label": "boot", "cycles": 4000},
+                      {"mark": 1, "kind": "run", "label": "program window", "cycles": 1028}]}
+
+    class FakeSteps:
+        def __init__(self, work: Path, energy: bool):
+            self.work, self.energy, self.calls = work, energy, []
+
+        def image(self, name, which, cwd, cmd, timeout):
+            self.calls.append((name, which, cmd))
+            run = cl.FORGE / "out" / "flow" / "mvt_v5_ab12"
+            (run / "sw").mkdir(parents=True, exist_ok=True)
+            (run / "sw" / "forge_quiet.elf").write_bytes(b"quiet")
+            if self.energy:
+                (run / "energy").mkdir(exist_ok=True)
+                (run / "energy" / "energy.json").write_text(json.dumps(ej))
+            log = self.work / "flow.log"
+            log.write_text("flow mvt_v5_ab12 (mvt_v5: M=64) on snax_forge -> out/flow/mvt_v5_ab12/\n")
+            return log
+
+    with tempfile.TemporaryDirectory() as d:
+        d = Path(d)
+        old = cl.FORGE, cl.GE_DIR, cl.RTL_ZIPS, cl.ROOT
+        cl.FORGE, cl.GE_DIR, cl.RTL_ZIPS, cl.ROOT = d / "forge", d / "ge", d / "rtl", d
+        try:
+            (cl.FORGE / "recipes" / "polybench").mkdir(parents=True)
+            (cl.FORGE / "recipes" / "polybench" / "mvt_v5.json").write_text("{}")
+            sha = cl.hashlib.sha256(b"quiet").hexdigest()
+            cl.arc.write(cl.RTL_ZIPS / "mvt_column_cg.zip",
+                         {"provenance.json": json.dumps({"quiet_elf_sha256": sha}).encode()})
+            work = d / "work"
+            work.mkdir()
+            st = FakeSteps(work, True)
+            out = cl.ge_run(work, mvt, st)
+            assert out["status"] == "PASS" and out["same_quiet_elf"] is True, out
+            assert out["gate"] is False and out["folder"] == "out/flow/mvt_v5_ab12", out
+            assert json.loads((cl.GE_DIR / "mvt_column_cg.json").read_text()) == ej
+            assert [w["kind"] for w in out["windows"]] == ["boot", "run"] and out["windows"][1]["cycles"] == 1028
+            assert st.calls == [("gvsoc", "snax_forge", cl.flow_command(mvt))], st.calls
+            (cl.GE_DIR / "mvt_column_cg.json").unlink()
+            shutil_rm = cl.shutil.rmtree
+            shutil_rm(cl.FORGE / "out")
+            cl.arc.write(cl.RTL_ZIPS / "mvt_column_cg.zip",
+                         {"provenance.json": json.dumps({"quiet_elf_sha256": "other"}).encode()})
+            out = cl.ge_run(work, mvt, FakeSteps(work, True))
+            assert out["status"] == "PASS" and out["same_quiet_elf"] is False, out
+            shutil_rm(cl.FORGE / "out")
+            (cl.GE_DIR / "mvt_column_cg.json").unlink()
+            out = cl.ge_run(work, mvt, FakeSteps(work, False))
+            assert out["status"] == "FAIL" and "energy.json" in out["why"] and "windows" not in out, out
+            assert not (cl.GE_DIR / "mvt_column_cg.json").exists()
+        finally:
+            cl.FORGE, cl.GE_DIR, cl.RTL_ZIPS, cl.ROOT = old
+
+
 def test_rtl_gates():
     c = {"d123_macro": {"status": "FAIL", "gate": False}, "quiet_windows": {"status": "INVESTIGATE", "gate": False},
          "gvsoc": {"status": "FAIL", "gate": False}, "data": {"status": "PASS"}, "quiet": {"status": "PASS"}}
