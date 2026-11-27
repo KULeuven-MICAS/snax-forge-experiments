@@ -1,0 +1,452 @@
+{
+ "tech": "nangate45",
+ "source": {
+  "snax_forge": "04165576384c4f3031e3b2d27d0ee9c058498b51",
+  "snax_forge_FifoSlicer": "c5c7d3bad1eb1ccf2e4e4a3d841fea749677d3f3",
+  "snax_forge_mixed": "90e9fba98c080676b22e7c95137d26a0faa9636d",
+  "snax_forge_scalar": "8d9128c4452542956aeb715c24a3b0f9742040bf",
+  "snax_forge_experiments": "2237a048526f2a3c7bf08f364df270489c67b547",
+  "stimulus": "rand64 seed 0",
+  "clk_gate": "1"
+ },
+ "prices": {
+  "units": {
+   "mul": {"span": 1, "e_fire": 90.37756},
+   "sum": {"span": 1, "e_fire": 4.0346122},
+   "mac": {"span": 1, "e_fire": 101.3020336}
+  },
+  "links": {"q_prod": {"from": "mul", "e_fire": 9.1214336}},
+  "slicers": {},
+  "ctrl_bits": 199,
+  "group_ctrl_bits": {"matvec": 132, "mac": 67},
+  "e_ctrl": 0.005449600000000001,
+  "movers": {
+   "mul_a": {"write": false, "channels": 8, "e_beat": 22.56338},
+   "mul_b": {"write": false, "channels": 8, "e_beat": 22.56338},
+   "sum_out": {"write": true, "channels": 1, "e_beat": 3.229712},
+   "mac_a": {"write": false, "channels": 8, "e_beat": 22.56338},
+   "mac_b": {"write": false, "channels": 1, "e_beat": 3.291861},
+   "mac_out": {"write": true, "channels": 8, "e_beat": 22.49923}
+  },
+  "e_xbar_ro": 1.8392993176799999,
+  "e_xbar_wo": 1.454512707945,
+  "e_rd": 3.38552,
+  "e_wr": 6.45356,
+  "superbank_banks": 8,
+  "e_dma_burst": 78.0825561190845,
+  "r_strm": 0.08473695178960629,
+  "r_xbar": 0.0,
+  "floor": {
+   "streamers": 5.050202268137337,
+   "crossbar": 3.4919734307459684,
+   "dma": 3.378391099999999
+  },
+  "e_l2": 54.476143195250145
+ },
+ "windows": [
+  {
+   "index": 0,
+   "mark": 0,
+   "kind": "boot",
+   "label": "boot",
+   "first": 0,
+   "last": 6560,
+   "cycles": 6560,
+   "counters": {
+    "inputs": {
+     "mul_a.lane0": {"grants": 0, "stalls": 0},
+     "mul_a.lane1": {"grants": 0, "stalls": 0},
+     "mul_a.lane2": {"grants": 0, "stalls": 0},
+     "mul_a.lane3": {"grants": 0, "stalls": 0},
+     "mul_a.lane4": {"grants": 0, "stalls": 0},
+     "mul_a.lane5": {"grants": 0, "stalls": 0},
+     "mul_a.lane6": {"grants": 0, "stalls": 0},
+     "mul_a.lane7": {"grants": 0, "stalls": 0},
+     "mul_b.lane0": {"grants": 0, "stalls": 0},
+     "mul_b.lane1": {"grants": 0, "stalls": 0},
+     "mul_b.lane2": {"grants": 0, "stalls": 0},
+     "mul_b.lane3": {"grants": 0, "stalls": 0},
+     "mul_b.lane4": {"grants": 0, "stalls": 0},
+     "mul_b.lane5": {"grants": 0, "stalls": 0},
+     "mul_b.lane6": {"grants": 0, "stalls": 0},
+     "mul_b.lane7": {"grants": 0, "stalls": 0},
+     "sum_out.lane0": {"grants": 0, "stalls": 0},
+     "mac_a.lane0": {"grants": 0, "stalls": 0},
+     "mac_a.lane1": {"grants": 0, "stalls": 0},
+     "mac_a.lane2": {"grants": 0, "stalls": 0},
+     "mac_a.lane3": {"grants": 0, "stalls": 0},
+     "mac_a.lane4": {"grants": 0, "stalls": 0},
+     "mac_a.lane5": {"grants": 0, "stalls": 0},
+     "mac_a.lane6": {"grants": 0, "stalls": 0},
+     "mac_a.lane7": {"grants": 0, "stalls": 0},
+     "mac_b.lane0": {"grants": 0, "stalls": 0},
+     "mac_out.lane0": {"grants": 0, "stalls": 0},
+     "mac_out.lane1": {"grants": 0, "stalls": 0},
+     "mac_out.lane2": {"grants": 0, "stalls": 0},
+     "mac_out.lane3": {"grants": 0, "stalls": 0},
+     "mac_out.lane4": {"grants": 0, "stalls": 0},
+     "mac_out.lane5": {"grants": 0, "stalls": 0},
+     "mac_out.lane6": {"grants": 0, "stalls": 0},
+     "mac_out.lane7": {"grants": 0, "stalls": 0},
+     "core0": {"grants": 38, "stalls": 0},
+     "axi": {"grants": 0, "stalls": 0}
+    },
+    "banks": [
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0}
+    ],
+    "groups": {
+     "matvec": {"busy": 0, "stall_in": 0, "stall_out": 0, "flush": 0},
+     "mac": {"busy": 0, "stall_in": 0, "stall_out": 0, "flush": 0}
+    },
+    "units": {
+     "mul": {"firings": 0, "pushes": 0},
+     "sum": {"firings": 0, "pushes": 0},
+     "mac": {"firings": 0, "pushes": 0}
+    },
+    "movers": {
+     "mac_a": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mac_b": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mac_out": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mul_a": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mul_b": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "sum_out": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0}
+    },
+    "copies": {"reads": 0, "writes": 0}
+   },
+   "energy": {
+    "parts": {
+     "datapath": 0.0,
+     "control": 0.0,
+     "streamers": 33.12932687898093,
+     "crossbar": 22.90734570569355,
+     "memory": 0.0,
+     "dma": 22.162245615999993
+    },
+    "total": 78.19891820067448,
+    "counts": {"fires": 0, "cycles": 0, "beats": 0.0, "requests": 0, "reads": 0, "writes": 0}
+   },
+   "background": {
+    "leak_design": 637.4899898036975,
+    "leak_core": 55.590897290879994,
+    "leak_rest": 263.51738438815954,
+    "idle": 123.23688488000043
+   }
+  },
+  {
+   "index": 1,
+   "mark": 1,
+   "kind": "run",
+   "label": "program window",
+   "first": 6560,
+   "last": 8121,
+   "cycles": 1561,
+   "counters": {
+    "inputs": {
+     "mul_a.lane0": {"grants": 512, "stalls": 184},
+     "mul_a.lane1": {"grants": 512, "stalls": 202},
+     "mul_a.lane2": {"grants": 512, "stalls": 252},
+     "mul_a.lane3": {"grants": 512, "stalls": 305},
+     "mul_a.lane4": {"grants": 512, "stalls": 296},
+     "mul_a.lane5": {"grants": 512, "stalls": 320},
+     "mul_a.lane6": {"grants": 512, "stalls": 320},
+     "mul_a.lane7": {"grants": 512, "stalls": 320},
+     "mul_b.lane0": {"grants": 512, "stalls": 221},
+     "mul_b.lane1": {"grants": 512, "stalls": 233},
+     "mul_b.lane2": {"grants": 512, "stalls": 274},
+     "mul_b.lane3": {"grants": 512, "stalls": 311},
+     "mul_b.lane4": {"grants": 512, "stalls": 309},
+     "mul_b.lane5": {"grants": 512, "stalls": 311},
+     "mul_b.lane6": {"grants": 512, "stalls": 320},
+     "mul_b.lane7": {"grants": 512, "stalls": 321},
+     "sum_out.lane0": {"grants": 64, "stalls": 97},
+     "mac_a.lane0": {"grants": 512, "stalls": 222},
+     "mac_a.lane1": {"grants": 512, "stalls": 223},
+     "mac_a.lane2": {"grants": 512, "stalls": 222},
+     "mac_a.lane3": {"grants": 512, "stalls": 222},
+     "mac_a.lane4": {"grants": 512, "stalls": 224},
+     "mac_a.lane5": {"grants": 512, "stalls": 223},
+     "mac_a.lane6": {"grants": 512, "stalls": 224},
+     "mac_a.lane7": {"grants": 512, "stalls": 224},
+     "mac_b.lane0": {"grants": 512, "stalls": 220},
+     "mac_out.lane0": {"grants": 8, "stalls": 5},
+     "mac_out.lane1": {"grants": 8, "stalls": 7},
+     "mac_out.lane2": {"grants": 8, "stalls": 4},
+     "mac_out.lane3": {"grants": 8, "stalls": 8},
+     "mac_out.lane4": {"grants": 8, "stalls": 5},
+     "mac_out.lane5": {"grants": 8, "stalls": 12},
+     "mac_out.lane6": {"grants": 8, "stalls": 2},
+     "mac_out.lane7": {"grants": 8, "stalls": 3},
+     "core0": {"grants": 0, "stalls": 0},
+     "axi": {"grants": 0, "stalls": 0}
+    },
+    "banks": [
+     {"reads": 404, "writes": 136, "conflicts": 119},
+     {"reads": 404, "writes": 136, "conflicts": 118},
+     {"reads": 404, "writes": 136, "conflicts": 132},
+     {"reads": 404, "writes": 136, "conflicts": 148},
+     {"reads": 404, "writes": 136, "conflicts": 137},
+     {"reads": 404, "writes": 136, "conflicts": 150},
+     {"reads": 404, "writes": 136, "conflicts": 150},
+     {"reads": 404, "writes": 136, "conflicts": 152},
+     {"reads": 404, "writes": 136, "conflicts": 103},
+     {"reads": 404, "writes": 136, "conflicts": 119},
+     {"reads": 404, "writes": 136, "conflicts": 125},
+     {"reads": 404, "writes": 136, "conflicts": 138},
+     {"reads": 404, "writes": 136, "conflicts": 139},
+     {"reads": 404, "writes": 136, "conflicts": 138},
+     {"reads": 404, "writes": 136, "conflicts": 149},
+     {"reads": 404, "writes": 136, "conflicts": 149},
+     {"reads": 404, "writes": 136, "conflicts": 115},
+     {"reads": 404, "writes": 136, "conflicts": 129},
+     {"reads": 404, "writes": 136, "conflicts": 128},
+     {"reads": 404, "writes": 136, "conflicts": 141},
+     {"reads": 404, "writes": 136, "conflicts": 138},
+     {"reads": 404, "writes": 136, "conflicts": 152},
+     {"reads": 404, "writes": 136, "conflicts": 152},
+     {"reads": 404, "writes": 136, "conflicts": 146},
+     {"reads": 404, "writes": 136, "conflicts": 119},
+     {"reads": 404, "writes": 136, "conflicts": 121},
+     {"reads": 404, "writes": 136, "conflicts": 125},
+     {"reads": 404, "writes": 136, "conflicts": 142},
+     {"reads": 404, "writes": 136, "conflicts": 141},
+     {"reads": 404, "writes": 136, "conflicts": 149},
+     {"reads": 404, "writes": 136, "conflicts": 152},
+     {"reads": 404, "writes": 136, "conflicts": 151}
+    ],
+    "groups": {
+     "matvec": {"busy": 596, "stall_in": 243, "stall_out": 0, "flush": 1},
+     "mac": {"busy": 512, "stall_in": 226, "stall_out": 0, "flush": 1}
+    },
+    "units": {
+     "mul": {"firings": 512, "pushes": 512},
+     "sum": {"firings": 512, "pushes": 64},
+     "mac": {"firings": 512, "pushes": 8}
+    },
+    "movers": {
+     "mac_a": {"busy": 729, "stall_xbar": 7, "stall_fifo": 0, "idle": 8},
+     "mac_b": {"busy": 512, "stall_xbar": 220, "stall_fifo": 1, "idle": 11},
+     "mac_out": {"busy": 20, "stall_xbar": 2, "stall_fifo": 720, "idle": 2},
+     "mul_a": {"busy": 804, "stall_xbar": 32, "stall_fifo": 0, "idle": 7},
+     "mul_b": {"busy": 807, "stall_xbar": 28, "stall_fifo": 0, "idle": 8},
+     "sum_out": {"busy": 64, "stall_xbar": 97, "stall_fifo": 680, "idle": 2}
+    },
+    "copies": {"reads": 0, "writes": 0}
+   },
+   "energy": {
+    "parts": {
+     "datapath": 104.8758473728,
+     "control": 0.8740776928000001,
+     "streamers": 46.21332133037276,
+     "crossbar": 29.180179418315415,
+     "memory": 71.85389568000001,
+     "dma": 34.90869040531608
+    },
+    "total": 287.90601189960427,
+    "counts": {
+     "fires": 2048,
+     "cycles": 1579,
+     "beats": 3228.125,
+     "requests": 19574,
+     "reads": 12928,
+     "writes": 4352
+    }
+   },
+   "background": {
+    "leak_design": 151.69540763469084,
+    "leak_core": 13.228260773027998,
+    "leak_rest": 62.705889791145886,
+    "idle": 29.325118490500103
+   }
+  },
+  {
+   "index": 2,
+   "mark": 2,
+   "kind": "check",
+   "label": "check",
+   "first": 8121,
+   "last": 17001,
+   "cycles": 8880,
+   "counters": {
+    "inputs": {
+     "mul_a.lane0": {"grants": 0, "stalls": 0},
+     "mul_a.lane1": {"grants": 0, "stalls": 0},
+     "mul_a.lane2": {"grants": 0, "stalls": 0},
+     "mul_a.lane3": {"grants": 0, "stalls": 0},
+     "mul_a.lane4": {"grants": 0, "stalls": 0},
+     "mul_a.lane5": {"grants": 0, "stalls": 0},
+     "mul_a.lane6": {"grants": 0, "stalls": 0},
+     "mul_a.lane7": {"grants": 0, "stalls": 0},
+     "mul_b.lane0": {"grants": 0, "stalls": 0},
+     "mul_b.lane1": {"grants": 0, "stalls": 0},
+     "mul_b.lane2": {"grants": 0, "stalls": 0},
+     "mul_b.lane3": {"grants": 0, "stalls": 0},
+     "mul_b.lane4": {"grants": 0, "stalls": 0},
+     "mul_b.lane5": {"grants": 0, "stalls": 0},
+     "mul_b.lane6": {"grants": 0, "stalls": 0},
+     "mul_b.lane7": {"grants": 0, "stalls": 0},
+     "sum_out.lane0": {"grants": 0, "stalls": 0},
+     "mac_a.lane0": {"grants": 0, "stalls": 0},
+     "mac_a.lane1": {"grants": 0, "stalls": 0},
+     "mac_a.lane2": {"grants": 0, "stalls": 0},
+     "mac_a.lane3": {"grants": 0, "stalls": 0},
+     "mac_a.lane4": {"grants": 0, "stalls": 0},
+     "mac_a.lane5": {"grants": 0, "stalls": 0},
+     "mac_a.lane6": {"grants": 0, "stalls": 0},
+     "mac_a.lane7": {"grants": 0, "stalls": 0},
+     "mac_b.lane0": {"grants": 0, "stalls": 0},
+     "mac_out.lane0": {"grants": 0, "stalls": 0},
+     "mac_out.lane1": {"grants": 0, "stalls": 0},
+     "mac_out.lane2": {"grants": 0, "stalls": 0},
+     "mac_out.lane3": {"grants": 0, "stalls": 0},
+     "mac_out.lane4": {"grants": 0, "stalls": 0},
+     "mac_out.lane5": {"grants": 0, "stalls": 0},
+     "mac_out.lane6": {"grants": 0, "stalls": 0},
+     "mac_out.lane7": {"grants": 0, "stalls": 0},
+     "core0": {"grants": 6, "stalls": 0},
+     "axi": {"grants": 0, "stalls": 0}
+    },
+    "banks": [
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0},
+     {"reads": 0, "writes": 0, "conflicts": 0}
+    ],
+    "groups": {
+     "matvec": {"busy": 0, "stall_in": 0, "stall_out": 0, "flush": 0},
+     "mac": {"busy": 0, "stall_in": 0, "stall_out": 0, "flush": 0}
+    },
+    "units": {
+     "mul": {"firings": 0, "pushes": 0},
+     "sum": {"firings": 0, "pushes": 0},
+     "mac": {"firings": 0, "pushes": 0}
+    },
+    "movers": {
+     "mac_a": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mac_b": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mac_out": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mul_a": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "mul_b": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0},
+     "sum_out": {"busy": 0, "stall_xbar": 0, "stall_fifo": 0, "idle": 0}
+    },
+    "copies": {"reads": 0, "writes": 0}
+   },
+   "energy": {
+    "parts": {
+     "datapath": 0.0,
+     "control": 0.0,
+     "streamers": 44.84579614105955,
+     "crossbar": 31.008724065024197,
+     "memory": 0.0,
+     "dma": 30.00011296799999
+    },
+    "total": 105.85463317408374,
+    "counts": {"fires": 0, "cycles": 0, "beats": 0.0, "requests": 0, "reads": 0, "writes": 0}
+   },
+   "background": {
+    "leak_design": 862.9437666854931,
+    "leak_core": 75.25109267423998,
+    "leak_rest": 356.71255691567933,
+    "idle": 166.8206612400006
+   }
+  }
+ ],
+ "total": {
+  "datapath": 104.8758473728,
+  "control": 0.8740776928000001,
+  "streamers": 124.18844435041323,
+  "crossbar": 83.09624918903316,
+  "memory": 71.85389568000001,
+  "dma": 87.07104898931607
+ },
+ "static": {
+  "parts": {
+   "datapath": 104.8758473728,
+   "control": 0.5570526624000001,
+   "streamers": 39.325283885822586,
+   "crossbar": 25.52408323632439,
+   "memory": 71.85389568000001,
+   "dma": 31.37151492361608
+  },
+  "total": 273.5076777609631,
+  "counts": {
+   "fires": 2048,
+   "cycles": 1027,
+   "beats": 2120.0,
+   "requests": 12928,
+   "reads": 12928,
+   "writes": 4352
+  }
+ },
+ "background": {
+  "design_uw": 9717.83521042222,
+  "core_uw": 847.4222147999999,
+  "rest_uw": 4017.033298599993,
+  "idle_pj_cycle": 18.786110500000067,
+  "clock_ns": 10.0
+ },
+ "background_total": {
+  "leak_design": 1652.1291641238813,
+  "leak_core": 144.070250738148,
+  "leak_rest": 682.9358310949847,
+  "idle": 319.38266461050114
+ }
+}
