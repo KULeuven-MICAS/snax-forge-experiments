@@ -13,7 +13,7 @@
   "snax_forge_mixed": "90e9fba98c080676b22e7c95137d26a0faa9636d",
   "snax_forge_scalar": "8d9128c4452542956aeb715c24a3b0f9742040bf",
   "snax_forge_e2e1": "aac5c2115f841032c869f09ea4694ad3b3de2769",
-  "snax_forge_experiments": "2237a048526f2a3c7bf08f364df270489c67b547",
+  "snax_forge_experiments": "51336e34708e5def8316a78be652647146d317fb",
   "stimulus": "rand64 seed 0",
   "clk_gate": "1"
  },
