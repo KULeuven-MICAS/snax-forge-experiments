@@ -16,6 +16,7 @@ untiered,matadd,bambu,m16_n32,4,10,bambu,loop_count=128,ok,,129,130,128,1,1,PASS
 untiered,matadd,bambu,m16_n32,8,10,bambu,loop_count=64,ok,,65,66,64,1,1,PASS,yes,8,BB2 II=1 lat=2,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/matadd/bambu_w8,542fa32,2026-11-05
 untiered,matadd,bambu,m16_n32,16,10,bambu,loop_count=32,ok,,33,34,32,1,1,PASS,yes,8,BB2 II=1 lat=2,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/matadd/bambu_w16,542fa32,2026-11-05
 untiered,matadd,bambu,m16_n32,32,10,bambu,loop_count=16,failed: sim,"FAIL matadd N=512 W=32 stall=0 cycles=17 cycles_done=18 latency=1: 79 of 512 lanes differ | C[26]: got -4294966880 expected -542 | C[27]: got -4294967296 expected -1933 | C[28]: got 0 expected 398; Bambu 2026.11 bug, wide computed beat (notes/repro_bam3)",,,16,,,FAIL,yes,8,BB2 II=1 lat=2,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/matadd/bambu_w32,542fa32,2026-11-05
+untiered,matvec_col,bambu,m64_n64,8,10,bambu,loop_count=512 len=64,ok,,1024,1025,512,512,127,PASS,yes,6,BB2 not possible,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/matvec_col/bambu_w8,30818ed,2026-11-28
 untiered,relu,bambu,n4096,8,10,bambu,loop_count=512,ok,,513,514,512,1,1,PASS,yes,8,BB2 II=1 lat=2,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/relu/bambu_w8,0709cf1+dirty,2026-11-28
 untiered,rowsum,bambu,m4_n16,1,10,bambu,loop_count=64 len=16,ok,,65,66,64,1,16,PASS,yes,8,BB2 II=1 lat=2,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/rowsum/bambu_w1,542fa32,2026-11-05
 untiered,rowsum,bambu,m4_n16,2,10,bambu,loop_count=32 len=8,ok,,33,34,32,1,8,PASS,yes,8,BB2 II=1 lat=2,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/rowsum/bambu_w2,542fa32,2026-11-05
@@ -28,3 +29,7 @@ untiered,rowsum,bambu,m8_n64,4,10,bambu,loop_count=128 len=16,ok,,129,130,128,1,
 untiered,rowsum,bambu,m8_n64,8,10,bambu,loop_count=64 len=8,ok,,65,66,64,1,8,PASS,yes,8,BB2 II=1 lat=2,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/rowsum/bambu_w8,542fa32,2026-11-05
 untiered,rowsum,bambu,m8_n64,16,10,bambu,loop_count=32 len=4,ok,,34,35,32,2,5,PASS,yes,15,BB2 II=1 lat=3,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/rowsum/bambu_w16,542fa32,2026-11-05
 untiered,rowsum,bambu,m8_n64,32,10,bambu,loop_count=16 len=2,ok,,18,19,16,2,3,PASS,yes,15,BB2 II=1 lat=3,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/rowsum/bambu_w32,542fa32,2026-11-05
+a,atax,bambu,m64_n64,8,10,bambu,loop_count=512 len=8,ok,,2079,2081,512,1567,2050,PASS,yes,9,,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/atax/bambu_w8,30818ed,2026-11-28
+a,bicg,bambu,m64_n64,8,10,bambu,loop_count=512 len=8,ok,,2048,2049,512,1536,31,PASS,yes,10,,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/bicg/bambu_w8,30818ed,2026-11-28
+a,gesummv,bambu,n64,8,10,bambu,loop_count=512 len=8 alpha=1505919583 beta=588245967,ok,,1599,1601,8,1591,23,PASS,yes,8,,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/gesummv/bambu_w8,30818ed,2026-11-28
+a,mvt,bambu,m64_n64,8,10,bambu,loop_count=512 len=8,failed: compile,Error in compilation,,,512,,,,,,,nangate45,PandA 2026.11 rev cda4db2e,,30818ed,2026-11-28

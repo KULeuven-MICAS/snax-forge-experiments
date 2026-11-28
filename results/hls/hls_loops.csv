@@ -1,4 +1,8 @@
 tier,kernel,case,size,W,clock_ns,module,loop,lat_min,lat_max,iter_lat,ii_achieved,ii_target,trips,pipelined
+a,atax,opt,m64_n64,8,10,atax_Pipeline_BEAT,BEAT,520,520,2,1,1,520,yes
+a,bicg,opt,m64_n64,8,10,bicg,BEAT,512,512,2,1,1,512,yes
+a,gesummv,opt,n64,8,10,gesummv,BEAT,512,512,2,1,1,512,yes
+a,mvt,opt,m64_n64,8,10,mvt,BEAT,512,512,2,1,1,512,yes
 done,dot,opt,n4096,8,10,dot,BEAT,512,512,2,1,1,512,yes
 done,vecadd,opt,n4096,8,10,vecadd,BEAT,512,512,2,1,1,512,yes
 done,vecmul,opt,n4096,8,10,vecmul,BEAT,512,512,2,1,1,512,yes
@@ -24,6 +28,7 @@ untiered,matadd,dace,m16_n32,2,10,matadd_dace_Pipeline_VITIS_LOOP_20_2,VITIS_LOO
 untiered,matadd,dace,m16_n32,4,10,module_matadd_0_0_Pipeline_VITIS_LOOP_20_2,VITIS_LOOP_20_2,?,?,2,1,1,?,yes
 untiered,matadd,dace,m16_n32,8,10,module_matadd_0_0_Pipeline_VITIS_LOOP_20_2,VITIS_LOOP_20_2,?,?,2,1,1,?,yes
 untiered,matadd,dace,m16_n32,16,10,module_matadd_0_0_Pipeline_VITIS_LOOP_20_2,VITIS_LOOP_20_2,?,?,2,1,1,?,yes
+untiered,matvec_col,opt,m64_n64,8,10,matvec_col,BEAT,512,512,2,1,1,512,yes
 untiered,relu,opt,n4096,8,10,relu,BEAT,512,512,2,1,1,512,yes
 untiered,rowsum,opt,m4_n16,1,10,rowsum,BEAT,64,64,2,1,1,64,yes
 untiered,rowsum,opt,m4_n16,2,10,rowsum,BEAT,32,32,2,1,1,32,yes

@@ -77,6 +77,20 @@ Loops:
 | dace | m16_n32 | 8 | module_matadd_0_0_Pipeline_VITIS_LOOP_20_2 | VITIS_LOOP_20_2 | ? | 2 | 1/1 | ?-? | yes |
 | dace | m16_n32 | 16 | module_matadd_0_0_Pipeline_VITIS_LOOP_20_2 | VITIS_LOOP_20_2 | ? | 2 | 1/1 | ?-? | yes |
 
+## matvec_col
+
+Interface: axis, register slices off.
+
+| case | size | W | config | HLS clock ns | status | cycles | cyc/elem | overhead | est. latency | II | DSP | BRAM | portable | RTL |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| opt | m64_n64 | 8 | loop_count=512 len=64 | 10 | ok | 514 | 0.13 | 2 | 514-514 | 515 | 0 | 0 | yes | opt_w8 (ref) |
+
+Loops:
+
+| case | size | W | module | loop | trips | iter lat | II (achieved/target) | latency | pipelined |
+|---|---|---|---|---|---|---|---|---|---|
+| opt | m64_n64 | 8 | matvec_col | BEAT | 512 | 2 | 1/1 | 512-512 | yes |
+
 ## relu
 
 Interface: axis, register slices off.
