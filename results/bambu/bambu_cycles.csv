@@ -29,7 +29,7 @@ untiered,rowsum,bambu,m8_n64,4,10,bambu,loop_count=128 len=16,ok,,129,130,128,1,
 untiered,rowsum,bambu,m8_n64,8,10,bambu,loop_count=64 len=8,ok,,65,66,64,1,8,PASS,yes,8,BB2 II=1 lat=2,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/rowsum/bambu_w8,542fa32,2026-11-05
 untiered,rowsum,bambu,m8_n64,16,10,bambu,loop_count=32 len=4,ok,,34,35,32,2,5,PASS,yes,15,BB2 II=1 lat=3,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/rowsum/bambu_w16,542fa32,2026-11-05
 untiered,rowsum,bambu,m8_n64,32,10,bambu,loop_count=16 len=2,ok,,18,19,16,2,3,PASS,yes,15,BB2 II=1 lat=3,nangate45,PandA 2026.11 rev cda4db2e,rtl/untiered/rowsum/bambu_w32,542fa32,2026-11-05
-a,atax,bambu,m64_n64,8,10,bambu,loop_count=512 len=8,ok,,2065,2066,512,1553,2050,PASS,yes,12,,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/atax/bambu_w8,6c7572b,2026-11-28
-a,bicg,bambu,m64_n64,8,10,bambu,loop_count=512 len=8,ok,,2048,2049,512,1536,31,PASS,yes,10,,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/bicg/bambu_w8,6c7572b,2026-11-28
-a,gesummv,bambu,n64,8,10,bambu,loop_count=512 len=8 alpha=1505919583 beta=588245967,ok,,1599,1601,8,1591,23,PASS,yes,8,,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/gesummv/bambu_w8,6c7572b,2026-11-28
-a,mvt,bambu,m64_n64,8,10,bambu,loop_count=512 len=8,ok,,3072,3073,512,2560,46,PASS,yes,12,,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/mvt/bambu_w8,6c7572b,2026-11-28
+a,atax,bambu,m64_n64,8,10,bambu,loop_count=512 len=8,ok,,2065,2066,512,1553,2050,PASS,yes,12,,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/atax/bambu_w8,7bfe746,2026-11-28
+a,bicg,bambu,m64_n64,8,10,bambu,loop_count=512 len=8,ok,,2048,2049,512,1536,31,PASS,yes,10,,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/bicg/bambu_w8,7bfe746,2026-11-28
+a,gesummv,bambu,n64,8,10,bambu,loop_count=512 len=8 alpha=1505919583 beta=588245967,ok,,1024,1025,8,1016,15,PASS,yes,6,BB2 not possible,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/gesummv/bambu_w8,7bfe746,2026-11-28
+a,mvt,bambu,m64_n64,8,10,bambu,loop_count=512 len=8,ok,,3072,3073,512,2560,46,PASS,yes,12,,nangate45,PandA 2026.11 rev cda4db2e,rtl/a/mvt/bambu_w8,7bfe746,2026-11-28
