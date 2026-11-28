@@ -3,7 +3,7 @@
 
   pixi run pwr tbjson      POINT [--source S] [--tech T]
   pixi run pwr run         PATTERN ... --tech T [--source S] [--stim rand64|forge] [--size TAG|all] [--seed N]
-                                       [-j N] [--cores C] [--clk-gate] [--initreg-seed N]
+                                       [-j N] [--cores C] [--clk-gate] [--initreg-seed N] [--mode M]
   pixi run pwr setup-check --tech T [--source hls|forge|bambu|xls] [--point P]
   pixi run pwr summary     [PATTERN ...] [--source S] [--tech T]
   pixi run pwr modules     --source S --tech T
@@ -11,8 +11,10 @@
 The sources are hls (the default), forge, char, bambu, xls, streamer, xbar and xbar_mix. Per point one worker unpacks the DC
 run, writes tb.json (sim/sources/), compiles the testbench and the netlist, simulates each run at zero delay, cuts
 the window into a SAIF, checks it and runs PrimePower, then packs the point into sim/runs/.../<point>.zip and
-writes its rows into results/<source>/<tech>/. Workers and PT threads come from the free licences. The stages, each
-source's testbench and window, the checks and the columns are in docs/power.md; the commands in docs/TOOL.md.
+writes its rows into results/<source>/<tech>/. Workers and PT threads come from the free licences. The streamer and
+interconnect sources also run --mode idle or refused (the refusal price): their runs, rows and reports apart from
+the grant runs' (power_pt_<mode>.csv). The stages, each source's testbench and window, the checks and the columns are
+in docs/power.md; the commands in docs/TOOL.md.
 """
 from __future__ import annotations
 
@@ -101,6 +103,9 @@ INITREG_SEED: int | None = None
 # point's folder and power_reports zip get the same _cg tag, and its rows have clk_gate 1, merged apart from the
 # ungated rows. Off by default.
 CLK_GATE = False
+# --mode idle | refused (streamer, xbar, xbar_mix): the stimulus of sim/sources/strm.py; such a run's folder and
+# power_reports zip get the suffix _<mode> and its rows go to power_pt_<mode>.csv, the grant runs untouched.
+MODE = "grant"
 
 
 def gtag(point: str) -> str:
@@ -1213,8 +1218,13 @@ def write_results(tech: str, results: list[tuple[dict, dict]]) -> None:
 
 
 def power_zip(tech: str, point: str) -> Path:
-    """The committed PT reports of a point: results/<source>/<tech>/power_reports/<point>[_cg].zip."""
-    return RESULTS / tech / "power_reports" / f"{gtag(point)}.zip"
+    """The committed PT reports of a point: results/<source>/<tech>/power_reports/<point>[_cg][_<mode>].zip."""
+    return RESULTS / tech / "power_reports" / f"{mtag(point)}.zip"
+
+
+def mtag(point: str) -> str:
+    """gtag() and, for an idle or refused run, _<mode>: its run folder and report zip apart from the grant run's."""
+    return gtag(point) + ("" if MODE == "grant" else f"_{MODE}")
 
 
 # ---------------------------------------------------------------- char: a block alone, per window
@@ -1672,6 +1682,19 @@ STRM_COLUMNS = {
              "e_seq_pj", "e_comb_pj", "e_flop_pj", "e_dyn_pj", "e_window_pj", "e_access_pj", "p_dyn_uw",
              "annotated", "status", "snax_cluster_commit"]}
 STRM_COLUMNS["xbar_mix"] = STRM_COLUMNS["xbar"][:3] + ["ro", "wo"] + STRM_COLUMNS["xbar"][3:]
+# an idle or refused run's rows (power_pt_<mode>.csv): the grant columns, the mode, the refused request-cycles and the
+# energy per cycle; e_beat_pj or e_access_pj stays the window's energy over the beats or grants (empty when idle)
+STRM_MODE_COLUMNS = ("mode", "refused", "e_cycle_pj")
+REFUSED_RE = re.compile(r"TB: refused (\d+)")
+IDLE_RE = re.compile(r"TB: idle requests (\d+) beats (\d+) busy (\d+) xz (\d+)")
+
+
+def strm_columns() -> list[str]:
+    return STRM_COLUMNS[SOURCE] + ([] if MODE == "grant" else list(STRM_MODE_COLUMNS))
+
+
+def strm_csv(tech: str) -> Path:
+    return RESULTS / tech / ("power_pt.csv" if MODE == "grant" else f"power_pt_{MODE}.csv")
 STRM_KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
 READER_RE = re.compile(r"TB: beats (\d+) expected (\d+) fill (-?\d+) stalls (\d+) data_mismatches (\d+) "
                        r"addr_mismatches (\d+) xz (\d+)")
@@ -1701,18 +1724,20 @@ def do_point_strm(point: str, tech: str, seed: int, threads: int) -> tuple[dict,
 def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int, threads: int) -> tuple[dict, dict]:
     t_point = time.time()
     cfg = syn.forge_json(point, "config.json")
-    row = {c: "" for c in STRM_COLUMNS[SOURCE]}
+    row = {c: "" for c in strm_columns()}
+    if MODE != "grant":
+        row["mode"] = MODE
     row.update({"point": point, "tech": tech, "clock_ns": _num(CLOCK_NS), "clk_gate": gate(), "seed": seed,
                 "snax_cluster_commit": cfg.get("snax_cluster_commit", ""),
                 **{k: cfg.get("params", {}).get(v, "") for k, v in syn.STRM_PARAMS[SOURCE].items()}})
     times: dict = {}
     info: dict = {"times": times}
-    pdir = tech_runs(tech) / gtag(point)
+    pdir = tech_runs(tech) / mtag(point)
     rdir = pdir / f"s{seed}"
     shutil.rmtree(pdir, ignore_errors=True)
     try:
         syn_d, netlist, _ = point_inputs(stack, tech, point)
-        tb = strm_src.build(point, netlist, seed)
+        tb = strm_src.build(point, netlist, seed, MODE)
     except (ValueError, KeyError, FileNotFoundError, Fail) as e:
         row["status"] = f"failed: tb.json: {e}"
         return row, info
@@ -1740,7 +1765,24 @@ def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int
             raise Fail("sim: no window (vsim.log)")
         cycles = int(win.group(3))
         row["cycles"] = cycles
-        if SOURCE == "streamer":
+        if MODE == "refused":
+            m = REFUSED_RE.search(log)
+            if not m:
+                raise Fail("sim: no refused line (vsim.log)")
+            row["refused"] = int(m.group(1))
+            if not row["refused"]:
+                raise Fail("sim: refused mode with no refused request")
+        if MODE == "idle" and SOURCE == "streamer":
+            m = IDLE_RE.search(log)
+            if not m:
+                raise Fail("sim: no idle line (vsim.log)")
+            req, beats, busy, xz = map(int, m.groups())
+            row.update({"beats": beats, "refused": 0})
+            if req or beats or busy or xz or cycles != tb["window"]:
+                raise Fail(f"sim: idle with {req} requests, {beats} beats, {busy} busy cycles, {xz} X/Z, "
+                           f"cycles {cycles} of {tb['window']}")
+            work = 0
+        elif SOURCE == "streamer":
             m = READER_RE.search(log)
             if not m:
                 raise Fail("sim: no beats line (vsim.log)")
@@ -1749,7 +1791,7 @@ def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int
             if beats != want or dbad or abad or xz or cycles != fill + beats + stalls:
                 raise Fail(f"sim: beats {beats} of {want}, {dbad} data and {abad} address mismatches, {xz} X/Z, "
                            f"cycles {cycles} = fill {fill} + beats + stalls {stalls}?")
-            if stalls:
+            if stalls and MODE == "grant":
                 soft = f"failed: {stalls} stalls after the fill (energy kept)"
             work = beats
         else:
@@ -1758,7 +1800,9 @@ def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int
                 raise Fail("sim: no grants line (vsim.log)")
             grants, want, gbad, bbad, rbad, xz = map(int, m.groups())
             row["grants"] = grants
-            if grants != want or gbad or bbad or rbad or xz or cycles != tb["window"]:
+            if MODE == "idle":
+                row["refused"] = 0
+            if grants != want or gbad or bbad or rbad or xz or (tb["window"] is not None and cycles != tb["window"]):
                 raise Fail(f"sim: grants {grants} of {want}, {gbad} cycles short, {bbad} bank and {rbad} response "
                            f"mismatches, {xz} X/Z, cycles {cycles}")
             work = grants
@@ -1797,8 +1841,10 @@ def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int
         e_dyn = e_flop + e["comb"]
         row.update({"e_clk_pj": e["clk"], "e_reg_pj": e["reg"], "e_seq_pj": e["seq"], "e_comb_pj": e["comb"],
                     "e_flop_pj": e_flop, "e_dyn_pj": e_dyn, "e_window_pj": e_dyn * cycles,
-                    "e_beat_pj" if SOURCE == "streamer" else "e_access_pj": e_dyn * cycles / work,
+                    "e_beat_pj" if SOURCE == "streamer" else "e_access_pj": e_dyn * cycles / work if work else "",
                     "p_dyn_uw": e_dyn / CLOCK_NS * 1000.0, "status": soft or "ok"})
+        if MODE != "grant":
+            row["e_cycle_pj"] = e_dyn
     except Fail as e:
         row["status"] = f"failed: {e}"
     except Exception as e:  # noqa: BLE001  a crash fails this point, not the batch
@@ -1818,10 +1864,9 @@ def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int
 def write_results_strm(tech: str, results: list[tuple[dict, dict]]) -> None:
     """power_pt.csv (merged on point and seed) and per ok point its PT reports and tb.json in
     power_reports/<point>.zip."""
-    out = RESULTS / tech
     key = lambda r: (r["point"], syn.gate_flag(r), str(r["seed"]))  # gated rows apart  # noqa: E731
     rows = [r for r, _ in results]
-    _merge(out / "power_pt.csv", STRM_COLUMNS[SOURCE], key, rows, {key(r) for r in rows})
+    _merge(strm_csv(tech), strm_columns(), key, rows, {key(r) for r in rows})
     for r, info in results:
         z = power_zip(tech, r["point"])
         if r["status"] != "ok" and not r.get("e_dyn_pj"):
@@ -1853,8 +1898,7 @@ def run_strm(points: list[str], tech: str, seed: int, j: int, threads: int) -> i
     print(f"pwr: batch {time.time() - t:.1f} s", flush=True)
     write_results_strm(tech, results)
     bad = [r for r, _ in results if r["status"] != "ok"]
-    print(f"pwr: {len(results) - len(bad)} ok, {len(bad)} not ok -> "
-          f"{(RESULTS / tech / 'power_pt.csv').relative_to(ROOT)}")
+    print(f"pwr: {len(results) - len(bad)} ok, {len(bad)} not ok -> {strm_csv(tech).relative_to(ROOT)}")
     return 1 if bad else 0
 
 # ---------------------------------------------------------------- commands
@@ -1872,8 +1916,11 @@ def cmd_tbjson(args) -> int:
 
 
 def cmd_run(args) -> int:
-    global INITREG_SEED, CLK_GATE
+    global INITREG_SEED, CLK_GATE, MODE
     INITREG_SEED = args.initreg_seed
+    MODE = args.mode
+    if MODE != "grant" and args.source not in STRM:
+        sys.exit(f"--mode {MODE}: the streamer and interconnect sources only ({', '.join(STRM)})")
     CLK_GATE = args.clk_gate          # the _cg netlists (syn.py --clk-gate), rows with clk_gate 1
     syn.use_clk_gate(CLK_GATE)
     if INITREG_SEED is not None and args.source in ("char", *STRM):
@@ -1902,7 +1949,7 @@ def cmd_run(args) -> int:
     tech_runs(args.tech).mkdir(parents=True, exist_ok=True)
     with (tech_runs(args.tech) / "batches.jsonl").open("a") as fh:
         fh.write(json.dumps({"date": stamp, "source": args.source, "patterns": args.patterns, "stim": args.stim, "size": args.size,
-                             "seed": args.seed, "initreg_seed": INITREG_SEED, "licences": lic, "nproc": nproc, "J": j, "threads": threads}) + "\n")
+                             "seed": args.seed, "mode": MODE, "initreg_seed": INITREG_SEED, "licences": lic, "nproc": nproc, "J": j, "threads": threads}) + "\n")
     t = time.time()
     cells_lib(args.tech)
     print(f"pwr: cell models compiled in {time.time() - t:.1f} s", flush=True)
@@ -2112,6 +2159,9 @@ def main() -> int:
     p.add_argument("--initreg-seed", type=int, default=None,
                    help="a check, never the default: random register start (vopt +initreg=ru, vsim +initreg+N) "
                         "in place of +initreg+0; results/ is not written")
+    p.add_argument("--mode", choices=strm_src.MODES, default="grant",
+                   help="streamer, xbar, xbar_mix: grant (the tables), idle or refused (the refusal price), "
+                        "into power_pt_<mode>.csv")
     p.add_argument("--clk-gate", action="store_true",
                    help="the clock-gated netlists (syn.py --clk-gate, <point>_cg.zip): runs and power_reports tagged "
                         "_cg, rows with clk_gate 1, apart from the ungated ones; off by default")

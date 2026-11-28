@@ -9,7 +9,7 @@ Every command by job, one example each; flows in the folder READMEs and [`power.
 | Synthesize | `syn` | 3 |
 | Measure the energy | `pwr` | 4 |
 | Make the memories | `ram-build`, `ram` | 5 |
-| Make the tables HWCOST reads | `strm-table`, `xbar-kinds`, `char-export`, `char-table`, `cluster-fixed` | 6 |
+| Make the tables HWCOST reads | `strm-table`, `xbar-kinds`, `refusal-fit`, `char-export`, `char-table`, `cluster-fixed` | 6 |
 | Take a design through the whole cluster | `cluster`, `cluster/batch.sh`, `cluster-hwcost`, `cluster-breakdown`, `cluster-energy`, `cluster-sweep`, `ge-check`, `tier-check`, `model-fit`, `ablation`, `bank-counts`, `snb`, `snb-report`, `dma-copy` | 7 |
 | Compare forge with the HLS tools | `compare`, `compare-hls` | 8 |
 | Keep the repository clean | `arc`, `test`, `lint` | 9 |
@@ -55,7 +55,7 @@ Testbenches, windows and checks per source are in [`power.md`](power.md).
 | Command | What it does |
 |---|---|
 | `pwr tbjson POINT [--source S] [--tech T]` | print `tb.json` |
-| `pwr run PATTERN ... --tech nangate45 [--source S] [--size TAG\|all] [--seed N] [--stim rand64\|forge] [-j N] [--cores C] [--clk-gate] [--initreg-seed N]` | runs into `sim/runs/`, rows in `power_pt.csv`, `power_pt_modules.csv`, `power_reports/` |
+| `pwr run PATTERN ... --tech nangate45 [--source S] [--size TAG\|all] [--seed N] [--stim rand64\|forge] [-j N] [--cores C] [--clk-gate] [--initreg-seed N] [--mode grant\|idle\|refused]` | runs into `sim/runs/`, rows in `power_pt.csv`, `power_pt_modules.csv`, `power_reports/`; `--mode idle` or `refused` (streamer, xbar, xbar_mix) into `power_pt_<mode>.csv`, the runs and report zips suffixed `_<mode>` (X116) |
 | `pwr setup-check --tech nangate45 [--source S] [--point P]` | PT against DC, a diagnostic (X25) |
 | `pwr summary [PATTERN ...] [--source S] [--tech T]` | print `power_pt.csv` |
 | `pwr modules --source S --tech T` | fill old rows' size column (one-off) |
@@ -64,6 +64,7 @@ Testbenches, windows and checks per source are in [`power.md`](power.md).
 
 ```bash
 pixi run pwr run 'done/*/forge*' --source forge --tech nangate45 --size n2048
+pixi run pwr run 'd*' --source streamer --tech nangate45 --clk-gate --mode refused
 ```
 
 ## 5. Make the memories: `ram-build`, `ram`
@@ -90,6 +91,7 @@ snax-forge copies them with `pixi run import-costs`; meanings in [`cost_tables.m
 - **`xbar-kinds`** (`report/xbar_kinds.py`): `xbar_kinds.json`, area forms (X71) and energy factors (X93). Example: `pixi run xbar-kinds`.
 - **`char-export`** (`report/char_export.py`): `char.json` from gated rows (X37, X83 · X85). Example: `pixi run char-export`.
 - **`char-table`** (`report/char_table.py`): `results/char/char_table.md`. Example: `pixi run char-table`.
+- **`refusal-fit`** (`report/refusal_fit.py`): a refused request's price from the blocks' grant, idle and refused runs, per point and per set, and the idle energy against the floor; `results/strm/<tech>/refusal.json` (X116). Example: `pixi run refusal-fit --md`.
 - **`cluster-fixed`** (`report/cluster_fixed.py`): `results/cluster/<tech>/cluster_fixed.json`, the cluster's fixed parts (X103). Example: `pixi run cluster-fixed --md`.
 
 ## 7. Take a design through the whole cluster

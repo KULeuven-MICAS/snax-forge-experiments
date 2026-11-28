@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X116**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X117**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -520,7 +520,7 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 - **Decided:** a refused request costs $r$ of a granted one per part, fitted on `mvt_contiguous_w8_cg` against `mvt_padded_w8_cg` (one netlist, equal grants, 23 637 more refusals): the netlist's difference less the fitted floor (X112) over the 2 729 extra cycles, over SNAX-GVSoC's difference at the granted price: $r_{strm}$ = 0.085, $r_{xbar}$ = 0 (−0.026, clamped); the banks pay nothing (−0.33 nJ). Checked on `bicg_pipeline_contiguous_w8_cg` against its sequential twin: streamers and crossbar −2.37 nJ at the netlist, −1.89 in the model.
 - **Why:** pricing a refusal as a grant made SNAX-GVSoC's contiguous mvt 32 % above its padded twin against the netlist's 10 %; the stall cycles' cost is the floor's.
-- **Where:** `report/model_fit.py`; `cost_tables.md`, "The model's gate-level terms"; `results/cluster/runs/2026-11-27_cost3_r1.md`.
+- **Where:** `report/model_fit.py`; `cost_tables.md`, "The model's gate-level terms"; `results/cluster/runs/2026-11-27_cost3_r1.md`. Amended by X116 (the price from the blocks alone, these two pairs its checks).
 
 ### X112 — The idle floor and the L2 ↔ L1 transfers
 
@@ -545,6 +545,12 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** `ge/csyn2/` keeps CSYN2's energy runs of the 17 tier A points, `ge/ge1/` GE1's of the five `dot3_w*_cg` points (snax-forge `0416557`, bundles `b29bf0c`: the program their power runs used), and `ge/` the runs with the current prices (`cluster ge`, tier A only). `model-fit` and `ablation` read a point's run in that order (`model_fit.py`'s `GE_ORDER`); `ablation`'s `run` column is `ge/<point>.json` when it is not that run.
 - **Why:** today's dot3 programs are not the ones their netlists ran (window cycles, `stall_in`, a `copies` counter), so a new dot3 run would not match its power reports; the fits must read the runs as priced before the terms, which the new runs already include (Ryan, 28 Nov).
 - **Where:** `report/model_fit.py`, `report/ablation.py`, `cluster/README.md` ("ge"); `results/cluster/runs/2026-11-28_cost3_r3.md`.
+
+### X116 — A refused request's price from the blocks alone
+
+- **Decided:** $r$ is measured on the streamer reader and the interconnect alone, on the whole grant grid (168 readers, 17 interconnects, 18 `xbar_mix` points, gated), each point also run idle (nothing requested) and refused (requests held while refused: a reader's TCDM `ready` random each cycle, the interconnect's inputs paired on one bank in step): $r = (E_{ref} - E_{grant} - (C_{ref} - C_{grant})\thinspace e_{idle}) / (R\thinspace e_{grant})$, $R$ the refused request-cycles, $e_{grant}$ a lane's or an access's granted price. One $r$ per block when every point is within ±20 % of its set's mean, else a table beside the grant prices; clamped at 0. The `mvt_v4` and `bicg_v2` pairs become checks. Amends X111.
+- **Why:** X111's $r$ was fitted on one of the two pairs it is checked on; the grant grid gives each point its own grant price on the same netlist and testbench (Ryan, 28 Nov). The idle runs also check the floor (X112) block by block, a check only.
+- **Where:** `sim/sources/strm.py` (the modes), `sim/pwr.py` (`--mode`), `report/refusal_fit.py`; `power.md`, "Streamer and interconnect"; `results/strm/runs/2026-11-28_cost3_r5.md`.
 
 ## Reports and comparison
 
