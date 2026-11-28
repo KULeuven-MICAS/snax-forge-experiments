@@ -281,11 +281,19 @@ $$e_{l2} = \frac{\sum (E - C\thinspace f_{dma})}{\sum n}$$
 
 54.48 pJ a beat on all five points, the AXI's share in the rest (42–50 pJ a beat) and the superbank muxes' (`tcdm_logic`, about 14) outside the six parts. PT puts the banks there at 4.17 pJ an access against CACTI's 3.39 (read) and 6.45 (write); that is averaged PT's macro bias on the DMA's correlated request and write enable (PITFALLS PT7, X96), so the model keeps CACTI's prices.
 
-**A refused request.** The pair `mvt_contiguous_w8_cg` and `mvt_padded_w8_cg` share a netlist and their grants; refusals and the cycles they take are the only difference. For a part, the netlist's difference less its floor over the extra cycles, over what SNAX-GVSoC charges for the extra refusals at the granted price:
+**A refused request** (X116). Measured on the blocks alone, on the grant grid (`report/refusal_fit.py`, `power.md`, "Streamer and interconnect"). A reader runs three times: granted, idle and refused (its TCDM `ready` random each cycle). With $E$ and $C$ a run's window energy and cycles, $e_{idle}$ the idle run's energy a cycle, $R$ the refused request-cycles and $e_{lane}$ a lane's granted price (the beat over the channels):
 
-$$r = \frac{\Delta E_{nl} - p\thinspace\Delta C}{\Delta E_{granted}}$$
+$$r = \frac{E_{ref} - E_{grant} - (C_{ref} - C_{grant})\thinspace e_{idle}}{R\thinspace e_{lane}}$$
 
-Streamers (13.23 − 7.58) / 66.67 = 0.085; crossbar (5.88 − 7.02) / 43.46 < 0, so 0.
+The extra cycles pay the idle energy, as the model's floor pays every cycle. On the 168 readers $r$ is 0.072–0.262, falling with depth (0.23 at 2, 0.10 at 16) and channels; it is `streamer.csv`'s `r_refused`, read like the other columns, and `model_fit.json`'s `r_strm` is its mean, 0.1505. Example: depth 8, 4 channels, 3 loops, 0.119.
+
+The interconnect's refused run is set against an `apart` run with the same grants, cycles, banks and request fields and one input of a group valid at a time, at 2 and at 4 inputs a bank. With $F$ the first refused cycles:
+
+$$E_{ref} - E_{apart} = e_{first}\thinspace F + e_{more}\thinspace(R - F)$$
+
+On the 35 points $e_{first}$ is −0.009 pJ and $e_{more}$ +0.007 pJ (−0.002 and +0.002 of an access): a refused request costs the interconnect nothing. `r_xbar` is $e_{more}$ over the access, 0.0018. The first measurement, against the grant and idle runs, gave 3.2–3.9 pJ a refusal: that was the extra half-busy cycles' energy above idle, not the refusals'.
+
+The pair `mvt_contiguous_w8_cg` and `mvt_padded_w8_cg` (one netlist, equal grants) is a check, as is `bicg_v2` int64. Its own fit (X111), the netlist's difference less its floor over the extra cycles, over SNAX-GVSoC's extra refusals at the granted price, gives streamers (13.23 − 7.58) / 66.67 = 0.085 and crossbar (5.88 − 7.02) / 43.46 < 0.
 
 ## Reading a table
 

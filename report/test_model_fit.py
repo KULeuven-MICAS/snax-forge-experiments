@@ -42,12 +42,15 @@ def test_refusal():
     r = REP["refusal"]
     assert r["fit"]["grants"][0] == r["fit"]["grants"][1]
     assert r["fit"]["d_refusals"] > 20000, r["fit"]["d_refusals"]
-    assert 0 < r["r_strm"] < 0.2, r["r_strm"]
-    assert r["r_xbar"] == 0.0 and r["fit"]["parts"]["crossbar"]["raw"] < 0
-    chk = r["check"]["parts"]
-    total_nl = sum(v["d_netlist_nj"] for v in chk.values())
-    total_model = sum(v["model_nj"] for v in chk.values())
-    assert abs(total_nl - total_model) < 1.0, (total_nl, total_model)
+    assert r["source"] == "blocks" and 0.1 < r["r_strm"] < 0.2, r["r_strm"]
+    assert 0 <= r["r_xbar"] < 0.01 and abs(r["blocks"]["xbar"]["r_first"]) < 0.01, r["blocks"]
+    assert r["blocks"]["strm"]["points"] == 168 and r["blocks"]["xbar"]["points"] == 35
+    assert r["fit"]["parts"]["crossbar"]["raw"] < 0    # the mvt pair's own: a refusal costs the crossbar nothing
+    # the pairs with the blocks' r, never fitted on them (the ablation checks them against the criteria)
+    tot = {k: (sum(v["d_netlist_nj"] for v in r[k]["parts"].values()), sum(v["model_nj"] for v in r[k]["parts"].values()))
+           for k in ("fit", "check")}
+    assert abs(tot["fit"][1] / tot["fit"][0] - 1) < 0.35, tot      # mvt: 19.1 nJ at the netlist
+    assert abs(tot["check"][1] - tot["check"][0]) < 3.0, tot       # bicg: -2.4 nJ
 
 
 def test_copy_has_no_crossbar_access():

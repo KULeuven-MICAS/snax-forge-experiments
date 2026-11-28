@@ -10,10 +10,13 @@ dma group in the CALIBRATION points' dma_in and dma_out windows less f_dma a cyc
 accesses SNAX-GVSoC's energy run counts beyond its priced ones, over the superbank's banks): e_l2. SNAX-GVSoC's runs
 are read as priced before the terms, the first file of GE_ORDER that has the point: ge/csyn2/ (CSYN2's tier A),
 ge/ge1/ (GE1's dot3, the program their power runs used), then ge/ (the runs with the current prices).
-Refusals (X111): REF_PAIR's netlist difference per part less the fitted floor over the extra cycles, over SNAX-GVSoC's
-difference in refused requests at the granted price: r_strm, r_xbar, clamped at 0. Checks on tier A (cluster/
-points.json, the crossbar's inputs from SNAX_FORGE's paper/data/): the floor per point, e_l2 per point, the refusal pair REF_CHECK,
-and the copies' crossbar above its floor (X113). Writes results/cluster/<tech>/model_fit.json; --md prints tables.
+Refusals (X116): from the blocks alone, results/strm/<tech>/refusal.json (report/refusal_fit.py): r_strm the
+reader grid's mean (each reader's own in streamer.csv's r_refused), r_xbar the interconnect's refused-against-apart
+r_more (a refused request's further cycles, as a stalled streamer's), clamped at 0. REF_PAIR's own fit (X111: the
+netlist difference per part less the floor over the extra cycles, over SNAX-GVSoC's refusals at the granted price)
+stays beside it as a check. Checks on tier A (cluster/points.json, the crossbar's inputs from SNAX_FORGE's
+paper/data/): the floor per point, e_l2 per point, both refusal pairs with the blocks' r, and the copies' crossbar
+above its floor (X113). Writes results/cluster/<tech>/model_fit.json; --md prints tables.
 """
 
 from __future__ import annotations
@@ -128,9 +131,10 @@ def lane_prices(ge: dict) -> dict[str, tuple[float, float]]:
 
 
 def refused(ge: dict, marks: set[int]) -> dict:
-    """Refusals over the windows and their energy at the granted price, per part; grants for the pair check."""
+    """Refusals over the windows and their energy at the granted price, per part and per mover (the streamers');
+    grants for the pair check."""
     lp = lane_prices(ge)
-    out = {"refusals": 0, "grants": 0, "streamers_nj": 0.0, "crossbar_nj": 0.0}
+    out = {"refusals": 0, "grants": 0, "streamers_nj": 0.0, "crossbar_nj": 0.0, "movers_nj": {}}
     for w in ge["windows"]:
         if w["mark"] not in marks:
             continue
@@ -141,6 +145,7 @@ def refused(ge: dict, marks: set[int]) -> dict:
             out["refusals"] += c["stalls"]
             out["grants"] += c["grants"]
             out["streamers_nj"] += c["stalls"] * lp[mover][0] / 1e3
+            out["movers_nj"][mover] = out["movers_nj"].get(mover, 0.0) + c["stalls"] * lp[mover][0] / 1e3
             out["crossbar_nj"] += c["stalls"] * lp[mover][1] / 1e3
     return out
 
@@ -172,19 +177,35 @@ def pair(en: dict, tech: str, a: str, b: str, floor: dict, paper: dict, parts: d
     return out
 
 
+def blocks(tech: str) -> dict:
+    """The refusal fractions from refusal.json (X116): the reader grid's mean r and range, the interconnect's
+    r_first and r_more (xbar and xbar_mix together); r_xbar is r_more."""
+    f = json.loads((ROOT / "results" / "strm" / tech / "refusal.json").read_text())
+    s = f["sets"]["streamer"]
+    ab = [q for k in ("xbar", "xbar_mix") for q in f["ab"][k]["points"].values()]
+    if not s["n"] or not ab:
+        raise SystemExit("refusal.json has no reader grid or no refused-against-apart runs: run refusal-fit first")
+    first = sum(q["r_first"] for q in ab) / len(ab)
+    more = sum(q["r_more"] for q in ab) / len(ab)
+    return {"r_strm": max(s["mean"], 0.0), "r_xbar": max(more, 0.0),
+            "strm": {"points": s["n"], "mean": s["mean"], "min": s["min"], "max": s["max"]},
+            "xbar": {"points": len(ab), "r_first": first, "r_more": more}}
+
+
 def fit_refusal(en: dict, tech: str, floor: dict, paper: dict, parts: dict) -> dict:
+    """The blocks' r (X116), and both refusal pairs as checks: REF_PAIR's own r beside it (X111's fit)."""
+    b = blocks(tech)
+    r = {"streamers": b["r_strm"], "crossbar": b["r_xbar"]}
     fit = pair(en, tech, *REF_PAIR, floor, paper, parts)
     if fit["grants"][0] != fit["grants"][1]:
         raise SystemExit(f"{REF_PAIR}: the grants differ ({fit['grants']}), refusals are not the only difference")
-    r = {}
-    for p, v in fit["parts"].items():
-        raw = (v["d_netlist_nj"] - v["d_floor_nj"]) / v["d_granted_nj"]
-        v["raw"] = raw
-        r[p] = max(raw, 0.0)
     chk = pair(en, tech, *REF_CHECK, floor, paper, parts)
-    for p, v in chk["parts"].items():
-        v["model_nj"] = r[p] * v["d_granted_nj"] + v["d_floor_nj"]
-    return {"r_strm": r["streamers"], "r_xbar": r["crossbar"], "fit": fit, "check": chk}
+    for side in (fit, chk):
+        for p, v in side["parts"].items():
+            v["raw"] = (v["d_netlist_nj"] - v["d_floor_nj"]) / v["d_granted_nj"]   # the pair's own r
+            v["model_nj"] = r[p] * v["d_granted_nj"] + v["d_floor_nj"]
+    return {"r_strm": b["r_strm"], "r_xbar": b["r_xbar"], "source": "blocks", "blocks": b, "fit": fit,
+            "check": chk}
 
 
 def tier_a(en: dict) -> list[dict]:
@@ -238,17 +259,21 @@ def markdown(j: dict) -> str:
     out = ["The idle floor (pJ a cycle):", "",
            f"- streamers {fl['streamers']['k_pj']:.4f} a mover or channel; crossbar {fl['crossbar']['a_pj']:.3f} "
            f"+ {fl['crossbar']['b_pj']:.4f} an input; DMA {fl['dma']['pj']:.3f}",
-           f"- e_l2 {j['l2']['e_l2_pj']:.2f} pJ a beat; r_strm {r['r_strm']:.4f}, r_xbar {r['r_xbar']:.4f} "
-           f"(raw {r['fit']['parts']['crossbar']['raw']:.4f})", "",
+           f"- e_l2 {j['l2']['e_l2_pj']:.2f} pJ a beat; r_strm {r['r_strm']:.4f} (the readers' mean, "
+           f"{r['blocks']['strm']['min']:.3f}–{r['blocks']['strm']['max']:.3f}), r_xbar {r['r_xbar']:.4f} "
+           f"(r_first {r['blocks']['xbar']['r_first']:+.4f}); the mvt pair's own {r['fit']['parts']['streamers']['raw']:.4f}, "
+           f"{r['fit']['parts']['crossbar']['raw']:.4f}", "",
            "| point | streamers fitted / measured | crossbar | DMA | e_l2 pJ a beat |", "|---|---|---|---|---|"]
     for pt, v in j["check"]["floor"].items():
         cells = [f"{v[q]['fitted']:.2f} / {v[q]['measured']:.2f} ({_pct(v[q]['fitted'], v[q]['measured'])})"
                  for q in ("streamers", "crossbar", "dma")]
         l2 = j["check"]["l2"].get(pt)
         out.append(f"| `{pt}` | " + " | ".join(cells) + (f" | {l2['pj']:.1f} |" if l2 else " | – |"))
-    out += ["", "The refusal check (nJ, a − b):", "", "| part | netlist | model (r × granted + floor) |", "|---|---|---|"]
-    for p, v in r["check"]["parts"].items():
-        out.append(f"| {p} | {v['d_netlist_nj']:+.2f} | {v['model_nj']:+.2f} |")
+    out += ["", "The refusal pairs (nJ, a − b), the blocks' r:", "", "| pair | part | netlist | model (r × granted + floor) |",
+            "|---|---|---|---|"]
+    for name, side in (("mvt", r["fit"]), ("bicg", r["check"])):
+        for p, v in side["parts"].items():
+            out.append(f"| {name} | {p} | {v['d_netlist_nj']:+.2f} | {v['model_nj']:+.2f} |")
     out += ["", "| copy | crossbar above floor, pJ a burst | D184's two accesses |", "|---|---|---|"]
     for pt, v in j["check"]["copy_crossbar"].items():
         out.append(f"| `{pt}` | {v['above_floor_pj_burst']:.2f} | {v['d184_pj_burst']:.2f} |")

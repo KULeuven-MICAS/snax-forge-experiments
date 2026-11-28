@@ -13,6 +13,7 @@ for, the gated ones by default. Standard library only.
 from __future__ import annotations
 
 import csv
+import json
 import itertools
 import random
 import sys
@@ -151,6 +152,12 @@ class TestGated(unittest.TestCase):
             self.assertEqual([(r["channels"], r["area_um2"], r["e_beat_pj"], r["flops"], r["status"]) for r in cg],
                              [("4", "80", "10", "53", "ok")])
             self.assertEqual(st.build("streamer", "nangate45", root=Path(t)), cg)   # the gated rows by default
+            self.assertEqual([r["r_refused"] for r in cg], [""])                     # no refusal.json: empty
+            f = Path(t) / "results" / "strm" / "nangate45" / "refusal.json"
+            f.parent.mkdir(parents=True)
+            f.write_text(json.dumps({"sets": {"streamer": {"points": {"d8_l1_c4": {"r": 0.125}}}}}))
+            self.assertEqual([r["r_refused"] for r in st.build("streamer", "nangate45", root=Path(t))], ["0.125"])
+            self.assertEqual([r["r_refused"] for r in st.build("streamer", "nangate45", "0", Path(t))], ["", ""])
 
 
 if __name__ == "__main__":

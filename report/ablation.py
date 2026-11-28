@@ -4,7 +4,8 @@
     pixi run ablation [--tech nangate45] [--md]
 
 Re-prices each tier A point's energy run as CSYN2 priced it (model_fit's _ge: ge/csyn2/, ge/ge1/, then ge/) over the
-program window with model_fit.json's terms, adding one per STEPS: refusals at r_strm and r_xbar of the granted price (D203), the idle floor of the
+program window with model_fit.json's terms, adding one per STEPS: refusals at r_xbar and each mover's r (its reader's, from ge/<point>.json's prices where
+they carry one, else the readers' mean r_strm; X116) of the granted price (D203), the idle floor of the
 streamers, crossbar and DMA (D205), the L2 <-> L1 transfers' bank accesses and e_l2 (D204), the copy at the dma
 group's e_burst (dma_copy.json) with no crossbar access (X113). Per step, the six parts' total over the netlist's
 (energy.json), the pairs PAIRS' changes at both levels, and per kernel the dynamic top-1 and tau-a against the
@@ -30,13 +31,16 @@ PAIRS = (("mvt_contiguous_w8", "mvt_padded_w8"), ("bicg_sequential_contiguous_w8
          ("mvt_column", "mvt_column_pipeline"), ("bicg_two_pass", "bicg_two_pass_pipeline"))
 
 
-def steps(ge: dict, marks: set[int], fit: dict, e_burst: float, sh: dict) -> dict[str, dict[str, float]]:
-    """The six parts' nJ after each step, cumulative."""
+def steps(ge: dict, marks: set[int], fit: dict, e_burst: float, sh: dict,
+          r_movers: dict[str, float] | None = None) -> dict[str, dict[str, float]]:
+    """The six parts' nJ after each step, cumulative; a mover's refusals at its own r_movers (its reader's
+    r_refused, X116) where given, at the readers' mean r_strm otherwise."""
     ws = [w for w in ge["windows"] if w["mark"] in marks]
     e = {p: sum(w["energy"]["parts"].get(p, 0.0) for w in ws) for p in tc.DYN}
     out = {"committed": dict(e)}
     ref = mf.refused(ge, marks)
-    e["streamers"] -= (1 - fit["refusal"]["r_strm"]) * ref["streamers_nj"]
+    rm = r_movers or {}
+    e["streamers"] -= sum((1 - rm.get(m, fit["refusal"]["r_strm"])) * nj for m, nj in ref["movers_nj"].items())
     e["crossbar"] -= (1 - fit["refusal"]["r_xbar"]) * ref["crossbar_nj"]
     out["refusals"] = dict(e)
     f = mf.floor_pj(fit["floor"], sh)
@@ -61,14 +65,26 @@ def base_ge(tech: str, pt: str) -> dict:
     return mf._ge(tech, pt)
 
 
-def rerun_nj(tech: str, pt: str, marks: set[int]) -> float | None:
-    """ge/<point>.json's six parts over the program window when it is priced with the terms, else None: also when
-    there is no such file, or it is the one base_ge read (no run beside the base)."""
+def rerun_ge(tech: str, pt: str) -> dict | None:
+    """ge/<point>.json when it is priced with the terms and is not the file base_ge read, else None."""
     f = ROOT / "results" / "cluster" / tech / "ge" / f"{pt}.json"
     if not f.is_file() or f.resolve() == mf.ge_path(tech, pt).resolve():
         return None
     ge = json.loads(f.read_text())
-    if "r_strm" not in ge["prices"]:
+    return ge if "r_strm" in ge["prices"] else None
+
+
+def r_movers(tech: str, pt: str) -> dict[str, float]:
+    """Each mover's own refusal fraction, from the rerun's prices where they carry one (snax-forge's per mover r)."""
+    ge = rerun_ge(tech, pt)
+    return {m: v["r"] for m, v in ge["prices"]["movers"].items() if "r" in v} if ge else {}
+
+
+def rerun_nj(tech: str, pt: str, marks: set[int]) -> float | None:
+    """ge/<point>.json's six parts over the program window when it is priced with the terms, else None: also when
+    there is no such file, or it is the one base_ge read (no run beside the base)."""
+    ge = rerun_ge(tech, pt)
+    if ge is None:
         return None
     return sum(sum(v for k, v in w["energy"]["parts"].items() if k in tc.DYN) for w in ge["windows"] if w["mark"] in marks)
 
@@ -95,8 +111,9 @@ def report(tech: str) -> dict:
             nl["nj"]["memory_pt"] = nl["nj"]["memory"]
             nl["nj"]["memory"] = counted[pt]["total"]["counted_nj"]
             banks = "counted"
-        st = steps(ge, marks, fit, e_burst, mf.shape_of(tech, paper, pt))
-        rows[pid] = {"kernel": tc.kernel_of(pid), "banks": banks,
+        rm = r_movers(tech, pt)
+        st = steps(ge, marks, fit, e_burst, mf.shape_of(tech, paper, pt), rm)
+        rows[pid] = {"kernel": tc.kernel_of(pid), "banks": banks, "r_movers": "own" if rm else "mean",
                      "netlist_nj": sum(v for k, v in nl["nj"].items() if k in tc.DYN), "netlist_parts": nl["nj"],
                      "steps": {s: {"nj": sum(v.values()), "parts": v} for s, v in st.items()}}
         for s in rows[pid]["steps"].values():
