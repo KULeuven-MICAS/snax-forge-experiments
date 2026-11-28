@@ -69,6 +69,8 @@
   {"point": "pack/d2_i32", "datapath": "FifoPacker", "params": {"inLanes": 1, "laneType": "int32", "words": 1}},
   {"point": "pack/d4_i16", "datapath": "FifoPacker", "params": {"inLanes": 1, "laneType": "int16", "words": 1}},
   {"point": "pack/d8_i8", "datapath": "FifoPacker", "params": {"inLanes": 1, "laneType": "int8", "words": 1}},
+  {"point": "pack/d4_i8", "datapath": "FifoPacker", "params": {"inLanes": 2, "laneType": "int8", "words": 1}},
+  {"point": "pack/d2_i8", "datapath": "FifoPacker", "params": {"inLanes": 4, "laneType": "int8", "words": 1}},
   {"point": "slice/d2_i32_n1", "datapath": "FifoSlicer", "params": {"words": 1, "laneType": "int32", "outLanes": 1}},
   {"point": "slice/d4_i16_n1", "datapath": "FifoSlicer", "params": {"words": 1, "laneType": "int16", "outLanes": 1}},
   {"point": "slice/d2_i16_n2", "datapath": "FifoSlicer", "params": {"words": 1, "laneType": "int16", "outLanes": 2}},
