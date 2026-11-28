@@ -82,9 +82,12 @@ class TestCharExport(unittest.TestCase):
         errs = []
         for p in self.points:
             name, dp = p["point"], p["datapath"]
-            if name not in self.d or dp in ce.STREAM or ct.check_only(dp, ce.as_measured(dp, p["params"], cat)):
+            if name not in self.d or dp in ce.STREAM or dp in ct.WIRES:
                 continue
-            est = ce.leak_at(self.j, dp, ce.as_measured(dp, p["params"], cat))
+            params, _ = ce.params_of(self.d, p, cat)
+            if ct.check_only(dp, params):
+                continue
+            est = ce.leak_at(self.j, dp, params)
             errs.append(est / float(self.d[name]["synth"]["leak_power_uw"]) - 1)
         errs.sort()
         self.assertGreater(len(errs), 50)
@@ -128,7 +131,8 @@ class TestCharExport(unittest.TestCase):
         for p in self.points:
             key = ce.table_key(self.j, p["datapath"], p["params"])
             there = (p["datapath"], json.dumps(key, sort_keys=True), p["params"].get("lanes"), p["params"].get("depth"))
-            self.assertEqual(there in written, not ct.check_only(p["datapath"], p["params"]), p["point"])
+            self.assertEqual(there in written, not ct.check_only(p["datapath"], p["params"])
+                             and p["datapath"] not in ct.WIRES, p["point"])
 
     def test_copy_from_the_pair_at_w0(self):
         params = next(p["params"] for p in self.points if p["point"] == "mac/acc_w8_i8_i32")
@@ -186,7 +190,8 @@ class TestCharExport(unittest.TestCase):
         """X99: each SimdLanes scalar form is one entry at its exact params (snax-forge's lookup key: None values
         dropped, lanes aside), copy over lanes, apart from the plain op at its pair; listed after the plain rows with
         its scalars in the op column; its commit is source.snax_forge_scalar."""
-        forms = [q for q in self.points if q["datapath"] == "SimdLanes" and ct.scalar(q["params"])]
+        forms = [q for q in self.points if q["datapath"] == "SimdLanes" and ct.scalar(q["params"])
+                 and not ct.e2e1(q["params"])]
         self.assertEqual(len(forms), 7)
         for q in forms:
             p, name = q["params"], q["point"]
@@ -206,8 +211,31 @@ class TestCharExport(unittest.TestCase):
         _, rows = ct.block_rows({TECH: self.d}, "lanes")
         names = [r[0].strip("`") for r in rows]
         first = min(names.index(q["point"]) for q in forms)
-        self.assertEqual(set(names[first:]), {q["point"] for q in forms})   # after every plain row
+        self.assertEqual(set(names[first:first + len(forms)]), {q["point"] for q in forms})   # after every plain row
         self.assertEqual(self.j["source"]["snax_forge_scalar"], self.d[forms[0]["point"]]["synth"]["snax_forge_commit"])
+
+    def test_e2e1_forms_own_entries(self):
+        """X116: requant, axpbypcz and threshold each one entry at W = 1 at its exact params and own types, copy over
+        lanes, its W = 8 point not written; listed after X99's forms; source.snax_forge_e2e1; no HaloLink entry."""
+        forms = [q for q in self.points if ct.e2e1(q["params"])]
+        self.assertEqual(len(forms), 10)
+        ones = [q for q in forms if q["params"]["lanes"] == 1]
+        self.assertEqual(len(ones), 5)
+        for q in ones:
+            name, want = q["point"], {k: v for k, v in q["params"].items() if k != "lanes"}
+            x = [e for e in self.j["blocks"]["SimdLanes"] if e["params"] == want]
+            self.assertEqual(len(x), 1, name)
+            self.assertEqual((x[0]["lanes_rule"], [p["lanes"] for p in x[0]["points"]]), ("copy", [1]))
+            self.assertEqual(x[0]["points"][0]["e_comb_pj"], ct.e(self.d, name, "busy", "e_comb_pj"))
+            self.assertEqual(ct.group(self.d[name]), ct.E2E1)
+        gray = next(q["params"] for q in ones if q["params"].get("k1") == 77)
+        self.assertEqual((gray["inTypes"], gray["opType"]), (["uint8"] * 3, "uint16"))   # types as measured
+        self.assertEqual(ct.pair_label(gray), "u8")
+        _, rows = ct.block_rows({TECH: self.d}, "lanes")
+        names = [r[0].strip("`") for r in rows]
+        self.assertEqual(set(names[-len(forms):]), {q["point"] for q in forms})   # after X99's forms
+        self.assertNotIn("HaloLink", self.j["blocks"])
+        self.assertEqual(self.j["source"]["snax_forge_e2e1"], self.d[ones[0]["point"]]["synth"]["snax_forge_commit"])
 
     def test_slicer_bits(self):
         """64 + ceil(log2 d_in) + 1 flops (word, counter, full), 64 / d_in + ceil(log2 d_in) loading a pop (X94), one

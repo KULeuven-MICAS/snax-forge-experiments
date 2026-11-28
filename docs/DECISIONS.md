@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X111**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X118**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -208,7 +208,7 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 ### X29 — The block grid
 
-- **Decided:** 27 int64 points: SimdLanes add, mul and the accumulating Mac at W = 1, 8, 32; TreeAccumulate W = 1–32; SerialAccumulate W = 2–32; LinkBuffer D = 1–16 (W = 1), D = 1 at W = 8, 32; beside them X89, X94, X97, X98, X99.
+- **Decided:** 27 int64 points: SimdLanes add, mul and the accumulating Mac at W = 1, 8, 32; TreeAccumulate W = 1–32; SerialAccumulate W = 2–32; LinkBuffer D = 1–16 (W = 1), D = 1 at W = 8, 32; beside them X89, X94, X97, X98, X99, X116.
 - **Why:** the forms forge uses, enough for a first-order model.
 - **Where:** `char/points.json`.
 
@@ -277,6 +277,18 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** the seven SimdLanes scalar forms snax-forge's estimate looks up, each its own `char.json` entry at W = 1 keyed by its scalars, `copy` over lanes, gated, built at their own snax-forge commit (`source.snax_forge_scalar`): one stream with k (`mul` by k from a CSR at int64 and at int8 → int32, `max` with k = 0 baked at int32) and axpby with k1 and k2 (both from CSRs at int64 and int32, k1 from a CSR alone, k1 baked to 3, at int32). A scalar from a CSR is an input pin of opType's width that the testbench holds at one random full-width value a window (drawn after the data, applied at the window's lead-in), outside the toggle check; `char_table` lists the forms after the plain SimdLanes rows, the scalars in the op column, and sets each beside the plain SimdLanes at its pair and W.
 - **Why:** gesummv's forms scale a matrix by a CSR scalar or end in one axpby, and axpy and relu have scalars too; `char.json` had no SimdLanes with a scalar, so the estimate priced all of them at 0 (`char.missing`). Measured, a scale by a CSR k is the plain multiplier's netlist (the int8 one X98's int8 × int32 mul) at 0.79 to 0.80 of its energy a fire, k held; axpby with both scalars from CSRs is two multipliers and an add in area (2.03 to 2.04 muls beyond the add) at 1.34 to 1.44 muls of energy; k1 baked to 3 is a second adder; relu's max with 0 a quarter of an add.
 - **Where:** `results/char/runs/2026-11-25_tiera4_x1.md`; `results/char/char_table.md`, "Scalar forms"; `power.md`, "Char".
+
+### X116 — SimdLanes' requant, axpbypcz and threshold, and the halo link
+
+- **Decided:** the five SimdLanes forms E2E1 uses, each its own `char.json` entry at W = 1 at its exact params, its own types kept (uint8, uint16) and every slot (k1, k2, k3, d, lo, hi, the Csr pins), `copy` over lanes, gated, at snax-forge `aac5c21` (`source.snax_forge_e2e1`): requant int32 → int8 at d 1024 and 512 (lo 0, hi 127), axpbypcz of three uint8 at uint16 → uint8 for gray (k 77, 150, 29, d 256) and the blurs (k2 2, d 4), threshold uint8 at int16 → uint8 (k from a CSR, hi 255, its k X117); their W = 8 points check the copy rule and are not exported. The halo link (`HaloLink`, snax-forge D206) has no entry: snax-forge's lookup gives comb 0 and energy 0, found `wires`, its flops priced from the catalogue as every block's. The char testbench's kind `halo` drives it: one `stream` window, a load every cycle after a fill of H loads.
+- **Why:** E2E1's int8 MLP and gray-blur-threshold pipeline, whose blocks had no entry, so every E2E1 design raised `char.missing`; snax-forge's lookup keys these ops at their own types and slots (a shift keeps a sum's high bits, a clamp or compare reads all of opType), not at the width pair. Measured at W = 1: requant 19.4 µm², 0.072 pJ a fire (d 512: 18.9 µm², 0.060 pJ), gray 331.4 µm², 0.534 pJ (2.53 int8 muls of area), blur 60.9 µm², 0.131 pJ, threshold 59.9 µm², 0.121 pJ. At W = 8 each is within 4 % of 8 × its W = 1 point but the threshold, which the rule prices high by 7 % in area, 8 % in energy and 27 % in leakage: DC builds its W = 8 from full adders that leak less per µm² (0.0207 against 0.0245 µW/µm²). Leakage is outside the default estimate and the paper's figures (COST2), so it moves no reported number. The halo link's comb is one reset inverter a flop (0.532 µm², DFFR_X1's reset is active low; 34.0 of 403.5 µm², 8.4 %, at W = 8) and its stream e_comb 0: the taps are wires and the load a clock gate. The inverters are left out of its price as they are a flop's, not the link's, and no lanes rule fits them (the link holds H = 2 beats at W = 1, 1 at W ≥ 2).
+- **Where:** `results/char/runs/2026-11-27_e2e1_a5.md`; `results/char/char_table.md`, "E2E1 forms" and "HaloLink"; `power.md`, "Char"; snax-forge's `snax_forge/char/__init__.py` (`WIRES`).
+
+### X117 — A threshold's k inside the data's range
+
+- **Decided:** a SimdLanes threshold reading k from its CSR holds one value a window uniform over a's range above its least value (1 to 255 for uint8), from a generator of its own (`default_rng([seed, 1])`, `sim/pwr.py`'s `threshold_k`), not X99's full-width value drawn after the data; every other scalar as X99.
+- **Why:** a full-width int16 k lies outside 1 to 256 in 99.6 % of draws, and then every lane's output is constant (k `0xb804` at W = 1 and `0xb1c6` at W = 8 gave 255 through busy); drawn after the data, W = 1 and W = 8 also held different values, and the W = 8 point came out at 0.62 of its copy rule. Inside the range both hold k = 134 in busy and 227 in idle, the output takes 0 and 255, and W = 8 lands at 0.917.
+- **Where:** `sim/pwr.py` (`threshold_k`); `power.md`, "Char"; `results/char/runs/2026-11-27_e2e1_a5.md`.
 
 ### X52 · X82 — Reader and interconnect characterized
 

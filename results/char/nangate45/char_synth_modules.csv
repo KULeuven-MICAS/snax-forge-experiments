@@ -1,4 +1,10 @@
 point,tech,clock_ns,clk_gate,path,design,area_um2,comb_um2,seq_um2,bbox_um2,dyn_power_uw,leak_power_uw
+halo/t3_w1_i8,nangate45,10,1,HaloLink_i8_n1_t3,HaloLink_i8_n1_t3,97.0900,8.5120,85.1200,0.0000,9.997,1.61
+halo/t3_w1_i8,nangate45,10,1,clk_gate_beats_1_0_reg,SNPS_CLOCK_GATE_HIGH_HaloLink_i8_n1_t3,3.4580,0.0000,3.4580,0.0000,,
+halo/t3_w32_i8,nangate45,10,1,HaloLink_i8_n32_t3,HaloLink_i8_n32_t3,1629.2501,136.1920,1489.6001,0.0000,213.95,34.3
+halo/t3_w32_i8,nangate45,10,1,clk_gate_beats_0_31_reg,SNPS_CLOCK_GATE_HIGH_HaloLink_i8_n32_t3,3.4580,0.0000,3.4580,0.0000,,
+halo/t3_w8_i8,nangate45,10,1,HaloLink_i8_n8_t3,HaloLink_i8_n8_t3,403.5220,34.0480,366.0160,0.0000,52.624,8.16
+halo/t3_w8_i8,nangate45,10,1,clk_gate_beats_0_7_reg,SNPS_CLOCK_GATE_HIGH_HaloLink_i8_n8_t3,3.4580,0.0000,3.4580,0.0000,,
 lanes/add_w1,nangate45,10,1,SimdLanes_i64xi64_i64_i64_n1_add,SimdLanes_i64xi64_i64_i64_n1_add,269.7240,0.0000,0.0000,0.0000,45.825,4.83
 lanes/add_w1,nangate45,10,1,alus_0,ElementwiseAlu_w64_add,269.7240,269.7240,0.0000,0.0000,45.825,4.83
 lanes/add_w1_i16_i16,nangate45,10,1,SimdLanes_i16xi16_i16_i16_n1_add,SimdLanes_i16xi16_i16_i16_n1_add,65.4360,0.0000,0.0000,0.0000,11.023,1.19
@@ -74,6 +80,10 @@ lanes/axpby_w1_i32_k1_3,nangate45,10,1,SimdLanes_i32xi32_i32_i32_n1_axpby_k13,Si
 lanes/axpby_w1_i32_k1csr,nangate45,10,1,SimdLanes_i32xi32_i32_i32_n1_axpby_k1r,SimdLanes_i32xi32_i32_i32_n1_axpby_k1r,1924.7760,1924.7760,0.0000,0.0000,243.604,40
 lanes/axpby_w1_i32_k1csr_k2csr,nangate45,10,1,SimdLanes_i32xi32_i32_i32_n1_axpby_k1r_k2r,SimdLanes_i32xi32_i32_i32_n1_axpby_k1r_k2r,3840.5080,3840.5080,0.0000,0.0000,463.719,80.9
 lanes/axpby_w1_i64_k1csr_k2csr,nangate45,10,1,SimdLanes_i64xi64_i64_i64_n1_axpby_k1r_k2r,SimdLanes_i64xi64_i64_i64_n1_axpby_k1r_k2r,14343.2521,14343.2521,0.0000,0.0000,1810.724,300
+lanes/axpbypcz_w1_u8_u16_u8_k22_d4,nangate45,10,1,SimdLanes_u8xu8xu8_u16_u8_n1_axpbypcz_k22_d4,SimdLanes_u8xu8xu8_u16_u8_n1_axpbypcz_k22_d4,60.9140,60.9140,0.0000,0.0000,8.507,1.1
+lanes/axpbypcz_w1_u8_u16_u8_k77_k150_k29_d256,nangate45,10,1,SimdLanes_u8xu8xu8_u16_u8_n1_axpbypcz_k177_k2150_k329_d256,SimdLanes_u8xu8xu8_u16_u8_n1_axpbypcz_k177_k2150_k329_d256,331.4360,331.4360,0.0000,0.0000,37.09,6.44
+lanes/axpbypcz_w8_u8_u16_u8_k22_d4,nangate45,10,1,SimdLanes_u8xu8xu8_u16_u8_n8_axpbypcz_k22_d4,SimdLanes_u8xu8xu8_u16_u8_n8_axpbypcz_k22_d4,487.3120,487.3120,0.0000,0.0000,68.063,8.82
+lanes/axpbypcz_w8_u8_u16_u8_k77_k150_k29_d256,nangate45,10,1,SimdLanes_u8xu8xu8_u16_u8_n8_axpbypcz_k177_k2150_k329_d256,SimdLanes_u8xu8xu8_u16_u8_n8_axpbypcz_k177_k2150_k329_d256,2642.9760,2642.9760,0.0000,0.0000,294.741,51.2
 lanes/max_w1_i32_k0,nangate45,10,1,SimdLanes_i32_i32_i32_n1_max_k0,SimdLanes_i32_i32_i32_n1_max_k0,33.5160,0.0000,0.0000,0.0000,5.644,0.791401
 lanes/max_w1_i32_k0,nangate45,10,1,alus_0,ElementwiseAlu_w32_s_max,33.5160,33.5160,0.0000,0.0000,5.644,0.791401
 lanes/mul_w1,nangate45,10,1,SimdLanes_i64xi64_i64_i64_n1_mul,SimdLanes_i64xi64_i64_i64_n1_mul,6912.5420,0.0000,0.0000,0.0000,936.842,144
@@ -153,6 +163,12 @@ lanes/mul_w8_i8_i32,nangate45,10,1,alus_4,ElementwiseAlu_w32_mul_3,293.9300,293.
 lanes/mul_w8_i8_i32,nangate45,10,1,alus_5,ElementwiseAlu_w32_mul_2,293.9300,293.9300,0.0000,0.0000,34.343,6.57
 lanes/mul_w8_i8_i32,nangate45,10,1,alus_6,ElementwiseAlu_w32_mul_1,293.9300,293.9300,0.0000,0.0000,34.399,6.57
 lanes/mul_w8_i8_i32,nangate45,10,1,alus_7,ElementwiseAlu_w32_mul_0,293.9300,293.9300,0.0000,0.0000,34.409,6.57
+lanes/requant_w1_i32_i8_d1024,nangate45,10,1,SimdLanes_i32_i32_i8_n1_requant_d1024_lo0_hi127,SimdLanes_i32_i32_i8_n1_requant_d1024_lo0_hi127,19.4180,19.4180,0.0000,0.0000,1.588,0.471923
+lanes/requant_w1_i32_i8_d512,nangate45,10,1,SimdLanes_i32_i32_i8_n1_requant_d512_lo0_hi127,SimdLanes_i32_i32_i8_n1_requant_d512_lo0_hi127,18.8860,18.8860,0.0000,0.0000,1.336,0.465356
+lanes/requant_w8_i32_i8_d1024,nangate45,10,1,SimdLanes_i32_i32_i8_n8_requant_d1024_lo0_hi127,SimdLanes_i32_i32_i8_n8_requant_d1024_lo0_hi127,155.3440,155.3440,0.0000,0.0000,12.701,3.78
+lanes/requant_w8_i32_i8_d512,nangate45,10,1,SimdLanes_i32_i32_i8_n8_requant_d512_lo0_hi127,SimdLanes_i32_i32_i8_n8_requant_d512_lo0_hi127,151.0880,151.0880,0.0000,0.0000,10.098,3.72
+lanes/threshold_w1_u8_i16_u8_kcsr_hi255,nangate45,10,1,SimdLanes_u8_i16_u8_n1_threshold_kr_hi255,SimdLanes_u8_i16_u8_n1_threshold_kr_hi255,59.8500,59.8500,0.0000,0.0000,3.83,1.47
+lanes/threshold_w8_u8_i16_u8_kcsr_hi255,nangate45,10,1,SimdLanes_u8_i16_u8_n8_threshold_kr_hi255,SimdLanes_u8_i16_u8_n8_threshold_kr_hi255,443.9540,443.9540,0.0000,0.0000,31.36,9.21
 link/d16_w1,nangate45,10,1,LinkBuffer_i64_n1_d16,LinkBuffer_i64_n1_d16,6491.9962,988.9880,5447.6802,0.0000,98.748,102
 link/d16_w1,nangate45,10,1,clk_gate_slots_0_0_reg,SNPS_CLOCK_GATE_HIGH_LinkBuffer_i64_n1_d16_15,3.4580,0.0000,3.4580,0.0000,,
 link/d16_w1,nangate45,10,1,clk_gate_slots_10_0_reg,SNPS_CLOCK_GATE_HIGH_LinkBuffer_i64_n1_d16_5,3.4580,0.0000,3.4580,0.0000,,

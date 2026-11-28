@@ -136,6 +136,8 @@ def n_bits(datapath: str, params: dict) -> int:
         return width(params["outType"])
     if datapath == "LinkBuffer":
         return w * params["depth"] * width(params["dtype"])
+    if datapath == "HaloLink":                     # H = ceil((T - 1) / W) held beats (snax-forge D206)
+        return (params["taps"] + w - 2) // w * w * width(params["dtype"])
     if datapath == "FifoPacker":                   # the held slots and the slice counter
         chunk = params["inLanes"] * width(params["laneType"])
         r = params["words"] * 64 // chunk

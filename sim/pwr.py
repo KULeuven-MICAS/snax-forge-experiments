@@ -1249,6 +1249,9 @@ def tb_top_char(tb: dict, netlist: Path) -> str:
         sw = max(1, pins.get("wslot", {}).get("bits", 0))
         params.update({"D": tb["depth"], "SW": sw})
         wires = [("load", 1), ("wslot", sw), ("rslot", sw)]
+    elif kind == "halo":
+        params["H"] = tb["held"]
+        wires = [("load", 1)]
     elif kind == "pack":
         wires = [("in_valid", 1), ("out_ready", 1), ("clear", 1), ("last", 1)]
     elif kind == "slice":
@@ -1294,6 +1297,22 @@ def char_seq_cells(tech: str, point: str) -> int | None:
     return None
 
 
+THRESHOLD_K_STREAM = 1     # threshold_k's generator: default_rng([seed, THRESHOLD_K_STREAM])
+
+
+def threshold_k(tb: dict, seed: int) -> dict:
+    """A SimdLanes threshold's held k (X117), {window: {"k": bits at opType}}: per window in tb.json's order one value
+    uniform over a's range above its least value (1 to 255 for uint8), so a lane's output is hi for some a and 0 for
+    others, as a workload's threshold is; from its own generator (seeded [seed, THRESHOLD_K_STREAM], not after the
+    data), so the point's W = 1 and W = 8 hold the same k."""
+    ta, bits = tb["params"]["inTypes"][0], tb["scalars"]["k"]["bits"]
+    w = int(ta.removeprefix("u").removeprefix("int"))
+    lo, hi = (0, (1 << w) - 1) if ta.startswith("u") else (-(1 << (w - 1)), (1 << (w - 1)) - 1)
+    rng = np.random.default_rng([seed, THRESHOLD_K_STREAM])
+    return {win["name"]: {"k": int(rng.integers(lo + 1, hi, endpoint=True)) & ((1 << bits) - 1)}
+            for win in tb["windows"]}
+
+
 def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
     """rand64: per data input port in tb.json order, one stream of full-range int64, as many values as the
     slots take new beats, each value the port's low bits; the expected outputs from sim/ref.py's char_ref. Every
@@ -1304,7 +1323,8 @@ def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
     A SimdLanes' scalar pins (tb.json's scalars), a CSR the program writes once and holds: drawn after the data
     streams from the same generator (the data as without them), per window in tb.json's order one full-range int64
     per pin, its low bits, applied at the window's lead-in slot and held through the window (0 while settling). They
-    hold, so they are not in the toggle check; `ks` gives {window: {pin: value}}."""
+    hold, so they are not in the toggle check; `ks` gives {window: {pin: value}}. A threshold's k from its CSR is
+    threshold_k's instead (X117): inside a's range, from a generator of its own, so every lanes count holds the same."""
     n_new = sum(1 for s in slots if s["new"])
     rng = np.random.default_rng(seed)
     info = np.iinfo(np.int64)
@@ -1314,6 +1334,8 @@ def char_stimulus(tb: dict, slots: list[dict], seed: int) -> dict:
     scalars = tb.get("scalars", {})
     ks = {w["name"]: {n: int(rng.integers(info.min, info.max, dtype=np.int64, endpoint=True)) & ((1 << p["bits"]) - 1)
                       for n, p in scalars.items()} for w in tb["windows"]} if scalars else {}
+    if scalars and tb["params"].get("op") == "threshold":
+        ks = threshold_k(tb, seed)
     if scalars:     # each slot's pins with the scalars it sees: a window's from its lead-in slot on
         held, ref_slots = {n: 0 for n in scalars}, []
         for i, s in enumerate(slots):

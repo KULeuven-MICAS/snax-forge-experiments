@@ -30,14 +30,19 @@ TECHS = ["nangate45"]
 N = 2048                      # the forge points' task, the dot 4 to 6 Mac comparison
 CLOCK, SEED, CYCLES = "10", "0", 128
 BLOCKS = [("SimdLanes", "lanes"), ("Mac", "mac"), ("TreeAccumulate", "tree"),
-          ("SerialAccumulate", "serial"), ("LinkBuffer", "link"), ("FifoPacker", "pack"), ("FifoSlicer", "slice")]
+          ("SerialAccumulate", "serial"), ("LinkBuffer", "link"), ("HaloLink", "halo"), ("FifoPacker", "pack"), ("FifoSlicer", "slice")]
 STREAM_BLOCKS = ("FifoPacker", "FifoSlicer")
 REGISTERED = ("Mac", "TreeAccumulate", "SerialAccumulate")
 FOLDS = ("TreeAccumulate", "SerialAccumulate")
 TYPE_KEYS = ("inTypes", "opType", "outType", "inType", "dtype", "laneType")
-W0 = {"SimdLanes": 1, "Mac": 8, "TreeAccumulate": 8, "SerialAccumulate": 8}   # the lanes each pair is measured at
+W0 = {"SimdLanes": 1, "Mac": 8, "TreeAccumulate": 8, "SerialAccumulate": 8,
+      "HaloLink": 1}   # the lanes each pair is measured at
 PAIRS = [(i, o) for i in (8, 16, 32, 64) for o in (8, 16, 32, 64) if o >= i]
 SCALARS = ("k", "k1", "k2")     # SimdLanes' scalar slots, each baked (k, k1, k2) or from its CSR (kCsr, ...; X99)
+E2E1_OPS = ("requant", "axpbypcz", "threshold")      # SimdLanes' ops keyed at their own types and slots (X116)
+SLOTS = ("k", "k1", "k2", "k3", "d", "lo", "hi")     # every slot an op column names, X99's and X116's
+STREAM_WINDOW = ("LinkBuffer", "HaloLink")           # the blocks measured in one stream window
+WIRES = ("HaloLink",)       # no char.json entry: its taps are wires, priced by its flops alone (X116)
 
 
 def fail(msg: str) -> None:
@@ -95,16 +100,35 @@ def scalar(params: dict) -> bool:
     return any(params.get(n) is not None or params.get(f"{n}Csr") for n in SCALARS)
 
 
+def e2e1(params: dict) -> bool:
+    """A SimdLanes form of X116: requant, axpbypcz or threshold, keyed at its own types and slots."""
+    return params.get("op") in E2E1_OPS
+
+
 def scalar_label(params: dict) -> str:
-    """The scalars as the op column shows them: "k csr", "k = 0", "k1 csr, k2 csr", "k1 = 3"; "" for none."""
-    return ", ".join(f"{n} csr" if params.get(f"{n}Csr") else f"{n} = {params[n]}" for n in SCALARS
+    """The scalars as the op column shows them: "k csr", "k = 0", "k1 csr, k2 csr", "k1 = 3" (and X116's k3, d, lo,
+    hi: "d = 1024, lo = 0, hi = 127"); "" for none."""
+    return ", ".join(f"{n} csr" if params.get(f"{n}Csr") else f"{n} = {params[n]}" for n in SLOTS
                      if params.get(f"{n}Csr") or params.get(n) is not None)
 
 
 def op_label(params: dict) -> str:
-    """The op column: the op, and a scalar form's scalars in brackets (mul (k csr), axpby (k1 = 3))."""
+    """The op column: the op, and a scalar form's scalars in brackets (mul (k csr), axpby (k1 = 3)); an X116 form's
+    op type too (axpbypcz at u16 (k2 = 2, d = 4))."""
     op = str(params.get("op", "-"))
+    if e2e1(params):
+        return f"{op} at {type_tag(params['opType'])} ({scalar_label(params)})"
     return f"{op} ({scalar_label(params)})" if scalar(params) else op
+
+
+def type_tag(t: str) -> str:
+    """int8 -> i8, uint16 -> u16."""
+    return ("u" if t.startswith("u") else "i") + str(width(t))
+
+
+def window_of(datapath: str) -> str:
+    """The window a block's comb per fire is read from: stream for the links, busy for every other block."""
+    return "stream" if datapath in STREAM_WINDOW else "busy"
 
 
 def pair_key(params: dict) -> tuple[tuple[int, ...], int]:
@@ -114,8 +138,15 @@ def pair_key(params: dict) -> tuple[tuple[int, ...], int]:
 
 
 def pair_label(params: dict) -> str:
-    """The in column: i8, or i8xi32 for a mixed pair."""
+    """The in column: i8, or i8xi32 for a mixed pair; an X116 form's own input type (u8)."""
+    if e2e1(params):
+        return "x".join(dict.fromkeys(type_tag(t) for t in params["inTypes"]))
     return "x".join(f"i{w}" for w in in_widths(params))
+
+
+def out_label(params: dict) -> str:
+    """The out column: i<w_out>; an X116 form's own output type (u8)."""
+    return type_tag(params["outType"]) if e2e1(params) else f"i{pair(params)[1]}"
 
 
 def bank_study(point: dict) -> bool:
@@ -184,7 +215,7 @@ def load(tech: str, points: list[dict], gate: str = "1") -> dict:
         name = p["point"]
         if name not in synth or name not in power:
             fail(f"{tech}: {name} has no synthesis or power row")
-        want = ["stream"] if p["datapath"] == "LinkBuffer" else ["busy", "idle"]
+        want = ["stream"] if p["datapath"] in STREAM_WINDOW else ["busy", "idle"]
         if sorted(power[name]) != sorted(want):
             fail(f"{tech}: {name} has windows {sorted(power[name])}, R2 has {want}")
         rows = [synth[name], *power[name].values()]
@@ -202,18 +233,21 @@ def load(tech: str, points: list[dict], gate: str = "1") -> dict:
 
 MIXED = "the mixed pairs"   # X98's points, measured at their own snax-forge commit beside their blocks'
 SCALAR = "the scalar forms"     # X99's SimdLanes points, the same
+E2E1 = "the E2E1 forms"         # X116's SimdLanes forms and the halo link, the same
 
 
 def group(v: dict) -> str:
-    """The points one snax-forge commit covers: a block, the mixed pairs (X98) of every block, or SimdLanes' scalar
-    forms (X99)."""
+    """The points one snax-forge commit covers: a block, the mixed pairs (X98) of every block, SimdLanes' scalar
+    forms (X99), or SimdLanes' E2E1 forms with the halo link (X116)."""
+    if e2e1(v["params"]) or v["datapath"] == "HaloLink":
+        return E2E1
     return MIXED if mixed(v["params"]) else SCALAR if scalar(v["params"]) else v["datapath"]
 
 
 def source_key(v: dict) -> str:
-    """char.json's source.snax_forge_<key> for a point at another commit than the first row's: mixed, scalar or the
-    block."""
-    return {MIXED: "mixed", SCALAR: "scalar"}.get(group(v), v["datapath"])
+    """char.json's source.snax_forge_<key> for a point at another commit than the first row's: mixed, scalar, e2e1
+    or the block."""
+    return {MIXED: "mixed", SCALAR: "scalar", E2E1: "e2e1"}.get(group(v), v["datapath"])
 
 
 def block_commits(d: dict) -> dict:
@@ -243,18 +277,23 @@ def ehold(d: dict) -> dict:
 def params_cell(v: dict) -> list[str]:
     p = v["params"]
     lanes = p.get("lanes", p.get("inLanes", p.get("outLanes", "-")))
-    return [str(lanes), str(p.get("depth", "-")), op_label(p), pair_label(p), f"i{pair(p)[1]}"]
+    return [str(lanes), str(p.get("depth", "-")), op_label(p), pair_label(p), out_label(p)]
+
+
+def form_rank(params: dict) -> int:
+    """A SimdLanes row's place: the plain ops, then X99's scalar forms, then X116's forms."""
+    return 2 if e2e1(params) else 1 if scalar(params) else 0
 
 
 def block_rows(D: dict, prefix: str) -> tuple[list[str], list[list]]:
-    windows = ["stream"] if prefix == "link" else ["busy", "idle"]
+    windows = ["stream"] if prefix in ("link", "halo") else ["busy", "idle"]
     head = ["point", "lanes", "depth", "op", "in", "out"]
     for t in TECHS:
         tag = t.removeprefix("nangate")
         head += [f"{tag} area", f"{tag} comb", f"{tag} seq", f"{tag} flops"]
         head += [f"{tag} {w} {g}" for w in windows for g in ("e_comb", "e_flop", "e_dyn")]
     pts = [p for p in D[TECHS[0]] if p.startswith(prefix + "/")]
-    pts.sort(key=lambda p: (scalar(D[TECHS[0]][p]["params"]), not is64(D[TECHS[0]][p]["params"]),
+    pts.sort(key=lambda p: (form_rank(D[TECHS[0]][p]["params"]), not is64(D[TECHS[0]][p]["params"]),
                             D[TECHS[0]][p]["params"].get("op", ""),
                             pair_key(D[TECHS[0]][p]["params"]),
                             int(D[TECHS[0]][p]["params"].get("lanes", D[TECHS[0]][p]["params"].get("outLanes", 0))),
@@ -343,6 +382,20 @@ def scaling(D: dict, prefix: str) -> list[str]:
             lines.append(f"- {t}: the model a pop (char.json's e_fire plus n_bits e_hold) against busy e_dyn: "
                          f"{'; '.join(ratio)}, against e_load {j['flop']['e_load_fj']:.1f} fJ (the accumulators', "
                          "X37): the model prices the slicer high, most where the word loads most often (d_in 2).")
+        return lines
+    if prefix == "halo":
+        import char_export as ce
+        lines = []
+        for t in TECHS:
+            d = D[t]
+            pts = sorted((p for p, v in d.items() if v["datapath"] == "HaloLink"), key=lambda p: d[p]["params"]["lanes"])
+            per = "; ".join(f"W = {d[p]['params']['lanes']}: {float(d[p]['synth']['comb_area_um2']) / ce.n_bits('HaloLink', d[p]['params']):.3f} µm² "
+                            f"and {1000 * e(d, p, 'stream', 'e_bit_pj'):.1f} fJ" for p in pts)
+            comb_e = max(e(d, p, "stream", "e_comb_pj") for p in pts)
+            lines.append(f"- {t}: comb area per flop and e_bit in stream: {per}. The comb is one reset inverter a flop "
+                         f"(DFFR_X1's active-low RN), the largest stream e_comb {comb_e:.4f} pJ: the taps are wires, the "
+                         "load the clock gate. char.json has no entry: snax-forge prices the link by its flops alone "
+                         "(found `wires`, X116), leaving out the inverters.")
         return lines
     lines = []
     for t in TECHS:
@@ -446,9 +499,10 @@ def types_section(D: dict, J: dict) -> list[str]:
             (a8, e8), (a32, e32) = comb(f"{prefix}/{case}_w{lo}"), comb(f"{prefix}/{case}_w{hi}")
             slopes.append(f"{dp} {(a32 - a8) / (hi - lo):.2f} µm² and {(e32 - e8) / (hi - lo):.4f} pJ a lane")
         rows = []
-        for p in sorted(x for x, v in d.items() if check_only(v["datapath"], v["params"])):
+        for p in sorted(x for x, v in d.items() if check_only(v["datapath"], v["params"])
+                        and v["datapath"] not in WIRES):
             v = d[p]
-            a, en = comb(p, "stream" if v["datapath"] == "LinkBuffer" else "busy")
+            a, en = comb(p, window_of(v["datapath"]))
             ma, me = (ce.comb_at(j, v["datapath"], v["params"], c) for c in ("comb_um2", "e_comb_pj"))
             rows.append([f"`{p}`", rule_of(v["datapath"]), f(a, 1), f(ma, 1), f"{a / ma:.3f}", f(en, 4), f(me, 4),
                          f"{en / me:.3f}"])
@@ -533,7 +587,8 @@ def scalar_section(D: dict) -> list[str]:
     for t in TECHS:
         d = D[t]
         rows = []
-        for p in [q for q, v in d.items() if v["datapath"] == "SimdLanes" and scalar(v["params"])]:
+        for p in [q for q, v in d.items() if v["datapath"] == "SimdLanes" and scalar(v["params"])
+                  and not e2e1(v["params"])]:
             v = d[p]["params"]
             base, mul = plain(d, p), plain(d, p, "mul")
             if base is None or mul is None:
@@ -560,6 +615,51 @@ def scalar_section(D: dict) -> list[str]:
         out += [f"**{t}: each scalar form, then the plain SimdLanes at its pair and W** (e/fire the busy e_dyn, pJ; "
                 "- plain: the scalar form less the plain one; in muls: axpby's comb and e_comb over the plain add's, "
                 "in units of the plain mul's at the pair; the mixed mul is shown beside a scale, not differenced):", "", table(head, rows), ""]
+    return out
+
+
+# ---------------------------------------------------------------- SimdLanes' E2E1 forms (X116)
+def at_lanes(d: dict, p: str, w: int) -> str | None:
+    """The point of p's datapath and params at lanes w, None without one."""
+    v = d[p]
+    want = {**v["params"], "lanes": w}
+    return next((q for q, u in d.items() if u["datapath"] == v["datapath"] and u["params"] == want), None)
+
+
+def e2e1_section(D: dict) -> list[str]:
+    """Each X116 form at W = 1 beside the plain SimdLanes add and mul at its widest input width (both inputs and the
+    output there), then its W = 8 point against 8 x its W = 1 point (the copy rule)."""
+    head = ["point", "op", "in", "out", "comb µm²", "e/fire pJ", "leak µW", "idle/cycle", "add comb", "add e",
+            "comb in adds", "comb in muls", "e in adds", "e in muls"]
+    out = []
+    for t in TECHS:
+        d = D[t]
+        val = lambda q: (float(d[q]["synth"]["comb_area_um2"]), e(d, q, "busy"),  # noqa: E731
+                         float(d[q]["synth"]["leak_comb_uw"]))
+        rows, copies_ = [], []
+        for p in [q for q, v in d.items() if e2e1(v["params"]) and v["params"]["lanes"] == 1]:
+            v = d[p]["params"]
+            w = pair(v)[0]
+            add, mul = point_name("lanes", "add", 1, w, w), point_name("lanes", "mul", 1, w, w)
+            if add not in d or mul not in d:
+                fail(f"{t}: {p}: no plain SimdLanes add and mul at i{w} beside it")
+            (c, en, lk), (ca, ea, _), (cm, em, _) = val(p), val(add), val(mul)
+            rows.append([f"`{p}`", op_label(v), pair_label(v), out_label(v), f(c, 1), f(en), f(lk, 4),
+                         f(e(d, p, "idle")), f(ca, 1), f(ea), f"{c / ca:.2f}", f"{c / cm:.2f}", f"{en / ea:.2f}",
+                         f"{en / em:.2f}"])
+            q = at_lanes(d, p, 8)
+            if q is None:
+                fail(f"{t}: {p}: no W = 8 point to check the copy rule")
+            (c8, e8, l8) = val(q)
+            copies_.append([f"`{q}`", f(c8, 1), f(8 * c, 1), f"{c8 / (8 * c):.3f}", f(e8), f(8 * en),
+                            f"{e8 / (8 * en):.3f}", f(l8, 4), f(8 * lk, 4), f"{l8 / (8 * lk):.3f}"])
+        out += [f"**{t}: each E2E1 form at W = 1, then the plain SimdLanes add and mul at its widest input width** "
+                "(e/fire the busy e_dyn, which is e_comb: no flop; leak the comb leakage; in adds and in muls: the "
+                "form over the plain add's and mul's comb and e/fire, at i<w_in> on both inputs and the output):", "",
+                table(head, rows), "",
+                f"**{t}: each W = 8 point against 8 x its W = 1 point** (the copy rule, `copy` over lanes):", "",
+                table(["point", "comb µm²", "8 x W1", "ratio", "e/fire pJ", "8 x W1", "ratio", "leak µW", "8 x W1",
+                       "ratio"], copies_), ""]
     return out
 
 
@@ -625,7 +725,7 @@ def model_points(D: dict, J: dict) -> list[str]:
         for br in brows:
             p = br[0].strip("`")
             v = D[TECHS[0]][p]
-            if check_only(dp, v["params"]):
+            if check_only(dp, v["params"]) or dp in WIRES:
                 continue
             row = [br[0], ce.n_bits(dp, v["params"])]
             for t in TECHS:
@@ -789,7 +889,7 @@ def main() -> int:
          "- **Windows:** busy (a fire every cycle; FifoPacker a push every cycle, its output always ready; FifoSlicer "
          "a pop every cycle, its input always valid, its output always ready, a take every d_in cycles) and idle "
          "(the enable at 0, every other input held; FifoSlicer's output not ready) for SimdLanes, Mac, TreeAccumulate, "
-         "SerialAccumulate, FifoPacker and FifoSlicer; stream for LinkBuffer (a load every cycle at full occupancy), a link that is not loading costing "
+         "SerialAccumulate, FifoPacker and FifoSlicer; stream for LinkBuffer (a load every cycle at full occupancy) and HaloLink (a load every cycle after its fill), a link that is not loading costing "
          "its flops x e_hold (X33).",
          "- **Types:** the int64 set (CHAR1's 27 points) gives the flop constants and the lanes rules; every compute "
          "block has its 10 (in, out) pairs, out at least in, the op at out, at one lane count W0 (SimdLanes 1, the "
@@ -822,6 +922,16 @@ def main() -> int:
           "SimdLanes rows. Beside each, the plain SimdLanes at its pair and W (two streams, no scalar: add for axpby "
           "and max, mul for a scale); a scale of a narrower a than its k also beside the mixed mul (X98) of a and "
           "the op's type, the multiplier it is.", "", *scalar_section(D)]
+    L += ["## E2E1 forms", "",
+          "SimdLanes' requant, axpbypcz and threshold, the forms E2E1's int8 MLP and image pipeline use (X116): requant "
+          "`min(max(a // d, lo), hi)` (int32 to int8, d 1024 and 512), axpbypcz `(k1 a + k2 b + k3 c) // d` (gray, k = "
+          "(77, 150, 29) and d 256; the blurs, k2 2 and d 4, an unset k no multiplier) and threshold, hi where `a - k + 1` "
+          "is at least 1 at the op's type (k from a CSR, held at one value a window inside a's range, 1 to 255, from a "
+          "generator of its own, X117). snax-forge's lookup keys these at their own types and slots, not at the width "
+          "pair, so each is its own char.json entry at W = 1 at its exact params, `copy` over lanes, and the tables "
+          "show the types as measured (u8, u16). The W = 8 points check the copy rule and are not exported. DC builds "
+          "the threshold at W = 8 from full adders that leak less per µm² than W = 1's gates, so the rule prices it "
+          "high (X116).", "", *e2e1_section(D)]
     designs, units, _ = model_syn2(D, J)
     n_designs, n_units, n_packers = model_syn2(D, J, narrow_designs())
     L += ["## Model", "",
