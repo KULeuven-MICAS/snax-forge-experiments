@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X118**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X119**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -405,6 +405,12 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** each one-port Vitis RAM becomes a CACTI macro (`ram/vitis_ram.py`), else the point parks or `--with-ram` builds it from flops; counted energy (X50) in `e_ram_pj`.
 - **Why:** unparks the dace points; only the memory differs.
 - **Where:** `syn/README.md`, "Sources"; `results/hls/runs/2026-11-10_csyn1_r3.md`.
+
+### X118 — E7 at int8, one spec for every tool
+
+- **Decided:** E7 runs at forge's `i8` preset (int8 in; int32 products, sums and outputs), W = 8, 4096 elements a stream (levels 1 and 2) or 64 × 64 (tier A), data uniform over each type; cases Vitis opt, Bambu, XLS (dace out: W = 1 only, X62's RAM). Cycles from the first input beat accepted to the last output beat, on the ports, the same for every tool. Operands used again are streamed again in forge's order, and an HLS block holds no more storage than forge's engine. forge's engine per kernel: its form with the lowest energy per task among those within 1 % of the fewest cycles, control and datapath (X63). Amends X24 and the windows of X12 and X44 for E7; the int64 rows stay until the int8 rows replace them.
+- **Why:** one spec, the type and width §C uses, and cycles every tool counts alike.
+- **Where:** hls-exercises `docs/HLS_VS_FORGE.md`; `results/compare/README.md`.
 
 ## Cluster
 

@@ -4,6 +4,8 @@ forge's figures exclude `<tag>_peripherals` (BUSY_COUNTER, snax-forge D168): it 
 
 Generated parts come from `report/compare_hls.py` (`pixi run compare-hls`) and the two tier CSVs (X45, X64); the text outside the `gen` markers is written by hand. This page has the setup, the summary across kernels and the parts' basis; each kernel has its own page. Every case is clock-gated (X79 · X87 · X88).
 
+**The paper's comparison moves to int8 (X118).** E7 is being remeasured at forge's `i8` preset and W = 8 on three levels (the basic blocks, dot and matvec's column form, tier A), with one cycle window for every tool. This page and its CSVs hold the int64 data at W = 1 to 16 until the int8 rows replace them.
+
 <!-- gen:index -->
 | Tier | Kernels |
 |---|---|
