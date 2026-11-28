@@ -3,7 +3,8 @@
 // Always valid from `go`: drives beat 0 with TVALID = 1, holds each beat until a handshake, then
 // the next; after the last beat it holds the last beat (TVALID stays 1). Data comes in by
 // plusargs, so one compile serves every size:
-//   +<NAME>_HEX=<file>    $readmemh file, one beat per line, lane 0 in the low bits (lanes.h)
+//   +<NAME>_HEX=<file>    $readmemh file, one beat per line, lane 0 in the low bits (lanes.h; a lane is the
+//                         stream's element, 8 bits at int8, X119)
 //   +<NAME>_BEATS=<n>     beats in the file
 // Inputs change only by nonblocking assignment at the rising edge; the handshake is the
 // TREADY sampled at the falling edge before it, so nothing races with the DUT's flops.

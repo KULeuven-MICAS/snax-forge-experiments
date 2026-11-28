@@ -14,7 +14,7 @@ DIR is rtl/forge/ in this repo (git ignores rtl/: a bundle is rebuilt from its c
 
 The tasks run inside this repo's `pixi run`, whose PIXI_* and CONDA_* variables and .pixi/ PATH entries would make the inner pixi take this repo's environment; they are removed, and before any point the driver checks that the inner CONDA_PREFIX is under $SNAX_FORGE/.pixi/envs/.
 
-The first point runs alone when hw/chisel's Emit classpath (hw/chisel/target/emit-classpath.txt) is not there yet: the first Emit exports it through sbt, and parallel first calls would race. A point's own `sets` (points.json, e.g. ["M=16", "N=128"]) and then the global --set values (e.g. --set N=2048) go to the sandbox step after W, and tag the sandbox and design folder names in that order; point.json records them as `sets`.
+The first point runs alone when hw/chisel's Emit classpath (hw/chisel/target/emit-classpath.txt) is not there yet: the first Emit exports it through sbt, and parallel first calls would race. A point's own `sets` (points.json, e.g. ["M=16", "N=128"]) and then the global --set values (e.g. --set N=2048) go to the sandbox step after W, except a set whose name starts with `design.`, `platform.` or `memory.` (`design.narrow_mul=true`, `design.data=full`), which goes to the design step (`split_sets`; snax-forge's sandbox refuses it, X119). All of them tag the sandbox and design folder names in that order; point.json records them as `sets`.
 
 A recipe is found by its name in any folder under $SNAX_FORGE/recipes/ but recipes/custom/ (the editor's), as snax-forge keeps them by category (recipes/reduce/rowsum_2.json); a name found in no folder or in several is refused (find_recipe, also used by forge/query.py).
 

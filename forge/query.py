@@ -6,6 +6,7 @@
   python forge/query.py cycles BUNDLE_DIR JOBS BEATS_JSON    the group's busy cycles
   python forge/query.py ctrl_bits ACCELERATOR_JSON  the control units' registers and bits
   python forge/query.py ref KERNEL IN_NPZ OUT_NPZ [SYMBOLS_JSON [DTYPES_JSON]]   the kernel's NumPy body, a type parameter (OP_TYPE) rebound
+  python forge/query.py types KERNEL PRESET          the containers' and type parameters' dtypes at a type preset (i8)
 
 Runs inside snax-forge's pixi environment, with snax-forge as the working directory (sim/sources/forge.py calls it
 as forge/bundles.py calls snax-forge's tasks), and prints one JSON object on stdout. What each answer holds is in
@@ -196,10 +197,23 @@ def cmd_ref(kernel: str, in_npz: str, out_npz: str, symbols: str = "", dtypes: s
     return {"kernel": kernel, "func": f"{spec.func.__module__}.{spec.func.__name__}", "outputs": list(outs)}
 
 
+def cmd_types(kernel: str, preset: str) -> dict:
+    """The dtypes a recipe at --set types=PRESET gives the kernel (KernelSpec.kernel_dtypes): an HLS point at
+    X118's spec checks against snax-forge's kernel at these (sim/sources/hls.py narrow_ref, X119)."""
+    from snax_forge.sdfg.loader import load
+
+    spec = load(kernel)
+    try:
+        dtypes = spec.kernel_dtypes(preset, {})
+    except ValueError as e:
+        raise SystemExit(f"types {kernel}: {e}") from None
+    return {"kernel": kernel, "preset": preset, "dtypes": dict(dtypes)}
+
+
 def main() -> int:
     cmd, *args = sys.argv[1:]
     fn = {"point": cmd_point, "program": cmd_program, "cycles": cmd_cycles, "ctrl_bits": cmd_ctrl_bits,
-          "ref": cmd_ref}[cmd]
+          "ref": cmd_ref, "types": cmd_types}[cmd]
     print(json.dumps(fn(*args)))
     return 0
 

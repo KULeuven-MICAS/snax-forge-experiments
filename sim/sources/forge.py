@@ -24,7 +24,7 @@ CLK, RST = _ports("forge")   # clk_i, rst_ni: syn/syn.py's SOURCES
 ROOT = Path(__file__).resolve().parents[2]
 RTL = ROOT / "rtl" / "forge"
 QUERY = ROOT / "forge" / "query.py"
-SIZE = "n2048"                   # the one size of a forge point: its shape is the point's sets
+SIZE = "n2048"                   # the reference task's tag (X24), the size of a forge point made at its shape
 CONTROL_KINDS = {"forge_csr"}
 BITS = {"int8": 8, "int16": 16, "int32": 32, "int64": 64}   # a stream's element dtypes: num_slc = 64 / bits a word
 CSR_PORTS = {"req_addr": "csr_req_addr_i", "req_data": "csr_req_data_i", "req_write": "csr_req_write_i",
@@ -91,8 +91,9 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
                the value is the reference's
       sizes   {n2048: {shape: {symbol: value}, jobs, beats: {unit: JOB_BEATS}, writes: [[offset, value, name], ...
                        START last], stream_beats: {name: beats}, expected_cycles, expected_from}}
-              shape: the point's sets, the n2048 shape for its tier and kernel (sim/sources/hls.py's extra_sizes),
-              the size the design point was made at. writes: JOBS and each JOB_BEATS as snax-forge's LOWER writes
+              shape: the point's sets, the size the design point was made at: the n2048 shape for its tier and
+              kernel (sim/sources/hls.py's extra_sizes), tagged n2048, or a size of the kernel's hls-exercises
+              params.json (X118's n4096, X119), tagged as there; the one size of the point. writes: JOBS and each JOB_BEATS as snax-forge's LOWER writes
               them for that design point (forge/query.py program: lower/derive.py's task list, lower/c.py's
               job_writes), then START; sim/pwr.py adds the scalar writes before START. expected_cycles: the group's
               busy cycles from snax-forge's model (forge/query.py cycles: gen/rtl.py's group_counter) with those
@@ -122,11 +123,13 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
                          "rebundle (pixi run forge-rtl)")
     ports = hls.ports_of(netlist, top)
 
-    # the size: the point's sets are the n2048 shape (the design point was made at it, forge/bundles.py)
-    shape = {k: int(v) for k, v in (x.split("=", 1) for x in pj.get("sets", [])) if k != "types"}   # types=i8: a preset
-    want = dict(hls.extra_sizes(point)).get(SIZE)
-    if want is None or {k.lower(): v for k, v in shape.items()} != want:
-        raise ValueError(f"{point}: bundle made with sets {pj.get('sets')}, the n2048 shape is {want}: "
+    # the size: the point's sets are its shape (the design point was made at it, forge/bundles.py); types=i8 is a
+    # preset, design.data=full and design.narrow_mul=true are the design step's
+    shape = {k: int(v) for k, v in (x.split("=", 1) for x in pj.get("sets", [])) if k != "types" and "." not in k}
+    tag = size_tag(point, shape)
+    if tag is None:
+        raise ValueError(f"{point}: bundle made with sets {pj.get('sets')}, neither the n2048 shape "
+                         f"{dict(hls.extra_sizes(point)).get(SIZE)} nor a size of the kernel's params.json: "
                          "rebundle (pixi run forge-rtl)")
 
     q = query("point", str(b))
@@ -215,7 +218,7 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
     writes = [[csrs["JOBS"], jobs[0], "JOBS"]] + [[csrs[f"{u}.JOB_BEATS"], v, f"{u}.JOB_BEATS"] for u, v in beats.items()]
     writes.append([csrs["START"], 1, "START"])
     cyc = query("cycles", str(b), str(jobs[0]), json.dumps(beats))
-    sizes = {SIZE: {"shape": shape, "jobs": jobs[0], "beats": beats, "writes": writes,
+    sizes = {tag: {"shape": shape, "jobs": jobs[0], "beats": beats, "writes": writes,
                     "stream_beats": {s["name"]: s["beats"] for s in streams},
                     "expected_cycles": cyc["cycles"], "expected_from": cyc["working"]}}
 
@@ -243,8 +246,22 @@ def check(tb: dict) -> None:
             raise ValueError(f"size {tag}: no expected cycles")
 
 
+def size_tag(point: str, shape: dict) -> str | None:
+    """The size tag of a forge point made at `shape`: n2048 at the reference task's shape (X24), else the tag of
+    the hls-exercises params.json size it is (n4096, X119); None when it is neither."""
+    low = {k.lower(): v for k, v in shape.items()}
+    if low == dict(hls.extra_sizes(point)).get(SIZE):
+        return SIZE
+    try:
+        sizes = hls.params_of(point)["sizes"]
+    except (OSError, ValueError, KeyError):
+        return None
+    return next((hls.size_tag(z) for z in sizes if z == low), None)
+
+
 def default_size(tb: dict) -> str:
-    return SIZE
+    """The point's one size."""
+    return next(iter(tb["sizes"]))
 
 
 def kernel_ref(kernel: str, ins: dict, workdir: Path, symbols: dict | None = None, dtypes: dict | None = None) -> dict:

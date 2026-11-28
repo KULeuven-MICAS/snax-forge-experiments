@@ -5,7 +5,8 @@
 
 A point is one snax-forge recipe at one W, named as hls-exercises names its points (done/dot/forge3_w4); patterns
 are shell globs over those names. Per point, in the snax-forge checkout (SNAX_FORGE, default ../snax-forge):
-sandbox, design and bundle, packed into <DIR>/<point>.zip (DIR rtl/forge/) with point.json (recipe, W, sets,
+sandbox, design and bundle (a set starting with design., platform. or memory. goes to the design step, every other
+to the sandbox: split_sets), packed into <DIR>/<point>.zip (DIR rtl/forge/) with point.json (recipe, W, sets,
 dtypes, commit, dirty, date). A dirty bundle is refused unless --allow-dirty. find_recipe finds a recipe by name
 under recipes/ (also used by forge/query.py). The steps, the environment and the dtypes are in forge/README.md.
 Standard library and arc/arc.py only.
@@ -105,6 +106,17 @@ def point_sets(p: dict, sets: list[str]) -> list[str]:
     return [*own, *sets]
 
 
+DESIGN_HEADS = ("design", "platform", "memory")      # snax-forge's design step takes these --set paths (TOOL.md)
+
+
+def split_sets(sets: list[str]) -> tuple[list[str], list[str]]:
+    """(the sandbox's sets, the design step's): a set whose name starts with design., platform. or memory.
+    (design.narrow_mul=true, design.data=full) is the design step's, the rest (N=2048, types=i8, dtypes.C=int16)
+    the recipe's. snax-forge's sandbox refuses a design set, and its design step reads only these."""
+    design = [x for x in sets if x.split("=", 1)[0].split(".", 1)[0] in DESIGN_HEADS and "." in x.split("=", 1)[0]]
+    return [x for x in sets if x not in design], design
+
+
 def work_name(p: dict, sets: list[str]) -> str:
     extra = "".join("_" + re.sub(r"[^A-Za-z0-9]", "", s) for s in sets)
     extra += "".join(f"_{d}" for d in sorted(set(p.get("dtypes", {}).values())))
@@ -145,11 +157,15 @@ def steps(p: dict, sets: list[str], out: Path) -> tuple[list[str], list[str], li
     name = work_name(p, sets)
     sandbox = f"out/sandbox/syn1/{name}"
     design = f"out/design/syn1/{name}"
+    own, design_sets = split_sets(sets)
     s1 = [recipe_arg(p, name), "--set", f"W={p['W']}"]
-    for s in sets:
+    for s in own:
         s1 += ["--set", s]
     s1 += ["--out", sandbox]
-    s2 = ["<last .snaxdfg of " + sandbox + ">", "--platform", PLATFORM, "--out", design]
+    s2 = ["<last .snaxdfg of " + sandbox + ">", "--platform", PLATFORM]
+    for s in design_sets:
+        s2 += ["--set", s]
+    s2 += ["--out", design]
     s3 = [f"{design}/design_point.json", "--out", str(out / p["point"])]
     return s1, s2, s3
 
@@ -163,7 +179,7 @@ def run_point(p: dict, args) -> dict:
         print(f"failed: recipe  {p['point']}: {e}", flush=True)
         return {"point": p["point"], "status": f"failed: recipe ({e})", "seconds": 0.0, "commit": "", "dirty": "",
                 "error": str(e)}
-    sandbox, design = Path(FORGE / s1[-1]), Path(FORGE / s2[-1])
+    sandbox, design = Path(FORGE / s1[-1]), Path(FORGE / s2[-1])      # each step's --out is its last argument
     res = {"point": p["point"], "status": "", "seconds": 0.0, "commit": "", "dirty": "", "error": ""}
     if dest.exists():
         shutil.rmtree(dest)
@@ -230,7 +246,8 @@ def main() -> int:
     ap.add_argument("-j", "--jobs", type=int, default=1, help="points at once (default 1)")
     ap.add_argument("--allow-dirty", action="store_true", help="keep a bundle whose bundle.json says dirty")
     ap.add_argument("--set", action="append", default=[], metavar="K=V",
-                    help="more --set for the sandbox step (e.g. N=2048); also tags the sandbox and design folders")
+                    help="more --set (e.g. N=2048 for the sandbox, design.narrow_mul=true for the design step); "
+                         "also tags the sandbox and design folders")
     ap.add_argument("--out", type=Path, default=ROOT / "rtl" / "forge",
                     help="where the bundles go, one zip per point (default rtl/forge)")
     args = ap.parse_args()

@@ -33,15 +33,18 @@ def build(point: str, netlist: Path) -> dict:
               start_port pulsed for one cycle by sim/tb/bambu_seq.sv; idle_port an output nobody reads (covered,
               not driven or checked)
       streams [{arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   <arg>_TDATA/_TVALID/_TREADY (or
-              p_<arg>_...), in params.json's axis order; lanes = TDATA bits / 64
+              p_<arg>_...), in params.json's axis order; dtype and lanes as sources/hls.py's (an input at
+              dtype, an output at acc_dtype; lanes = TDATA bits / the element's bits, X119)
       pins    [{port, bits, from: "config" | "data:<arg>"}]   loop_count, len (where the kernel has it), alpha
               (axpy): plain inputs, no ap_vld; driven from time 0, before reset is released, and held for the
               whole run (Bambu reads them on every iteration, hls-exercises tb/bambu.svh); alpha drawn as a rand64
               data pin after the streams
-      sizes   as sources/hls.py's: the cosim sizes, b64 when every config pin equals loop_count, n2048
-    Expected cycles: the line a x loop_count + b through cycles_done at the point's sizes in
-    results/bambu/bambu_cycles.csv (status ok rows; cycles_done is start_port's cycle to done_port's, as the
-    window counts), integer and exact at those sizes.
+      sizes   as sources/hls.py's: the cosim sizes, b64 when every config pin equals loop_count, n2048 (not at
+              a narrow point)
+      ref     as sources/hls.py's, a narrow point only
+    Expected cycles: cycles_done at a size of results/bambu/bambu_cycles.csv (status ok rows; cycles_done is
+    start_port's cycle to done_port's, as the window counts), else the line a x loop_count + b through its sizes,
+    integer and exact at them.
     """
     top = hls.filelist(point)["top"]
     prm = hls.params_of(point)
@@ -63,10 +66,9 @@ def build(point: str, netlist: Path) -> dict:
         if base is None:
             raise ValueError(f"{point}: no AXI-stream port for argument {arg}")
         d, bits = ports[f"{base}_TDATA"]
-        if bits % 64:
-            raise ValueError(f"{point}: {base}_TDATA is {bits} bits, not a multiple of 64")
-        streams.append({"arg": arg, "dir": d, "kind": "axis", "lanes": bits // 64, "dtype": prm["dtype"],
-                        "data": f"{base}_TDATA", "valid": f"{base}_TVALID", "ready": f"{base}_TREADY"})
+        dt = hls.stream_dtype(prm, d)
+        streams.append({"arg": arg, "dir": d, "kind": "axis", "lanes": hls.lanes_of(point, f"{base}_TDATA", bits, dt),
+                        "dtype": dt, "data": f"{base}_TDATA", "valid": f"{base}_TVALID", "ready": f"{base}_TREADY"})
 
     pins = []
     for name in list(prm.get("config", {})) + list(prm.get("scalars", [])):
@@ -82,11 +84,14 @@ def build(point: str, netlist: Path) -> dict:
     if extra:
         raise ValueError(f"{point}: ports tb.json does not cover: {extra}")
 
-    return {"tb_version": TB_VERSION, "source": "bambu", "point": point, "kernel": prm["kernel"], "top": top,
-            "case": case, "W": w,
-            "clock": {"port": CLK}, "reset": {"port": RST, "active": "low", "sync": True},
-            "control": {"kind": "bambu_ctl", **CONTROL}, "streams": streams, "pins": pins,
-            "sizes": hls.sizes_for(point, prm["sizes"], prm["config"], w, prm.get("valid"))}
+    tb = {"tb_version": TB_VERSION, "source": "bambu", "point": point, "kernel": prm["kernel"], "top": top,
+          "case": case, "W": w,
+          "clock": {"port": CLK}, "reset": {"port": RST, "active": "low", "sync": True},
+          "control": {"kind": "bambu_ctl", **CONTROL}, "streams": streams, "pins": pins,
+          "sizes": hls.sizes_for(point, prm["sizes"], prm["config"], w, prm.get("valid"), extra=not hls.narrow(prm))}
+    if hls.narrow(prm):
+        tb["ref"] = hls.narrow_ref(prm, streams)
+    return tb
 
 
 def check(tb: dict) -> None:
@@ -95,9 +100,7 @@ def check(tb: dict) -> None:
         raise ValueError(f"control.kind {tb['control']['kind']}: only bambu_ctl is built here")
     if tb["tb_version"] != TB_VERSION:
         raise ValueError(f"tb_version {tb['tb_version']}, expected {TB_VERSION}")
-    for s in tb["streams"]:
-        if s["kind"] != "axis" or s["dtype"] != "int64":
-            raise ValueError(f"stream {s['arg']}: {s['kind']} {s['dtype']}, only axis int64 is built")
+    hls.check_streams(tb)
 
 
 def default_size(tb: dict) -> str:
@@ -105,7 +108,8 @@ def default_size(tb: dict) -> str:
 
 
 def expected_cycles(tb: dict, size: str, results: Path) -> tuple[int | None, str]:
-    """cycles_done's line through the point's ok rows of results/bambu/bambu_cycles.csv, at this size."""
+    """cycles_done of the point's ok row of results/bambu/bambu_cycles.csv at this size, else the line through
+    them at this size (a narrow point has one size, X119)."""
     tier = tb["point"].split("/")[0]
     pts = {}
     with (results / "bambu_cycles.csv").open(newline="") as fh:
@@ -114,6 +118,8 @@ def expected_cycles(tb: dict, size: str, results: Path) -> tuple[int | None, str
                                                                            str(tb["W"]), "ok"):
                 lc = int(re.search(r"loop_count=(\d+)", r["config"]).group(1))
                 pts[r["size"]] = (lc, int(r["cycles_done"]))
+    if size in pts and pts[size][0] == tb["sizes"][size]["loop_count"]:
+        return pts[size][1], f"cycles_done at {size}"
     try:
         a, b = cycle_line(pts)
     except ValueError as e:

@@ -8,7 +8,8 @@ A run measures one window of $T$ cycles at $t_{clk}$ = 10 ns (X2). Each energy i
 
 | Symbol (column) | Meaning |
 |---|---|
-| $T$ (`cycles`) | the window's cycles, start to done (X12, X23, X44) |
+| $T$ (`cycles`) | the window's cycles, start to done (X12, X23, X44): the energy window |
+| `cycles_ports` | the port window: the first input beat accepted to the last output beat accepted, both included, the same for every source (X119); §B's cycles |
 | $B$ (`beats`) | beats per input stream in the window; a beat is W elements |
 | $e_{clk}, e_{reg}, e_{seq}, e_{comb}$ (`e_clk_pj` ...) | PT's clock-network, register, other sequential and combinational groups, internal + switching, per cycle (pJ) |
 | $e_{flop}$ (`e_flop_pj`) | $e_{clk} + e_{reg} + e_{seq}$, as PT splits a flop's clock edge by whether its output toggles (X11) |
@@ -19,7 +20,7 @@ A run measures one window of $T$ cycles at $t_{clk}$ = 10 ns (X2). Each energy i
 | $n_{bits}$ (`flop_bits`) | the point's flops, `seq_cells` in `synth_dc.csv` |
 | $e_{bit}$ (`e_bit_pj`) | $e_{flop} / n_{bits}$, per flop bit per cycle |
 
-No leakage (it stays in `synth_dc.csv`). `power_pt.csv` has one row per point, size and seed, with `point`, `top`, `tech`, `clock_ns`, `W`, `size`, `config`, `seed` and `status` (`ok`, `failed: <check>`, `skipped: ...`). Added by source: forge's `counter`, `expected_cycles` and differences (X56); the RAM's `ram_kind`, `ram_reads`, `ram_writes`, `e_ram_pj` (X62); char's window (X33); `e_beat_pj`, `e_access_pj` ([`cost_tables.md`](cost_tables.md)); the cluster's `e_macro_pj`, `e_io_pj`, `e_win_pj` (X74).
+No leakage (it stays in `synth_dc.csv`). `power_pt.csv` has one row per point, size and seed, with `point`, `top`, `tech`, `clock_ns`, `W`, `size`, `config`, `seed`, `cycles`, `cycles_ports` and `status` (`ok`, `failed: <check>`, `skipped: ...`). Added by source: forge's `counter`, `expected_cycles` and differences (X56); the RAM's `ram_kind`, `ram_reads`, `ram_writes`, `e_ram_pj` (X62); char's window (X33); `e_beat_pj`, `e_access_pj` ([`cost_tables.md`](cost_tables.md)); the cluster's `e_macro_pj`, `e_io_pj`, `e_win_pj` (X74).
 
 ## Before a run
 
@@ -38,7 +39,7 @@ One worker per point, J workers with nproc // J PT threads each, from the free l
 |---|---|---|
 | tb.json | `sim/sources/hls.py` from the top's ports, `filelist.f`, `params.json` (X14); a `# ram:` point is `skipped` | a port not covered, `control.kind` not `ap_ctrl_hs` |
 | compile | `sim/tb/*.sv`, generated `tb.sv`, netlist with `vlog -timescale 1ns/1ps`; `vopt +initreg+0 +acc=n` against cell models in `sim/runs/<tech>/_cells` | vlog or vopt errors |
-| stimulus | rand64 (or forge) per X19, reference from `sim/ref.py`, `$readmemh` files | an input bit never toggles in ≥ 64 beats (fewer: counted, printed); forge: `sim/ref.py` differs from `data.h`'s `EXP_*` |
+| stimulus | rand64 (or forge) per X19, each input uniform over its stream's dtype (X119), reference from `sim/ref.py` (a narrow point: snax-forge's kernel, X119), `$readmemh` files | an input bit never toggles in ≥ 64 beats (fewer: counted, printed); forge: `sim/ref.py` differs from `data.h`'s `EXP_*` |
 | vsim | `vsim -c`, no SDF, `+nospecify +notimingchecks`, plusargs (`sim/scripts/run.do`); every output beat compared, DUT scopes dumped from the edge raising `ap_start` to the done edge | a mismatch, X/Z on a valid output, a timeout |
 | cycles | the TB's count (X12) against cosim's line a x loop_count + b, or cosim at a cosim size (X19) | a different count, no integer line |
 | vcd2saif | `-instance tb/dut -time t0 t1` in the VCD's unit; VCD deleted (X8, X18) | no SAIF |
@@ -48,12 +49,20 @@ One worker per point, J workers with nproc // J PT threads each, from the free l
 
 The TB (`sim/tb/`): `ap_ctrl_hs_seq.sv` (10 ns clock, 5 cycles of synchronous active-low reset, `ap_start` held until `ap_ready`, `ap_vld` pulsed on the first start cycle, a timeout), `axis_src.sv` (always valid), `axis_sink.sv` (always ready, compares, X/Z check). Outputs are sampled at falling edges, so nothing races. `tb.sv` dumps the DUT and sub-design scopes, not cells (PITFALLS LIB2). A licence error reruns once (X17), first log kept as `*.licence_retry.log`.
 
+## Narrow streams and the port window (X119)
+
+- **Element widths.** A stream's `dtype` is its element: an input carries `params.json`'s `dtype`, an output its `acc_dtype` (else `dtype`); `lanes` = TDATA bits / the element's bits, the same in `sim/sources/hls.py`, `bambu.py` and `xls.py` (dslx-exercises' `params.json` for XLS). X118's points: inputs 8 int8 lanes in 64 bits, vecadd's and relu's outputs 8 int32 lanes in 256 bits, dot's `out` one int32. `beats_hex` packs each lane at its width, lane 0 low; `axis_sink`'s `EW` prints a mismatch lane by lane. An int64 point's `tb.json` is byte for byte as before (`results/compare/runs/2026-11-28_hcmp1_r4b.md`).
+- **Stimulus and reference.** rand64 draws each input uniform over its dtype from the seed, stream by stream (int64: X19's draws exactly). A narrow point's `tb.json` has `ref`: snax-forge's kernel (`params.json`'s `forge_kernel`), its type preset (`forge_types`, `i8`) and the dtypes snax-forge resolves for it (`forge/query.py types`), each stream's dtype checked against its container's. The expected outputs are snax-forge's kernel body on the inputs at those dtypes (`forge/query.py ref`, `kernel_ref`, as forge's own check), once per kernel and inputs in a batch; `sim/ref.py` stays for the int64 points. `--stim forge` is int64 only.
+- **Sizes.** A narrow point runs its `params.json` sizes (n4096) and `b64`; no `n2048`. A forge point made at a size of the kernel's hls-exercises `params.json` is tagged with it (`forge_w8_i8_n4096`: `n4096`); at the n2048 shape it stays `n2048`. `power_pt_modules.csv` keeps the modules of `n4096` runs as of `n2048` runs.
+- **Expected cycles.** Bambu's and XLS's at a size of their cycle CSV are that row's (`cycles_done`; `cycles` + 1), else the line through the rows; a narrow point has one size.
+- **The port window.** Each sequencer (`ap_ctrl_hs_seq`, `bambu_seq`, `xls_seq`, `csr_seq`) takes `in_hs` and `out_hs` from the generated top (valid and ready on any input, on any output stream; XLS's cfg channel is not a stream), counts rising edges from reset's release (the first edge after it is cycle 1), samples both at the falling edge before each edge, as the sinks do, and prints `TB: ports first_in <c> last_out <c>`. `cycles_ports` = last_out − first_in + 1 goes into `power_pt.csv` beside `cycles`; a run without the line fails. The energy window stays each source's (X12, X23, X44): the task as the tool runs it. `pwr run` prints both per run; `cycles_ports` ≤ `cycles` + 1 is checked in the round's run note, not failed.
+
 ## Forge (`--source forge`)
 
 Bundles `rtl/forge/<point>.zip` (`forge/bundles.py`), netlists in `syn/runs/forge/<tech>/` (X6); snax-forge unchanged.
 
 - **tb.json** (`sim/sources/forge.py`, X14): from the bundle's JSON files (one group only), the streamer hjson and the netlist's ports as C§17's wrapper has them (`clk_i`, `rst_ni`, CSR, `stream2acc_<k>_*`, `acc2stream_<k>_*`, `<group>_busy_o`, `<group>_done_o`); `forge/query.py` gives containers, the kernel and `expected_cycles` (`group_counter`).
-- **Control `forge_csr`:** one size `n2048` (X55: tier done N = 2048; relu, axpy N = 2048, matadd M = 32, N = 64, rowsum M = 16, N = 128). LOWER's writes (`forge/query.py program`, X58): JOBS, JOB_BEATS, scalars (`K1`, or `K1_LO`, `K1_HI` at int64; axpy's alpha), START. At W = 4: relu, matadd, axpy, axpy_baked JOBS 512; rowsum JOBS 16, JOB_BEATS 32; rowsum_2 JOBS 4, JOB_BEATS 128; dot 4 JOBS 1, JOB_BEATS 512.
+- **Control `forge_csr`:** one size, the shape it was bundled at: `n2048` (X55: tier done N = 2048; relu, axpy N = 2048, matadd M = 32, N = 64, rowsum M = 16, N = 128) or X118's `n4096` (X119). LOWER's writes (`forge/query.py program`, X58): JOBS, JOB_BEATS, scalars (`K1`, or `K1_LO`, `K1_HI` at int64; axpy's alpha), START. At W = 4: relu, matadd, axpy, axpy_baked JOBS 512; rowsum JOBS 16, JOB_BEATS 32; rowsum_2 JOBS 4, JOB_BEATS 128; dot 4 JOBS 1, JOB_BEATS 512.
 - **Stream order:** the streamer's visit order, as `order` when not the identity: `rowsum_2` beat t holds rows 4⌊t/128⌋ to 4⌊t/128⌋ + 3 of column t mod 128 (M = 16, N = 128, W = 4). axpy's in-place `y` has TB streams `y_in`, `y_out`, checked against αx + y.
 - **The TB** (`sim/tb/csr_seq.sv`): `rst_ni` low 5 cycles, 2 idle, each write held until `csr_req_ready_o`, START last; sources valid from the first busy cycle.
 - **The window:** START accepted in cycle a, busy a + 1 .. E, `<group>_done_o` high in E + 1, so BUSY_COUNTER = E - a (C§17). Falling edge before START's edge to the one before e_E: rising edges e_a .. e_{E-1}, E - a of them, as X12 (dump margins: PITFALLS Q6). BUSY_COUNTER (D168) is read back.
@@ -88,7 +97,7 @@ snax_cluster's reader and sparse interconnect, alone and in `strm/xbar_mix.py`'s
 
 hls-exercises' `rtl/<tier>/<kernel>/bambu_w<W>/` (X44).
 
-- **tb.json** (`sim/sources/bambu.py`): streams `<arg>_TDATA/_TVALID/_TREADY` in `axis` order, lanes = TDATA bits / 64; pins `loop_count`, `len`, `alpha`; `clock`, `reset` from `SOURCES`; sizes as Vitis.
+- **tb.json** (`sim/sources/bambu.py`): streams `<arg>_TDATA/_TVALID/_TREADY` in `axis` order, lanes = TDATA bits / the element's bits (X119); pins `loop_count`, `len`, `alpha`; `clock`, `reset` from `SOURCES`; sizes as Vitis.
 - **Control `bambu_ctl`:** `start_port`, `done_port`; `idle_port` connected, never read.
 - **The TB** (`sim/tb/bambu_seq.sv`): pins driven from time 0 and held; `reset` (sync, active low) 5 cycles, 2 idle, sources valid a cycle before a one-cycle `start_port` pulse.
 - **The window:** falling edge before the first rising edge sampling `start_port` = 1 to the one before `done_port` = 1: Bambu's `cycles_done` (PITFALLS Q6).
@@ -125,14 +134,14 @@ The rest of the folder (`tb.sv`, `logs/`, `stim/`, `vsim.log`, `vcd2saif.log`, `
 In `results/<source>/<tech>/` (X20; Vitis in `results/hls/`):
 
 - `power_pt.csv`: a row per point, size and seed;
-- `power_pt_modules.csv`: `point, tech, size, path, design, e_dyn_pj`, per hierarchical cell of the default run and each `n2048` seed-0 run (X60);
+- `power_pt_modules.csv`: `point, tech, size, path, design, e_dyn_pj`, per hierarchical cell of the default run and each `n2048` and `n4096` seed-0 run (X60, X119);
 - `power_reports/<tier>/<kernel>/<point>.zip` (X51): `power.rpt`, `power_hierarchy.rpt`, `switching_activity.rpt`, `tb.json`; other runs in `<size>_<seed>/`; deterministic (PITFALLS Z1).
 
 Tool versions, licence counts and setup-check differences go into the run note.
 
 **A point with a RAM (X62).** A dace point with a swapped macro (`resolved.ram` in `tech.json`) is simulated with the macro's `.v` (`+define+SRAM_INIT_ZERO`), its `.db` linked (`PWR_RAM_DBS`); each instance prints `RAMCOUNT <inst> <cell> reads <n> writes <n>`. The macros are PT's `black_box` group, replaced by `e_ram_pj` = reads x e_rd + writes x e_wr (X50), their output nets added to comb; `e_run_pj` = e_dyn x cycles + `e_ram_pj`; PT's figure is kept as `e_ram_pt_pj` (PITFALLS PT7). A flop RAM (`--with-ram`) is ordinary logic. Dace dot, axpy, rowsum run n2048 only; rowsum's n2048 is m16_n128.
 
-**n2048 (X24, X55).** Every `tb.json` has `n2048` after cosim's sizes and `b64` (`EXTRA_SIZES`): tier done N = 2048, relu and axpy n = 2048, matadd m32_n64, rowsum m16_n128 (W = 4: loop_count 512, len 32). Pins at n = 2048 (vecadd, vecmul `loop_count` = 2048 / W; vsum, dot `loop_count` = `len` = 2048 / W), cycles from cosim's line through n64 and n512 (X19). Not the default (`b64`); its reports in `n2048_s0/`, its modules beside the default's (X60).
+**n2048 (X24, X55).** Every int64 `tb.json` has `n2048` (a narrow point has none, X119) after cosim's sizes and `b64` (`EXTRA_SIZES`): tier done N = 2048, relu and axpy n = 2048, matadd m32_n64, rowsum m16_n128 (W = 4: loop_count 512, len 32). Pins at n = 2048 (vecadd, vecmul `loop_count` = 2048 / W; vsum, dot `loop_count` = `len` = 2048 / W), cycles from cosim's line through n64 and n512 (X19). Not the default (`b64`); its reports in `n2048_s0/`, its modules beside the default's (X60).
 
 `setup-check` (X25) runs PT and DC on one netlist with the same uniform activity and prints each group's difference (`check.json`); it fails only on wire load (PITFALLS PT1). Run it when the flow or a library changes.
 

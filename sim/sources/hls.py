@@ -20,6 +20,9 @@ HLS = Path(os.environ.get("SIM_HLS", Path(__file__).resolve().parents[3] / "hls-
 RTL = HLS / "rtl"
 BENCH = HLS / "bench"
 BEATS = 64
+# A stream's element widths (X119): an input carries params.json's dtype, an output its acc_dtype (else dtype);
+# lanes = TDATA bits / the element's bits. int64 streams are built as before (64-bit lanes).
+BITS = {"int8": 8, "int16": 16, "int32": 32, "int64": 64}
 # control kinds: only ap_ctrl_hs is built; the forge kinds are reserved for sim/sources/forge.py
 CONTROL_KINDS = {"ap_ctrl_hs"}
 RESERVED_KINDS = {"forge_csr", "forge_datapath"}
@@ -33,6 +36,44 @@ EXTRA_SIZES = {
     "done": {"*": {"n": 2048}},
     "untiered": {"relu": {"n": 2048}, "axpy": {"n": 2048}, "matadd": {"m": 32, "n": 64}, "rowsum": {"m": 16, "n": 128}},
 }
+
+
+def narrow(prm: dict) -> bool:
+    """A point whose inputs are narrower than int64 (X118's int8 in, int32 out): its params.json size and b64
+    only, no n2048 reference task, and the reference is snax-forge's kernel at the point's types (X119)."""
+    return prm.get("dtype", "int64") != "int64"
+
+
+def stream_dtype(prm: dict, direction: str) -> str:
+    """An input stream's element: params.json's dtype; an output's: acc_dtype, else dtype."""
+    dtype = prm.get("dtype", "int64")
+    return dtype if direction == "in" else prm.get("acc_dtype", dtype)
+
+
+def lanes_of(point: str, port: str, bits: int, dtype: str) -> int:
+    """TDATA bits / the element's bits, refused when they do not divide."""
+    if dtype not in BITS:
+        raise ValueError(f"{point}: {port} carries {dtype}; the streams take {sorted(BITS)}")
+    if bits % BITS[dtype]:
+        raise ValueError(f"{point}: {port} is {bits} bits, not a multiple of {BITS[dtype]} ({dtype})")
+    return bits // BITS[dtype]
+
+
+def narrow_ref(prm: dict, streams: list[dict]) -> dict:
+    """tb.json's ref of a narrow point: snax-forge's kernel (params.json's forge_kernel) at its type preset
+    (forge_types), the containers' dtypes as snax-forge resolves the preset (forge/query.py types); every
+    stream's dtype must be its container's there, so HLS and forge points check against the same spec."""
+    from . import forge as _forge          # sim/sources/forge.py imports this module
+    for k in ("forge_kernel", "forge_types"):
+        if k not in prm:
+            raise ValueError(f"{prm.get('kernel')}: params.json has no {k}; a narrow point's reference needs it")
+    kernel = prm["forge_kernel"].rsplit("/", 1)[-1]       # polybench/vecadd: snax-forge's loader takes vecadd
+    q = _forge.query("types", kernel, prm["forge_types"])
+    for s in streams:
+        if q["dtypes"].get(s["arg"]) != s["dtype"]:
+            raise ValueError(f"{prm['kernel']}: stream {s['arg']} is {s['dtype']}, snax-forge's "
+                             f"{kernel} at {prm['forge_types']} has {q['dtypes'].get(s['arg'])}")
+    return {"kernel": kernel, "types": prm["forge_types"], "dtypes": q["dtypes"]}
 
 
 def extra_sizes(point: str) -> list[tuple[str, dict]]:
@@ -94,10 +135,12 @@ def size_tag(size: dict) -> str:
     return "_".join(f"{k}{v}" for k, v in size.items())
 
 
-def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | None = None, b64: bool = True) -> dict:
+def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | None = None, b64: bool = True,
+              extra: bool = True) -> dict:
     """{tag: {pin: value}}: the tool's sizes valid at this W, then 'b64' (64 beats) when every config pin equals
-    loop_count at those sizes (rowsum's len does not), then EXTRA_SIZES for the tier; values from the config
-    expressions. Shared by the HLS tools' adapters (hls, bambu, xls)."""
+    loop_count at those sizes (rowsum's len does not), then EXTRA_SIZES for the tier (not with extra=False: a
+    narrow point, X119); values from the config expressions. Shared by the HLS tools' adapters (hls, bambu,
+    xls)."""
     out = {}
     for size in sizes:
         if valid and not _eval(valid, size, w):
@@ -105,7 +148,7 @@ def sizes_for(point: str, sizes: list[dict], config: dict, w: int, valid: str | 
         out[size_tag(size)] = {k: int(_eval(e, size, w)) for k, e in config.items()}
     if b64 and all(all(v == cfg["loop_count"] for v in cfg.values()) for cfg in out.values()):
         out["b64"] = {k: BEATS for k in config}
-    for tag, size in extra_sizes(point):
+    for tag, size in extra_sizes(point) if extra else []:
         if valid and not _eval(valid, size, w):
             continue
         elems = 1
@@ -123,14 +166,19 @@ def build(point: str) -> dict:
       clock   {port}
       reset   {port, active, sync}
       control {kind: "ap_ctrl_hs", start, done, ready, idle}
-      streams [{arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   in params.json's axis order
+      streams [{arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   in params.json's axis order; dtype
+               the element (an input: params.json's dtype, an output: acc_dtype, else dtype), lanes = TDATA
+               bits / its bits
       pins    [{port, bits, vld, from: "config" | "data:<arg>"}]
       sizes   {tag: {pin: value}}  cosim's sizes valid at this W, and 'b64' (64 beats) when every config
                                    pin equals loop_count at cosim's sizes (rowsum's len does not, so it
                                    has no b64 and runs at a cosim size), then the reference task n2048
                                    (EXTRA_SIZES: tier done N = 2048; untiered relu and axpy
                                    n = 2048, matadd m32_n64, rowsum m16_n128), from params.json's config
-                                   expressions at those values
+                                   expressions at those values; a narrow point (dtype not int64, X119)
+                                   has its params.json sizes and b64 only
+      ref     {kernel, types, dtypes}  a narrow point only: snax-forge's kernel (params.json's forge_kernel, its
+                                   name: vecadd) and type preset (forge_types) and the dtypes snax-forge gives the containers
     """
     fl = filelist(point)
     top = fl["top"]
@@ -152,10 +200,9 @@ def build(point: str) -> dict:
         if base is None:
             raise ValueError(f"{point}: no AXI-stream port for argument {arg}")
         d, bits = ports[f"{base}_TDATA"]
-        if bits % 64:
-            raise ValueError(f"{point}: {base}_TDATA is {bits} bits, not a multiple of 64")
-        streams.append({"arg": arg, "dir": d, "kind": "axis", "lanes": bits // 64, "dtype": prm["dtype"],
-                        "data": f"{base}_TDATA", "valid": f"{base}_TVALID", "ready": f"{base}_TREADY"})
+        dt = stream_dtype(prm, d)
+        streams.append({"arg": arg, "dir": d, "kind": "axis", "lanes": lanes_of(point, f"{base}_TDATA", bits, dt),
+                        "dtype": dt, "data": f"{base}_TDATA", "valid": f"{base}_TVALID", "ready": f"{base}_TREADY"})
 
     pins = []
     for name in list(prm.get("config", {})) + list(prm.get("scalars", [])):
@@ -173,12 +220,25 @@ def build(point: str) -> dict:
 
     # a case with its own sizes (the dace case of dot, axpy and rowsum: the n2048 task only) runs those, no b64
     own = prm["cases"].get(case, {}).get("sizes")
-    sizes = sizes_for(point, own or prm["sizes"], prm["config"], w, prm.get("valid"), b64=not own)
+    sizes = sizes_for(point, own or prm["sizes"], prm["config"], w, prm.get("valid"), b64=not own,
+                      extra=not narrow(prm))
 
-    return {"tb_version": TB_VERSION, "point": point, "kernel": prm["kernel"], "top": top, "case": case, "W": w,
-            "clock": {"port": CLK},
-            "reset": {"port": RST, "active": "low", "sync": True},
-            "control": control, "streams": streams, "pins": pins, "sizes": sizes}
+    tb = {"tb_version": TB_VERSION, "point": point, "kernel": prm["kernel"], "top": top, "case": case, "W": w,
+          "clock": {"port": CLK},
+          "reset": {"port": RST, "active": "low", "sync": True},
+          "control": control, "streams": streams, "pins": pins, "sizes": sizes}
+    if narrow(prm):
+        tb["ref"] = narrow_ref(prm, streams)
+    return tb
+
+
+def check_streams(tb: dict) -> None:
+    """Axis streams of int8 to int64 elements (X119); a narrow one needs tb.json's ref."""
+    for s in tb["streams"]:
+        if s["kind"] != "axis" or s["dtype"] not in BITS:
+            raise ValueError(f"stream {s['arg']}: {s['kind']} {s['dtype']}, only axis {sorted(BITS)} is built")
+    if any(s["dtype"] != "int64" for s in tb["streams"]) and "ref" not in tb:
+        raise ValueError("a narrow stream and no ref (snax-forge's kernel and types) in tb.json")
 
 
 def check(tb: dict) -> None:
@@ -190,9 +250,7 @@ def check(tb: dict) -> None:
         raise ValueError(f"control.kind {kind}: only ap_ctrl_hs is built")
     if tb["tb_version"] != TB_VERSION:
         raise ValueError(f"tb_version {tb['tb_version']}, expected {TB_VERSION}")
-    for s in tb["streams"]:
-        if s["kind"] != "axis" or s["dtype"] != "int64":
-            raise ValueError(f"stream {s['arg']}: {s['kind']} {s['dtype']}, only axis int64 is built")
+    check_streams(tb)
 
 
 def default_size(tb: dict) -> str:

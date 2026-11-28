@@ -56,11 +56,13 @@ def build(point: str, netlist: Path) -> dict:
               width; config fields from the cfg expressions at the size, alpha drawn as a rand64 data pin after the
               streams
       streams [{arg, xls_arg, dir, kind: "axis", lanes, dtype, data, valid, ready}]   _<xls_arg>_TDATA/_TVALID/
-              _TREADY, inputs then outputs; arg is the hls-exercises name (sim/ref.py, the plusargs)
+              _TREADY, inputs then outputs; arg is the hls-exercises name (sim/ref.py, the plusargs); dtype and
+              lanes as sources/hls.py's, from dslx-exercises' params.json (X119)
       pins    []
-      sizes   as sources/hls.py's, from the config fields
-    Expected cycles: the line a x loop_count + b through cycles (the cfg transfer to the last output beat) at the
-    point's sizes in results/xls/xls_cycles.csv (status ok), plus 1: the window counts the rising edges from the cfg
+      sizes   as sources/hls.py's, from the config fields (no n2048 at a narrow point)
+      ref     as sources/hls.py's, a narrow point only (forge_kernel and forge_types from hls-exercises' params.json)
+    Expected cycles: cycles (the cfg transfer to the last output beat) at a size of results/xls/xls_cycles.csv
+    (status ok), else the line a x loop_count + b through its sizes, plus 1: the window counts the rising edges from the cfg
     transfer edge to the last output's transfer edge, both included (XLS's datapath is combinational, so the last
     beat is computed in the cycle that ends at its transfer edge).
     """
@@ -97,10 +99,12 @@ def build(point: str, netlist: Path) -> dict:
         if f"{base}_TDATA" not in ports:
             raise ValueError(f"{point}: no channel {base}_TDATA")
         d, bits = ports[f"{base}_TDATA"]
-        if d != side or bits % 64:
-            raise ValueError(f"{point}: {base}_TDATA is {d} {bits} bits, expected {side}, a multiple of 64")
-        streams.append({"arg": harg, "xls_arg": xarg, "dir": d, "kind": "axis", "lanes": bits // 64,
-                        "dtype": prm["dtype"], "data": f"{base}_TDATA", "valid": f"{base}_TVALID",
+        if d != side:
+            raise ValueError(f"{point}: {base}_TDATA is {d}, expected {side}")
+        dt = hls.stream_dtype(prm, d)
+        streams.append({"arg": harg, "xls_arg": xarg, "dir": d, "kind": "axis",
+                        "lanes": hls.lanes_of(point, f"{base}_TDATA", bits, dt),
+                        "dtype": dt, "data": f"{base}_TDATA", "valid": f"{base}_TVALID",
                         "ready": f"{base}_TREADY"})
 
     known = {CLK, RST, *CFG.values()} | {s[k] for s in streams for k in ("data", "valid", "ready")}
@@ -109,11 +113,15 @@ def build(point: str, netlist: Path) -> dict:
         raise ValueError(f"{point}: ports tb.json does not cover: {extra}")
 
     config = {f["name"]: prm["cfg"][f["name"]] for f in fields if f["from"] == "config"}
-    return {"tb_version": TB_VERSION, "source": "xls", "point": point, "kernel": prm["kernel"], "top": top,
-            "case": case, "W": w,
-            "clock": {"port": CLK}, "reset": {"port": RST, "active": "high", "sync": True},
-            "control": {"kind": "xls_cfg", **CFG, "bits": cw, "fields": fields},
-            "streams": streams, "pins": [], "sizes": hls.sizes_for(point, prm["sizes"], config, w)}
+    tb = {"tb_version": TB_VERSION, "source": "xls", "point": point, "kernel": prm["kernel"], "top": top,
+          "case": case, "W": w,
+          "clock": {"port": CLK}, "reset": {"port": RST, "active": "high", "sync": True},
+          "control": {"kind": "xls_cfg", **CFG, "bits": cw, "fields": fields},
+          "streams": streams, "pins": [], "sizes": hls.sizes_for(point, prm["sizes"], config, w,
+                                                                 extra=not hls.narrow(prm))}
+    if hls.narrow(prm):
+        tb["ref"] = hls.narrow_ref({**hprm, **prm}, streams)     # forge_kernel and forge_types from either
+    return tb
 
 
 def check(tb: dict) -> None:
@@ -122,9 +130,7 @@ def check(tb: dict) -> None:
         raise ValueError(f"control.kind {tb['control']['kind']}: only xls_cfg is built here")
     if tb["tb_version"] != TB_VERSION:
         raise ValueError(f"tb_version {tb['tb_version']}, expected {TB_VERSION}")
-    for s in tb["streams"]:
-        if s["kind"] != "axis" or s["dtype"] != "int64":
-            raise ValueError(f"stream {s['arg']}: {s['kind']} {s['dtype']}, only axis int64 is built")
+    hls.check_streams(tb)
 
 
 def default_size(tb: dict) -> str:
@@ -140,7 +146,8 @@ def cfg_word(tb: dict, values: dict) -> int:
 
 
 def expected_cycles(tb: dict, size: str, results: Path) -> tuple[int | None, str]:
-    """cycles' line through the point's ok rows of results/xls/xls_cycles.csv at this size, plus 1 (the window)."""
+    """cycles of the point's ok row of results/xls/xls_cycles.csv at this size, else the line through them at this
+    size; plus 1 (the window)."""
     tier = tb["point"].split("/")[0]
     pts = {}
     with (results / "xls_cycles.csv").open(newline="") as fh:
@@ -149,6 +156,8 @@ def expected_cycles(tb: dict, size: str, results: Path) -> tuple[int | None, str
                                                                            str(tb["W"]), "ok"):
                 lc = int(re.search(r"loop_count=(\d+)", r["config"]).group(1))
                 pts[r["size"]] = (lc, int(r["cycles"]))
+    if size in pts and pts[size][0] == tb["sizes"][size]["loop_count"]:
+        return pts[size][1] + 1, f"cycles at {size}, + 1"
     try:
         a, b = cycle_line(pts)
     except ValueError as e:

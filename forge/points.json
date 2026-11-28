@@ -86,5 +86,9 @@
   {"point": "done/dot/forge5_w8_i8", "recipe": "dot_v5", "W": 8, "sets": ["N=2048", "types=i8"]},
   {"point": "done/dot/forge5_w8_i16", "recipe": "dot_v5", "W": 8, "sets": ["N=2048", "types=i16"]},
   {"point": "done/dot/forge3_w8_i8", "recipe": "dot_v3", "W": 8, "sets": ["N=2048", "types=i8"]},
-  {"point": "done/dot/forge3_w32_i8", "recipe": "dot_v3", "W": 32, "sets": ["N=2048", "types=i8"]}
+  {"point": "done/dot/forge3_w32_i8", "recipe": "dot_v3", "W": 32, "sets": ["N=2048", "types=i8"]},
+  {"point": "done/vecadd/forge_w8_i8_n4096", "recipe": "vecadd_v1", "W": 8, "sets": ["N=4096", "types=i8", "design.data=full"]},
+  {"point": "untiered/relu/forge_w8_i8_n4096", "recipe": "relu_v1", "W": 8, "sets": ["N=4096", "types=i8", "design.data=full"]},
+  {"point": "done/dot/forge3_w8_i8_n4096", "recipe": "dot_v3", "W": 8, "sets": ["N=4096", "types=i8", "design.data=full"]},
+  {"point": "done/dot/forge3nm_w8_i8_n4096", "recipe": "dot_v3", "W": 8, "sets": ["N=4096", "types=i8", "design.data=full", "design.narrow_mul=true"]}
 ]

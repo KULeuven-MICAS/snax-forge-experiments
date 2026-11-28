@@ -148,7 +148,10 @@ COLUMNS = ["point", "top", "tech", "clock_ns", "clk_gate", "status", "errors", "
            "e_total_pj", "leak_clk_uw", "leak_reg_uw", "leak_seq_uw", "leak_comb_uw", "lib_md5", "dc_version",
            "date", "run"]
 FORGE_COLUMNS = ["recipe", "W", "snax_forge_commit",   # after COLUMNS, forge rows only
-                 "csr_um2", "ctrl_um2", "datapath_um2", "glue_um2"]
+                 "csr_um2", "ctrl_um2", "datapath_um2", "adapt_um2", "glue_um2"]
+# forge's stream adapters (X119): the modules that turn the 64-bit stream words into the datapath's lanes and back,
+# FifoSlicer on an input and FifoPacker on an output, instantiated by the wrapper beside csr, ctrl and datapath
+ADAPTERS = re.compile(r"^(FifoSlicer|FifoPacker)_")
 CHAR_COLUMNS = ["datapath", "lanes", "depth", "op", "form", "in_type", "out_type",
                 "snax_forge_commit"]  # after COLUMNS, char rows only
 BAMBU_COLUMNS = ["ctrl_um2", "datapath_um2", "glue_um2"]  # after COLUMNS, bambu rows only
@@ -794,19 +797,26 @@ def licence_error(get) -> str:
 
 
 def module_shares(tech: dict, point: str, clock: str, total: str) -> dict:
-    """forge: csr_um2, ctrl_um2, datapath_um2 (bundle.json's three modules, by design name, from
-    read_modules) and glue_um2 = total - the three; '' where a module has no row."""
-    designs = list(forge_json(point, "bundle.json").get("modules", {}))
+    """forge: csr_um2, ctrl_um2, datapath_um2 (bundle.json's three modules, by design name, from read_modules),
+    adapt_um2 (every instance of bundle.json's FifoSlicer and FifoPacker modules, X119; 0 when it lists none) and
+    glue_um2 = total - the four; '' where a module has no row."""
+    listed = list(forge_json(point, "bundle.json").get("modules", {}))
+    adapters = [d for d in listed if ADAPTERS.match(d)]
+    designs = [d for d in listed if d not in adapters]
     keys = ["csr_um2", "ctrl_um2", "datapath_um2"]
-    area = {m["design"]: float(m["area_um2"]) for m in read_modules(tech, point, clock)}
-    out = {k: "" for k in [*keys, "glue_um2"]}
+    mods = read_modules(tech, point, clock)
+    area = {m["design"]: float(m["area_um2"]) for m in mods}
+    out = {k: "" for k in [*keys, "adapt_um2", "glue_um2"]}
     if len(designs) != 3 or not total:
         return out
     for k, d in zip(keys, designs):
         if d in area:
             out[k] = f"{area[d]:.4f}"
-    if all(out[k] for k in keys):
-        out["glue_um2"] = f"{float(total) - sum(float(out[k]) for k in keys):.4f}"
+    hits = [m for m in mods if m["design"] in adapters]
+    if {m["design"] for m in hits} == set(adapters):
+        out["adapt_um2"] = f"{sum(float(m['area_um2']) for m in hits):.4f}"
+    if all(out[k] for k in [*keys, "adapt_um2"]):
+        out["glue_um2"] = f"{float(total) - sum(float(out[k]) for k in [*keys, 'adapt_um2']):.4f}"
     return out
 
 

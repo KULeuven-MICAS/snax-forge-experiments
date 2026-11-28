@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X119**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X120**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -411,6 +411,12 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** E7 runs at forge's `i8` preset (int8 in; int32 products, sums and outputs), W = 8, 4096 elements a stream (levels 1 and 2) or 64 × 64 (tier A), data uniform over each type; cases Vitis opt, Bambu, XLS (dace out: W = 1 only, X62's RAM). Cycles from the first input beat accepted to the last output beat, on the ports, the same for every tool. Operands used again are streamed again in forge's order, and an HLS block holds no more storage than forge's engine. forge's engine per kernel: its form with the lowest energy per task among those within 1 % of the fewest cycles, control and datapath (X63). Amends X24 and the windows of X12 and X44 for E7; the int64 rows stay until the int8 rows replace them.
 - **Why:** one spec, the type and width §C uses, and cycles every tool counts alike.
 - **Where:** hls-exercises `docs/HLS_VS_FORGE.md`; `results/compare/README.md`.
+
+### X119 — E7's narrow streams and the port window
+
+- **Decided:** for E7 (X118) the HLS sources take each stream's element from `params.json` (inputs at `dtype`, outputs at `acc_dtype`), lanes = TDATA bits / its bits; each input uniform over its dtype from X19's seed; the reference is snax-forge's kernel at the point's type preset (`forge/query.py types`, `ref`), as forge's own check; such a point runs its `params.json` size (n4096) and `b64`, no n2048. Forge points bundle at n4096 with `design.` sets passed to snax-forge's design step (`design.data=full`, `design.narrow_mul=true`). Every TB prints a port window, the first input beat accepted to the last output beat accepted (`cycles_ports` beside `cycles` in `power_pt.csv`); the energy window stays each source's. forge's stream adapters (FifoSlicer, FifoPacker) are their own area part, `adapt_um2`. Amends X12, X19, X23 and X44 for E7; int64 points build as before.
+- **Why:** one spec and one cycle count for every tool; the adapters exist only at narrow types, so they must not hide in ctrl, datapath or glue.
+- **Where:** `power.md`, "Narrow streams and the port window"; `syn/README.md`; `results/compare/runs/2026-11-28_hcmp1_r4b.md`.
 
 ## Cluster
 

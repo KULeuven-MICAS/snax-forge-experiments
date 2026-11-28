@@ -3,14 +3,16 @@
 // Always ready. At the falling edge before each rising edge it samples TVALID and TDATA: a
 // valid beat is the handshake of the next edge; it is compared with the expected beat. Any X or Z
 // on TVALID after reset, or in TDATA while valid, is an error. Expected data by plusargs:
-//   +<NAME>_HEX=<file>    $readmemh file of the expected beats (sim/ref.py)
+//   +<NAME>_HEX=<file>    $readmemh file of the expected beats (sim/ref.py, or snax-forge's kernel: X119)
 //   +<NAME>_BEATS=<n>     beats expected
 // `complete` rises once every expected beat has arrived. Beats count only after reset: the clock's
-// initial X -> 0 is a falling edge at time 0, and some DUTs (axpy opt) drive TVALID high in reset.
+// initial X -> 0 is a falling edge at time 0, and some DUTs (axpy opt) drive TVALID high in reset. A beat is DW / EW
+// lanes of EW bits, lane 0 in the low bits (EW 64 for int64; X119's int32 outputs EW 32): a mismatch prints its lanes.
 `timescale 1ns/1ps
 
 module axis_sink #(
     parameter int    DW   = 64,
+    parameter int    EW   = 64,       // bits a lane
     parameter string NAME = "C"
 ) (
     input  logic          clk,
@@ -49,9 +51,9 @@ module axis_sink #(
                 mism++;
                 if (mism <= 5) begin
                     $display("TB: FAIL: %s beat %0d at %0t", NAME, n, $realtime);
-                    for (int l = 0; l < DW / 64; l++)
-                        if (tdata[64*l +: 64] !== mem[n][64*l +: 64])
-                            $display("TB:         lane %0d: got %h, expected %h", l, tdata[64*l +: 64], mem[n][64*l +: 64]);
+                    for (int l = 0; l < DW / EW; l++)
+                        if (tdata[EW*l +: EW] !== mem[n][EW*l +: EW])
+                            $display("TB:         lane %0d: got %h, expected %h", l, tdata[EW*l +: EW], mem[n][EW*l +: EW]);
                 end
             end
             n++;

@@ -14,7 +14,7 @@
 //            $dumpvars is in the generated top, which knows the DUT's scopes.
 //   end      $finish once the window has closed and every sink is complete
 // +TIMEOUT=<cycles> (default 10000) fails a run that does not end.
-// Prints 'TB: window t0_ns <t0> t1_ns <t1> cycles <n>' for sim/pwr.py.
+// Prints 'TB: ports first_in <c> last_out <c>' (in_hs, out_hs: the streams' handshakes, X119) and 'TB: window t0_ns <t0> t1_ns <t1> cycles <n>' for sim/pwr.py.
 `timescale 1ns/1ps
 
 module ap_ctrl_hs_seq #(
@@ -27,9 +27,22 @@ module ap_ctrl_hs_seq #(
     output logic vld      = 1'b0,
     input  logic ap_done,
     input  logic ap_ready,
-    input  logic sinks_complete
+    input  logic sinks_complete,
+    input  logic in_hs,          // valid and ready on any input stream (the generated top)
+    input  logic out_hs          // valid and ready on any output stream
 );
     always #(T_NS / 2) clk = ~clk;
+
+    // The port window (docs/DECISIONS.md X119, the same in every sequencer): rising edges counted from reset's
+    // release (the first edge after it is cycle 1); first_in is the cycle of the first input beat accepted (valid
+    // and ready on any input stream: in_hs), last_out that of the last output beat accepted (out_hs), each sampled
+    // at the falling edge before its edge, as the sinks sample. Printed as 'TB: ports first_in <c> last_out <c>'.
+    longint pcyc = 0, first_in = -1, last_out = -1;
+    always @(posedge clk) if (rst_n === 1'b1) pcyc++;
+    always @(negedge clk) if (rst_n === 1'b1) begin
+        if (first_in < 0 && in_hs === 1'b1) first_in = pcyc + 1;
+        if (out_hs === 1'b1) last_out = pcyc + 1;
+    end
 
     longint negs = 0;           // falling edges so far
     longint n_open, n_close;
@@ -71,6 +84,7 @@ module ap_ctrl_hs_seq #(
         ap_start <= 1'b0;
         wait (closed && sinks_complete);
         @(negedge clk);
+        $display("TB: ports first_in %0d last_out %0d", first_in, last_out);
         $display("TB: window t0_ns %0.3f t1_ns %0.3f cycles %0d", t_open, t_close, n_close - n_open);
         $finish;
     end

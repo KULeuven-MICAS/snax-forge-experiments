@@ -24,6 +24,7 @@ Tool behaviour that gives wrong numbers, or none, without an error: one line eac
 - **DC18.** An unloaded output port has no driver and reads Z: take status from the RTL run.
 - **DC19.** `syn/runs/<source>/<tech>/summary.csv` is never pruned: `syn.py` merges a batch into `synth_dc.csv` (X79 · X87 · X88).
 - **DC20.** A large inferred mux maps to MUX2 trees (16 × 256: 7,680 MUX2, 14,300 µm², comb x2, energy x3), smaller ones (up to 16 × 128, 8 × 256) to AOI22: check `reference.rpt`'s MUX2 count before fitting (X97).
+- **DC21.** syn.py's forge split took exactly three `bundle.json` modules; a bundle whose wrapper also instantiates a stream adapter (`FifoPacker_n1_i32_w1` as dot's `sum_out_packer` at i8, HCMP1 R4b) lists four, and `csr_um2` to `glue_um2` came out empty with no message: the adapters are `adapt_um2` since X119; check a new bundle's `modules` against the row's split.
 
 ## Libraries
 
@@ -97,6 +98,7 @@ Tool behaviour that gives wrong numbers, or none, without an error: one line eac
 - **E7.** A submodule off main's pin dirties every bundle: `git -C ../snax-forge submodule update <sub>` first.
 - **E8.** `forge/query.py ref` runs the checkout's kernel body, so a branch changing one (PACK1a's `OP_TYPE = int32`) fails it: forge power on main, record branch and HEAD (CG5 R1); since CHAR2 R7 axpy and matadd carry `OP_TYPE` int64, older bundles do not.
 - **E9.** `syn.py`, `pwr.py` write CRLF while forge's CSVs are LF since the CG5 merge: `sed -i 's/\r$//'` and check `git diff --stat` (CHAR2 R7); other sources stay CRLF.
+- **E10.** `bundle.json` names its design point inside snax-forge's `out/` (scratch), so once that is cleaned `pwr tbjson` on an older bundle stops ("the design point bundle.json names is not there"), and its DC netlist may predate a top rename (`snax_forge_vecmul_shell_wrapper`, now `_v1_`): for a before/after `tb.json` check, rebundle into a scratch `--out` and build from the wrapper's port list (`results/compare/runs/2026-11-28_hcmp1_r4b.md`).
 
 ## snax_cluster's generators
 

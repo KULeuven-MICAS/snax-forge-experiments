@@ -13,7 +13,7 @@ done/dot/xls_w4,nangate45,10,1,clk_gate_____state_2_reg,SNPS_CLOCK_GATE_HIGH_dot
 done/dot/xls_w4,nangate45,10,1,dot,dot,30076.0881,29345.6522,723.5200,0.0000,1799.878,492
 done/dot/xls_w8,nangate45,10,1,clk_gate_____state_1_reg_0,SNPS_CLOCK_GATE_HIGH_dot_2,3.4580,0.0000,3.4580,0.0000,,
 done/dot/xls_w8,nangate45,10,1,clk_gate_____state_2_reg,SNPS_CLOCK_GATE_HIGH_dot_1,3.4580,0.0000,3.4580,0.0000,,
-done/dot/xls_w8,nangate45,10,1,dot,dot,59148.5583,58418.1223,723.5200,0.0000,3430,973
+done/dot/xls_w8,nangate45,10,1,dot,dot,3499.7620,2914.0300,578.8160,0.0000,215.944,72.6
 done/vecadd/xls_w1,nangate45,10,1,clk_gate_____state_reg_0,SNPS_CLOCK_GATE_HIGH_vecadd,3.4580,0.0000,3.4580,0.0000,,
 done/vecadd/xls_w1,nangate45,10,1,vecadd,vecadd,674.0440,525.8820,144.7040,0.0000,42.467,12.3
 done/vecadd/xls_w16,nangate45,10,1,clk_gate_____state_reg_0,SNPS_CLOCK_GATE_HIGH_vecadd,3.4580,0.0000,3.4580,0.0000,,
@@ -23,7 +23,7 @@ done/vecadd/xls_w2,nangate45,10,1,vecadd,vecadd,1080.2260,932.0640,144.7040,0.00
 done/vecadd/xls_w4,nangate45,10,1,clk_gate_____state_reg_0,SNPS_CLOCK_GATE_HIGH_vecadd,3.4580,0.0000,3.4580,0.0000,,
 done/vecadd/xls_w4,nangate45,10,1,vecadd,vecadd,1892.5900,1744.4280,144.7040,0.0000,124.033,32.8
 done/vecadd/xls_w8,nangate45,10,1,clk_gate_____state_reg_0,SNPS_CLOCK_GATE_HIGH_vecadd,3.4580,0.0000,3.4580,0.0000,,
-done/vecadd/xls_w8,nangate45,10,1,vecadd,vecadd,3518.9140,3370.7520,144.7040,0.0000,226.538,59.9
+done/vecadd/xls_w8,nangate45,10,1,vecadd,vecadd,688.1420,539.9800,144.7040,0.0000,69.919,14.4
 done/vecmul/xls_w1,nangate45,10,1,clk_gate_____state_reg_0,SNPS_CLOCK_GATE_HIGH_vecmul,3.4580,0.0000,3.4580,0.0000,,
 done/vecmul/xls_w1,nangate45,10,1,vecmul,vecmul,7327.5020,7179.3400,144.7040,0.0000,445.493,144
 done/vecmul/xls_w16,nangate45,10,1,clk_gate_____state_reg_0,SNPS_CLOCK_GATE_HIGH_vecmul,3.4580,0.0000,3.4580,0.0000,,
@@ -83,7 +83,7 @@ untiered/relu/xls_w2,nangate45,10,1,relu,relu,406.4480,258.2860,144.7040,0.0000,
 untiered/relu/xls_w4,nangate45,10,1,clk_gate_____state_reg_0,SNPS_CLOCK_GATE_HIGH_relu,3.4580,0.0000,3.4580,0.0000,,
 untiered/relu/xls_w4,nangate45,10,1,relu,relu,544.7680,396.6060,144.7040,0.0000,41.279,12.2
 untiered/relu/xls_w8,nangate45,10,1,clk_gate_____state_reg_0,SNPS_CLOCK_GATE_HIGH_relu,3.4580,0.0000,3.4580,0.0000,,
-untiered/relu/xls_w8,nangate45,10,1,relu,relu,821.9400,673.7780,144.7040,0.0000,68.833,18.9
+untiered/relu/xls_w8,nangate45,10,1,relu,relu,333.8300,185.6680,144.7040,0.0000,23.835,7.19
 untiered/rowsum/xls_w1,nangate45,10,1,clk_gate_____state_1_reg_0,SNPS_CLOCK_GATE_HIGH_rowsum_2,3.4580,0.0000,3.4580,0.0000,,
 untiered/rowsum/xls_w1,nangate45,10,1,clk_gate_____state_2_reg,SNPS_CLOCK_GATE_HIGH_rowsum_1,3.4580,0.0000,3.4580,0.0000,,
 untiered/rowsum/xls_w1,nangate45,10,1,rowsum,rowsum,1490.3980,759.9620,723.5200,0.0000,121.107,28.2
