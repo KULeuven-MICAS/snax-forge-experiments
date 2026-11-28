@@ -1,4 +1,5 @@
 point,top,tech,clock_ns,clk_gate,W,size,config,beats,seed,cycles,cycles_ports,expected_cycles,expected_diff,e_clk_pj,e_reg_pj,e_seq_pj,e_comb_pj,e_flop_pj,e_dyn_pj,p_dyn_uw,e_comb_fire_pj,e_flop_fire_pj,e_run_pj,flop_bits,e_bit_pj,status
+a/mvt/xls_w8,mvt,nangate45,10,1,8,m64_n64,loop_count=512 len=8,512,0,513,512,513,0,2.625318,3.370396,0,17.76245,5.995714,23.75817,2375.817,17.79715,6.007424,12187.94,2229,0.002689867,ok
 done/dot/xls_w8,dot,nangate45,10,1,8,n4096,loop_count=512 len=512,512,0,513,512,513,0,0.6432087,0.1573923,0,4.193471,0.800601,4.994072,499.4072,4.201661,0.8021647,2561.959,130,0.006158469,ok
 done/vecadd/xls_w8,vecadd,nangate45,10,1,8,n4096,loop_count=512,512,0,513,512,513,0,0.2408641,0.02591334,0,2.574883,0.2667775,2.841661,284.1661,2.579912,0.2672985,1457.772,33,0.008084166,ok
 done/vecmul/xls_w1,vecmul,nangate45,10,1,1,b64,loop_count=64,64,0,65,,65,0,0.2489466,0.02484978,0,12.39598,0.2737964,12.66977,1266.977,12.58966,0.2780745,823.5353,33,0.008296861,ok

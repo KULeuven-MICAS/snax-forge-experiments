@@ -44,10 +44,73 @@ def narrow(prm: dict) -> bool:
     return prm.get("dtype", "int64") != "int64"
 
 
-def stream_dtype(prm: dict, direction: str) -> str:
-    """An input stream's element: params.json's dtype; an output's: acc_dtype, else dtype."""
+def stream_dtype(prm: dict, direction: str, arg: str | None = None, types: dict | None = None) -> str:
+    """An int64 point's stream element: params.json's dtype for an input, acc_dtype (else dtype) for an output. A
+    narrow point's (X120): the dtype snax-forge gives the array the port carries (its params.json streams entry's
+    array, else the port's name) at the point's type preset (`types`, narrow_types): axpy's y and mvt's x1_in are
+    int32 inputs at i8."""
+    if types is not None:
+        array = array_of(prm.get("streams", {}).get(arg, {}).get("array", arg), types["dtypes"])
+        if array not in types["dtypes"]:
+            raise ValueError(f"{prm.get('kernel')}: port {arg} carries {array}, no container of snax-forge's "
+                             f"{types['kernel']} at {types['types']}")
+        return types["dtypes"][array]
     dtype = prm.get("dtype", "int64")
     return dtype if direction == "in" else prm.get("acc_dtype", dtype)
+
+
+def array_of(arg: str, dtypes: dict) -> str:
+    """The forge container a port without a streams entry carries: its own name, or for <a>_out, when that is no
+    container and <a> is, <a> (axpy's y_out is y, updated in place, as forge names the pair)."""
+    if arg not in dtypes and arg.endswith("_out") and arg[: -len("_out")] in dtypes:
+        return arg[: -len("_out")]
+    return arg
+
+
+def stream_array(s: dict, dtypes: dict) -> str:
+    """The forge container a tb.json stream carries: its streams entry's array, else array_of its name."""
+    return s["follows"]["array"] if "follows" in s else array_of(s["arg"], dtypes)
+
+
+_TYPES: dict = {}
+
+
+def narrow_types(prm: dict) -> dict:
+    """{kernel, types, dtypes}: snax-forge's kernel (params.json's forge_kernel, its name: vecadd) at its type preset
+    (forge_types), the dtypes snax-forge gives the containers and type parameters (forge/query.py types)."""
+    from . import forge as _forge          # sim/sources/forge.py imports this module
+    for k in ("forge_kernel", "forge_types"):
+        if k not in prm:
+            raise ValueError(f"{prm.get('kernel')}: params.json has no {k}; a narrow point's reference needs it")
+    kernel = prm["forge_kernel"].rsplit("/", 1)[-1]       # polybench/vecadd: snax-forge's loader takes vecadd
+    key = (kernel, prm["forge_types"])
+    if key not in _TYPES:
+        _TYPES[key] = _forge.query("types", kernel, prm["forge_types"])["dtypes"]
+    return {"kernel": kernel, "types": prm["forge_types"], "dtypes": _TYPES[key]}
+
+
+def follows(point: str, prm: dict, arg: str, lanes: int, w: int) -> dict | None:
+    """A port's params.json streams entry (X120): the forge array it carries and the expressions of its beats a run
+    and of the flat row-major index of lane l of beat b (over the size's keys, W, b and l); its lanes must be the
+    port's (TDATA bits / the element's). None without an entry: the port carries its own array in turn."""
+    e = prm.get("streams", {}).get(arg)
+    if e is None:
+        return None
+    if int(_eval(str(e["lanes"]), {}, w)) != lanes:
+        raise ValueError(f"{point}: port {arg} has {lanes} lanes, params.json's streams says {e['lanes']}")
+    return {"array": e["array"], "beats": str(e["beats"]), "index": str(e["index"])}
+
+
+def follow(s: dict, dims: dict, w: int):
+    """(beats, index) of a stream with a streams entry at a size (dims: its keys and values): index[b, l] the flat
+    element of its array lane l of beat b carries."""
+    import numpy as np
+
+    f = s["follows"]
+    beats = int(_eval(f["beats"], dims, w))
+    b, lane = np.arange(beats)[:, None], np.arange(s["lanes"])[None, :]
+    idx = eval(f["index"], {"__builtins__": {}}, {**dims, "W": w, "b": b, "l": lane})  # params.json's own
+    return beats, np.broadcast_to(np.asarray(idx, dtype=np.int64), (beats, s["lanes"]))
 
 
 def lanes_of(point: str, port: str, bits: int, dtype: str) -> int:
@@ -60,20 +123,22 @@ def lanes_of(point: str, port: str, bits: int, dtype: str) -> int:
 
 
 def narrow_ref(prm: dict, streams: list[dict]) -> dict:
-    """tb.json's ref of a narrow point: snax-forge's kernel (params.json's forge_kernel) at its type preset
-    (forge_types), the containers' dtypes as snax-forge resolves the preset (forge/query.py types); every
-    stream's dtype must be its container's there, so HLS and forge points check against the same spec."""
-    from . import forge as _forge          # sim/sources/forge.py imports this module
-    for k in ("forge_kernel", "forge_types"):
-        if k not in prm:
-            raise ValueError(f"{prm.get('kernel')}: params.json has no {k}; a narrow point's reference needs it")
-    kernel = prm["forge_kernel"].rsplit("/", 1)[-1]       # polybench/vecadd: snax-forge's loader takes vecadd
-    q = _forge.query("types", kernel, prm["forge_types"])
+    """tb.json's ref of a narrow point: snax-forge's kernel at its type preset and the dtypes it gives the
+    containers (narrow_types); every stream's dtype must be that of the array it carries there (its streams
+    entry's array, else its own name: mvt's x1_in carries x1), so HLS and forge points check against the same
+    spec."""
+    t = narrow_types(prm)
     for s in streams:
-        if q["dtypes"].get(s["arg"]) != s["dtype"]:
-            raise ValueError(f"{prm['kernel']}: stream {s['arg']} is {s['dtype']}, snax-forge's "
-                             f"{kernel} at {prm['forge_types']} has {q['dtypes'].get(s['arg'])}")
-    return {"kernel": kernel, "types": prm["forge_types"], "dtypes": q["dtypes"]}
+        array = stream_array(s, t["dtypes"])
+        if t["dtypes"].get(array) != s["dtype"]:
+            raise ValueError(f"{prm['kernel']}: stream {s['arg']} ({array}) is {s['dtype']}, snax-forge's "
+                             f"{t['kernel']} at {t['types']} has {t['dtypes'].get(array)}")
+    return t
+
+
+def dims_of(point: str, prm: dict, w: int) -> dict:
+    """{tag: size} of params.json's sizes valid at this W: the keys the streams entries' expressions take."""
+    return {size_tag(z): z for z in prm["sizes"] if not prm.get("valid") or _eval(prm["valid"], z, w)}
 
 
 def extra_sizes(point: str) -> list[tuple[str, dict]]:
@@ -113,12 +178,29 @@ def case_w(point: str) -> tuple[str, int]:
 
 
 def ports_of(vfile: Path, top: str) -> dict:
-    """{port: (dir, bits)} of module `top`, from its input/output declarations."""
+    """{port: (dir, bits)} of module `top`, from its input/output declarations: in the body (a DC netlist, Vitis's
+    and Bambu's Verilog), or in an ANSI header (XLS's Verilog, snax-forge's SV), where a name alone takes the
+    direction and width of the one before it."""
     text = re.sub(r"//.*", "", vfile.read_text())
     m = re.search(rf"^\s*module\s+{re.escape(top)}\b(.*?)^\s*endmodule", text, re.M | re.S)
     if not m:
         raise ValueError(f"{vfile}: no module {top}")
     ports = {}
+    head = re.match(r"\s*\((.*?)\)\s*;", m.group(1), re.S)
+    if head and re.search(r"\b(input|output)\b", head.group(1)):
+        cur = None
+        for item in head.group(1).split(","):
+            item = " ".join(item.split())
+            d = re.fullmatch(r"(input|output)\s+(?:wire\s+|logic\s+|reg\s+)?(?:\[(\d+):(\d+)\]\s*)?(\w+)", item)
+            if d:
+                cur = ("in" if d.group(1) == "input" else "out",
+                       int(d.group(2)) - int(d.group(3)) + 1 if d.group(2) else 1)
+                ports[d.group(4)] = cur
+            elif re.fullmatch(r"\w+", item) and cur:
+                ports[item] = cur
+            else:
+                raise ValueError(f"{vfile}: module {top}'s header item {item!r} is not a port declaration")
+        return ports
     for d, msb, lsb, names in re.findall(
             r"^\s*(input|output)\s+(?:wire\s+|reg\s+)?(?:\[(\d+):(\d+)\]\s*)?([^;]+);", m.group(1), re.M):
         bits = int(msb) - int(lsb) + 1 if msb else 1
@@ -193,6 +275,7 @@ def build(point: str) -> dict:
             raise ValueError(f"{point}: no {p}: not ap_ctrl_hs")
     control = {"kind": "ap_ctrl_hs", "start": "ap_start", "done": "ap_done", "ready": "ap_ready", "idle": "ap_idle"}
 
+    types = narrow_types(prm) if narrow(prm) else None
     streams = []
     for arg in prm["axis"]:
         # Vitis renames an argument that is a Verilog keyword or clashes (dot's out -> out_r)
@@ -200,16 +283,17 @@ def build(point: str) -> dict:
         if base is None:
             raise ValueError(f"{point}: no AXI-stream port for argument {arg}")
         d, bits = ports[f"{base}_TDATA"]
-        dt = stream_dtype(prm, d)
-        streams.append({"arg": arg, "dir": d, "kind": "axis", "lanes": lanes_of(point, f"{base}_TDATA", bits, dt),
-                        "dtype": dt, "data": f"{base}_TDATA", "valid": f"{base}_TVALID", "ready": f"{base}_TREADY"})
+        dt = stream_dtype(prm, d, arg, types)
+        streams.append(axis_stream(point, prm, arg, d, dt, lanes_of(point, f"{base}_TDATA", bits, dt), w,
+                                   f"{base}_TDATA", f"{base}_TVALID", f"{base}_TREADY"))
 
     pins = []
     for name in list(prm.get("config", {})) + list(prm.get("scalars", [])):
         if name not in ports or f"{name}_ap_vld" not in ports:
             raise ValueError(f"{point}: no pin {name} with {name}_ap_vld")
         pins.append({"port": name, "bits": ports[name][1], "vld": f"{name}_ap_vld",
-                     "from": "config" if name in prm.get("config", {}) else f"data:{name}"})
+                     "from": "config" if name in prm.get("config", {}) else f"data:{name}",
+                     **data_dtype(name, prm, types)})
 
     known = {CLK, RST, *control.values()}
     known |= {s[k] for s in streams for k in ("data", "valid", "ready")}
@@ -220,15 +304,45 @@ def build(point: str) -> dict:
 
     # a case with its own sizes (the dace case of dot, axpy and rowsum: the n2048 task only) runs those, no b64
     own = prm["cases"].get(case, {}).get("sizes")
-    sizes = sizes_for(point, own or prm["sizes"], prm["config"], w, prm.get("valid"), b64=not own,
-                      extra=not narrow(prm))
+    sizes = sizes_for(point, own or prm["sizes"], prm["config"], w, prm.get("valid"),
+                      b64=not own and "streams" not in prm, extra=not narrow(prm))
 
     tb = {"tb_version": TB_VERSION, "point": point, "kernel": prm["kernel"], "top": top, "case": case, "W": w,
           "clock": {"port": CLK},
           "reset": {"port": RST, "active": "low", "sync": True},
           "control": control, "streams": streams, "pins": pins, "sizes": sizes}
+    return with_ref(tb, point, prm, w)
+
+
+def axis_stream(point: str, prm: dict, arg: str, d: str, dtype: str, lanes: int, w: int, data: str, valid: str,
+                ready: str, **extra) -> dict:
+    """One axis stream of tb.json (hls, bambu, xls), with its params.json streams entry where it has one."""
+    s = {"arg": arg, **extra, "dir": d, "kind": "axis", "lanes": lanes, "dtype": dtype, "data": data,
+         "valid": valid, "ready": ready}
+    f = follows(point, prm, arg, lanes, w)
+    if f:
+        s["follows"] = f
+    return s
+
+
+def data_dtype(name: str, prm: dict, types: dict | None) -> dict:
+    """A scalar pin's (or XLS cfg field's) {"dtype"} at a narrow point: snax-forge's dtype of the scalar (axpy's
+    and gesummv's alpha int32 at i8), drawn at it (sim/pwr.py); nothing for a config pin or an int64 point."""
+    if types is None or name in prm.get("config", {}):
+        return {}
+    if name not in types["dtypes"]:
+        raise ValueError(f"{prm.get('kernel')}: scalar {name} is no container of snax-forge's {types['kernel']}")
+    return {"dtype": types["dtypes"][name]}
+
+
+def with_ref(tb: dict, point: str, prm: dict, w: int) -> dict:
+    """A narrow point's ref (narrow_ref) and, where a stream follows a params.json streams entry, the sizes'
+    dimensions its expressions take (dims)."""
     if narrow(prm):
-        tb["ref"] = narrow_ref(prm, streams)
+        tb["ref"] = narrow_ref(prm, tb["streams"])
+    if any("follows" in s for s in tb["streams"]):
+        dims = dims_of(point, prm, w)
+        tb["dims"] = {t: dims[t] for t in tb["sizes"]}
     return tb
 
 

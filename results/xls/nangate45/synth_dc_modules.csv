@@ -1,4 +1,16 @@
 point,tech,clock_ns,clk_gate,path,design,area_um2,comb_um2,seq_um2,bbox_um2,dyn_power_uw,leak_power_uw
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_2_reg_0,SNPS_CLOCK_GATE_HIGH_mvt_11,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_4_reg,SNPS_CLOCK_GATE_HIGH_mvt_10,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_5_reg_0,SNPS_CLOCK_GATE_HIGH_mvt_9,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_6_reg[0]_0,SNPS_CLOCK_GATE_HIGH_mvt_8,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_6_reg[1]_0,SNPS_CLOCK_GATE_HIGH_mvt_7,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_6_reg[2]_0,SNPS_CLOCK_GATE_HIGH_mvt_6,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_6_reg[3]_0,SNPS_CLOCK_GATE_HIGH_mvt_5,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_6_reg[4]_0,SNPS_CLOCK_GATE_HIGH_mvt_4,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_6_reg[5]_1,SNPS_CLOCK_GATE_HIGH_mvt_12,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_6_reg[6]_0,SNPS_CLOCK_GATE_HIGH_mvt_2,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,clk_gate_____state_6_reg[7]_0,SNPS_CLOCK_GATE_HIGH_mvt_1,3.4580,0.0000,3.4580,0.0000,,
+a/mvt/xls_w8,nangate45,10,1,mvt,mvt,22717.7298,12649.8962,10029.7956,0.0000,1940.63,487
 done/dot/xls_w8,nangate45,10,1,clk_gate_____state_1_reg_0,SNPS_CLOCK_GATE_HIGH_dot_2,3.4580,0.0000,3.4580,0.0000,,
 done/dot/xls_w8,nangate45,10,1,clk_gate_____state_2_reg,SNPS_CLOCK_GATE_HIGH_dot_1,3.4580,0.0000,3.4580,0.0000,,
 done/dot/xls_w8,nangate45,10,1,dot,dot,3499.7620,2914.0300,578.8160,0.0000,215.944,72.6

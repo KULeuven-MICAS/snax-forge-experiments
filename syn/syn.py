@@ -987,6 +987,21 @@ def cmd_list(args) -> int:
     return 0
 
 
+def hdl_format(point: str, filelist: Path) -> str:
+    """DC's reader for the point: its source's, but sverilog for an XLS point whose Verilog has a loop-header
+    genvar (`for (genvar i = 0; ...)`, XLS's array updates in tier A's mvt), which the verilog reader refuses
+    (VER-720, PITFALLS DC22); the XLS points without one are read as before."""
+    fmt = SOURCES[SOURCE]["format"]
+    if SOURCE != "xls" or not filelist.is_file():
+        return fmt
+    for ln in filelist.read_text().splitlines():
+        f = filelist.parent / ln.strip()
+        if ln.strip() and not ln.lstrip().startswith("#") and f.is_file() \
+                and re.search(r"\bfor\s*\(\s*genvar\b", f.read_text(errors="replace")):
+            return "sverilog"
+    return fmt
+
+
 def dc_env(tech: dict, res: dict, point: str, args) -> dict:
     src = SOURCES[SOURCE]
     filelist = (run_dir(tech["name"], point, args.clock) / "filelist.f" if SOURCE in BUNDLED
@@ -1005,7 +1020,7 @@ def dc_env(tech: dict, res: dict, point: str, args) -> dict:
         "SYN_WIRE_LOAD": tech["wire_load"],
         "SYN_CLOCK_NS": args.clock,
         "SYN_CORES": str(args.cores),
-        "SYN_FORMAT": src["format"],
+        "SYN_FORMAT": hdl_format(point, filelist),
         "SYN_CLK_PORT": src["clk"],
         "SYN_RST_PORT": src["rst"],
         **({"SYN_WRITE_SDF": "1"} if getattr(args, "sdf", False) else {}),   # no SDF unless asked

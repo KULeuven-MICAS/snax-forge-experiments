@@ -53,6 +53,12 @@ class SplitSets(unittest.TestCase):
         self.assertEqual(sets_of(s1), ["W=8", "N=2048"])
         self.assertEqual(sets_of(s2), [])
 
+    def test_w_param(self):
+        p = {"point": "a/mvt/forge5_w8_i8_m64_n64", "recipe": "mvt_v5", "W": 8, "w_param": "W_x1",
+             "sets": ["M=64", "N=64", "types=i8", "design.data=full"]}
+        s1, _, _ = bundles.steps(p, [], Path("/out"))
+        self.assertEqual(sets_of(s1), ["W_x1=8", "M=64", "N=64", "types=i8"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

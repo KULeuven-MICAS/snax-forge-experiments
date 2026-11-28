@@ -25,6 +25,7 @@ Tool behaviour that gives wrong numbers, or none, without an error: one line eac
 - **DC19.** `syn/runs/<source>/<tech>/summary.csv` is never pruned: `syn.py` merges a batch into `synth_dc.csv` (X79 · X87 · X88).
 - **DC20.** A large inferred mux maps to MUX2 trees (16 × 256: 7,680 MUX2, 14,300 µm², comb x2, energy x3), smaller ones (up to 16 × 128, 8 × 256) to AOI22: check `reference.rpt`'s MUX2 count before fitting (X97).
 - **DC21.** syn.py's forge split took exactly three `bundle.json` modules; a bundle whose wrapper also instantiates a stream adapter (`FifoPacker_n1_i32_w1` as dot's `sum_out_packer` at i8, HCMP1 R4b) lists four, and `csr_um2` to `glue_um2` came out empty with no message: the adapters are `adapt_um2` since X119; check a new bundle's `modules` against the row's split.
+- **DC22.** XLS's Verilog of tier A's mvt, bicg and atax has a loop-header genvar (`for (genvar __i0 = 0; ...)`), which DC's verilog reader refuses (VER-720); the run fails as "no area report", the cause only in `logs/dc_shell.log`: syn.py reads such an XLS point with the sverilog reader (`hdl_format`), the others as before (HCMP1 R8a).
 
 ## Libraries
 
@@ -52,6 +53,7 @@ Tool behaviour that gives wrong numbers, or none, without an error: one line eac
 - **Q15.** Escaped identifiers end in a space inside `%m` paths: parse to the last whitespace, brace them in vsim.
 - **Q16.** Under `+acc=n` TB variables are invisible to vsim commands: use DUT ports.
 - **Q17.** `char_seq_core.svh` is `include`d in each char sequencer's body, so its names (`k` the sample count, `bi`, `beats`, `exps`, `sample`) are the sequencer's: a port of the same name fails vlog (vlog-2388) and every point of the kind fails `vlog_tb` in half a second; the lanes sequencer's scalar port is `scal`.
+- **Q18.** The input-toggle check fails a stream that reads a small array again for every row (gesummv's `x`, bicg_v2_1's `r`: 8 distinct words a lane over 512 beats leave a bit 0 with probability 2^-8, seed 0 hits it): it is enforced only from 64 distinct draws a lane, below that recorded in `untoggled_bits` (X120).
 
 ## vcd2saif
 

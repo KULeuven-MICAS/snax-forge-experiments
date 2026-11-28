@@ -6,7 +6,7 @@ Rules:
 
 - An entry is a choice someone may want to reverse: what was decided, why, and where the detail lives. A change is written into the entry, not chained after it.
 - Entries merged into one keep all their numbers in its heading, so a cite of any of them still finds it. A number is never changed or reused; a removed entry's text is in git history.
-- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X120**.
+- A new decision gets the next free number, under its area, and names the run note that found it. Next free number: **X121**.
 
 Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26, X27, X35 and X43 under "Retired" at the end.
 
@@ -417,6 +417,12 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 - **Decided:** for E7 (X118) the HLS sources take each stream's element from `params.json` (inputs at `dtype`, outputs at `acc_dtype`), lanes = TDATA bits / its bits; each input uniform over its dtype from X19's seed; the reference is snax-forge's kernel at the point's type preset (`forge/query.py types`, `ref`), as forge's own check; such a point runs its `params.json` size (n4096) and `b64`, no n2048. Forge points bundle at n4096 with `design.` sets passed to snax-forge's design step (`design.data=full`, `design.narrow_mul=true`). Every TB prints a port window, the first input beat accepted to the last output beat accepted (`cycles_ports` beside `cycles` in `power_pt.csv`); the energy window stays each source's. forge's stream adapters (FifoSlicer, FifoPacker) are their own area part, `adapt_um2`. Amends X12, X19, X23 and X44 for E7; int64 points build as before.
 - **Why:** one spec and one cycle count for every tool; the adapters exist only at narrow types, so they must not hide in ctrl, datapath or glue.
 - **Where:** `power.md`, "Narrow streams and the port window"; `syn/README.md`; `results/compare/runs/2026-11-28_hcmp1_r4b.md`.
+
+### X120 — forge's programs and the HLS streams entries
+
+- **Decided:** a forge point whose program is more than one accelerator task of one group (several jobs, groups or accelerators, a chain's `JOBS_<SINK>`, ROWS, a forked input, a copy) is driven as its program: `forge/query.py program` walks snax-forge's task list as the C backend does (default build) and checks it against the bundle's `main.c`; the TB (`sim/tb/csr_prog_seq.sv`) issues every CSR write, scalar (int32 one word, int64 two), START, wait (a group's done pulses equal its starts: the program's poll on STATUS) and BUSY_COUNTER read in that order; each wrapper port is one stream carrying its streamer tasks in program order (a container read twice is two streams; one unit run on A then B is one). Its data: inputs drawn at their dtype from X19's seed, every other container (an intermediate, a copy's destination) from snax-forge's executor on the design point's graph (`dfg/execute.py`, `forge/query.py run`), whose outputs must equal the kernel's; a read between two writes of an element is refused. The DMA is left out: a copy between jobs (mvt_v4_1_1's and atax_v1_2's `transpose_A_T`) is not run, its destination read as the graph gives it (the copy is §C's). The window is the first START to the last run's end; expected cycles from each job's `group_counter` in program order, each job's BUSY_COUNTER against its own. The one-task points build as before. On the HLS side, a narrow point's stream element is snax-forge's dtype of the array the port carries (amends X119's `dtype` / `acc_dtype`: axpy's `y` and mvt's `x1_in` are int32 inputs), a port with an hls-exercises `params.json` `streams` entry follows it (array, lanes, beats, index; each array drawn once), `narrow_ref` checks each stream's array, scalar pins and XLS cfg fields are drawn at their dtype, and XLS's cfg widths are 32 bits for loop_count and len and the container's for a scalar. The input-toggle check is enforced only where every lane carries 64 distinct draws.
+- **Why:** tier A's forms are programs, not one task; the HLS ports of matvec_col and tier A carry arrays in their own orders, some again for every row.
+- **Where:** `power.md`, "Programs and streams entries"; `forge/README.md`; `results/compare/runs/2026-11-28_hcmp1_r8a.md`.
 
 ## Cluster
 

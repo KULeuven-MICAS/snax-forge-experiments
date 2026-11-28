@@ -90,5 +90,6 @@
   {"point": "done/vecadd/forge_w8_i8_n4096", "recipe": "vecadd_v1", "W": 8, "sets": ["N=4096", "types=i8", "design.data=full"]},
   {"point": "untiered/relu/forge_w8_i8_n4096", "recipe": "relu_v1", "W": 8, "sets": ["N=4096", "types=i8", "design.data=full"]},
   {"point": "done/dot/forge3_w8_i8_n4096", "recipe": "dot_v3", "W": 8, "sets": ["N=4096", "types=i8", "design.data=full"]},
-  {"point": "done/dot/forge3nm_w8_i8_n4096", "recipe": "dot_v3", "W": 8, "sets": ["N=4096", "types=i8", "design.data=full", "design.narrow_mul=true"]}
+  {"point": "done/dot/forge3nm_w8_i8_n4096", "recipe": "dot_v3", "W": 8, "sets": ["N=4096", "types=i8", "design.data=full", "design.narrow_mul=true"]},
+  {"point": "a/mvt/forge6nm_w8_i8_m64_n64", "recipe": "mvt_v6", "W": 8, "sets": ["M=64", "N=64", "R=8", "types=i8", "design.data=full", "design.narrow_mul=true"]}
 ]

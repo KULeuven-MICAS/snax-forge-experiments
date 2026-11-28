@@ -1,4 +1,16 @@
 point,tech,clk_gate,size,path,design,e_dyn_pj
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt,mvt,23.75816
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_2_reg_0,SNPS_CLOCK_GATE_HIGH_mvt_11,0.004998992
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_4_reg,SNPS_CLOCK_GATE_HIGH_mvt_10,0.1596346
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_5_reg_0,SNPS_CLOCK_GATE_HIGH_mvt_9,0.007711078
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_6_reg[0]_0,SNPS_CLOCK_GATE_HIGH_mvt_8,0.0443271
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_6_reg[1]_0,SNPS_CLOCK_GATE_HIGH_mvt_7,0.0437393
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_6_reg[2]_0,SNPS_CLOCK_GATE_HIGH_mvt_6,0.04374185
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_6_reg[3]_0,SNPS_CLOCK_GATE_HIGH_mvt_5,0.0437393
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_6_reg[4]_0,SNPS_CLOCK_GATE_HIGH_mvt_4,0.04374185
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_6_reg[5]_1,SNPS_CLOCK_GATE_HIGH_mvt_12,0.04343353
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_6_reg[6]_0,SNPS_CLOCK_GATE_HIGH_mvt_2,0.0437393
+a/mvt/xls_w8,nangate45,1,m64_n64,mvt/clk_gate_____state_6_reg[7]_0,SNPS_CLOCK_GATE_HIGH_mvt_1,0.04343388
 done/dot/xls_w8,nangate45,1,n4096,dot,dot,4.994071
 done/dot/xls_w8,nangate45,1,n4096,dot/clk_gate_____state_1_reg_0,SNPS_CLOCK_GATE_HIGH_dot_2,0.004998991
 done/dot/xls_w8,nangate45,1,n4096,dot/clk_gate_____state_2_reg,SNPS_CLOCK_GATE_HIGH_dot_1,0.1227535

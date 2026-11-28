@@ -60,22 +60,24 @@ def build(point: str, netlist: Path) -> dict:
     if ports[CONTROL["idle"]][0] != "out" or ports[CONTROL["done"]][0] != "out":
         raise ValueError(f"{point}: done_port or idle_port is not an output")
 
+    types = hls.narrow_types(prm) if hls.narrow(prm) else None
     streams = []
     for arg in prm["axis"]:
         base = next((b for b in (arg, f"p_{arg}") if f"{b}_TDATA" in ports), None)
         if base is None:
             raise ValueError(f"{point}: no AXI-stream port for argument {arg}")
         d, bits = ports[f"{base}_TDATA"]
-        dt = hls.stream_dtype(prm, d)
-        streams.append({"arg": arg, "dir": d, "kind": "axis", "lanes": hls.lanes_of(point, f"{base}_TDATA", bits, dt),
-                        "dtype": dt, "data": f"{base}_TDATA", "valid": f"{base}_TVALID", "ready": f"{base}_TREADY"})
+        dt = hls.stream_dtype(prm, d, arg, types)
+        streams.append(hls.axis_stream(point, prm, arg, d, dt, hls.lanes_of(point, f"{base}_TDATA", bits, dt), w,
+                                       f"{base}_TDATA", f"{base}_TVALID", f"{base}_TREADY"))
 
     pins = []
     for name in list(prm.get("config", {})) + list(prm.get("scalars", [])):
         if name not in ports or ports[name][0] != "in":
             raise ValueError(f"{point}: no input pin {name}")
         pins.append({"port": name, "bits": ports[name][1],
-                     "from": "config" if name in prm.get("config", {}) else f"data:{name}"})
+                     "from": "config" if name in prm.get("config", {}) else f"data:{name}",
+                     **hls.data_dtype(name, prm, types)})
 
     known = {CLK, RST, *CONTROL.values()}
     known |= {s[k] for s in streams for k in ("data", "valid", "ready")}
@@ -88,10 +90,9 @@ def build(point: str, netlist: Path) -> dict:
           "case": case, "W": w,
           "clock": {"port": CLK}, "reset": {"port": RST, "active": "low", "sync": True},
           "control": {"kind": "bambu_ctl", **CONTROL}, "streams": streams, "pins": pins,
-          "sizes": hls.sizes_for(point, prm["sizes"], prm["config"], w, prm.get("valid"), extra=not hls.narrow(prm))}
-    if hls.narrow(prm):
-        tb["ref"] = hls.narrow_ref(prm, streams)
-    return tb
+          "sizes": hls.sizes_for(point, prm["sizes"], prm["config"], w, prm.get("valid"), b64="streams" not in prm,
+                                 extra=not hls.narrow(prm))}
+    return hls.with_ref(tb, point, prm, w)
 
 
 def check(tb: dict) -> None:

@@ -158,7 +158,7 @@ def steps(p: dict, sets: list[str], out: Path) -> tuple[list[str], list[str], li
     sandbox = f"out/sandbox/syn1/{name}"
     design = f"out/design/syn1/{name}"
     own, design_sets = split_sets(sets)
-    s1 = [recipe_arg(p, name), "--set", f"W={p['W']}"]
+    s1 = [recipe_arg(p, name), "--set", f"{p.get('w_param', 'W')}={p['W']}"]      # mvt_v5's width is W_x1
     for s in own:
         s1 += ["--set", s]
     s1 += ["--out", sandbox]

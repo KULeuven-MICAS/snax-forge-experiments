@@ -23,7 +23,10 @@ DSLX = Path(os.environ.get("SIM_XLS", ROOT.parent / "dslx-exercises")).resolve()
 RTL = DSLX / "rtl"
 KERNELS = DSLX / "kernels"
 CFG = {"data": "_cfg_TDATA", "valid": "_cfg_TVALID", "ready": "_cfg_TREADY"}
-CFG_BITS = {"loop_count": 32, "len": 32, "alpha": 64}      # the cfg fields' widths (the kernels' .x structs)
+# the cfg fields' widths (the kernels' .x structs): loop_count and len 32 bits; a scalar (alpha, beta) the bits of
+# its forge container's dtype at the point's types (X120: int32 at i8), 64 at an int64 point
+CFG_BITS = {"loop_count": 32, "len": 32}
+INT64_SCALAR_BITS = 64
 CONTROL_KINDS = {"xls_cfg"}
 
 
@@ -78,18 +81,26 @@ def build(point: str, netlist: Path) -> dict:
     if ports[CFG["data"]][0] != "in" or ports[CFG["ready"]][0] != "out":
         raise ValueError(f"{point}: _cfg is not an input channel")
 
+    hprm = json.loads((hls.HLS / prm["hls_exercises"] / "params.json").read_text())
+    types = hls.narrow_types({**hprm, **prm}) if hls.narrow(prm) else None
     fields = []
     for name, expr in prm["cfg"].items():
-        if name not in CFG_BITS:
+        data = str(expr).startswith("IN_")
+        if name in CFG_BITS:
+            bits = CFG_BITS[name]
+        elif data:      # a scalar: its forge container's dtype (alpha int32 at i8), 64 bits at an int64 point
+            bits = hls.BITS[types["dtypes"][name]] if types and name in types["dtypes"] else INT64_SCALAR_BITS
+            if types and name not in types["dtypes"]:
+                raise ValueError(f"{point}: cfg field {name} is no container of snax-forge's {types['kernel']}")
+        else:
             raise ValueError(f"{point}: cfg field {name} has no width in sim/sources/xls.py CFG_BITS")
-        fields.append({"name": name, "bits": CFG_BITS[name],
-                       "from": f"data:{name}" if str(expr).startswith("IN_") else "config"})
+        fields.append({"name": name, "bits": bits, "from": f"data:{name}" if data else "config",
+                       **({"dtype": types["dtypes"][name]} if data and types else {})})
     cw = ports[CFG["data"]][1]
     if sum(f["bits"] for f in fields) != cw:
         raise ValueError(f"{point}: cfg fields {[(f['name'], f['bits']) for f in fields]} sum to "
                          f"{sum(f['bits'] for f in fields)} bits, _cfg_TDATA is {cw}")
 
-    hprm = json.loads((hls.HLS / prm["hls_exercises"] / "params.json").read_text())
     xargs = [(a, "in") for a in prm["inputs"]] + [(a, "out") for a in prm["outputs"]]
     if len(xargs) != len(hprm["axis"]):
         raise ValueError(f"{point}: {len(xargs)} channels, hls-exercises' axis has {hprm['axis']}")
@@ -101,11 +112,9 @@ def build(point: str, netlist: Path) -> dict:
         d, bits = ports[f"{base}_TDATA"]
         if d != side:
             raise ValueError(f"{point}: {base}_TDATA is {d}, expected {side}")
-        dt = hls.stream_dtype(prm, d)
-        streams.append({"arg": harg, "xls_arg": xarg, "dir": d, "kind": "axis",
-                        "lanes": hls.lanes_of(point, f"{base}_TDATA", bits, dt),
-                        "dtype": dt, "data": f"{base}_TDATA", "valid": f"{base}_TVALID",
-                        "ready": f"{base}_TREADY"})
+        dt = hls.stream_dtype(hprm if types else prm, d, harg, types)     # the streams entries: hls-exercises'
+        streams.append(hls.axis_stream(point, hprm, harg, d, dt, hls.lanes_of(point, f"{base}_TDATA", bits, dt), w,
+                                       f"{base}_TDATA", f"{base}_TVALID", f"{base}_TREADY", xls_arg=xarg))
 
     known = {CLK, RST, *CFG.values()} | {s[k] for s in streams for k in ("data", "valid", "ready")}
     extra = sorted(set(ports) - known)
@@ -118,10 +127,9 @@ def build(point: str, netlist: Path) -> dict:
           "clock": {"port": CLK}, "reset": {"port": RST, "active": "high", "sync": True},
           "control": {"kind": "xls_cfg", **CFG, "bits": cw, "fields": fields},
           "streams": streams, "pins": [], "sizes": hls.sizes_for(point, prm["sizes"], config, w,
+                                                                 b64="streams" not in hprm,
                                                                  extra=not hls.narrow(prm))}
-    if hls.narrow(prm):
-        tb["ref"] = hls.narrow_ref({**hprm, **prm}, streams)     # forge_kernel and forge_types from either
-    return tb
+    return hls.with_ref(tb, point, {**hprm, **prm}, w)     # forge_kernel and forge_types from either
 
 
 def check(tb: dict) -> None:

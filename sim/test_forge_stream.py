@@ -55,6 +55,74 @@ def test_int64_stream_unchanged() -> None:
     assert np.array_equal(st["data"]["A"], want)
 
 
+def _seg(job: int, d: str, c: str, order: list, end: str = "u.a") -> dict:
+    return {"job": job, "dir": d, "container": c, "order": order, "shape": [len(order)], "end": end}
+
+
+def _prog(streams: list, starts: int, dmas: tuple = ()) -> dict:
+    ops = [{"op": "start", "job": j} for j in range(starts)]
+    for k, d in dmas:                   # a copy between the starts, at op k
+        ops.insert(k, {"op": "dma", "task": d["task"]})
+    return {"ops": ops, "streams": streams, "dmas": list(d for _, d in dmas)}
+
+
+def test_sources_initial_final_and_refused() -> None:
+    src = pwr.forge_src
+    # job 0 reads A and writes t; job 1 reads t (final) and x in place (initial), writes x (final)
+    p = _prog([_seg(0, "in", "A", [0, 1]), _seg(0, "out", "t", [0, 1]), _seg(1, "in", "t", [0, 1]),
+               _seg(1, "in", "x", [0, 1]), _seg(1, "out", "x", [0, 1])], 2)
+    assert [v["value"] for v in src.sources(p)] == ["initial", "final", "final", "initial", "final"]
+    # a copy (atax_v1_2's transpose) between the jobs: its destination reads final
+    copy = {"task": "transpose_A_T", "direction": "l1_to_l1", "dst": {"container": "A_T"}}
+    p = _prog([_seg(0, "in", "A", [0, 1]), _seg(1, "in", "A_T", [0, 1])], 2, ((1, copy),))
+    assert [v["value"] for v in src.sources(p)] == ["initial", "final"]
+    # t written by job 0, read by job 1, written again by job 2: job 1 reads a value between two writes
+    p = _prog([_seg(0, "out", "t", [0]), _seg(1, "in", "t", [0]), _seg(2, "out", "t", [0])], 3)
+    try:
+        src.sources(p)
+    except ValueError as e:
+        assert "between two writes" in str(e) or "again after it" in str(e), e
+    else:
+        raise AssertionError("a read between two writes was not refused")
+
+
+def test_program_cycles_serial_and_parallel() -> None:
+    jobs = [{"task": "a", "cycles": 514}, {"task": "b", "cycles": 514}, {"task": "c", "cycles": 8}]
+    serial = {"jobs": jobs, "ops": [{"op": "start", "job": 0, "group": 0}, {"op": "wait", "group": 0},
+                                    {"op": "start", "job": 1, "group": 0}, {"op": "wait", "group": 0},
+                                    {"op": "start", "job": 2, "group": 1}, {"op": "wait", "group": 1}]}
+    assert pwr.forge_src.program_cycles(serial)[0] == 1036          # gesummv_v2_1_1's
+    both = {"jobs": jobs[:2], "ops": [{"op": "start", "job": 0, "group": 0}, {"op": "start", "job": 1, "group": 1},
+                                      {"op": "wait", "group": 0}, {"op": "wait", "group": 1}]}
+    assert pwr.forge_src.program_cycles(both)[0] == 514
+
+
+def test_ports_of_ansi_header(tmp: Path = ROOT / "tmp") -> None:
+    tmp.mkdir(exist_ok=True)
+    f = tmp / "test_ports_of_ansi.sv"
+    f.write_text("module w(\n  input          clk_i,\n                 rst_ni,\n  output [255:0] d_o,\n"
+                 "  input  wire [7:0] _y2_TDATA\n);\nendmodule\n")
+    try:
+        got = pwr.hls.ports_of(f, "w")
+    finally:
+        f.unlink()
+    assert got == {"clk_i": ("in", 1), "rst_ni": ("in", 1), "d_o": ("out", 256), "_y2_TDATA": ("in", 8)}, got
+
+
+def test_follow_index_and_distinct_lanes() -> None:
+    s = {"lanes": 8, "follows": {"array": "y1", "beats": "m * n // W", "index": "(b % (n // W)) * W + l"}}
+    beats, idx = pwr.hls.follow(s, {"m": 4, "n": 16}, 8)        # mvt's y1, again for every row
+    assert beats == 8 and idx[:2].ravel().tolist() == list(range(16)) and idx[2].tolist() == list(range(8))
+    assert pwr.distinct_per_lane(idx) == 2
+    assert pwr.distinct_per_lane(np.arange(64 * 8).reshape(64, 8)) == 64
+
+
+def test_array_of_in_place_output() -> None:
+    dts = {"x": "int8", "y": "int32", "alpha": "int32"}
+    assert pwr.hls.array_of("y_out", dts) == "y" and pwr.hls.array_of("y", dts) == "y"
+    assert pwr.hls.stream_dtype({"streams": {}}, "in", "y", {"kernel": "axpy", "types": "i8", "dtypes": dts}) == "int32"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

@@ -16,6 +16,8 @@ import re
 import subprocess
 from pathlib import Path
 
+import numpy as np
+
 from . import hls
 from . import ports as _ports
 
@@ -27,6 +29,7 @@ QUERY = ROOT / "forge" / "query.py"
 SIZE = "n2048"                   # the reference task's tag (X24), the size of a forge point made at its shape
 CONTROL_KINDS = {"forge_csr"}
 BITS = {"int8": 8, "int16": 16, "int32": 32, "int64": 64}   # a stream's element dtypes: num_slc = 64 / bits a word
+SCALAR_DTYPES = ("int32", "int64")    # a scalar CSR slot: one 32-bit word, or two (low word first)
 CSR_PORTS = {"req_addr": "csr_req_addr_i", "req_data": "csr_req_data_i", "req_write": "csr_req_write_i",
              "req_valid": "csr_req_valid_i", "req_ready": "csr_req_ready_o", "rsp_data": "csr_rsp_data_o",
              "rsp_valid": "csr_rsp_valid_o", "rsp_ready": "csr_rsp_ready_i"}
@@ -105,38 +108,37 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
     b = bundle_of(point, bundle)
     bundle = json.loads((b / "bundle.json").read_text())
     acc = json.loads((b / "accelerator.json").read_text())
+    pj = json.loads((b / "point.json").read_text())
+    q = query("point", str(b))
+    prog = query("program", str(b))
+    ports = hls.ports_of(netlist, bundle["top"])
+    # the size: the point's sets that are the kernel's symbols (the design point was made at them,
+    # forge/bundles.py); types=i8 is a preset, R=8 a recipe param, design.data=full the design step's
+    shape = {k: int(v) for k, v in (x.split("=", 1) for x in pj.get("sets", [])) if k in prog["symbols"]}
+    tag = size_tag(point, shape)
+    if tag is None:
+        raise ValueError(f"{point}: bundle made with sets {pj.get('sets')}, neither the n2048 shape "
+                         f"{dict(hls.extra_sizes(point)).get(SIZE)} nor a size of the kernel's params.json: "
+                         "rebundle (pixi run forge-rtl)")
+    for k, v in shape.items():
+        if prog["symbols"].get(k) != v:
+            raise ValueError(f"{point}: the design point has {k} = {prog['symbols'].get(k)}, the sets {k} = {v}")
+    if "BUSY_COUNTER" not in {c["name"] for a in acc.get("accelerators", [acc]) for g in a["groups"] for c in g["csrs"]}:
+        raise ValueError(f"{point}: no BUSY_COUNTER CSR (a bundle made before snax-forge D168 names it COUNTER): "
+                         "rebundle (pixi run forge-rtl)")
+    if not simple(prog, acc):
+        return build_program(point, b, bundle, acc, pj, q, prog, ports, shape, tag)
     acc_name = None
     if "accelerators" in acc:      # D157's nested form: one accelerator's groups, inputs and outputs
         if len(acc["accelerators"]) != 1:
             raise ValueError(f"{point}: {len(acc['accelerators'])} accelerators; one is supported")
         acc = acc["accelerators"][0]
         acc_name = acc["name"]
-    pj = json.loads((b / "point.json").read_text())
     top, w = bundle["top"], int(pj["W"])
     case = point.split("/")[2].rsplit("_w", 1)[0]
     if len(acc["groups"]) != 1:
         raise ValueError(f"{point}: {len(acc['groups'])} groups; one is supported")
     (g,) = acc["groups"]
-    # snax-forge D168 renamed the busy-cycle CSR; its forge/query.py refuses a bundle made before it
-    if "BUSY_COUNTER" not in {c["name"] for c in g["csrs"]}:
-        raise ValueError(f"{point}: no BUSY_COUNTER CSR (a bundle made before snax-forge D168 names it COUNTER): "
-                         "rebundle (pixi run forge-rtl)")
-    ports = hls.ports_of(netlist, top)
-
-    # the size: the point's sets are its shape (the design point was made at it, forge/bundles.py); types=i8 is a
-    # preset, design.data=full and design.narrow_mul=true are the design step's
-    shape = {k: int(v) for k, v in (x.split("=", 1) for x in pj.get("sets", [])) if k != "types" and "." not in k}
-    tag = size_tag(point, shape)
-    if tag is None:
-        raise ValueError(f"{point}: bundle made with sets {pj.get('sets')}, neither the n2048 shape "
-                         f"{dict(hls.extra_sizes(point)).get(SIZE)} nor a size of the kernel's params.json: "
-                         "rebundle (pixi run forge-rtl)")
-
-    q = query("point", str(b))
-    prog = query("program", str(b))
-    for k, v in shape.items():
-        if prog["symbols"].get(k) != v:
-            raise ValueError(f"{point}: the design point has {k} = {prog['symbols'].get(k)}, the sets {k} = {v}")
 
     csrs = {c["name"]: c["offset"] for c in g["csrs"]}
     for need in ("START", "JOBS", "STATUS", "BUSY_COUNTER"):
@@ -156,8 +158,8 @@ def build(point: str, netlist: Path, bundle: Path) -> dict:
                 "csrs": [[csrs[f"{sc['unit']}.{c}"], f"{sc['unit']}.{c}"] for c in sc["csrs"]]}
                for sc in prog["scalars"]]
     for sc in scalars:
-        if sc["dtype"] != "int64":
-            raise ValueError(f"{point}: scalar {sc['container']} is {sc['dtype']}; only int64 is driven")
+        if sc["dtype"] not in SCALAR_DTYPES:
+            raise ValueError(f"{point}: scalar {sc['container']} is {sc['dtype']}; {SCALAR_DTYPES} are driven")
 
     container = {p["end"]: p["container"] for p in q["ports"]}
     order = {s["end"]: s for s in prog["streams"]}
@@ -240,6 +242,10 @@ def check(tb: dict) -> None:
         if s["kind"] != "stream" or s["dtype"] not in BITS:
             raise ValueError(f"stream {s['arg']}: {s['kind']} {s['dtype']}, only {sorted(BITS)} streams are built")
     for tag, z in tb["sizes"].items():
+        if "program" in z:              # several jobs, groups or accelerators (X120)
+            if not any(o[0] == "start" for o in z["program"]) or not isinstance(z["expected_cycles"], int):
+                raise ValueError(f"size {tag}: a program with no start or no expected cycles")
+            continue
         if not z["writes"] or z["writes"][-1][2] != "START":
             raise ValueError(f"size {tag}: the writes do not end with START")
         if not isinstance(z["expected_cycles"], int):
@@ -280,6 +286,238 @@ def kernel_ref(kernel: str, ins: dict, workdir: Path, symbols: dict | None = Non
     return {"info": info, "outs": out}
 
 
+def graph_run(design_point: str, ins: dict, workdir: Path) -> dict:
+    """snax-forge's reference executor on the design point (forge/query.py run): {container: array} of
+    every container, transients included, from the non-transient ones in `ins` (a scalar a 0-d array)."""
+    workdir.mkdir(parents=True, exist_ok=True)
+    fi, fo = workdir / "run_in.npz", workdir / "run_out.npz"
+    np.savez(fi, **ins)
+    query("run", design_point, str(fi), str(fo))
+    out = dict(np.load(fo))
+    fi.unlink()
+    fo.unlink()
+    return out
+
+
 def netlist_modules(netlist: Path) -> set:
     """Every module the netlist defines (DC indents some headers, PITFALLS DC6)."""
     return set(re.findall(r"^\s*module\s+(\S+)\s*\(", netlist.read_text(), re.M))
+
+
+# ---------------------------------------------------------------- several jobs, groups or accelerators (X120)
+def simple(prog: dict, acc: dict) -> bool:
+    """A point build_one() drives as before: one accelerator, one group, one accelerator task writing JOBS and
+    JOB_BEATS only, no forked input, no copy, at most an in/out pair of streams on a container."""
+    accs = acc.get("accelerators", [acc])
+    if len(accs) != 1 or len(accs[0]["groups"]) != 1 or len(prog["jobs"]) != 1:
+        return False
+    if any(isinstance(e, list) for e in accs[0]["inputs"]) or any(d["direction"] == "l1_to_l1" for d in prog["dmas"]):
+        return False
+    if any(k not in ("JOBS", "JOB_BEATS") for _, k, _ in prog["writes"]):
+        return False
+    seen: dict = {}
+    for s in prog["streams"]:
+        seen.setdefault(s["container"], []).append(s["dir"])
+    return all(len(v) == 1 or sorted(v) == ["in", "out"] for v in seen.values())
+
+
+def sources(prog: dict) -> list[dict]:
+    """Where each segment's values come from (X120): a read of elements no earlier job or copy wrote takes the
+    container's initial contents (drawn, or zeros for a transient), a read of elements an earlier job or copy
+    wrote takes the graph's final contents, and a write its final contents. Refused where the final contents
+    are not what the stream moves: an element written again after it is read or written (a value between two
+    writes), or a segment reading some elements of each kind."""
+    pos, k = {}, 0                     # each start's and copy's place in the program
+    for o in prog["ops"]:
+        if o["op"] == "start":
+            pos[("job", o["job"])] = k
+            k += 1
+        elif o["op"] == "dma":
+            pos[("dma", o["task"])] = k
+            k += 1
+    writes: dict = {}                  # container -> [(place, job or None, set of elements)]
+    for s in prog["streams"]:
+        if s["dir"] == "out":
+            writes.setdefault(s["container"], []).append((pos[("job", s["job"])], s["job"],
+                                                          {e for e in s["order"] if e >= 0}))
+    for d in prog["dmas"]:
+        if d["direction"] == "l1_to_l1":
+            writes.setdefault(d["dst"]["container"], []).append((pos[("dma", d["task"])], None, None))   # whole
+    out = []
+    for s in prog["streams"]:
+        at = pos[("job", s["job"])]
+        elems = {e for e in s["order"] if e >= 0}
+        ws = writes.get(s["container"], [])
+
+        def hits(w):
+            return w[2] is None or bool(w[2] & elems)
+        if s["dir"] == "out":
+            later = [w for w in ws if hits(w) and w[0] > at]
+            same = [w for w in ws if w[0] == at and w[2] is not None and w[2] & elems]     # itself, and any other
+            if later or len(same) > 1:
+                raise ValueError(f"{s['container']}: written by job {s['job']} ({s['end']}) and again after it; "
+                                 "its value between the two is not the graph's final one")
+            out.append({"value": "final"})
+            continue
+        before = [w for w in ws if hits(w) and w[0] < at]
+        if not before:
+            out.append({"value": "initial"})
+            continue
+        last = max(w[0] for w in before)
+        again = [w for w in ws if hits(w) and w[0] > last]
+        if again:
+            raise ValueError(f"{s['container']}: job {s['job']} ({s['end']}) reads it between two writes; the "
+                             "value it reads is not the graph's final one")
+        covered = set()
+        for w in before:
+            covered |= set(range(int(np.prod(s["shape"])))) if w[2] is None else w[2]
+        if not elems <= covered:
+            raise ValueError(f"{s['container']}: job {s['job']} ({s['end']}) reads elements some written before "
+                             "it and some not")
+        out.append({"value": "final"})
+    return out
+
+
+def build_program(point: str, b: Path, bundle: dict, acc: dict, pj: dict, q: dict, prog: dict, ports: dict,
+                  shape: dict, tag: str) -> dict:
+    """tb.json of a form with several jobs, groups or accelerators, a forked input, ROWS or a copy (X120), as
+    build()'s with:
+      control {kind: "forge_csr", group (the groups joined by +), CSR ports, busy, done (the first group's),
+               groups: [{name, busy, done}], csrs: {<group>.<NAME> or <group>.<unit>.<NAME>: offset}}
+      streams one per wrapper port (stream2acc_<k>, then acc2stream_<k>): arg (its first segment's container),
+               name (its containers joined by _, made unique), ends (a fork's ports), dtype, num_ch, num_slc,
+               d_out, lanes, elems, beats (all its segments'), segments: [{job, task, container, shape,
+               transient, beats, identity, order, value: initial | final}] in program order
+      scalars [{job, container, dtype, unit, slot, csrs: [[offset, name], ...]}] each job's
+      design_point the graph sim/pwr.py runs snax-forge's executor on (forge/query.py run)
+      left_out the DMA tasks the TB does not run: [{task, direction, src, dst}], a copy's destination read as
+               the graph gives it
+      sizes   {tag: {shape, program: [op, ...], jobs: [{task, group, cycles, working, writes}], stream_beats,
+               expected_cycles, expected_from}}
+               program in order: ["write", offset, value, name], ["scalar", i] (scalars[i], its words),
+               ["start", offset, group, task], ["wait", group] (until the group's done pulses equal its starts:
+               the program's poll on STATUS), ["counter", offset, job, task] (its BUSY_COUNTER read)
+    """
+    accs = acc["accelerators"]
+    groups = [g for a in accs for g in a["groups"]]
+    gname = [g["name"] for g in groups]
+    csrs = {}
+    for g in groups:
+        csrs |= {f"{g['name']}.{c['name']}": c["offset"] for c in g["csrs"]}
+        for u in g["units"]:
+            csrs |= {f"{g['name']}.{u['name']}.{c['name']}": c["offset"] for c in u.get("csrs", [])}
+    control = {"kind": "forge_csr", "group": "+".join(gname), **CSR_PORTS,
+               "busy": f"{gname[0]}_busy_o", "done": f"{gname[0]}_done_o",
+               "groups": [{"name": n, "busy": f"{n}_busy_o", "done": f"{n}_done_o"} for n in gname], "csrs": csrs}
+    units = {u["name"]: u for g in groups for u in g["units"]}
+    nch = {"in": [], "out": []}
+    for a in accs:
+        c = streamer_channels(b, bundle["tag"], a["name"])
+        nch["in"] += c["in"]
+        nch["out"] += c["out"]
+    src = sources(prog)
+    transient = {c for c in {s["container"] for s in prog["streams"]} if c not in q.get("dtypes", {})}
+    streams = []
+    for side, ends, pre in (("in", [e for a in accs for e in a["inputs"]], "stream2acc"),
+                            ("out", [e for a in accs for e in a["outputs"]], "acc2stream")):
+        if len(ends) != len(nch[side]):
+            raise ValueError(f"{point}: {len(ends)} {side}put ports, the streamers' num_channel has {len(nch[side])}")
+        for k, e in enumerate(ends):
+            fork = e if isinstance(e, list) else [e]
+            uname, port = fork[0].split(".", 1)
+            p = units[uname]["ports"][port]
+            io = "i" if side == "in" else "o"
+            data = f"{pre}_{k}_data_{io}"
+            num_ch = nch[side][k]
+            if data not in ports or ports[data][1] != 64 * num_ch:
+                raise ValueError(f"{point}: {data} {ports.get(data)}, num_channel {num_ch} gives {64 * num_ch} bits")
+            if p["dtype"] not in BITS:
+                raise ValueError(f"{point}: {fork[0]} is {p['dtype']}; the streams take {sorted(BITS)}")
+            num_slc, d_out = 64 // BITS[p["dtype"]], int(p.get("d_out", 1))
+            segs = [(s, v) for s, v in zip(prog["streams"], src) if s["end"] == fork[0]]
+            if not segs:
+                raise ValueError(f"{point}: no streamer task moves {fork[0]}")
+            want = (side, num_ch * num_slc, num_ch, num_slc, d_out, p["dtype"])
+            keys = ("dir", "lanes", "num_ch", "num_slc", "d_out", "dtype")
+            for s, _ in segs:
+                if tuple(s[x] for x in keys) != want:
+                    raise ValueError(f"{point}: {s['task']} on {fork[0]} is {[s[x] for x in keys]}, the port {want}")
+            streams.append({"arg": segs[0][0]["container"], "name": "_".join(dict.fromkeys(s["container"] for s, _ in segs)),
+                            "end": fork[0], "ends": fork, "dir": side, "kind": "stream", "lanes": num_ch,
+                            "num_ch": num_ch, "dtype": p["dtype"], "num_slc": num_slc, "d_out": d_out,
+                            "elems": num_ch * num_slc, "data": data,
+                            "valid": f"{pre}_{k}_valid_{io}", "ready": f"{pre}_{k}_ready_{'o' if side == 'in' else 'i'}",
+                            "beats": sum(s["beats"] for s, _ in segs),
+                            "segments": [{"job": s["job"], "task": s["task"], "container": s["container"],
+                                          "shape": s["shape"], "transient": s["container"] in transient,
+                                          "beats": s["beats"], "identity": s["identity"],
+                                          "order": None if s["identity"] else s["order"], **v} for s, v in segs]})
+    names = [s["name"] for s in streams]
+    for s, n in zip(streams, names):   # one name a stream: arg_in / arg_out for an in/out pair, else by unit
+        same = [x for x, m in zip(streams, names) if m == n]
+        if len(same) > 1:
+            pair = sorted(x["dir"] for x in same) == ["in", "out"]
+            s["name"] = f"{n}_{s['dir']}" if pair else f"{n}_{s['end'].split('.')[0]}"
+    if len({s["name"] for s in streams}) != len(streams):
+        raise ValueError(f"{point}: stream names {names} not unique")
+
+    known = {CLK, RST, *CSR_PORTS.values()} | {g[k] for g in control["groups"] for k in ("busy", "done")}
+    known |= {s[k] for s in streams for k in ("data", "valid", "ready")}
+    missing, extra = sorted(known - set(ports)), sorted(set(ports) - known)
+    if missing or extra:
+        raise ValueError(f"{point}: netlist ports not as C§17's wrapper: missing {missing}, not covered {extra}")
+
+    scalars, sidx, program = [], {}, []
+    for j, job in enumerate(prog["jobs"]):
+        for i, sc in enumerate(job["scalars"]):
+            if sc["dtype"] not in SCALAR_DTYPES:
+                raise ValueError(f"{point}: scalar {sc['container']} is {sc['dtype']}; {SCALAR_DTYPES} are driven")
+            sidx[(j, i)] = len(scalars)
+            scalars.append({"job": j, "container": sc["container"], "dtype": sc["dtype"], "unit": sc["unit"],
+                            "slot": sc["slot"], "csrs": [[d["offset"], f"{job['group']}.{sc['unit']}.{c}"]
+                                                         for d, c in zip(sc["defines"], sc["csrs"])]})
+    for o in prog["ops"]:
+        job = prog["jobs"][o["job"]] if "job" in o else None
+        if o["op"] == "write":
+            own = o["csr"].startswith("JOBS")
+            program.append(["write", o["offset"], o["value"],
+                            f"{job['group']}.{o['csr']}" if own else f"{job['group']}.{o['unit']}.{o['csr']}"])
+        elif o["op"] == "scalar":
+            program.append(["scalar", sidx[(o["job"], o["scalar"])]])
+        elif o["op"] == "start":
+            program.append(["start", o["offset"], o["group"], job["task"]])
+        elif o["op"] == "wait":
+            program.append(["wait", o["group"]])
+        elif o["op"] == "counter":
+            program.append(["counter", o["offset"], o["job"], job["task"]])
+    exp, how = program_cycles(prog)
+    sizes = {tag: {"shape": shape, "program": program,
+                   "jobs": [{"task": j["task"], "group": j["group"], "cycles": j["cycles"], "working": j["working"],
+                             "writes": j["writes"]} for j in prog["jobs"]],
+                   "stream_beats": {s["name"]: s["beats"] for s in streams},
+                   "expected_cycles": exp, "expected_from": how}}
+    return {"tb_version": TB_VERSION, "source": "forge", "point": point, "kernel": q["kernel"], "recipe": pj["recipe"],
+            "top": bundle["top"], "case": point.split("/")[2].rsplit("_w", 1)[0], "W": int(pj["W"]),
+            "snax_forge_commit": pj["snax_forge_commit"], "dtypes": {**q.get("dtypes", {}), **pj.get("dtypes", {})},
+            "symbols": prog["symbols"], "design_point": prog["design_point"],
+            "clock": {"port": CLK}, "reset": {"port": RST, "active": "low", "sync": False},
+            "control": control, "streams": streams, "pins": [], "scalars": scalars, "baked": q.get("baked", {}),
+            "left_out": [d for d in prog["dmas"]], "sizes": sizes}
+
+
+def program_cycles(prog: dict) -> tuple[int, str]:
+    """The program's window from its jobs' busy cycles (group_counter each): a job runs from its start for its
+    cycles, a wait holds the next op until the group's jobs started so far have ended; the CSR traffic between
+    is not counted. Its first start to its last end."""
+    t, start, end, by_group = 0, {}, {}, {}
+    for o in prog["ops"]:
+        if o["op"] == "start":
+            j = o["job"]
+            start[j], end[j] = t, t + prog["jobs"][j]["cycles"]
+            by_group.setdefault(o["group"], []).append(j)
+        elif o["op"] == "wait":
+            t = max([t] + [end[j] for j in by_group.get(o["group"], [])])
+    first = min(start.values())
+    cyc = [f"{j['task']} {j['cycles']}" for j in prog["jobs"]]
+    return max(end.values()) - first, (f"snax-forge's group_counter per job ({', '.join(cyc)}), the jobs in the "
+                                       "program's order, a wait ending its group's jobs")
