@@ -24,11 +24,11 @@
   "group_ctrl_bits": {"bicg_types": 200},
   "e_ctrl": 0.005449600000000001,
   "movers": {
-   "mul_a": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "mul_b": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "mac_b": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "sum_out": {"write": true, "channels": 1, "e_beat": 3.229712},
-   "mac_out": {"write": true, "channels": 4, "e_beat": 11.54413}
+   "mul_a": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "mul_b": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "mac_b": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "sum_out": {"write": true, "channels": 1, "e_beat": 3.229712, "r": 0.209732},
+   "mac_out": {"write": true, "channels": 4, "e_beat": 11.54413, "r": 0.122891}
   },
   "e_xbar_ro": 1.8392993176799999,
   "e_xbar_wo": 1.454512707945,
@@ -36,8 +36,8 @@
   "e_wr": 6.45356,
   "superbank_banks": 8,
   "e_dma_burst": 78.0825561190845,
-  "r_strm": 0.08473695178960629,
-  "r_xbar": 0.0,
+  "r_strm": 0.15051708047732332,
+  "r_xbar": 0.0017749005306149125,
   "floor": {
    "streamers": 1.6413157371446345,
    "crossbar": 1.998691996673389,
@@ -654,12 +654,12 @@
     "parts": {
      "datapath": 16.2168810816,
      "control": 0.56348864,
-     "streamers": 4.498369317283663,
-     "crossbar": 3.0925249993212773,
+     "streamers": 4.499953678874453,
+     "crossbar": 3.0925360087407436,
      "memory": 3.90688448,
      "dma": 1.8614934960999994
     },
-    "total": 30.13964201430494,
+    "total": 30.141237385315193,
     "counts": {
      "fires": 2624,
      "cycles": 517,
@@ -947,10 +947,18 @@
  "total": {
   "datapath": 16.2168810816,
   "control": 0.56348864,
-  "streamers": 16.72617155901119,
-  "crossbar": 17.982780374538024,
+  "streamers": 16.72775592060198,
+  "crossbar": 17.98279138395749,
   "memory": 7.53103744,
   "dma": 31.061741787548506
+ },
+ "program": {
+  "datapath": 16.2168810816,
+  "control": 0.56348864,
+  "streamers": 5.071131555400786,
+  "crossbar": 3.788080823583083,
+  "memory": 7.53103744,
+  "dma": 7.0684081953485105
  },
  "static": {
   "parts": {

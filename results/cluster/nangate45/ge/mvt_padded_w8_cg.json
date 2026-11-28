@@ -17,10 +17,10 @@
   "group_ctrl_bits": {"mvt_1": 132},
   "e_ctrl": 0.005449600000000001,
   "movers": {
-   "vmul_x2_a": {"write": false, "channels": 8, "e_beat": 22.56338},
-   "vmul_x2_b": {"write": false, "channels": 8, "e_beat": 22.56338},
-   "vsum_x2_seed": {"write": false, "channels": 1, "e_beat": 3.229712},
-   "vsum_x2_out": {"write": true, "channels": 1, "e_beat": 3.229712}
+   "vmul_x2_a": {"write": false, "channels": 8, "e_beat": 22.56338, "r": 0.103672},
+   "vmul_x2_b": {"write": false, "channels": 8, "e_beat": 22.56338, "r": 0.103672},
+   "vsum_x2_seed": {"write": false, "channels": 1, "e_beat": 3.229712, "r": 0.209732},
+   "vsum_x2_out": {"write": true, "channels": 1, "e_beat": 3.229712, "r": 0.209732}
   },
   "e_xbar_ro": 1.8392993176799999,
   "e_xbar_wo": 1.454512707945,
@@ -28,8 +28,8 @@
   "e_wr": 6.45356,
   "superbank_banks": 8,
   "e_dma_burst": 78.0825561190845,
-  "r_strm": 0.08473695178960629,
-  "r_xbar": 0.0,
+  "r_strm": 0.15051708047732332,
+  "r_xbar": 0.0017749005306149125,
   "floor": {
    "streamers": 2.7776112474755354,
    "crossbar": 2.5730310097782274,
@@ -681,12 +681,12 @@
     "parts": {
      "datapath": 53.0092061696,
      "control": 0.37477989120000005,
-     "streamers": 25.069131008105174,
-     "crossbar": 16.68579194242325,
+     "streamers": 25.09431874584069,
+     "crossbar": 16.6861899199372,
      "memory": 28.36388096,
      "dma": 1.8479799316999994
     },
-    "total": 125.35076990302842,
+    "total": 125.37635561827788,
     "counts": {
      "fires": 1536,
      "cycles": 521,
@@ -1252,12 +1252,12 @@
     "parts": {
      "datapath": 53.0092061696,
      "control": 0.37477989120000005,
-     "streamers": 25.063575785610222,
-     "crossbar": 16.680645880403695,
+     "streamers": 25.088763523345737,
+     "crossbar": 16.681043857917643,
      "memory": 28.36388096,
      "dma": 1.8412231494999993
     },
-    "total": 125.33331183631391,
+    "total": 125.35889755156337,
     "counts": {
      "fires": 1536,
      "cycles": 521,
@@ -1466,10 +1466,18 @@
  "total": {
   "datapath": 106.0184123392,
   "control": 0.7495597824000001,
-  "streamers": 94.32172412980367,
-  "crossbar": 74.30078815738875,
+  "streamers": 94.37209960527471,
+  "crossbar": 74.30158411241666,
   "memory": 85.66002943999999,
   "dma": 88.37847642600207
+ },
+ "program": {
+  "datapath": 106.0184123392,
+  "control": 0.7495597824000001,
+  "streamers": 52.86069951175285,
+  "crossbar": 35.847635671281054,
+  "memory": 85.66002943999999,
+  "dma": 37.88842143650208
  },
  "static": {
   "parts": {

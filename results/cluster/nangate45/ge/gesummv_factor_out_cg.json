@@ -28,15 +28,15 @@
   "group_ctrl_bits": {"matvec": 132, "matvec_1": 132, "axpby": 34},
   "e_ctrl": 0.005449600000000001,
   "movers": {
-   "mul_a": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "mul_b": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "sum_out": {"write": true, "channels": 1, "e_beat": 3.229712},
-   "mul_1_a": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "mul_1_b": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "sum_1_out": {"write": true, "channels": 1, "e_beat": 3.229712},
-   "axpby_a": {"write": false, "channels": 4, "e_beat": 11.44502},
-   "axpby_b": {"write": false, "channels": 4, "e_beat": 11.44502},
-   "axpby_out": {"write": true, "channels": 4, "e_beat": 11.44502}
+   "mul_a": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "mul_b": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "sum_out": {"write": true, "channels": 1, "e_beat": 3.229712, "r": 0.209732},
+   "mul_1_a": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "mul_1_b": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "sum_1_out": {"write": true, "channels": 1, "e_beat": 3.229712, "r": 0.209732},
+   "axpby_a": {"write": false, "channels": 4, "e_beat": 11.44502, "r": 0.125796},
+   "axpby_b": {"write": false, "channels": 4, "e_beat": 11.44502, "r": 0.125796},
+   "axpby_out": {"write": true, "channels": 4, "e_beat": 11.44502, "r": 0.125796}
   },
   "e_xbar_ro": 1.8392993176799999,
   "e_xbar_wo": 1.454512707945,
@@ -44,8 +44,8 @@
   "e_wr": 6.45356,
   "superbank_banks": 8,
   "e_dma_burst": 78.0825561190845,
-  "r_strm": 0.08473695178960629,
-  "r_xbar": 0.0,
+  "r_strm": 0.15051708047732332,
+  "r_xbar": 0.0017749005306149125,
   "floor": {
    "streamers": 3.4088865309927026,
    "crossbar": 2.5730310097782274,
@@ -693,12 +693,12 @@
     "parts": {
      "datapath": 6.054547488,
      "control": 0.37190250240000006,
-     "streamers": 5.312706258322036,
-     "crossbar": 3.3168506222290244,
+     "streamers": 5.314290619912827,
+     "crossbar": 3.3168616316484902,
      "memory": 3.6732864,
      "dma": 1.8209528028999995
     },
-    "total": 20.55024607385106,
+    "total": 20.551841444861314,
     "counts": {
      "fires": 1600,
      "cycles": 517,
@@ -1136,12 +1136,12 @@
     "parts": {
      "datapath": 6.054547488,
      "control": 0.37190250240000006,
-     "streamers": 5.271799619950124,
-     "crossbar": 3.2859742501116855,
+     "streamers": 5.273383981540913,
+     "crossbar": 3.285985259531152,
      "memory": 3.6732864,
      "dma": 1.7804121096999994
     },
-    "total": 20.437922370161807,
+    "total": 20.439517741172065,
     "counts": {
      "fires": 1600,
      "cycles": 517,
@@ -1470,12 +1470,12 @@
     "parts": {
      "datapath": 0.282734336,
      "control": 0.0020381504,
-     "streamers": 0.3608724593827886,
-     "crossbar": 0.22858533823021568,
+     "streamers": 0.36134238101073757,
+     "crossbar": 0.22859839652355532,
      "memory": 0.42318720000000004,
      "dma": 0.08445977749999997
     },
-    "total": 1.3818772615130044,
+    "total": 1.3823602414342928,
     "counts": {"fires": 8, "cycles": 11, "beats": 25.0, "requests": 100, "reads": 64, "writes": 32}
    },
    "background": {
@@ -1707,10 +1707,18 @@
  "total": {
   "datapath": 12.391829312,
   "control": 0.7458431552000001,
-  "streamers": 34.50078426681452,
-  "crossbar": 24.61105448813848,
+  "streamers": 34.50442291162405,
+  "crossbar": 24.61108956527075,
   "memory": 14.53817056,
   "dma": 34.27583423606826
+ },
+ "program": {
+  "datapath": 12.391829312,
+  "control": 0.7458431552000001,
+  "streamers": 12.629598042243881,
+  "crossbar": 8.099949575523862,
+  "memory": 14.53817056,
+  "dma": 12.59669854736827
  },
  "static": {
   "parts": {

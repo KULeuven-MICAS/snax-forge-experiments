@@ -24,9 +24,15 @@
   "group_ctrl_bits": {"matvec": 132, "mac": 67},
   "e_ctrl": 0.005449600000000001,
   "movers": {
-   "atax_reader0": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "atax_reader1": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "atax_writer0": {"write": true, "channels": 4, "e_beat": 11.44502, "e_beat_at": {"1": 3.229712}}
+   "atax_reader0": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "atax_reader1": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "atax_writer0": {
+    "write": true,
+    "channels": 4,
+    "e_beat": 11.44502,
+    "e_beat_at": {"1": 3.229712},
+    "r": 0.125796
+   }
   },
   "e_xbar_ro": 1.8392993176799999,
   "e_xbar_wo": 1.454512707945,
@@ -34,8 +40,8 @@
   "e_wr": 6.45356,
   "superbank_banks": 8,
   "e_dma_burst": 78.0825561190845,
-  "r_strm": 0.08473695178960629,
-  "r_xbar": 0.0,
+  "r_strm": 0.15051708047732332,
+  "r_xbar": 0.0017749005306149125,
   "floor": {
    "streamers": 1.136295510330901,
    "crossbar": 1.8838241940524214,
@@ -557,12 +563,12 @@
     "parts": {
      "datapath": 6.054547488,
      "control": 0.37190250240000006,
-     "streamers": 4.085507107164664,
-     "crossbar": 2.94160050016471,
+     "streamers": 4.086278201436158,
+     "crossbar": 2.941611509584176,
      "memory": 3.6732864,
      "dma": 1.8141960206999994
     },
-    "total": 18.941040018429373,
+    "total": 18.941822122120332,
     "counts": {
      "fires": 1600,
      "cycles": 517,
@@ -828,12 +834,12 @@
     "parts": {
      "datapath": 8.481080319999998,
      "control": 0.1884035712,
-     "streamers": 3.2244993161255997,
-     "crossbar": 2.457553105480263,
+     "streamers": 3.227230127957261,
+     "crossbar": 2.457578539108985,
      "memory": 2.80659328,
      "dma": 1.7905472829999993
     },
-    "total": 18.948676875805862,
+    "total": 18.951433121266245,
     "counts": {
      "fires": 1024,
      "cycles": 516,
@@ -1030,10 +1036,18 @@
  "total": {
   "datapath": 14.535627807999997,
   "control": 0.5603060736000001,
-  "streamers": 14.05278398159383,
-  "crossbar": 16.577766373152045,
+  "streamers": 14.056285887696985,
+  "crossbar": 16.577802816200233,
   "memory": 9.944067519999999,
   "dma": 27.410969971572257
+ },
+ "program": {
+  "datapath": 14.535627807999997,
+  "control": 0.5603060736000001,
+  "streamers": 7.7021213939265865,
+  "crossbar": 6.043457923059089,
+  "memory": 9.944067519999999,
+  "dma": 8.519006940372257
  },
  "static": {
   "parts": {

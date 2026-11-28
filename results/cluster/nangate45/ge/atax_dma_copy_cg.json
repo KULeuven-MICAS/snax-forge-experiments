@@ -27,12 +27,12 @@
   "group_ctrl_bits": {"matvec": 132, "matvec_1": 132},
   "e_ctrl": 0.005449600000000001,
   "movers": {
-   "mul_a": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "mul_b": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "sum_out": {"write": true, "channels": 1, "e_beat": 3.229712},
-   "mul_1_a": {"write": false, "channels": 1, "e_beat": 3.291861},
-   "mul_1_b": {"write": false, "channels": 4, "e_beat": 11.54413},
-   "sum_1_out": {"write": true, "channels": 1, "e_beat": 3.229712}
+   "mul_a": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "mul_b": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "sum_out": {"write": true, "channels": 1, "e_beat": 3.229712, "r": 0.209732},
+   "mul_1_a": {"write": false, "channels": 1, "e_beat": 3.291861, "r": 0.198128},
+   "mul_1_b": {"write": false, "channels": 4, "e_beat": 11.54413, "r": 0.122891},
+   "sum_1_out": {"write": true, "channels": 1, "e_beat": 3.229712, "r": 0.209732}
   },
   "e_xbar_ro": 1.8392993176799999,
   "e_xbar_wo": 1.454512707945,
@@ -40,8 +40,8 @@
   "e_wr": 6.45356,
   "superbank_banks": 8,
   "e_dma_burst": 78.0825561190845,
-  "r_strm": 0.08473695178960629,
-  "r_xbar": 0.0,
+  "r_strm": 0.15051708047732332,
+  "r_xbar": 0.0017749005306149125,
   "floor": {
    "streamers": 1.8938258505515013,
    "crossbar": 2.056125897983873,
@@ -605,12 +605,12 @@
     "parts": {
      "datapath": 6.054547488,
      "control": 0.37190250240000006,
-     "streamers": 4.5017700291158835,
-     "crossbar": 3.044407144665819,
+     "streamers": 4.503354390706673,
+     "crossbar": 3.0444181540852853,
      "memory": 3.6732864,
      "dma": 1.8310879761999994
     },
-    "total": 19.4770015403817,
+    "total": 19.478596911391957,
     "counts": {
      "fires": 1600,
      "cycles": 517,
@@ -999,12 +999,12 @@
     "parts": {
      "datapath": 9.2501430592,
      "control": 0.3834120576,
-     "streamers": 8.77456716222998,
-     "crossbar": 5.898356659194072,
+     "streamers": 8.789905129088059,
+     "crossbar": 5.898641209815715,
      "memory": 8.87344512,
      "dma": 1.8783854515999994
     },
-    "total": 35.05830950982404,
+    "total": 35.07393202730377,
     "counts": {
      "fires": 1600,
      "cycles": 533,
@@ -1215,10 +1215,18 @@
  "total": {
   "datapath": 15.3046905472,
   "control": 0.7553145600000001,
-  "streamers": 45.287675543217894,
-  "crossbar": 43.69745985748129,
+  "streamers": 45.30459787166676,
+  "crossbar": 43.6977554175224,
   "memory": 338.41789280000006,
   "dma": 384.3994219353424
+ },
+ "program": {
+  "datapath": 15.3046905472,
+  "control": 0.7553145600000001,
+  "streamers": 34.651827462314564,
+  "crossbar": 32.13204724136311,
+  "memory": 338.41789280000006,
+  "dma": 365.39597199784237
  },
  "static": {
   "parts": {
