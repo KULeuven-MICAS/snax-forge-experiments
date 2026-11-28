@@ -17,13 +17,14 @@ Interface: axis, register slices off.
 
 | case | size | W | config | HLS clock ns | status | cycles | cyc/elem | overhead | est. latency | II | DSP | BRAM | portable | RTL |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| opt | m64_n64 | 8 | loop_count=512 len=8 | 10 | ok | 523 | 0.13 | 11 | 524-524 | 525 | 0 | 0 | yes | opt_w8 (ref) |
+| opt | m64_n64 | 8 | loop_count=512 len=8 | 10 | ok | 526 | 0.13 | 14 | 529-529 | 530 | 0 | 0 | yes | opt_w8 (ref) |
 
 Loops:
 
 | case | size | W | module | loop | trips | iter lat | II (achieved/target) | latency | pipelined |
 |---|---|---|---|---|---|---|---|---|---|
-| opt | m64_n64 | 8 | atax_Pipeline_BEAT | BEAT | 520 | 2 | 1/1 | 520-520 | yes |
+| opt | m64_n64 | 8 | atax_Pipeline_BEAT | BEAT | 512 | 1 | 1/1 | 512-512 | yes |
+| opt | m64_n64 | 8 | atax_Pipeline_DRAIN | DRAIN | 8 | 2 | 1/1 | 8-8 | yes |
 
 ## bicg
 

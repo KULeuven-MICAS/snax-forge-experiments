@@ -1,7 +1,7 @@
 # bambu_cycles.csv: copied byte for byte by report/import_cycles.py (pixi run import-cycles)
 repo: https://github.com/rgantonio/hls-exercises
-commit: cdf9ca961e5e8eb052ad318929c159ff093b07af
-file_commit: cdf9ca961e5e8eb052ad318929c159ff093b07af
+commit: a02ed18e05cc494b2e5a271e3f0e9f769885729a
+file_commit: a02ed18e05cc494b2e5a271e3f0e9f769885729a
 path: results_staging/bambu_cycles.csv
-sha256: 54e3f24cfc7607def2dfeee7e4270657de12ea66b512a17ad355a58756585044
-date: 2026-11-28T16:30:33
+sha256: d3a9b12601b0814c9789d9ea35f61dd09be440d269c9c941399fd719c3be2115
+date: 2026-11-28T17:16:33

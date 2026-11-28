@@ -1,5 +1,6 @@
 tier,kernel,case,size,W,clock_ns,module,loop,lat_min,lat_max,iter_lat,ii_achieved,ii_target,trips,pipelined
-a,atax,opt,m64_n64,8,10,atax_Pipeline_BEAT,BEAT,520,520,2,1,1,520,yes
+a,atax,opt,m64_n64,8,10,atax_Pipeline_BEAT,BEAT,512,512,1,1,1,512,yes
+a,atax,opt,m64_n64,8,10,atax_Pipeline_DRAIN,DRAIN,8,8,2,1,1,8,yes
 a,bicg,opt,m64_n64,8,10,bicg,BEAT,512,512,2,1,1,512,yes
 a,gesummv,opt,n64,8,10,gesummv,BEAT,512,512,2,1,1,512,yes
 a,mvt,opt,m64_n64,8,10,mvt,BEAT,512,512,2,1,1,512,yes
