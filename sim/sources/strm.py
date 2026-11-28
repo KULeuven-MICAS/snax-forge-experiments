@@ -5,7 +5,8 @@ xbar point is the TCDM sparse interconnect (rtl/xbar/<point>.zip); an xbar_mix p
 strm/xbar_mix.py's wrapper, with read-only and write-only inputs (rtl/xbar_mix/<point>.zip). None has a done: the TB here is generated
 whole per point (the port names carry the channel and bank index), drives the work, checks every output and prints
 the window. A point runs in one of MODES: grant (every request granted, the tables' runs), idle (configured, no
-request) or refused (requests held while refused), the last two for the refusal price (report/refusal_fit.py).
+request), refused (requests held while refused) or apart (refused's grants with no refusal), the last three for
+the refusal price (report/refusal_fit.py).
 build() writes tb.json (its fields and the stimuli in its docstring); docs/power.md, "Streamer and interconnect", has
 the testbench and the window.
 """
@@ -19,7 +20,7 @@ from . import ROOT, syn as _syn
 TB_VERSION = 1
 BEATS = 1024        # reader: beats per run, split over the loops
 CYCLES = 1024       # xbar: request cycles per run (refused: requests per input); idle: the window's cycles
-MODES = ("grant", "idle", "refused")
+MODES = ("grant", "idle", "refused", "apart")
 T_NS = 10
 ADDR_W = 17         # log2(128 KiB): the reader's address and the xbar's TCDM address width (grid.json)
 WORD_B = 8          # bytes per 64-bit TCDM word
@@ -54,7 +55,7 @@ def strides(bnds: list[int], channels: int) -> list[int]:
     return out
 
 
-def build(point: str, netlist: Path, seed: int = 0, mode: str = "grant") -> dict:
+def build(point: str, netlist: Path, seed: int = 0, mode: str = "grant", group: int = 2) -> dict:
     """tb.json:
       tb_version, source, point, params, top, snax_cluster_commit
       clock    {port: clock}
@@ -69,7 +70,9 @@ def build(point: str, netlist: Path, seed: int = 0, mode: str = "grant") -> dict
       window   the window's expected cycles: reader None (fill + beats, measured), xbar cycles + 1; idle: reader
                cycles, xbar cycles + 1; refused: None (measured)
       seed     the root seed of the TB's $urandom calls: sim/pwr.py runs vsim -sv_seed <seed> (pwr run --seed, default 0)
-      mode     idle or refused; absent in a grant run's tb.json (as before the modes)
+      mode     idle, refused or apart; absent in a grant run's tb.json (as before the modes)
+      group    xbar refused or apart: the inputs that share a bank (G), absent for refused at 2 (as before groups)
+      reqs     the requests per input with `group`: 2 x cycles / G, so the window stays about 2 x cycles
 
     The stimuli:
       reader  io_start for one cycle; every TCDM request granted at once (ready 1), its response valid the next cycle
@@ -107,6 +110,13 @@ def build(point: str, netlist: Path, seed: int = 0, mode: str = "grant") -> dict
               grants exactly one of them and forwards its request (row, write, data, strb), no bank valid without
               one, each granted read answered with the bank's data, grants = inputs x cycles; the TB prints the
               refused request-cycles.
+      groups  xbar refused with --group G (G divides the inputs): as above with G inputs per bank (group
+              g = i // G, request k to bank (g + k) mod banks), each input 2 x cycles / G requests; the group's
+              next requests once all G are granted, so a request waits 0 to G - 1 cycles. The TB also prints the
+              refused requests (first refused cycles).
+      apart   xbar, any G: refused's stimulus, the same request fields at the same edges, but only one input of
+              a group valid at a time (in index order, the next one valid once the current is granted): the same
+              grants, cycles and banks with no refusal. refused minus apart is the refusals' energy alone.
     The window's rising edges are its own cycles and no event sits on a boundary (the char source's rule); the TB dumps
     from time 0 and sim/pwr.py cuts the window.
     """
@@ -114,6 +124,9 @@ def build(point: str, netlist: Path, seed: int = 0, mode: str = "grant") -> dict
         raise ValueError(f"mode {mode}: one of {', '.join(MODES)}")
     syn = _syn()
     source = syn.SOURCE
+    grouped = mode == "apart" or group != 2
+    if grouped and (mode not in ("refused", "apart") or source not in ("xbar", "xbar_mix")):
+        raise ValueError(f"{point}: --group and apart are for the interconnect's refused and apart runs only")
     cfg = syn.forge_json(point, "config.json")
     p = cfg["params"]
     tb = {"tb_version": TB_VERSION, "source": source, "point": point, "params": p, "top": syn.top_of(point),
@@ -132,14 +145,16 @@ def build(point: str, netlist: Path, seed: int = 0, mode: str = "grant") -> dict
         n, banks = p["inputs"], p["banks"]
         if n > banks:
             raise ValueError(f"{n} inputs on {banks} banks: no conflict-free stimulus (power only where inputs <= banks)")
-        if mode == "refused" and n % 2:
-            raise ValueError(f"{n} inputs: the refused stimulus pairs the inputs")
+        if mode in ("refused", "apart") and (group < 2 or n % group or 2 * CYCLES % group):
+            raise ValueError(f"{n} inputs: the refused stimulus needs groups of {group} >= 2 dividing the inputs")
         bank_bits = banks.bit_length() - 1
         tb.update({"reset": {"port": "reset", "active": "high", "sync": True}, "control": {"kind": "strm_xbar"},
                    "inputs": n, "banks": banks, "bank_bits": bank_bits,
                    **({"ro": p["ro"], "wo": p["wo"]} if source == "xbar_mix" else {}),
                    "row_bits": ADDR_W - bank_bits - (WORD_B.bit_length() - 1), "cycles": CYCLES,
-                   "window": None if mode == "refused" else CYCLES + 1})
+                   "window": None if mode in ("refused", "apart") else CYCLES + 1})
+        if grouped:
+            tb.update({"group": group, "reqs": 2 * CYCLES // group})
     tb["netlist_inputs"] = netlist_inputs(netlist, tb["top"])
     # at 1 channel the spatial stride multiplies only channel 0's index: firtool drops the port (PITFALLS SC2)
     tb["spatial_stride_port"] = source == "streamer" and "io_aguCfg_spatialStrides_0" in tb["netlist_inputs"]
@@ -203,7 +218,7 @@ def tb_top(tb: dict, scopes: list[str]) -> str:
     mode = tb.get("mode", "grant")
     if tb["control"]["kind"] == "strm_reader":
         return (tb_reader_idle if mode == "idle" else tb_reader)(tb, scopes)
-    return {"grant": tb_xbar, "idle": tb_xbar_idle, "refused": tb_xbar_held}[mode](tb, scopes)
+    return {"grant": tb_xbar, "idle": tb_xbar_idle, "refused": tb_xbar_held, "apart": tb_xbar_held}[mode](tb, scopes)
 
 
 def _reader_head(tb: dict, what: str, ready: str) -> list[str]:
@@ -415,8 +430,12 @@ def tb_xbar_idle(tb: dict, scopes: list[str]) -> str:
 
 
 def tb_xbar_held(tb: dict, scopes: list[str]) -> str:
-    """refused: each input `cycles` requests in order, two inputs per bank at the start, a refused request held."""
-    L = _xbar_head(tb, "refused") + [""] + _dump(scopes)
+    """refused: each input `cycles` requests in order, two inputs per bank at the start, a refused request held;
+    with `group` G inputs per bank; apart: the same with one input of a group valid at a time."""
+    apart, g = tb.get("mode") == "apart", tb.get("group", 2)
+    grouped = apart or "group" in tb
+    what = ("apart" if apart else "refused") + (f", group {g}" if grouped else "")
+    L = _xbar_head(tb, what) + [""] + _dump(scopes)
     L += ["",
           "    localparam int REQS = CYC;",
           "    int t = -1, grants = 0, refused = 0, grant_bad = 0, bank_bad = 0, rsp_bad = 0, xz = 0;",
@@ -502,7 +521,57 @@ def tb_xbar_held(tb: dict, scopes: list[str]) -> str:
           "        $finish;",
           "    end",
           "endmodule"]
+    if grouped:
+        L = _grouped(L, g, tb["reqs"], apart)
     return "\n".join(L) + "\n"
+
+
+def _grouped(L: list[str], g: int, reqs: int, apart: bool) -> list[str]:
+    """tb_xbar_held's lines for G inputs per bank, and for apart (one input of a group valid at a time)."""
+    sub = {
+        "    localparam int REQS = CYC;": [f"    localparam int REQS = {reqs}, G = {g};", "    int refused_first = 0;",
+                                          "    bit was_refused [N];"],
+        "    // input i's request k[i]: bank (i / 2 + k) mod B (a pair's two inputs on one bank), a random row;":
+            ["    // input i's request k[i]: bank (i / G + k) mod B (a group's G inputs on one bank), a random row;"],
+        "        tgt[i] = (i / 2 + k[i]) % B;": ["        tgt[i] = (i / G + k[i]) % B;"],
+        "        refused += $countones(q_valid & ~q_ready);":
+            ["        refused += $countones(q_valid & ~q_ready);",
+             "        for (int i = 0; i < N; i++) begin",
+             "            if (q_valid[i] && !q_ready[i] && !was_refused[i]) refused_first++;  // a request's first refusal",
+             "            was_refused[i] = q_valid[i] && !q_ready[i];",
+             "        end"],
+        "            for (int j = 0; j < N / 2; j++) if (got[2*j] && got[2*j+1])  // the pair's next requests":
+            ["            for (int j = 0; j < N / G; j++) begin  // the group's next requests once all G are granted",
+             "                bit all;",
+             "                all = 1;",
+             "                for (int i = G*j; i < G*j + G; i++) all &= got[i];",
+             "                if (all) for (int i = G*j; i < G*j + G; i++) begin k[i]++; got[i] = 0; issue(i); end",
+             "            end"],
+        "                for (int i = 2*j; i < 2*j + 2; i++) begin k[i]++; got[i] = 0; issue(i); end": [],
+        "        for (int i = 0; i < N; i++) begin k[i] = 0; adv[i] = 0; got[i] = 0; was_read[i] = 0; issue(i); end":
+            ["        for (int i = 0; i < N; i++) begin",
+             "            k[i] = 0; adv[i] = 0; got[i] = 0; was_read[i] = 0; was_refused[i] = 0; issue(i);",
+             "        end"],
+        "        $display(\"TB: refused %0d\", refused);":
+            ["        $display(\"TB: refused %0d first %0d\", refused, refused_first);"],
+    }
+    if apart:
+        sub["        q_valid[i] <= k[i] < REQS;"] = [
+            "        q_valid[i] <= k[i] < REQS && i % G == 0;   // apart: the group's first input, the others in turn"]
+        sub["            for (int i = 0; i < N; i++) if (adv[i]) begin got[i] = 1; q_valid[i] <= 1'b0; end"] = [
+            "            for (int i = 0; i < N; i++) if (adv[i]) begin",
+            "                got[i] = 1;",
+            "                q_valid[i] <= 1'b0;",
+            "                if (i % G < G - 1) q_valid[i + 1] <= 1'b1;   // the next input of the group",
+            "            end"]
+    out = []
+    for line in L:
+        if line in sub:
+            out += sub.pop(line)
+        else:
+            out.append(line)
+    assert not sub, f"tb_xbar_held changed: {list(sub)}"
+    return out
 
 
 def tb_xbar(tb: dict, scopes: list[str]) -> str:

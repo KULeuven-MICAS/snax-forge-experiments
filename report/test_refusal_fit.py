@@ -77,6 +77,27 @@ def test_fit() -> None:
         assert "| streamer | 3 | 0.1100 |" in md and "Missing" in md and "| xbar_mix | 0 |" in md
 
 
+def test_ab() -> None:
+    """refused against apart at 2 and 4 inputs a bank: e_first and e_more back from known prices."""
+    e_first, e_more, n = 2.0, 0.25, 16
+    g = {**BASE, "point": "i16_b32", "inputs": n, "banks": 32, "cycles": 1025, "e_access_pj": 4.0, "e_window_pj": 1.0}
+    r2, r4, f4 = n // 2 * 1024, n * 3 // 2 * 512, n * 3 // 4 * 512
+    rows = {"refused": {"refused": r2, "e_window_pj": 100.0 + e_first * r2, "cycles": 2049},
+            "apart": {"refused": 0, "refused_first": 0, "e_window_pj": 100.0, "cycles": 2049, "group": 2},
+            "refused_g4": {"refused": r4, "refused_first": f4, "e_window_pj": 90.0 + e_first * f4 + e_more * (r4 - f4),
+                           "cycles": 2049, "group": 4},
+            "apart_g4": {"refused": 0, "refused_first": 0, "e_window_pj": 90.0, "cycles": 2049, "group": 4}}
+    with tempfile.TemporaryDirectory() as d:
+        res = Path(d)
+        write(res / "power_pt.csv", [g])
+        for m, r in rows.items():
+            write(res / f"power_pt_{m}.csv", [{**BASE, "point": "i16_b32", "inputs": n, "banks": 32, **r}])
+        a = rf.ab_fit(res)
+    q = a["points"]["i16_b32"]
+    assert a["n"] == 1 and abs(q["e_first_pj"] - e_first) < 1e-9 and abs(q["e_more_pj"] - e_more) < 1e-9
+    assert abs(q["r_first"] - 0.5) < 1e-9 and q["cycles_off"] == [0, 0] and q["first"] == [r2, f4]
+
+
 def test_spread() -> None:
     pts = {"a": {"r": -0.2, "channels": 1}, "b": {"r": -0.1, "channels": 2}}
     s = rf.summary(pts, ("channels",))

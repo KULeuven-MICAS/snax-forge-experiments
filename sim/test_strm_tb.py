@@ -30,7 +30,7 @@ def reader(c: int, loops: int, mode: str = "grant") -> dict:
     return tb
 
 
-def xbar(n: int, banks: int, ro: int = 0, wo: int = 0, mode: str = "grant") -> dict:
+def xbar(n: int, banks: int, ro: int = 0, wo: int = 0, mode: str = "grant", group: int = 2) -> dict:
     bb = banks.bit_length() - 1
     tb = {"control": {"kind": "strm_xbar"}, "point": f"i{n}_b{banks}", "top": "Xbar", "source": "xbar",
           "inputs": n, "banks": banks, "bank_bits": bb, "row_bits": s.ADDR_W - bb - 3, "cycles": s.CYCLES,
@@ -38,6 +38,10 @@ def xbar(n: int, banks: int, ro: int = 0, wo: int = 0, mode: str = "grant") -> d
     tb["ports"] = sorted(s.connected(tb))
     if mode != "grant":
         tb["mode"] = mode
+    if mode in ("refused", "apart"):
+        tb["window"] = None
+        if mode == "apart" or group != 2:
+            tb.update({"group": group, "reqs": 2 * s.CYCLES // group})
     return tb
 
 
@@ -187,14 +191,18 @@ def nums(pattern: str, out: str) -> list[int]:
 
 # ---------------------------------------------------------------- tests
 def test_text() -> None:
-    g, i, r = (s.tb_top(reader(4, 3, m), []) for m in s.MODES)
+    g, i, r = (s.tb_top(reader(4, 3, m), []) for m in ("grant", "idle", "refused"))
     assert "req_ready" not in g and "refused" not in g and "io_tcdmReq_0_ready(1'b1)" in g
     assert "io_tcdmReq_0_ready(req_ready[0])" in r and "TB: refused" in r and "$urandom); " in r
     assert "io_start" in i and "start <= 1'b1" not in i and "TB: idle requests" in i
-    g, i, r = (s.tb_top(xbar(8, 16, mode=m), []) for m in s.MODES)
+    g, i, r = (s.tb_top(xbar(8, 16, mode=m), []) for m in ("grant", "idle", "refused"))
     assert "refused" not in g and "issue" not in g
     assert "task automatic issue" in r and "(i / 2 + k[i]) % B" in r and "TB: refused" in r
     assert "q_valid" in i and "apply" not in i and "banks valid %b with no input" in i
+    r4, a2 = s.tb_top(xbar(8, 16, mode="refused", group=4), []), s.tb_top(xbar(8, 16, mode="apart"), [])
+    assert "REQS = 512, G = 4" in r4 and "(i / G + k[i]) % B" in r4 and "first %0d" in r4 and "i % G == 0" not in r4
+    assert "REQS = 1024, G = 2" in a2 and "i % G == 0" in a2 and "q_valid[i + 1] <= 1'b1" in a2
+    assert "G = " not in r and "first %0d" not in r      # refused at 2: R6's TB as it was
     try:
         s.tb_top(xbar(8, 16, mode="busy"), [])
     except KeyError:
@@ -234,6 +242,21 @@ def test_sim() -> None:
         assert ref == tb["inputs"] // 2 * s.CYCLES and cyc == 2 * s.CYCLES + 1, out   # one refusal per pair and request
         out = run(t, xbar_model(tb, "double"))
         assert nums(s_xbar(), out)[2] > 0, out             # two grants on one bank are caught
+        n = tb["inputs"]
+        for g in (2, 4):
+            reqs = 2 * s.CYCLES // g
+            for mode in ("refused", "apart"):
+                if mode == "refused" and g == 2:
+                    continue
+                out = run(xbar(n, tb["banks"], tb["ro"], tb["wo"], mode, g), xbar_model(tb))
+                grants, want, gbad, bbad, rbad, xz = nums(s_xbar(), out)
+                gref, first = nums(r"TB: refused (\d+) first (\d+)", out)
+                (gcyc,) = nums(r"cycles (\d+)", out)
+                assert grants == want == n * reqs and (gbad, bbad, rbad, xz) == (0, 0, 0, 0), out
+                assert gcyc == g * reqs + 1 == 2 * s.CYCLES + 1, out
+                want_ref = (n * (g - 1) // 2 * reqs, n * (g - 1) // g * reqs) if mode == "refused" else (0, 0)
+                assert (gref, first) == want_ref, (mode, g, out)
+                print(f"{tb['point']} ro {tb['ro']} wo {tb['wo']} {mode} G {g}: refused {gref} first {first}")
         out = run({**tb, "mode": "idle"}, xbar_model(tb))
         assert nums(r"cycles (\d+)", out) == [s.CYCLES + 1] and nums(s_xbar(), out) == [0, 0, 0, 0, 0, 0], out
         print(f"{tb['point']} ro {tb['ro']} wo {tb['wo']}: refused {ref} over {cyc} cycles")

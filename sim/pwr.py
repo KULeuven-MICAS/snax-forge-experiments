@@ -3,7 +3,7 @@
 
   pixi run pwr tbjson      POINT [--source S] [--tech T]
   pixi run pwr run         PATTERN ... --tech T [--source S] [--stim rand64|forge] [--size TAG|all] [--seed N]
-                                       [-j N] [--cores C] [--clk-gate] [--initreg-seed N] [--mode M]
+                                       [-j N] [--cores C] [--clk-gate] [--initreg-seed N] [--mode M] [--group G]
   pixi run pwr setup-check --tech T [--source hls|forge|bambu|xls] [--point P]
   pixi run pwr summary     [PATTERN ...] [--source S] [--tech T]
   pixi run pwr modules     --source S --tech T
@@ -12,8 +12,8 @@ The sources are hls (the default), forge, char, bambu, xls, streamer, xbar and x
 run, writes tb.json (sim/sources/), compiles the testbench and the netlist, simulates each run at zero delay, cuts
 the window into a SAIF, checks it and runs PrimePower, then packs the point into sim/runs/.../<point>.zip and
 writes its rows into results/<source>/<tech>/. Workers and PT threads come from the free licences. The streamer and
-interconnect sources also run --mode idle or refused (the refusal price): their runs, rows and reports apart from
-the grant runs' (power_pt_<mode>.csv). The stages, each source's testbench and window, the checks and the columns are
+interconnect sources also run --mode idle, refused or apart (the refusal price; the interconnect --group G too): their
+runs, rows and reports apart from the grant runs' (power_pt_<mode>[_g<G>].csv). The stages, each source's testbench and window, the checks and the columns are
 in docs/power.md; the commands in docs/TOOL.md.
 """
 from __future__ import annotations
@@ -106,6 +106,7 @@ CLK_GATE = False
 # --mode idle | refused (streamer, xbar, xbar_mix): the stimulus of sim/sources/strm.py; such a run's folder and
 # power_reports zip get the suffix _<mode> and its rows go to power_pt_<mode>.csv, the grant runs untouched.
 MODE = "grant"
+GROUP = 2   # --group G (xbar, xbar_mix refused or apart): G inputs per bank; the suffix _g<G> when not 2
 
 
 def gtag(point: str) -> str:
@@ -1223,8 +1224,18 @@ def power_zip(tech: str, point: str) -> Path:
 
 
 def mtag(point: str) -> str:
-    """gtag() and, for an idle or refused run, _<mode>: its run folder and report zip apart from the grant run's."""
-    return gtag(point) + ("" if MODE == "grant" else f"_{MODE}")
+    """gtag() and, for an idle, refused or apart run, _<mode>[_g<G>]: its run folder and report zip apart from the
+    grant run's."""
+    return gtag(point) + mode_suffix()
+
+
+def mode_suffix() -> str:
+    return ("" if MODE == "grant" else f"_{MODE}") + ("" if GROUP == 2 else f"_g{GROUP}")
+
+
+def grouped() -> bool:
+    """A run of the grouped interconnect TB (apart, or refused at G != 2): it prints the first refusals too."""
+    return MODE == "apart" or GROUP != 2
 
 
 # ---------------------------------------------------------------- char: a block alone, per window
@@ -1685,16 +1696,17 @@ STRM_COLUMNS["xbar_mix"] = STRM_COLUMNS["xbar"][:3] + ["ro", "wo"] + STRM_COLUMN
 # an idle or refused run's rows (power_pt_<mode>.csv): the grant columns, the mode, the refused request-cycles and the
 # energy per cycle; e_beat_pj or e_access_pj stays the window's energy over the beats or grants (empty when idle)
 STRM_MODE_COLUMNS = ("mode", "refused", "e_cycle_pj")
-REFUSED_RE = re.compile(r"TB: refused (\d+)")
+REFUSED_RE = re.compile(r"TB: refused (\d+)(?: first (\d+))?")
 IDLE_RE = re.compile(r"TB: idle requests (\d+) beats (\d+) busy (\d+) xz (\d+)")
 
 
 def strm_columns() -> list[str]:
-    return STRM_COLUMNS[SOURCE] + ([] if MODE == "grant" else list(STRM_MODE_COLUMNS))
+    return (STRM_COLUMNS[SOURCE] + ([] if MODE == "grant" else list(STRM_MODE_COLUMNS))
+            + (["group", "refused_first"] if grouped() else []))
 
 
 def strm_csv(tech: str) -> Path:
-    return RESULTS / tech / ("power_pt.csv" if MODE == "grant" else f"power_pt_{MODE}.csv")
+    return RESULTS / tech / ("power_pt.csv" if MODE == "grant" else f"power_pt{mode_suffix()}.csv")
 STRM_KEPT = ("power.rpt", "power_hierarchy.rpt", "switching_activity.rpt")
 READER_RE = re.compile(r"TB: beats (\d+) expected (\d+) fill (-?\d+) stalls (\d+) data_mismatches (\d+) "
                        r"addr_mismatches (\d+) xz (\d+)")
@@ -1737,7 +1749,7 @@ def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int
     shutil.rmtree(pdir, ignore_errors=True)
     try:
         syn_d, netlist, _ = point_inputs(stack, tech, point)
-        tb = strm_src.build(point, netlist, seed, MODE)
+        tb = strm_src.build(point, netlist, seed, MODE, GROUP)
     except (ValueError, KeyError, FileNotFoundError, Fail) as e:
         row["status"] = f"failed: tb.json: {e}"
         return row, info
@@ -1765,13 +1777,17 @@ def _do_point_strm(stack: contextlib.ExitStack, point: str, tech: str, seed: int
             raise Fail("sim: no window (vsim.log)")
         cycles = int(win.group(3))
         row["cycles"] = cycles
-        if MODE == "refused":
+        if MODE in ("refused", "apart"):
             m = REFUSED_RE.search(log)
             if not m:
                 raise Fail("sim: no refused line (vsim.log)")
             row["refused"] = int(m.group(1))
-            if not row["refused"]:
+            if grouped():
+                row.update({"group": GROUP, "refused_first": int(m.group(2) or 0)})
+            if MODE == "refused" and not row["refused"]:
                 raise Fail("sim: refused mode with no refused request")
+            if MODE == "apart" and row["refused"]:
+                raise Fail(f"sim: apart mode with {row['refused']} refused request-cycles")
         if MODE == "idle" and SOURCE == "streamer":
             m = IDLE_RE.search(log)
             if not m:
@@ -1916,9 +1932,11 @@ def cmd_tbjson(args) -> int:
 
 
 def cmd_run(args) -> int:
-    global INITREG_SEED, CLK_GATE, MODE
+    global INITREG_SEED, CLK_GATE, MODE, GROUP
     INITREG_SEED = args.initreg_seed
-    MODE = args.mode
+    MODE, GROUP = args.mode, args.group
+    if (MODE == "apart" or GROUP != 2) and (args.source not in ("xbar", "xbar_mix") or MODE not in ("refused", "apart")):
+        sys.exit("--mode apart and --group: the interconnect's refused and apart runs only (xbar, xbar_mix)")
     if MODE != "grant" and args.source not in STRM:
         sys.exit(f"--mode {MODE}: the streamer and interconnect sources only ({', '.join(STRM)})")
     CLK_GATE = args.clk_gate          # the _cg netlists (syn.py --clk-gate), rows with clk_gate 1
@@ -1949,7 +1967,7 @@ def cmd_run(args) -> int:
     tech_runs(args.tech).mkdir(parents=True, exist_ok=True)
     with (tech_runs(args.tech) / "batches.jsonl").open("a") as fh:
         fh.write(json.dumps({"date": stamp, "source": args.source, "patterns": args.patterns, "stim": args.stim, "size": args.size,
-                             "seed": args.seed, "mode": MODE, "initreg_seed": INITREG_SEED, "licences": lic, "nproc": nproc, "J": j, "threads": threads}) + "\n")
+                             "seed": args.seed, "mode": MODE, "group": GROUP, "initreg_seed": INITREG_SEED, "licences": lic, "nproc": nproc, "J": j, "threads": threads}) + "\n")
     t = time.time()
     cells_lib(args.tech)
     print(f"pwr: cell models compiled in {time.time() - t:.1f} s", flush=True)
@@ -2161,7 +2179,9 @@ def main() -> int:
                         "in place of +initreg+0; results/ is not written")
     p.add_argument("--mode", choices=strm_src.MODES, default="grant",
                    help="streamer, xbar, xbar_mix: grant (the tables), idle or refused (the refusal price), "
-                        "into power_pt_<mode>.csv")
+                        "into power_pt_<mode>.csv; apart: refused's grants with no refusal (xbar, xbar_mix)")
+    p.add_argument("--group", type=int, default=2,
+                   help="xbar, xbar_mix refused or apart: inputs per bank (default 2), suffix _g<G> otherwise")
     p.add_argument("--clk-gate", action="store_true",
                    help="the clock-gated netlists (syn.py --clk-gate, <point>_cg.zip): runs and power_reports tagged "
                         "_cg, rows with clk_gate 1, apart from the ungated ones; off by default")

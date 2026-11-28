@@ -13,7 +13,15 @@ granted request's price (a reader's beat over its channels, an interconnect acce
 Per set the mean, range and the means by each axis; `within` says whether every point is within SPREAD of its
 set's mean. r_strm is the streamer mean, r_xbar the mean of xbar and xbar_mix together, both clamped at 0 as X111's.
 Beside it, the idle energy a cycle against model_fit.json's floor for the same block (k_s (1 + channels) for a
-reader, a_x + b_x inputs for an interconnect), a check only. Writes results/strm/<tech>/refusal.json.
+reader, a_x + b_x inputs for an interconnect), a check only.
+
+The interconnect's refusals alone (`ab`): its refused runs against the apart runs with the same grants, cycles and
+request fields (power_pt_refused.csv against power_pt_apart.csv at 2 inputs a bank, the _g4 files at 4). At 2 every
+refused request waits one cycle; at 4 they wait 1 to 3. With F the first refused cycles and R all of them:
+
+    E_ref - E_apart = e_first F + e_more (R - F),   e_first = (E_ref - E_apart) / R at 2
+
+Writes results/strm/<tech>/refusal.json.
 """
 
 from __future__ import annotations
@@ -77,6 +85,31 @@ def floor_check(kind: str, pts: dict[str, dict], floor: dict) -> dict:
     return {"mean": statistics.fmean(v), "min": min(v), "max": max(v)} if v else {}
 
 
+def ab_point(g: dict, a2: dict, b2: dict, a4: dict, b4: dict) -> dict:
+    """e_first and e_more of one interconnect point from its four runs (pJ, and over the granted access)."""
+    r2, r4, f4 = int(a2["refused"]), int(a4["refused"]), int(a4["refused_first"])
+    d2 = float(a2["e_window_pj"]) - float(b2["e_window_pj"])
+    d4 = float(a4["e_window_pj"]) - float(b4["e_window_pj"])
+    e_first = d2 / r2
+    e_more = (d4 - e_first * f4) / (r4 - f4)
+    u = float(g["e_access_pj"])
+    return {"e_first_pj": e_first, "e_more_pj": e_more, "r_first": e_first / u, "r_more": e_more / u,
+            "x2_pj": d2 / r2, "x4_pj": d4 / r4, "unit_pj": u, "refused": [r2, r4], "first": [r2, f4],
+            "cycles_off": [int(a2["cycles"]) - int(b2["cycles"]), int(a4["cycles"]) - int(b4["cycles"])]}
+
+
+def ab_fit(res: Path) -> dict:
+    g = _rows(res / "power_pt.csv")
+    runs = [_rows(res / f"power_pt_{m}.csv") for m in ("refused", "apart", "refused_g4", "apart_g4")]
+    pts = {p: ab_point(g[p], *(r[p] for r in runs)) for p in sorted(g) if all(p in r for r in runs)}
+    out: dict = {"points": pts, "n": len(pts)}
+    for k in ("e_first_pj", "e_more_pj", "r_first", "r_more"):
+        v = [q[k] for q in pts.values()]
+        if v:
+            out[k] = {"mean": statistics.fmean(v), "min": min(v), "max": max(v)}
+    return out
+
+
 def fit(tech: str) -> dict:
     floor = json.loads((ROOT / "results" / "cluster" / tech / "model_fit.json").read_text())["floor"]
     out: dict = {"tech": tech, "spread": SPREAD, "sets": {}, "missing": {}}
@@ -88,6 +121,7 @@ def fit(tech: str) -> dict:
         out["sets"][kind] = {"points": pts, **summary(pts, axes), "idle_over_floor": floor_check(kind, pts, floor)}
     xs = [p["r"] for k in ("xbar", "xbar_mix") for p in out["sets"][k]["points"].values()]
     s = out["sets"]["streamer"]
+    out["ab"] = {k: ab_fit(ROOT / "results" / k / tech) for k in ("xbar", "xbar_mix")}
     out["r_strm"] = max(s["mean"], 0.0) if s["n"] else None
     out["r_xbar"] = max(statistics.fmean(xs), 0.0) if xs else None
     return out
@@ -107,6 +141,15 @@ def markdown(f: dict) -> str:
         for a, vals in s.get("by", {}).items():
             L += [f"| {k} by {a} | " + " | ".join(vals) + " |", "|---|" + "---:|" * len(vals),
                   "| mean r | " + " | ".join(f"{v:.4f}" for v in vals.values()) + " |", ""]
+    ab = {k: a for k, a in f.get("ab", {}).items() if a["n"]}
+    if ab:
+        L += ["| interconnect, refused − apart | points | e_first pJ (range) | e_more pJ (range) | r_first | r_more |",
+              "|---|---:|---|---|---:|---:|"]
+        for k, a in ab.items():
+            ef, em = a["e_first_pj"], a["e_more_pj"]
+            L.append(f"| {k} | {a['n']} | {ef['mean']:.3f} ({ef['min']:.3f}–{ef['max']:.3f}) | {em['mean']:.3f} "
+                     f"({em['min']:.3f}–{em['max']:.3f}) | {a['r_first']['mean']:.4f} | {a['r_more']['mean']:.4f} |")
+        L.append("")
     miss = {k: v for k, v in f["missing"].items() if v}
     if miss:
         L.append("Missing (no idle or refused run): " + "; ".join(f"{k} {len(v)}: {', '.join(v[:6])}"
