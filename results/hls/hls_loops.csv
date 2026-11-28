@@ -1,36 +1,6 @@
 tier,kernel,case,size,W,clock_ns,module,loop,lat_min,lat_max,iter_lat,ii_achieved,ii_target,trips,pipelined
-done,dot,opt,n64,1,10,dot,BEAT,64,64,2,1,1,64,yes
-done,dot,opt,n64,2,10,dot,BEAT,32,32,2,1,1,32,yes
-done,dot,opt,n64,4,10,dot,BEAT,16,16,2,1,1,16,yes
-done,dot,opt,n64,8,10,dot,BEAT,8,8,2,1,1,8,yes
-done,dot,opt,n64,16,10,dot,BEAT,4,4,2,1,1,4,yes
-done,dot,opt,n512,1,10,dot,BEAT,512,512,2,1,1,512,yes
-done,dot,opt,n512,2,10,dot,BEAT,256,256,2,1,1,256,yes
-done,dot,opt,n512,4,10,dot,BEAT,128,128,2,1,1,128,yes
-done,dot,opt,n512,8,10,dot,BEAT,64,64,2,1,1,64,yes
-done,dot,opt,n512,16,10,dot,BEAT,32,32,2,1,1,32,yes
-done,dot,dace,n2048,1,10,dot_dace_Pipeline_VITIS_LOOP_37_1,VITIS_LOOP_37_1,1,4095,2,1,1,1 ~ 4095,yes
-done,dot,dace,n2048,1,10,dot_dace_Pipeline_VITIS_LOOP_62_1,VITIS_LOOP_62_1,1,?,1,1,1,1 ~ ?,yes
-done,vecadd,opt,n64,1,10,vecadd,BEAT,64,64,2,1,1,64,yes
-done,vecadd,opt,n64,2,10,vecadd,BEAT,32,32,2,1,1,32,yes
-done,vecadd,opt,n64,4,10,vecadd,BEAT,16,16,2,1,1,16,yes
-done,vecadd,opt,n64,8,10,vecadd,BEAT,8,8,2,1,1,8,yes
-done,vecadd,opt,n64,16,10,vecadd,BEAT,4,4,2,1,1,4,yes
-done,vecadd,opt,n512,1,10,vecadd,BEAT,512,512,2,1,1,512,yes
-done,vecadd,opt,n512,2,10,vecadd,BEAT,256,256,2,1,1,256,yes
-done,vecadd,opt,n512,4,10,vecadd,BEAT,128,128,2,1,1,128,yes
-done,vecadd,opt,n512,8,10,vecadd,BEAT,64,64,2,1,1,64,yes
-done,vecadd,opt,n512,16,10,vecadd,BEAT,32,32,2,1,1,32,yes
-done,vecadd,dace,n64,1,10,vecadd_dace,VITIS_LOOP_19_1,1,?,2,1,1,1 ~ ?,yes
-done,vecadd,dace,n64,2,10,vecadd_dace_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,?,?,2,1,1,?,yes
-done,vecadd,dace,n64,4,10,module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,?,?,2,1,1,?,yes
-done,vecadd,dace,n64,8,10,module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,?,?,2,1,1,?,yes
-done,vecadd,dace,n64,16,10,module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,?,?,2,1,1,?,yes
-done,vecadd,dace,n512,1,10,vecadd_dace,VITIS_LOOP_19_1,1,?,2,1,1,1 ~ ?,yes
-done,vecadd,dace,n512,2,10,vecadd_dace_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,?,?,2,1,1,?,yes
-done,vecadd,dace,n512,4,10,module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,?,?,2,1,1,?,yes
-done,vecadd,dace,n512,8,10,module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,?,?,2,1,1,?,yes
-done,vecadd,dace,n512,16,10,module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1,VITIS_LOOP_19_1,?,?,2,1,1,?,yes
+done,dot,opt,n4096,8,10,dot,BEAT,512,512,2,1,1,512,yes
+done,vecadd,opt,n4096,8,10,vecadd,BEAT,512,512,2,1,1,512,yes
 done,vecmul,opt,n64,1,10,vecmul,BEAT,64,64,2,1,1,64,yes
 done,vecmul,opt,n64,2,10,vecmul,BEAT,32,32,2,1,1,32,yes
 done,vecmul,opt,n64,4,10,vecmul,BEAT,16,16,2,1,1,16,yes
@@ -95,18 +65,7 @@ untiered,matadd,dace,m16_n32,2,10,matadd_dace_Pipeline_VITIS_LOOP_20_2,VITIS_LOO
 untiered,matadd,dace,m16_n32,4,10,module_matadd_0_0_Pipeline_VITIS_LOOP_20_2,VITIS_LOOP_20_2,?,?,2,1,1,?,yes
 untiered,matadd,dace,m16_n32,8,10,module_matadd_0_0_Pipeline_VITIS_LOOP_20_2,VITIS_LOOP_20_2,?,?,2,1,1,?,yes
 untiered,matadd,dace,m16_n32,16,10,module_matadd_0_0_Pipeline_VITIS_LOOP_20_2,VITIS_LOOP_20_2,?,?,2,1,1,?,yes
-untiered,relu,opt,n64,1,10,relu,BEAT,64,64,2,1,1,64,yes
-untiered,relu,opt,n64,2,10,relu,BEAT,32,32,2,1,1,32,yes
-untiered,relu,opt,n64,4,10,relu,BEAT,16,16,2,1,1,16,yes
-untiered,relu,opt,n64,8,10,relu,BEAT,8,8,2,1,1,8,yes
-untiered,relu,opt,n64,16,10,relu,BEAT,4,4,2,1,1,4,yes
-untiered,relu,opt,n512,1,10,relu,BEAT,512,512,2,1,1,512,yes
-untiered,relu,opt,n512,2,10,relu,BEAT,256,256,2,1,1,256,yes
-untiered,relu,opt,n512,4,10,relu,BEAT,128,128,2,1,1,128,yes
-untiered,relu,opt,n512,8,10,relu,BEAT,64,64,2,1,1,64,yes
-untiered,relu,opt,n512,16,10,relu,BEAT,32,32,2,1,1,32,yes
-untiered,relu,dace,n64,1,10,relu_dace,VITIS_LOOP_19_1,1,?,2,1,1,1 ~ ?,yes
-untiered,relu,dace,n512,1,10,relu_dace,VITIS_LOOP_19_1,1,?,2,1,1,1 ~ ?,yes
+untiered,relu,opt,n4096,8,10,relu,BEAT,512,512,2,1,1,512,yes
 untiered,rowsum,opt,m4_n16,1,10,rowsum,BEAT,64,64,2,1,1,64,yes
 untiered,rowsum,opt,m4_n16,2,10,rowsum,BEAT,32,32,2,1,1,32,yes
 untiered,rowsum,opt,m4_n16,4,10,rowsum,BEAT,16,16,2,1,1,16,yes
