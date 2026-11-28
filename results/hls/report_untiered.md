@@ -17,34 +17,13 @@ Interface: axis, register slices off.
 
 | case | size | W | config | HLS clock ns | status | cycles | cyc/elem | overhead | est. latency | II | DSP | BRAM | portable | RTL |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| opt | n64 | 1 | loop_count=64 | 10 | ok | 66 | 1.03 | 2 | 66-66 | 67 | 0 | 0 | yes | opt_w1 (ref) |
-| opt | n64 | 2 | loop_count=32 | 10 | ok | 34 | 0.53 | 2 | 34-34 | 35 | 0 | 0 | yes | opt_w2 (ref) |
-| opt | n64 | 4 | loop_count=16 | 10 | ok | 18 | 0.28 | 2 | 18-18 | 19 | 0 | 0 | yes | opt_w4 (ref) |
-| opt | n64 | 8 | loop_count=8 | 10 | ok | 10 | 0.16 | 2 | 10-10 | 11 | 0 | 0 | yes | opt_w8 (ref) |
-| opt | n64 | 16 | loop_count=4 | 10 | ok | 6 | 0.09 | 2 | 6-6 | 7 | 0 | 0 | yes | opt_w16 (ref) |
-| opt | n512 | 1 | loop_count=512 | 10 | ok | 514 | 1.00 | 2 | 514-514 | 515 | 0 | 0 | yes | opt_w1 (yes) |
-| opt | n512 | 2 | loop_count=256 | 10 | ok | 258 | 0.50 | 2 | 258-258 | 259 | 0 | 0 | yes | opt_w2 (yes) |
-| opt | n512 | 4 | loop_count=128 | 10 | ok | 130 | 0.25 | 2 | 130-130 | 131 | 0 | 0 | yes | opt_w4 (yes) |
-| opt | n512 | 8 | loop_count=64 | 10 | ok | 66 | 0.13 | 2 | 66-66 | 67 | 0 | 0 | yes | opt_w8 (yes) |
-| opt | n512 | 16 | loop_count=32 | 10 | ok | 34 | 0.07 | 2 | 34-34 | 35 | 0 | 0 | yes | opt_w16 (yes) |
-| dace | n2048 | 1 | loop_count=2048 | 10 | ok | 4101 | 2.00 | 2053 | 11-? | ? | 0 | 8 | yes | dace_w1 (ref) |
+| opt | n4096 | 8 | loop_count=512 | 10 | ok | 514 | 0.13 | 2 | 514-514 | 515 | 0 | 0 | yes | opt_w8 (ref) |
 
 Loops:
 
 | case | size | W | module | loop | trips | iter lat | II (achieved/target) | latency | pipelined |
 |---|---|---|---|---|---|---|---|---|---|
-| opt | n64 | 1 | axpy | BEAT | 64 | 2 | 1/1 | 64-64 | yes |
-| opt | n64 | 2 | axpy | BEAT | 32 | 2 | 1/1 | 32-32 | yes |
-| opt | n64 | 4 | axpy | BEAT | 16 | 2 | 1/1 | 16-16 | yes |
-| opt | n64 | 8 | axpy | BEAT | 8 | 2 | 1/1 | 8-8 | yes |
-| opt | n64 | 16 | axpy | BEAT | 4 | 2 | 1/1 | 4-4 | yes |
-| opt | n512 | 1 | axpy | BEAT | 512 | 2 | 1/1 | 512-512 | yes |
-| opt | n512 | 2 | axpy | BEAT | 256 | 2 | 1/1 | 256-256 | yes |
-| opt | n512 | 4 | axpy | BEAT | 128 | 2 | 1/1 | 128-128 | yes |
-| opt | n512 | 8 | axpy | BEAT | 64 | 2 | 1/1 | 64-64 | yes |
-| opt | n512 | 16 | axpy | BEAT | 32 | 2 | 1/1 | 32-32 | yes |
-| dace | n2048 | 1 | axpy_dace_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | 1 ~ ? | 1 | 1/1 | 1-? | yes |
-| dace | n2048 | 1 | axpy_dace_Pipeline_VITIS_LOOP_37_2 | VITIS_LOOP_37_2 | 1 ~ 4095 | 2 | 1/1 | 1-4095 | yes |
+| opt | n4096 | 8 | axpy | BEAT | 512 | 2 | 1/1 | 512-512 | yes |
 
 ## matadd
 
