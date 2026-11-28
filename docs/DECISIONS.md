@@ -250,9 +250,9 @@ Retired numbers: X10 (now in X25's heading), X36 (in X37's), X46 (in X64's); X26
 
 ### X89 — The type axis
 
-- **Decided:** each compute block at its 10 width pairs (8 to 64, w_out ≥ w_in) at one lane count (W0 = 1 for SimdLanes, 8 for the folds), FifoPacker at int32, int16, int8; over lanes `copy` for lane-copy blocks, `slope` (int64 per-lane cost x w_in / 64) for narrow folds; LinkBuffer x w / 64.
+- **Decided:** each compute block at its 10 width pairs (8 to 64, w_out ≥ w_in) at one lane count (W0 = 1 for SimdLanes, 8 for the folds), FifoPacker one point per type and lanes in (int32, int16 at one lane in, int8 at 1, 2 and 4: the lanes a design packs below a word), made at a snax-forge commit of its own as X94's slicer (`source.snax_forge_FifoPacker`); over lanes `copy` for lane-copy blocks, `slope` (int64 per-lane cost x w_in / 64) for narrow folds; LinkBuffer x w / 64.
 - **Why:** DC trims sign bits differently per block (shared ratios missed by 2x); the slope lands within 1 to 5 % on area.
-- **Where:** `results/char/char_table.md`, "The type axis"; `results/char/runs/2026-11-16_char2_r2.md`, `_r4.md`.
+- **Where:** `results/char/char_table.md`, "The type axis"; `results/char/runs/2026-11-16_char2_r2.md`, `_r4.md`, `2026-11-28_e2e1_a5b.md`.
 
 ### X94 — The input slicer
 

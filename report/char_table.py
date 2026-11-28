@@ -352,6 +352,16 @@ def scaling(D: dict, prefix: str) -> list[str]:
                             for r, t_ in ((2, "i32"), (4, "i16"), (8, "i8")))
             lines.append(f"- {t}: busy e_dyn a push: {per} pJ; idle is its clock gates' (and at d_out 2 its "
                          "ungated 1-bit counter's).")
+            twins = [(f"pack/d{r}_i8", f"pack/d{r}_{t_}", n) for r, t_, n in ((4, "i16", 2), (2, "i32", 4))
+                     if f"pack/d{r}_i8" in d]
+            if twins:                       # int8 at 2 and 4 lanes in: the RTL of int16 and int32 at one
+                same = all(area(d, a) == area(d, b) and e(d, a, "idle") == e(d, b, "idle") for a, b, _ in twins)
+                per = ", ".join(f"`{a}` (int8 x{n}) {e(d, a, 'busy'):.4f} against `{b}` {e(d, b, 'busy'):.4f}"
+                                for a, b, n in twins)
+                lines.append(f"- {t}: int8 at 2 and 4 lanes in holds the bits of int16 and int32 at one, "
+                             f"{'the same area and idle energy' if same else 'area or idle energy NOT the same'}; "
+                             f"busy e_dyn a push {per} pJ, the stimulus differing (rand64 draws one stream a lane "
+                             "port).")
         return lines
     if prefix == "slice":
         import char_export as ce
